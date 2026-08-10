@@ -1,0 +1,125 @@
+import React, { useState, useEffect } from "react";
+import HeroBanner from "./sections/HeroBanner";
+import MarketplaceHub from "./sections/MarketplaceHub";
+import ShopByCategory from "./sections/ShopByCategory";
+import FlashDeals from "./sections/FlashDeals";
+import TopBrands from "./sections/TopBrands";
+import PopularProducts from "./sections/PopularProducts";
+import RecommendedForYou from "./sections/RecommendedForYou";
+import NearbyRestaurants from "./sections/NearbyRestaurants";
+import PopularServices from "./sections/PopularServices";
+import CouponsOffers from "./sections/CouponsOffers";
+import OccasionsAndCollections from "./sections/OccasionsAndCollections";
+import MegaSaleBanner from "./sections/MegaSaleBanner";
+import AppNewsletterSocial from "./sections/AppNewsletterSocial";
+import { getProducts } from "../../api/productService";
+import { fetchCategories } from "../../api/categoryService";
+import FeaturedProductCategory from "./sections/FeaturedProductCategory";
+import FeaturedServiceCategory from "./sections/FeaturedServiceCategory";
+
+function Home() {
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadHomeData = async () => {
+      try {
+        setLoading(true);
+        const [productsData, categoriesData] = await Promise.all([
+          getProducts({ productType: "E-Commerce", limit: 12 }),
+          fetchCategories({ businessType: "E-Commerce" }),
+        ]);
+
+        const plist = Array.isArray(productsData)
+          ? productsData
+          : productsData?.products || productsData?.data || [];
+        const clist =
+          categoriesData?.data ||
+          categoriesData?.categories ||
+          (Array.isArray(categoriesData) ? categoriesData : []);
+
+        setProducts(plist);
+        setCategories(clist);
+      } catch (err) {
+        console.error("Failed to load home page data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadHomeData();
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-[#fafafa] font-sans antialiased text-slate-900 pb-12 space-y-6 sm:space-y-8">
+      {/* Hero Carousel Banner */}
+      <HeroBanner />
+
+      {/* AI Personal Assistant, Weather Card & Our Services 4 Cards */}
+      <MarketplaceHub />
+
+      {/* Food Delivery Service Promo Banner */}
+
+      {/* Flash Deals */}
+      <FlashDeals />
+
+      {/* Featured Service Categories */}
+      <FeaturedServiceCategory />
+
+      <MegaSaleBanner
+        title="Craving Something Delicious?"
+        description="Order your favorite meals and get up to 50% off on selected restaurants."
+        imageUrl="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80"
+        linkUrl="/shop"
+      />
+      {/* Popular Local Shops */}
+      <TopBrands />
+
+      {/* Popular Products */}
+      <PopularProducts />
+
+      <MegaSaleBanner
+        title="Services, Right at Your Doorstep 🏠"
+        description="Book trusted professionals for home cleaning, salon & spa, tuition, dance classes, repairs and more — all from one place."
+        imageUrl="https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=400&q=80"
+        linkUrl="/services"
+      />
+
+      {/* Recommended For You */}
+      <RecommendedForYou />
+      <FeaturedProductCategory
+        products={products}
+        categories={categories}
+        loading={loading}
+      />
+      <MegaSaleBanner
+        title="Limited Time Offer!"
+        description="Get up to 50% off on selected items"
+        imageUrl="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80"
+        linkUrl="/shop"
+      />
+
+      {/* Nearby Restaurants */}
+      <NearbyRestaurants />
+
+      {/* Book Home Services */}
+      <PopularServices />
+      <MegaSaleBanner
+        title="Find Your Next Favorite 🛒"
+        description="Shop trending products, fresh arrivals and everyday essentials — all curated in one place."
+        imageUrl="https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&w=400&q=80"
+        linkUrl="/shop"
+      />
+      {/* Store Coupons & Rewards Grid */}
+      <CouponsOffers />
+
+      {/* Our Occasion & Our Collection */}
+      <OccasionsAndCollections />
+
+      {/* Bottom Offer Banner & Footer */}
+      <AppNewsletterSocial />
+    </div>
+  );
+}
+
+export default Home;

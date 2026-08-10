@@ -1,0 +1,437 @@
+export const FREE_SHIPPING_THRESHOLD = 1000;
+
+export function formatPrice(price) {
+  return `₹${price.toLocaleString("en-IN")}`;
+}
+
+export function readStorage(key, fallback) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
+  } catch {
+    return fallback;
+  }
+}
+
+export const navLinks = [
+  "Home",
+  "Our Residents",
+  "Gift Hampers",
+  "Nursery Collection",
+  "About Us",
+];
+
+export const pillars = [
+  {
+    title: "Thoughtful Materials",
+    text: "Made with gentle fabrics and safe, high quality fillings",
+    icon: "leaf",
+  },
+  {
+    title: "Made With Love",
+    text: "Handcrafted with care in every little detail",
+    icon: "heart",
+  },
+  {
+    title: "Perfect For Gifting",
+    text: "Beautifully packaged for meaningful moments",
+    icon: "gift",
+  },
+  {
+    title: "Timeless Keepsakes",
+    text: "Created to be loved today and treasured always",
+    icon: "star",
+  },
+];
+
+export const PRODUCTS = [
+  {
+    id: 1,
+    name: "Benny Dog ",
+    tagline: "The quiet little dreamer with a heart full of wonder.",
+    price: 2299,
+    originalPrice: 2599,
+    image: "https://starlingtales.vercel.app/2.jpeg",
+    gallery: [
+      "https://starlingtales.vercel.app/16.jpeg",
+      "https://starlingtales.vercel.app/9.jpeg",
+    ],
+    category: "Dolls",
+    badge: "Bestseller",
+    rating: 4.9,
+    reviews: 124,
+    inStock: true,
+    description:
+      "Lovingly handcrafted with soft fabrics and calming details. Dreamer Doll is made for bedtime cuddles, storytelling moments, and comforting little rituals. Each doll is stitched with care and attention to every tiny detail.",
+    details: [
+      "Height: approx 30cm",
+      "Material: 100% cotton outer, hypoallergenic filling",
+      "Hand wash only, cold water",
+      "Suitable for ages 0+",
+      "CE certified & safety tested",
+    ],
+    tags: ["doll", "handmade", "gift"],
+    variants: [
+      { label: "Small (25cm)", sku: "DD-SM" },
+      { label: "Standard (30cm)", sku: "DD-ST" },
+      { label: "Large (38cm)", sku: "DD-LG" },
+    ],
+  },
+  {
+    id: 2,
+    name: "ELLIE ELEPHANT",
+    tagline: "Gentle, wise, and endlessly comforting.",
+    price: 2099,
+    originalPrice: null,
+    image: "https://starlingtales.vercel.app/11.jpeg",
+    gallery: [
+      "https://starlingtales.vercel.app/3.jpeg",
+      "https://starlingtales.vercel.app/5.jpeg",
+    ],
+    category: "Soft Toys",
+    badge: "New",
+    rating: 4.8,
+    reviews: 87,
+    inStock: true,
+    description:
+      "Ellie brings calm energy, soft hugs, and timeless nursery charm. Made with the gentlest fabrics for little hands to hold tight.",
+    details: [
+      "Height: approx 28cm",
+      "Material: plush velvet outer, PP cotton fill",
+      "Surface wash only",
+      "Suitable for ages 0+",
+      "CE certified",
+    ],
+    tags: ["elephant", "soft toy", "nursery"],
+    variants: [
+      { label: "Grey", sku: "EE-GR" },
+      { label: "Blue", sku: "EE-BL" },
+    ],
+  },
+  {
+    id: 3,
+    name: "MILO MONKEY",
+    tagline: "Playful, cheerful, and always ready for tiny adventures.",
+    price: 2199,
+    originalPrice: 2499,
+    image: "https://starlingtales.vercel.app/13.jpeg",
+    gallery: ["https://starlingtales.vercel.app/13.jpeg"],
+    category: "Soft Toys",
+    badge: "Bestseller",
+    rating: 4.9,
+    reviews: 203,
+    inStock: true,
+    description:
+      "Kiki reminds little ones that love is the safest place to land. Her front pocket holds surprises - a tiny joey, a note, or whatever the day brings.",
+    details: [
+      "Height: approx 32cm",
+      "Material: knitted cotton",
+      "Hand wash only",
+      "Suitable for ages 1+",
+      "CE certified",
+    ],
+    tags: ["kangaroo", "knitted", "gift"],
+    variants: [{ label: "Natural Cream", sku: "KK-NC" }],
+  },
+  {
+    id: 4,
+    name: "Kiki Kangaroo  ",
+    tagline: "Loyal, lovable, and made for everyday companionship.",
+    price: 2099,
+    originalPrice: null,
+    image: "https://starlingtales.vercel.app/1.jpeg",
+    gallery: ["https://starlingtales.vercel.app/1.jpeg"],
+    category: "Soft Toys",
+    badge: null,
+    rating: 4.7,
+    reviews: 56,
+    inStock: true,
+    description:
+      "Benny is the soft friend for sleepy afternoons and treasured memories. Complete with a cosy polka-dot blanket in every set.",
+    details: [
+      "Includes matching blanket",
+      "Height: approx 26cm",
+      "Material: crocheted cotton",
+      "Spot clean only",
+      "Suitable for ages 0+",
+    ],
+    tags: ["dog", "crochet", "bundle"],
+    variants: [
+      { label: "With Blanket", sku: "BD-BL" },
+      { label: "Without Blanket", sku: "BD-NB" },
+    ],
+  },
+  {
+    id: 5,
+    name: "Bunny Backpack",
+    tagline: "A little lamb, a lot of love.",
+    price: 2399,
+    originalPrice: null,
+    image: "https://starlingtales.vercel.app/4.jpeg",
+    gallery: ["https://starlingtales.vercel.app/4.jpeg"],
+    category: "Soft Toys",
+    badge: "New",
+    rating: 5,
+    reviews: 34,
+    inStock: true,
+    description:
+      "Soft cuddles. Pure comfort. Buttercup wears her pink bow proudly and comes with a tiny golden bell - a gentle jingle for every cuddle.",
+    details: [
+      "Height: approx 22cm",
+      "Material: boucle fabric & corduroy trim",
+      "Spot clean",
+      "Suitable for ages 0+",
+      "CE certified",
+    ],
+    tags: ["lamb", "white", "pink", "soft"],
+    variants: [{ label: "White/Pink", sku: "BL-WP" }],
+  },
+  {
+    id: 6,
+    name: "Bunny Family Basket",
+    tagline: "Handmade with love, dressed for adventure.",
+    price: 2599,
+    originalPrice: 2899,
+    image: "https://starlingtales.vercel.app/14.jpeg",
+    gallery: ["https://starlingtales.vercel.app/13.jpeg"],
+    category: "Dolls",
+    badge: "Sale",
+    rating: 4.8,
+    reviews: 91,
+    inStock: true,
+    description:
+      "With her denim plaid dress, braided yarn hair, and matching cowgirl hat, this doll is as charming as they come. Fully handcrafted, every stitch placed with intention.",
+    details: [
+      "Height: approx 34cm",
+      "Material: cotton fabric, yarn hair",
+      "Hand wash cold",
+      "Suitable for ages 3+",
+      "Handmade - slight variations are part of the charm",
+    ],
+    tags: ["doll", "cowgirl", "blue", "handmade"],
+    variants: [
+      { label: "Blue Plaid", sku: "CG-BP" },
+      { label: "Pink Plaid", sku: "CG-PP" },
+    ],
+  },
+  {
+    id: 7,
+    name: "Dreamer Doll",
+    tagline: "Your little one's adventure companion.",
+    price: 2799,
+    originalPrice: null,
+    image: "https://starlingtales.vercel.app/6.jpeg",
+    gallery: [
+      "https://starlingtales.vercel.app/8.jpeg",
+      "https://starlingtales.vercel.app/7.jpeg",
+    ],
+    category: "Accessories",
+    badge: "Personalised",
+    rating: 4.9,
+    reviews: 178,
+    inStock: true,
+    description:
+      "A waffle-knit toddler backpack with a plush bunny friend tucked in the front pocket. Available with personalised embroidered name on the pocket.",
+    details: [
+      "Dimensions: 28cm x 22cm x 10cm",
+      "Material: waffle cotton, plush bunny",
+      "Wipe clean",
+      "Suitable for ages 2+",
+      "Custom name embroidery available",
+    ],
+    tags: ["backpack", "bunny", "personalised", "toddler"],
+    variants: [
+      { label: "Sage Green", sku: "BB-SG" },
+      { label: "Dusty Pink", sku: "BB-DP" },
+    ],
+  },
+  {
+    id: 8,
+    name: "Unicorn Quilt",
+    tagline: "A magical quilt for little dreamers.",
+    price: 2499,
+    originalPrice: 2999,
+    image: "https://starlingtales.vercel.app/10.jpeg",
+    gallery: ["https://starlingtales.vercel.app/4.jpeg"],
+    category: "Nursery",
+    badge: "Sale",
+    rating: 4.7,
+    reviews: 62,
+    inStock: true,
+    description:
+      "Pastel unicorns, rainbows, and wildflowers quilt-stitched onto the softest cotton. Reversible plaid backing. A forever piece for every nursery.",
+    details: [
+      "Size: 100cm x 130cm",
+      "Material: 100% cotton muslin",
+      "Machine wash gentle, cold",
+      "Suitable for ages 0+",
+      "Reversible design",
+    ],
+    tags: ["quilt", "nursery", "unicorn", "pastel"],
+    variants: [{ label: "Pastel Multi", sku: "UQ-PM" }],
+  },
+  {
+    id: 9,
+    name: "Cowgirl Doll",
+    tagline: "Three best friends in their cosy home.",
+    price: 3499,
+    originalPrice: null,
+    image: "https://starlingtales.vercel.app/12.jpeg",
+    gallery: ["https://starlingtales.vercel.app/14.jpeg"],
+    category: "Gift Hampers",
+    badge: "Gift Set",
+    rating: 5,
+    reviews: 47,
+    inStock: true,
+    description:
+      "Three handcrafted linen bunnies - each uniquely dressed - nestled in a personalised rope basket. Perfect as a nursery gift or sibling set.",
+    details: [
+      "Includes 3 bunnies + rope basket",
+      "Bunnies: approx 25cm each",
+      "Basket: 22cm diameter",
+      "Personalised letter patch available",
+      "Handmade - each set unique",
+    ],
+    tags: ["bunny", "gift set", "basket", "personalised"],
+    variants: [{ label: "Set of 3", sku: "BFB-3" }],
+  },
+  {
+    id: 10,
+    name: "Toy Storage Unicorn",
+    tagline: "From gift hamper to toy storage - grows with the child.",
+    price: 2199,
+    originalPrice: null,
+    image: "https://starlingtales.vercel.app/6.jpeg",
+    gallery: [
+      "https://starlingtales.vercel.app/6.jpeg",
+      "https://starlingtales.vercel.app/10.jpeg",
+      "https://starlingtales.vercel.app/12.jpeg",
+    ],
+    category: "Nursery",
+    badge: null,
+    rating: 4.6,
+    reviews: 29,
+    inStock: true,
+    description:
+      "A striped fabric unicorn that doubles as a toy storage basket. Fill it with gifts, then use it as a beloved nursery storage piece for years.",
+    details: [
+      "Dimensions: 40cm wide x 30cm tall",
+      "Material: ticking stripe cotton",
+      "Wipe clean",
+      "Suitable from birth",
+      "Can hold up to 3kg",
+    ],
+    tags: ["storage", "unicorn", "nursery", "dual-use"],
+    variants: [{ label: "Natural Stripe", sku: "TSU-NS" }],
+  },
+  {
+    id: 11,
+    name: "Striped Storage Basket",
+    tagline: "Practical, charming, and perfect for nursery organization.",
+    price: 2899,
+    originalPrice: 3199,
+    image: "https://starlingtales.vercel.app/10.jpeg",
+    gallery: ["https://starlingtales.vercel.app/10.jpeg"],
+    category: "Nursery",
+    badge: "New",
+    rating: 4.8,
+    reviews: 14,
+    inStock: true,
+    description:
+      "A versatile ticking stripe canvas storage basket that keeps playrooms tidy and stylish. Handcrafted with sturdy cotton canvas and soft handles for easy carrying.",
+    details: [
+      "Dimensions: 35cm diameter x 40cm tall",
+      "Material: 100% cotton canvas outer",
+      "Wipe clean only",
+      "Sturdy woven handles",
+    ],
+    tags: ["storage", "striped", "nursery"],
+    variants: [{ label: "Natural Stripe", sku: "SSB-NS" }],
+  },
+  {
+    id: 12,
+    name: "Classic Toy Organiser",
+    tagline: "Keep play spaces beautiful and clutter-free.",
+    price: 2999,
+    originalPrice: null,
+    image: "https://starlingtales.vercel.app/12.jpeg",
+    gallery: ["https://starlingtales.vercel.app/12.jpeg"],
+    category: "Nursery",
+    badge: null,
+    rating: 4.9,
+    reviews: 18,
+    inStock: true,
+    description:
+      "A beautifully structured storage bag designed to hold blankets, soft toys, and nursery essentials. Made with premium heavy-weight cotton that stands upright.",
+    details: [
+      "Dimensions: 38cm wide x 35cm tall",
+      "Material: durable ticking canvas",
+      "Spot clean",
+      "Foldable for easy storage",
+    ],
+    tags: ["storage", "basket", "nursery"],
+    variants: [{ label: "Grey Stripe", sku: "CTO-GS" }],
+  },
+];
+
+export const RESIDENTS = [
+  {
+    id: "res-1",
+    name: "Benny Dog ",
+    tagline: "The quiet little dreamer with a heart full of wonder.",
+    image: "https://starlingtales.vercel.app/16.jpeg",
+    gallery: ["16.jpeg", "9.jpeg"],
+    description:
+      "Benny is a gentle soul who loves cozy blanket forts, listening to the soft patter of rain, and dreaming up adventures in the clouds. He is the perfect companion for peaceful afternoons, quiet reading hours, and gentle bedtime rituals.",
+    personality: [
+      { label: "Favorite Activity", value: "Cloud gazing & blanket forts" },
+      { label: "Dream", value: "To touch a shooting star" },
+      { label: "Secret Talent", value: "Whispering sweet dreams" },
+    ],
+    productId: 1,
+  },
+  {
+    id: "res-2",
+    name: "ELLIE ELEPHANT",
+    tagline: "Gentle, wise, and endlessly comforting.",
+    image: "https://starlingtales.vercel.app/17.jpeg",
+    gallery: ["3.jpeg", "5.jpeg"],
+    description:
+      "With her soft velvet ears and kind eyes, Ellie is a patient listener and a steady friend. She loves sharing tea parties with invisible cakes, listening to old nursery rhymes, and wrapping little hands in warm, comforting hugs.",
+    personality: [
+      { label: "Favorite Activity", value: "Listening to lullabies" },
+      { label: "Dream", value: "To paint the nursery sky" },
+      { label: "Secret Talent", value: "Remembering every story" },
+    ],
+    productId: 2,
+  },
+  {
+    id: "res-3",
+    name: "DREAMER DOLL",
+    tagline: "Playful, cheerful, and always ready for tiny adventures.",
+    image: "https://starlingtales.vercel.app/8.jpeg",
+    gallery: ["8.jpeg", "7.jpeg"],
+    description:
+      "Dreamer doll is a bundle of joy who believes that every day is a brand new adventure. She loves swinging from branch to branch (or chair to chair!), playing peek-a-boo, and bringing giggles and bright smiles to every room.",
+    personality: [
+      { label: "Favorite Activity", value: "Acrobatic tricks & peek-a-boo" },
+      { label: "Dream", value: "To build a ladder to the moon" },
+      { label: "Secret Talent", value: "Making anyone laugh" },
+    ],
+    productId: 7,
+  },
+  {
+    id: "res-4",
+    name: "Kiki Kangaroo",
+    tagline: "Loyal, lovable, and made for everyday companionship.",
+    image: "https://starlingtales.vercel.app/1.jpeg",
+    gallery: ["https://starlingtales.vercel.app/1.jpeg"],
+    description:
+      "Kiki reminds little ones that love is the safest place to land. Her front pocket holds little surprises—a tiny joey, secret notes, or precious treasures found during outdoor walks. She is always ready to bounce into fun!",
+    personality: [
+      { label: "Favorite Activity", value: "Collecting pocket treasures" },
+      { label: "Dream", value: "To jump over a rainbow" },
+      { label: "Secret Talent", value: "Keeping secrets safe" },
+    ],
+    productId: 4,
+  },
+];
