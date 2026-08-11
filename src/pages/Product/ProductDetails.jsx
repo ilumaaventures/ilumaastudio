@@ -231,9 +231,31 @@ function ProductDetails() {
             
             {/* Title & Brand */}
             <div className="space-y-2">
-              <span className="inline-block px-2.5 py-0.5 bg-blue-50 dark:bg-slate-800 text-[#2563eb] font-bold text-xs rounded">
-                {displayProduct.brand || "ILumaaStudio"}
-              </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-block px-2.5 py-0.5 bg-blue-50 dark:bg-slate-800 text-[#2563eb] font-bold text-xs rounded">
+                  {displayProduct.brand || "ILumaaStudio"}
+                </span>
+
+                {displayProduct.isFeatured && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-bold text-xs rounded-full">
+                    <Star size={12} className="fill-amber-500 text-amber-500" />
+                    Featured Product
+                  </span>
+                )}
+
+                {displayProduct.isOccasion && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 font-bold text-xs rounded-full">
+                    <Sparkles size={12} className="text-purple-500" />
+                    Special Occasion
+                  </span>
+                )}
+
+                {displayProduct.isFlashSale && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-bold text-xs rounded-full animate-pulse">
+                    ⚡ Flash Sale Item
+                  </span>
+                )}
+              </div>
 
               <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white leading-tight">
                 {displayProduct.name}

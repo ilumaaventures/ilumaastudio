@@ -8,9 +8,9 @@ import {
   ChevronRight,
   ArrowUpRight,
 } from "lucide-react";
-import { fetchCategories } from "../../../api/categoryService";
-import { getServices } from "../../../api/serviceService";
-import { ServiceGridSkeleton } from "../../../Components/Skeletons";
+import { fetchCategories } from "../../api/categoryService";
+import { getServices } from "../../api/serviceService";
+import { ServiceGridSkeleton } from "../../Components/Skeletons";
 
 const FALLBACK_HOME_SERVICES = [
   {
@@ -74,9 +74,7 @@ const formatLocation = (loc) =>
 
 export default function PopularServices() {
   const [serviceCategories, setServiceCategories] = useState([]);
-  const [featuredServices, setFeaturedServices] = useState(
-    FALLBACK_HOME_SERVICES,
-  );
+  const [featuredServices, setFeaturedServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const scrollRef = useRef(null);
@@ -102,7 +100,7 @@ export default function PopularServices() {
             list.map((s, idx) => ({
               _id: s._id || `s_${idx}`,
               id: s._id || `s_${idx}`,
-              name: s.serviceName || "Home Service",
+              name: s.serviceName || s.name || "Home Service",
               category:
                 typeof s.category === "object"
                   ? s.category?.name || "Home Care"
@@ -114,14 +112,16 @@ export default function PopularServices() {
               image:
                 s.thumbnail ||
                 s.images?.[0] ||
-                FALLBACK_HOME_SERVICES[idx % FALLBACK_HOME_SERVICES.length]
-                  .image,
+                "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=700&q=80",
               badge: idx % 2 === 0 ? "Popular" : "Verified",
             })),
           );
+        } else {
+          setFeaturedServices([]);
         }
       } catch (err) {
         console.error("Failed to load popular services:", err);
+        setFeaturedServices([]);
       } finally {
         setLoading(false);
       }

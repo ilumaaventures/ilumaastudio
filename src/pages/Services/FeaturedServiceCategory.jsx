@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { fetchCategories } from "../../../api/categoryService";
+// import { fetchCategories } from "../../../api/categoryService";
+import { fetchCategories } from "../../api/categoryService";
 
 function FeaturedServiceCategory() {
   const scrollRef = useRef(null);

@@ -6,8 +6,6 @@ import FlashDeals from "./sections/FlashDeals";
 import TopBrands from "./sections/TopBrands";
 import PopularProducts from "./sections/PopularProducts";
 import RecommendedForYou from "./sections/RecommendedForYou";
-import NearbyRestaurants from "./sections/NearbyRestaurants";
-import PopularServices from "./sections/PopularServices";
 import CouponsOffers from "./sections/CouponsOffers";
 import OccasionsAndCollections from "./sections/OccasionsAndCollections";
 import MegaSaleBanner from "./sections/MegaSaleBanner";
@@ -15,7 +13,6 @@ import AppNewsletterSocial from "./sections/AppNewsletterSocial";
 import { getProducts } from "../../api/productService";
 import { fetchCategories } from "../../api/categoryService";
 import FeaturedProductCategory from "./sections/FeaturedProductCategory";
-import FeaturedServiceCategory from "./sections/FeaturedServiceCategory";
 
 function Home() {
   const [products, setProducts] = useState([]);
@@ -58,13 +55,8 @@ function Home() {
       {/* AI Personal Assistant, Weather Card & Our Services 4 Cards */}
       <MarketplaceHub />
 
-      {/* Food Delivery Service Promo Banner */}
-
       {/* Flash Deals */}
       <FlashDeals />
-
-      {/* Featured Service Categories */}
-      <FeaturedServiceCategory />
 
       <MegaSaleBanner
         title="Craving Something Delicious?"
@@ -78,13 +70,6 @@ function Home() {
       {/* Popular Products */}
       <PopularProducts />
 
-      <MegaSaleBanner
-        title="Services, Right at Your Doorstep 🏠"
-        description="Book trusted professionals for home cleaning, salon & spa, tuition, dance classes, repairs and more — all from one place."
-        imageUrl="https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=400&q=80"
-        linkUrl="/services"
-      />
-
       {/* Recommended For You */}
       <RecommendedForYou />
       <FeaturedProductCategory
@@ -92,18 +77,6 @@ function Home() {
         categories={categories}
         loading={loading}
       />
-      <MegaSaleBanner
-        title="Limited Time Offer!"
-        description="Get up to 50% off on selected items"
-        imageUrl="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80"
-        linkUrl="/shop"
-      />
-
-      {/* Nearby Restaurants */}
-      <NearbyRestaurants />
-
-      {/* Book Home Services */}
-      <PopularServices />
       <MegaSaleBanner
         title="Find Your Next Favorite 🛒"
         description="Shop trending products, fresh arrivals and everyday essentials — all curated in one place."

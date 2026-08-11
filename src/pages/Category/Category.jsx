@@ -26,18 +26,16 @@ export default function CategoriesPage() {
         setLoading(true);
         const res = await fetchCategories({ businessType: "E-Commerce" });
         const list = res?.data || res?.categories || (Array.isArray(res) ? res : []);
-        setCategories(list.length > 0 ? list : FALLBACK_CATEGORIES);
+        setCategories(list);
       } catch (err) {
         console.error("Failed to load categories:", err);
-        setCategories(FALLBACK_CATEGORIES);
+        setCategories([]);
       } finally {
         setLoading(false);
       }
     };
     loadCategories();
   }, []);
-
-  const displayList = categories.length > 0 ? categories : FALLBACK_CATEGORIES;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-200 transition-colors pb-16">
@@ -61,9 +59,21 @@ export default function CategoriesPage() {
         {/* Categories Grid */}
         {loading ? (
           <CategoryGridSkeleton count={8} />
+        ) : categories.length === 0 ? (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-12 text-center space-y-3 shadow-xs">
+            <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-[#2563eb] flex items-center justify-center mx-auto text-2xl">
+              🏷️
+            </div>
+            <h3 className="text-lg font-black text-slate-900 dark:text-white">
+              No Categories Found from Backend API
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto font-medium">
+              We couldn't retrieve any business categories from the server.
+            </p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {displayList.map((cat, idx) => (
+            {categories.map((cat, idx) => (
               <Link
                 key={cat._id || idx}
                 to={`/products?category=${encodeURIComponent(cat.name)}`}
@@ -72,7 +82,7 @@ export default function CategoriesPage() {
                 {/* Category Image Banner */}
                 <div className="relative h-44 overflow-hidden bg-slate-100 dark:bg-slate-800">
                   <img
-                    src={cat.image || FALLBACK_CATEGORIES[idx % FALLBACK_CATEGORIES.length].image}
+                    src={cat.image || "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=400&auto=format&fit=crop"}
                     alt={cat.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />

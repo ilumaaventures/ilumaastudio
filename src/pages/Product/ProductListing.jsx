@@ -298,7 +298,6 @@ function ProductSection({ title, subtitle, products, icon }) {
             to="/shop"
             className="text-xs font-bold text-[#2563eb] hover:text-[#1d4ed8] transition flex items-center gap-1"
           >
-            {" "}
             <span>Sell All</span>
           </Link>
         </div>
@@ -308,16 +307,16 @@ function ProductSection({ title, subtitle, products, icon }) {
         ref={scrollRef}
         className="flex items-stretch gap-4 sm:gap-5 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 hide-scrollbar"
       >
-        {products.map((product) => (
-          <ProductCard key={product._id || product.id} product={product} />
-        ))}
+          {products.map((product) => (
+            <ProductCard key={product._id || product.id} product={product} />
+          ))}
+        </div>
       </div>
-    </div>
   );
 }
 
 export default function ProductListing() {
-  const [productList, setProductList] = useState(FALLBACK_PRODUCTS);
+  const [productList, setProductList] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -344,15 +343,15 @@ export default function ProductListing() {
             price: Number(p.price) || 0,
             originalPrice:
               Number(p.originalPrice) || Math.round((p.price || 0) * 1.3),
-            rating: p.rating || 4.8,
+            rating: p.rating || 4.5,
             reviews: Array.isArray(p.reviews)
               ? p.reviews.length
-              : p.numReviews || p.reviewsCount || 84,
-            sold: p.soldCount || 350,
+              : p.numReviews || p.reviewsCount || 0,
+            sold: p.soldCount || 0,
             image:
               p.images?.[0]?.url ||
               p.image ||
-              FALLBACK_PRODUCTS[idx % FALLBACK_PRODUCTS.length].image,
+              "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=700&q=80",
             badge: p.isFeatured
               ? "Featured"
               : idx % 2 === 0
@@ -360,9 +359,12 @@ export default function ProductListing() {
                 : "Popular",
           }));
           setProductList(formatted);
+        } else {
+          setProductList([]);
         }
       } catch (err) {
-        console.error("Product listing fetch fallback:", err);
+        console.error("Product listing fetch error:", err);
+        setProductList([]);
       } finally {
         setLoading(false);
       }
@@ -401,6 +403,18 @@ export default function ProductListing() {
 
         {loading ? (
           <ProductGridSkeleton count={6} />
+        ) : productList.length === 0 ? (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-12 text-center space-y-3 shadow-xs">
+            <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-[#2563eb] flex items-center justify-center mx-auto text-2xl">
+              📦
+            </div>
+            <h3 className="text-lg font-black text-slate-900 dark:text-white">
+              No Products Returned from Backend API
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto font-medium">
+              We couldn't find any products in the database. Please verify your backend server status or add products via the admin panel.
+            </p>
+          </div>
         ) : (
           <>
             {/* Trending Section */}

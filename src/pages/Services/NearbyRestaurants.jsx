@@ -1,38 +1,41 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getProducts } from "../../../api/productService";
-import { ProductGridSkeleton } from "../../../Components/Skeletons";
+import { getShops } from "../../api/publicService";
+import { StoreGridSkeleton } from "../../Components/Skeletons";
 
-function RecommendedForYou() {
-  const [items, setItems] = useState([]);
+function NearbyRestaurants() {
+  const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRecommended = async () => {
+    const fetchRestaurants = async () => {
       try {
         setLoading(true);
-        const res = await getProducts({ limit: 3 });
-        const list = Array.isArray(res) ? res : res?.products || res?.data || [];
+        const res = await getShops();
+        const list = Array.isArray(res) ? res : res?.stores || res?.data || [];
         if (list.length > 0) {
-          const formatted = list.map((p, idx) => ({
-            id: p._id || `rec_${idx}`,
-            title: p.name || "Recommended Product",
-            subtitle: p.category?.name || p.category || "General",
-            image: p.images?.[0]?.url || p.image || "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=400&q=80",
-            link: "/shop",
+          const formatted = list.slice(0, 3).map((s, idx) => ({
+            id: s._id || `rest_${idx}`,
+            name: s.businessName || s.name || s.storeName || "Local Partner",
+            subtitle: s.businessCategory || s.category || "Food & Dining",
+            image:
+              s.logo ||
+              s.banner ||
+              "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=500&q=80",
+            link: `/${s.slug || s._id}`,
           }));
-          setItems(formatted);
+          setRestaurants(formatted);
         } else {
-          setItems([]);
+          setRestaurants([]);
         }
       } catch (err) {
-        console.error("Recommended products fetch notice:", err);
-        setItems([]);
+        console.error("Restaurants API fetch notice:", err);
+        setRestaurants([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchRecommended();
+    fetchRestaurants();
   }, []);
 
   return (
@@ -40,10 +43,10 @@ function RecommendedForYou() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-          Recommended For You
+          Nearby Restaurants & Shops
         </h2>
         <Link
-          to="/shop"
+          to="/store"
           className="text-xs sm:text-sm font-bold text-[#1e6091] hover:text-[#1a5276] transition-colors"
         >
           See all
@@ -51,32 +54,34 @@ function RecommendedForYou() {
       </div>
 
       {loading ? (
-        <ProductGridSkeleton count={3} />
-      ) : items.length === 0 ? (
+        <StoreGridSkeleton count={3} />
+      ) : restaurants.length === 0 ? (
         <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-8 text-center">
-          <p className="text-xs text-slate-500 font-medium">No recommendations available from backend server.</p>
+          <p className="text-xs text-slate-500 font-medium">
+            No nearby partners returned from backend server.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-          {items.map((item) => (
+          {restaurants.map((rest) => (
             <Link
-              key={item.id}
-              to={item.link}
+              key={rest.id}
+              to={rest.link}
               className="group bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl overflow-hidden shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col"
             >
               <div className="h-36 sm:h-40 w-full overflow-hidden relative">
                 <img
-                  src={item.image}
-                  alt={item.title}
+                  src={rest.image}
+                  alt={rest.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
               <div className="p-4 bg-white dark:bg-slate-900">
                 <h3 className="font-extrabold text-slate-900 dark:text-white text-base sm:text-lg group-hover:text-[#1e6091] transition-colors">
-                  {item.title}
+                  {rest.name}
                 </h3>
                 <p className="text-xs font-semibold text-slate-400 mt-0.5">
-                  {item.subtitle}
+                  {rest.subtitle}
                 </p>
               </div>
             </Link>
@@ -87,5 +92,4 @@ function RecommendedForYou() {
   );
 }
 
-export default RecommendedForYou;
-
+export default NearbyRestaurants;

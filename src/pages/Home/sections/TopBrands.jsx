@@ -57,11 +57,11 @@ function TopBrands() {
             </span>
 
             <h2 className="mt-2 text-2xl sm:text-3xl font-black text-slate-900">
-              Popular Local Shops
+              Popular Shops
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              Discover trusted businesses and stores near you.
+              Discover trusted businesses and stores .
             </p>
           </div>
 
@@ -158,7 +158,7 @@ function TopBrands() {
                 const shopDescription =
                   shop.description ||
                   `Explore products and services from ${shopName}.`;
-                const storeRoute = `/${shop.slug || shop._id}`;
+                const storeRoute = `/${shop.slug || shop.businessName}`;
 
                 return (
                   <Link

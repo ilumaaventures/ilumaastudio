@@ -64,103 +64,164 @@ export default function MarketplaceHub() {
       </div>
 
       {/* Our Services Section */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            Our Services
-          </h2>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div>
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Our Services
+              </h2>
+              <p className="text-sm text-slate-500 mt-1">
+                Everything you need, all in one place
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+            {/* Product Marketplace */}
+            <Link
+              to="/productlisting"
+              className="
+          group relative overflow-hidden rounded-3xl
+          border border-amber-200/70
+          bg-gradient-to-br from-amber-50 to-yellow-100
+          shadow-sm hover:shadow-xl
+          transition-all duration-300
+          hover:-translate-y-1
+        "
+            >
+              <div className="relative h-44 overflow-hidden">
+                <img
+                  src="https://media.istockphoto.com/id/1219933495/photo/shopping-trolley-cart.jpg?s=2048x2048&w=is&k=20&c=nTaSxSeFe8NwZG-0QfV4mTlPhTl1NNsvfmWSJXe5tMo="
+                  alt="Product Marketplace"
+                  className="
+              h-full w-full object-cover
+              transition-transform duration-700
+              group-hover:scale-110
+            "
+                />
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+
+                <span className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur text-xs font-bold text-amber-700">
+                  Shop Products
+                </span>
+              </div>
+
+              <div className="relative p-5 pt-0">
+                <div
+                  className="
+              -mt-8 relative z-10
+              w-16 h-16 rounded-2xl
+              bg-gradient-to-br from-amber-100 to-amber-200
+              text-amber-700
+              flex items-center justify-center
+              shadow-lg border-4 border-white
+            "
+                >
+                  <ShoppingBag size={30} />
+                </div>
+
+                <div className="mt-4 flex items-end justify-between">
+                  <div>
+                    <h3 className="font-black text-lg sm:text-xl text-slate-900">
+                      Product Marketplace
+                    </h3>
+
+                    <p className="text-sm text-slate-500 mt-1">
+                      Discover products from trusted brands
+                    </p>
+                  </div>
+
+                  <div
+                    className="
+              w-10 h-10 rounded-full
+              bg-white flex items-center justify-center
+              text-amber-700
+              group-hover:bg-amber-600
+              group-hover:text-white
+              transition-all
+            "
+                  >
+                    →
+                  </div>
+                </div>
+              </div>
+            </Link>
+
+            {/* Service Marketplace */}
+            <Link
+              to="/servicelisting"
+              className="
+          group relative overflow-hidden rounded-3xl
+          border border-sky-200/70
+          bg-gradient-to-br from-sky-50 to-blue-100
+          shadow-sm hover:shadow-xl
+          transition-all duration-300
+          hover:-translate-y-1
+        "
+            >
+              <div className="relative h-44 overflow-hidden">
+                <img
+                  src="https://media.istockphoto.com/id/492892828/photo/air-conditioning-engineer.jpg?s=2048x2048&w=is&k=20&c=gYu9ROXlt0JnBsToEqZR4lROh6qkwAy1sZMhPlFDFtU="
+                  alt="Service Marketplace"
+                  className="
+              h-full w-full object-cover
+              transition-transform duration-700
+              group-hover:scale-110
+            "
+                />
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+
+                <span className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur text-xs font-bold text-sky-700">
+                  Book Services
+                </span>
+              </div>
+
+              <div className="relative p-5 pt-0">
+                <div
+                  className="
+              -mt-8 relative z-10
+              w-16 h-16 rounded-2xl
+              bg-gradient-to-br from-sky-100 to-blue-200
+              text-sky-700
+              flex items-center justify-center
+              shadow-lg border-4 border-white
+            "
+                >
+                  <Wrench size={30} />
+                </div>
+
+                <div className="mt-4 flex items-end justify-between">
+                  <div>
+                    <h3 className="font-black text-lg sm:text-xl text-slate-900">
+                      Service Marketplace
+                    </h3>
+
+                    <p className="text-sm text-slate-500 mt-1">
+                      Find professionals and book services
+                    </p>
+                  </div>
+
+                  <div
+                    className="
+              w-10 h-10 rounded-full
+              bg-white flex items-center justify-center
+              text-sky-700
+              group-hover:bg-sky-600
+              group-hover:text-white
+              transition-all
+            "
+                  >
+                    →
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </div>
         </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-          {/* 1. Product Marketplace */}
-          <Link
-            to="/productlisting"
-            className="bg-[#fef3c7]/60 hover:bg-[#fef3c7] border border-amber-200/60 rounded-3xl overflow-hidden transition-all duration-300 shadow-xs hover:shadow-md group"
-          >
-            <img
-              src="https://media.istockphoto.com/id/1219933495/photo/shopping-trolley-cart.jpg?s=2048x2048&w=is&k=20&c=nTaSxSeFe8NwZG-0QfV4mTlPhTl1NNsvfmWSJXe5tMo="
-              alt="Marketplace"
-              className="h-28 w-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-
-            <div className="p-5 flex flex-col items-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-100 to-amber-200 text-amber-700 flex items-center justify-center -mt-10 shadow-lg">
-                <ShoppingBag size={32} />
-              </div>
-
-              <h3 className="mt-4 font-black text-lg text-slate-900 group-hover:text-amber-800">
-                Product Marketplace
-              </h3>
-            </div>
-          </Link>
-
-          {/* 2. Service Marketplace */}
-          <Link
-            to="/servicelisting"
-            className="bg-[#fef3c7]/60 hover:bg-[#fef3c7] border border-amber-200/60 rounded-3xl overflow-hidden transition-all duration-300 shadow-xs hover:shadow-md group"
-          >
-            <img
-              src="https://media.istockphoto.com/id/492892828/photo/air-conditioning-engineer.jpg?s=2048x2048&w=is&k=20&c=gYu9ROXlt0JnBsToEqZR4lROh6qkwAy1sZMhPlFDFtU="
-              alt="Marketplace"
-              className="h-28 w-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-
-            <div className="p-5 flex flex-col items-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-100 to-amber-200 text-amber-700 flex items-center justify-center -mt-10 shadow-lg">
-                <Wrench size={32} />
-              </div>
-
-              <h3 className="font-black text-slate-900 text-base sm:text-lg group-hover:text-sky-800">
-                Service Marketplace
-              </h3>
-            </div>
-          </Link>
-
-          {/* 3. Event Marketplace */}
-          <Link
-            to="/"
-            className="bg-[#fef3c7]/60 hover:bg-[#fef3c7] border border-amber-200/60 rounded-3xl overflow-hidden transition-all duration-300 shadow-xs hover:shadow-md group"
-          >
-            <img
-              src="https://media.istockphoto.com/id/1759436430/photo/back-view-of-a-female-speaker-giving-a-speech-in-front-of-people-at-convention-center.jpg?s=2048x2048&w=is&k=20&c=yOkhPOVj1J73fXnFUBj21CtGt0TXqskYJu9Nm0Brj6Q="
-              alt="Marketplace"
-              className="h-28 w-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-
-            <div className="p-5 flex flex-col items-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-100 to-amber-200 text-amber-700 flex items-center justify-center -mt-10 shadow-lg">
-                <PartyPopper size={32} />
-              </div>
-
-              <h3 className="font-black text-slate-900 text-base sm:text-lg group-hover:text-rose-800">
-                Discover Events{" "}
-              </h3>
-            </div>
-          </Link>
-
-          {/* 4. Community Marketplace */}
-          <Link
-            to="/"
-            className="bg-[#fef3c7]/60 hover:bg-[#fef3c7] border border-amber-200/60 rounded-3xl overflow-hidden transition-all duration-300 shadow-xs hover:shadow-md group"
-          >
-            <img
-              src="https://images.unsplash.com/photo-1461088945293-0c17689e48ac?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-              alt="Marketplace"
-              className="h-28 w-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-
-            <div className="p-5 flex flex-col items-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-100 to-amber-200 text-amber-700 flex items-center justify-center -mt-10 shadow-lg">
-                <Users size={32} />
-              </div>
-
-              <h3 className="font-black text-slate-900 text-base sm:text-lg group-hover:text-indigo-800">
-                Join Community
-              </h3>
-            </div>
-          </Link>
-        </div>
-      </div>
+      </section>
     </div>
   );
 }

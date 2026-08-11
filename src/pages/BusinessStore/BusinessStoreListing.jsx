@@ -95,7 +95,7 @@ const FALLBACK_STORES = [
 
 export default function BusinessStoreListing() {
   const navigate = useNavigate();
-  const [stores, setStores] = useState(FALLBACK_STORES);
+  const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -112,15 +112,18 @@ export default function BusinessStoreListing() {
             slug: s.slug || (s.businessName || s.name || "").toLowerCase().replace(/\s+/g, "-") || "store",
             category: s.businessCategory || s.category || "General Store",
             rating: s.rating || 4.7,
-            reviews: s.reviewsCount || 150,
+            reviews: s.reviewsCount || 0,
             location: typeof s.location === "object" ? (s.location.city || s.location.address || "Lucknow") : (s.city || s.location || "Lucknow"),
-            image: s.logo || s.banner || FALLBACK_STORES[idx % FALLBACK_STORES.length].image,
+            image: s.logo || s.banner || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
             verified: true,
           }));
           setStores(formatted);
+        } else {
+          setStores([]);
         }
       } catch (err) {
-        console.error("Failed to load stores, showing fallback:", err);
+        console.error("Failed to load stores from API:", err);
+        setStores([]);
       } finally {
         setLoading(false);
       }
@@ -161,6 +164,18 @@ export default function BusinessStoreListing() {
         {/* Clean All Business Stores Grid */}
         {loading ? (
           <StoreGridSkeleton count={6} />
+        ) : stores.length === 0 ? (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-12 text-center space-y-3 shadow-xs">
+            <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-[#2563eb] flex items-center justify-center mx-auto text-2xl">
+              🏪
+            </div>
+            <h3 className="text-lg font-black text-slate-900 dark:text-white">
+              No Stores Returned from Backend API
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto font-medium">
+              We couldn't find any business stores registered in the backend.
+            </p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {stores.map((store) => {
