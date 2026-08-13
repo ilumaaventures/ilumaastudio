@@ -57,6 +57,8 @@ import ProductListing from "./pages/Product/ProductListing";
 import ServiceListing from "./pages/Services/ServiceListing";
 import HelpCenter from "./pages/Help/HelpCenter";
 
+import { getUserLocation } from "./utils/location";
+
 function App() {
   const dispatch = useDispatch();
   const {

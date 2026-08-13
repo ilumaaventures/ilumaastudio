@@ -159,7 +159,19 @@ export default function ShopPage() {
         rating: Number(p.rating) || 4.5,
         reviewsCount: p.numReviews || p.reviews?.length || 12,
         brand: brandName,
-        inStock: p.countInStock !== 0,
+        inStock: (() => {
+          const s =
+            p.inventory?.stockQuantity !== undefined
+              ? Number(p.inventory.stockQuantity)
+              : p.stockQuantity !== undefined
+              ? Number(p.stockQuantity)
+              : p.stock !== undefined
+              ? Number(p.stock)
+              : p.countInStock !== undefined
+              ? Number(p.countInStock)
+              : 0;
+          return s > 0;
+        })(),
         isBestseller: p.isBestseller || false,
         image: imgUrl,
         raw: p,
@@ -787,19 +799,36 @@ export default function ShopPage() {
                         </div>
 
                         {/* Stock status */}
-                        <div className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          <span>In Stock</span>
+                        <div
+                          className={`text-[10px] font-bold flex items-center gap-1 ${
+                            prod.inStock ? "text-emerald-600" : "text-rose-600"
+                          }`}
+                        >
+                          <div
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              prod.inStock ? "bg-emerald-500" : "bg-rose-500"
+                            }`}
+                          />
+                          <span>{prod.inStock ? "In Stock" : "Out of Stock"}</span>
                         </div>
 
                         {/* Add to Cart Button */}
-                        <button
-                          onClick={(e) => handleAddToCart(prod, e)}
-                          className="w-full mt-2 py-1.5 border border-[#2563eb] text-[#2563eb] dark:text-blue-400 hover:bg-[#2563eb] hover:text-white dark:hover:bg-[#2563eb] dark:hover:text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
-                        >
-                          <ShoppingCart size={13} />
-                          <span>Add to Cart</span>
-                        </button>
+                        {prod.inStock ? (
+                          <button
+                            onClick={(e) => handleAddToCart(prod, e)}
+                            className="w-full mt-2 py-1.5 border border-[#2563eb] text-[#2563eb] dark:text-blue-400 hover:bg-[#2563eb] hover:text-white dark:hover:bg-[#2563eb] dark:hover:text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                          >
+                            <ShoppingCart size={13} />
+                            <span>Add to Cart</span>
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            className="w-full mt-2 py-1.5 bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold flex items-center justify-center gap-1 cursor-not-allowed"
+                          >
+                            <span>Out of Stock</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -877,13 +906,22 @@ export default function ShopPage() {
                               }
                             />
                           </button>
-                          <button
-                            onClick={(e) => handleAddToCart(prod, e)}
-                            className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-                          >
-                            <ShoppingCart size={14} />
-                            <span>Add to Cart</span>
-                          </button>
+                          {prod.inStock ? (
+                            <button
+                              onClick={(e) => handleAddToCart(prod, e)}
+                              className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <ShoppingCart size={14} />
+                              <span>Add to Cart</span>
+                            </button>
+                          ) : (
+                            <button
+                              disabled
+                              className="bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-not-allowed"
+                            >
+                              <span>Out of Stock</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

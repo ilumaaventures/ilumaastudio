@@ -10,13 +10,23 @@ const mapDbCartToRedux = (dbItems) => {
   if (!dbItems) return [];
   return dbItems.map((item) => {
     const prod = item.product || {};
+    const effectiveStock =
+      prod.stockQuantity !== undefined
+        ? Number(prod.stockQuantity)
+        : prod.inventory?.stockQuantity !== undefined
+        ? Number(prod.inventory.stockQuantity)
+        : prod.stock !== undefined
+        ? Number(prod.stock)
+        : prod.countInStock !== undefined
+        ? Number(prod.countInStock)
+        : 0;
     return {
       _id: prod._id || item.product,
       name: prod.name || "Unknown Product",
       price: item.price !== undefined ? item.price : (prod.price || 0),
       category: prod.category?.name || "Uncategorized",
       image: prod.images?.[0]?.url || "https://via.placeholder.com/400x300?text=No+Image",
-      stock: prod.stock !== undefined ? prod.stock : 99,
+      stock: effectiveStock,
       quantity: item.quantity,
     };
   });

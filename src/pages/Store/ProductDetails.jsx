@@ -3,7 +3,15 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import baseApi from "../../api/baseApi";
 import { useStore } from "./StoreLayout";
 import ProductCard from "../../Components/store/ProductCard";
-import { ShoppingCart, Star, ArrowLeft, Heart, ShieldCheck, Truck, RefreshCw } from "lucide-react";
+import {
+  ShoppingCart,
+  Star,
+  ArrowLeft,
+  Heart,
+  ShieldCheck,
+  Truck,
+  RefreshCw,
+} from "lucide-react";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/reducers/cartReducer";
 import toast from "react-hot-toast";
@@ -29,13 +37,16 @@ export default function ProductDetails() {
         setLoading(true);
         setError("");
         const response = await baseApi.get(
-          `/public/store/${encodeURIComponent(businessName)}/product/${id}`
+          `/public/store/${encodeURIComponent(businessName)}/product/${id}`,
         );
         setProduct(response.data);
         setSelectedImageIdx(0);
 
         // Initialize variant options
-        if (response.data?.hasVariants && response.data.optionDefinitions?.length > 0) {
+        if (
+          response.data?.hasVariants &&
+          response.data.optionDefinitions?.length > 0
+        ) {
           const initial = {};
           response.data.optionDefinitions.forEach((opt) => {
             if (opt.values?.length > 0) {
@@ -46,7 +57,9 @@ export default function ProductDetails() {
         }
       } catch (err) {
         console.error("Error loading product details:", err);
-        setError(err.response?.data?.message || "Failed to load product details");
+        setError(
+          err.response?.data?.message || "Failed to load product details",
+        );
       } finally {
         setLoading(false);
       }
@@ -67,30 +80,41 @@ export default function ProductDetails() {
 
   const selectedPrice = activeVariant
     ? activeVariant.price
-    : (product?.hasVariants && product.variants && product.variants.length > 0
-        ? product.variants[0].price
-        : product?.price || 0);
+    : product?.hasVariants && product.variants && product.variants.length > 0
+      ? product.variants[0].price
+      : product?.price || 0;
 
   const selectedComparePrice = activeVariant
     ? activeVariant.compareAtPrice
-    : (product?.hasVariants && product.variants && product.variants.length > 0
-        ? product.variants[0].compareAtPrice
-        : product?.compareAtPrice);
+    : product?.hasVariants && product.variants && product.variants.length > 0
+      ? product.variants[0].compareAtPrice
+      : product?.compareAtPrice;
 
   const selectedStock = activeVariant
-    ? activeVariant.stockQuantity
-    : product?.stock || 0;
-
+    ? Number(activeVariant.stockQuantity ?? 0)
+    : Number(product.inventory?.stockQuantity ?? 0);
   const discountPercent =
     selectedComparePrice && selectedComparePrice > selectedPrice
-      ? Math.round(((selectedComparePrice - selectedPrice) / selectedComparePrice) * 100)
+      ? Math.round(
+          ((selectedComparePrice - selectedPrice) / selectedComparePrice) * 100,
+        )
       : 0;
 
-  const images = product.images?.length > 0 ? product.images : [{ url: "https://via.placeholder.com/600x500?text=No+Image" }];
-  
+  const images =
+    product.images?.length > 0
+      ? product.images
+      : [{ url: "https://via.placeholder.com/600x500?text=No+Image" }];
+
   const mainImage = useMemo(() => {
-    if (activeVariant?.image && (typeof activeVariant.image === 'string' ? activeVariant.image : activeVariant.image.url)) {
-      return typeof activeVariant.image === 'string' ? activeVariant.image : activeVariant.image.url;
+    if (
+      activeVariant?.image &&
+      (typeof activeVariant.image === "string"
+        ? activeVariant.image
+        : activeVariant.image.url)
+    ) {
+      return typeof activeVariant.image === "string"
+        ? activeVariant.image
+        : activeVariant.image.url;
     }
     return images[selectedImageIdx]?.url;
   }, [activeVariant, images, selectedImageIdx]);
@@ -104,14 +128,16 @@ export default function ProductDetails() {
     const itemInCart = cartItems.find((item) => item._id === product._id);
     const cartQty = itemInCart ? itemInCart.quantity : 0;
     if (cartQty + quantity > selectedStock) {
-      toast.error(`Cannot add more. Only ${selectedStock} units left in stock.`);
+      toast.error(
+        `Cannot add more. Only ${selectedStock} units left in stock.`,
+      );
       return;
     }
     dispatch(
       addToCart({
         product: { ...product, price: selectedPrice, stock: selectedStock },
         quantity,
-      })
+      }),
     );
     toast.success(`${product.name} (${quantity}) added to cart!`);
   };
@@ -120,7 +146,10 @@ export default function ProductDetails() {
   const relatedProducts = useMemo(() => {
     if (!product || !products) return [];
     return products
-      .filter((p) => p.category?._id === product.category?._id && p._id !== product._id)
+      .filter(
+        (p) =>
+          p.category?._id === product.category?._id && p._id !== product._id,
+      )
       .slice(0, 4);
   }, [product, products]);
 
@@ -136,9 +165,13 @@ export default function ProductDetails() {
   if (error || !product) {
     return (
       <div className="max-w-md mx-auto p-12 text-center space-y-4">
-        <p className="text-rose-600 font-bold">{error || "Product not found"}</p>
+        <p className="text-rose-600 font-bold">
+          {error || "Product not found"}
+        </p>
         <button
-          onClick={() => navigate(`/${encodeURIComponent(businessName)}/products`)}
+          onClick={() =>
+            navigate(`/${encodeURIComponent(businessName)}/products`)
+          }
           className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 hover:underline cursor-pointer"
         >
           <ArrowLeft size={14} /> Back to Catalog
@@ -146,8 +179,6 @@ export default function ProductDetails() {
       </div>
     );
   }
-
-
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10 w-full text-left space-y-12">
@@ -171,7 +202,11 @@ export default function ProductDetails() {
                 {discountPercent}% OFF
               </span>
             )}
-            <img src={mainImage} alt={product.name} className="w-full h-full object-cover" />
+            <img
+              src={mainImage}
+              alt={product.name}
+              className="w-full h-full object-cover"
+            />
           </div>
 
           {images.length > 1 && (
@@ -181,10 +216,16 @@ export default function ProductDetails() {
                   key={idx}
                   onClick={() => setSelectedImageIdx(idx)}
                   className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition shrink-0 ${
-                    selectedImageIdx === idx ? "border-indigo-600 shadow-sm" : "border-transparent opacity-70 hover:opacity-100"
+                    selectedImageIdx === idx
+                      ? "border-indigo-600 shadow-sm"
+                      : "border-transparent opacity-70 hover:opacity-100"
                   }`}
                 >
-                  <img src={img.url} alt="" className="w-full h-full object-cover" />
+                  <img
+                    src={img.url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
                 </button>
               ))}
             </div>
@@ -200,7 +241,7 @@ export default function ProductDetails() {
             <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-tight capitalize">
               {product.name}
             </h1>
-            
+
             {/* Reviews & Ratings */}
             <div className="flex items-center gap-2">
               <div className="flex text-amber-400">
@@ -229,7 +270,9 @@ export default function ProductDetails() {
 
           {/* Description */}
           <div className="space-y-2">
-            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Description</h3>
+            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+              Description
+            </h3>
             <p className="text-xs text-gray-500 leading-relaxed font-normal whitespace-pre-line">
               {product.description}
             </p>
@@ -239,7 +282,9 @@ export default function ProductDetails() {
           <div className="text-xs">
             <span className="text-gray-400 font-semibold">Availability: </span>
             {selectedStock > 0 ? (
-              <span className="text-green-600 font-bold">In Stock ({selectedStock} available)</span>
+              <span className="text-green-600 font-bold">
+                In Stock ({selectedStock} available)
+              </span>
             ) : (
               <span className="text-rose-600 font-bold">Out of Stock</span>
             )}
@@ -305,9 +350,13 @@ export default function ProductDetails() {
                 >
                   -
                 </button>
-                <span className="px-4 text-xs font-bold text-gray-900">{quantity}</span>
+                <span className="px-4 text-xs font-bold text-gray-900">
+                  {quantity}
+                </span>
                 <button
-                  onClick={() => setQuantity((q) => Math.min(selectedStock, q + 1))}
+                  onClick={() =>
+                    setQuantity((q) => Math.min(selectedStock, q + 1))
+                  }
                   className="px-3.5 py-2 hover:bg-gray-50 font-bold text-gray-600 transition cursor-pointer"
                 >
                   +
@@ -364,8 +413,12 @@ export default function ProductDetails() {
       {relatedProducts.length > 0 && (
         <div className="pt-12 border-t border-gray-100 text-left">
           <div className="mb-6">
-            <h2 className="text-xl font-black text-gray-900 tracking-tight">You May Also Like</h2>
-            <p className="text-gray-500 text-[10px] mt-0.5">Explore similar products from this collection</p>
+            <h2 className="text-xl font-black text-gray-900 tracking-tight">
+              You May Also Like
+            </h2>
+            <p className="text-gray-500 text-[10px] mt-0.5">
+              Explore similar products from this collection
+            </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {relatedProducts.map((p) => (

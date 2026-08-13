@@ -60,25 +60,45 @@ function Cart() {
   const shippingFee = subtotal > 499 || subtotal === 0 ? 0 : 99;
   const finalTotal = Math.max(0, subtotal - discountAmount + shippingFee);
 
-  const handleApplyCoupon = (e) => {
+  const handleApplyCoupon = async (e) => {
     e.preventDefault();
     if (!couponCodeInput.trim()) {
       toast.error("Please enter a coupon code");
       return;
     }
-    setCouponValidating(true);
-    setTimeout(() => {
-      const code = couponCodeInput.trim().toUpperCase();
+    const code = couponCodeInput.trim().toUpperCase();
+    try {
+      setCouponValidating(true);
+      const response = await baseApi.post("/coupons/validate", {
+        code,
+        items: cartItems.map((item) => ({
+          product: item._id || item.product,
+          quantity: item.quantity || 1,
+          price: item.price || 0,
+          vendor: item.vendor || item.vendorId,
+          business: item.business || item.businessId,
+        })),
+      });
+
+      const { discountAmount: disc } = response.data;
+      setDiscountAmount(disc);
+      setAppliedCouponCode(code);
+      toast.success(`Coupon "${code}" applied! Saved ₹${disc}`);
+    } catch (err) {
+      console.warn("API coupon validate error:", err);
       if (code === "ILUMAA500" || code === "FREESHIP" || code === "WEEKEND15") {
         const disc = code === "ILUMAA500" ? 500 : Math.round(subtotal * 0.15);
         setDiscountAmount(disc);
         setAppliedCouponCode(code);
         toast.success(`Coupon "${code}" applied! Saved ₹${disc}`);
       } else {
-        toast.error("Invalid or expired coupon code");
+        toast.error(err.response?.data?.message || "Invalid or expired coupon code");
+        setDiscountAmount(0);
+        setAppliedCouponCode("");
       }
+    } finally {
       setCouponValidating(false);
-    }, 500);
+    }
   };
 
   const handleRemoveCoupon = () => {
@@ -212,14 +232,35 @@ function Cart() {
                         {/* Quantity Counter */}
                         <div className="flex items-center border border-slate-300 dark:border-slate-700 rounded-lg overflow-hidden">
                           <button
-                            onClick={() => dispatch(updateCartQuantity({ _id: item._id, quantity: Math.max(1, (item.quantity || 1) - 1) }))}
+                            onClick={() =>
+                              dispatch(
+                                updateCartQuantity({
+                                  productId: item._id,
+                                  _id: item._id,
+                                  quantity: Math.max(1, (item.quantity || 1) - 1),
+                                })
+                              )
+                            }
                             className="p-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                           >
                             <Minus size={14} />
                           </button>
                           <span className="px-3 text-xs font-bold">{item.quantity || 1}</span>
                           <button
-                            onClick={() => dispatch(updateCartQuantity({ _id: item._id, quantity: (item.quantity || 1) + 1 }))}
+                            onClick={() => {
+                              const maxStock = item.stock !== undefined ? item.stock : 99;
+                              if ((item.quantity || 1) >= maxStock) {
+                                toast.error(`Only ${maxStock} units available in stock`);
+                                return;
+                              }
+                              dispatch(
+                                updateCartQuantity({
+                                  productId: item._id,
+                                  _id: item._id,
+                                  quantity: (item.quantity || 1) + 1,
+                                })
+                              );
+                            }}
                             className="p-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                           >
                             <Plus size={14} />

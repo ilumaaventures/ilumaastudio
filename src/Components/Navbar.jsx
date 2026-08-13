@@ -21,6 +21,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "../redux/actions/authActions";
 import TopBar from "./TopBar";
 import { fetchCategories } from "../api/categoryService";
+import { getUserLocation } from "../utils/location";
 
 function Navbar() {
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -36,6 +37,7 @@ function Navbar() {
   const totalQty = cartItems.reduce((acc, i) => acc + (i.quantity || 0), 0);
   const wishlistQty = wishlistItems.length;
   const [categories, setCategories] = useState([]);
+  const [location, setLocation] = useState(null);
   const getCategories = async () => {
     try {
       const res = await fetchCategories({
@@ -50,8 +52,18 @@ function Navbar() {
       console.error("Failed to load categories:", err);
     }
   };
+  const fetchLocation = async () => {
+    try {
+      const location = await getUserLocation();
+      setLocation(location);
+      console.log("User Location:", location);
+    } catch (error) {
+      console.log("Location permission denied:", error.message);
+    }
+  };
   useEffect(() => {
     getCategories();
+    fetchLocation();
   }, []);
 
   const handleSearch = (e) => {
@@ -115,7 +127,7 @@ function Navbar() {
               <MapPin size={16} className="text-[#2563eb]" />
               <div className="flex flex-col text-[10px] leading-tight">
                 <span className="font-bold text-slate-900 dark:text-white">
-                  Lucknow, UP
+                  {location?.city || "Unknown City"}
                 </span>
               </div>
             </div>

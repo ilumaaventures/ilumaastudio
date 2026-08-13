@@ -122,11 +122,42 @@ export default function StarlingCollection() {
   // Cart Handlers
   const handleAddToCart = (productId, sku, qty = 1) => {
     const origProduct = products.find((p) => p._id === productId);
-    if (origProduct) {
-      dispatch(addToCart({ product: origProduct, quantity: qty }));
-      toast.success(`${origProduct.name} added to cart!`);
-      setCartOpen(true);
+    if (!origProduct) return;
+
+    const availableStock =
+      origProduct.inventory?.stockQuantity !== undefined
+        ? Number(origProduct.inventory.stockQuantity)
+        : origProduct.stockQuantity !== undefined
+        ? Number(origProduct.stockQuantity)
+        : origProduct.stock !== undefined
+        ? Number(origProduct.stock)
+        : origProduct.countInStock !== undefined
+        ? Number(origProduct.countInStock)
+        : 0;
+
+    if (availableStock <= 0) {
+      toast.error(`Sorry, ${origProduct.name} is currently out of stock!`);
+      return;
     }
+
+    const itemInCart = cartItems.find((item) => item._id === origProduct._id);
+    const currentCartQty = itemInCart ? itemInCart.quantity : 0;
+
+    if (currentCartQty + qty > availableStock) {
+      toast.error(
+        `Cannot add more. Only ${availableStock} units available in inventory (${currentCartQty} already in cart).`
+      );
+      return;
+    }
+
+    dispatch(addToCart({ product: origProduct, quantity: qty }));
+    const remaining = availableStock - (currentCartQty + qty);
+    toast.success(
+      `${origProduct.name} added to cart! ${
+        remaining > 0 ? `(${remaining} units left in stock)` : "(Reached max available stock)"
+      }`
+    );
+    setCartOpen(true);
   };
 
   const handleUpdateQty = (productId, sku, newQty) => {
@@ -134,7 +165,24 @@ export default function StarlingCollection() {
       handleRemoveFromCart(productId, sku);
       return;
     }
-    dispatch(updateCartQuantity({ productId: productId, quantity: newQty }));
+    const origProduct = products.find((p) => p._id === productId);
+    const availableStock = origProduct
+      ? origProduct.inventory?.stockQuantity !== undefined
+        ? Number(origProduct.inventory.stockQuantity)
+        : origProduct.stockQuantity !== undefined
+        ? Number(origProduct.stockQuantity)
+        : origProduct.stock !== undefined
+        ? Number(origProduct.stock)
+        : origProduct.countInStock !== undefined
+        ? Number(origProduct.countInStock)
+        : 0
+      : 99;
+
+    if (newQty > availableStock) {
+      toast.error(`Cannot increase. Only ${availableStock} units available in inventory.`);
+      return;
+    }
+    dispatch(updateCartQuantity({ productId: productId, _id: productId, quantity: newQty }));
   };
 
   const handleRemoveFromCart = (productId, sku) => {

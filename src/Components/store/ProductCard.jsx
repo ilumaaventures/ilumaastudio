@@ -10,9 +10,46 @@ export default function ProductCard({ product }) {
   const dispatch = useDispatch();
   const { business } = useStore();
 
+  const checkIsOutOfStock = (prod) => {
+    if (!prod) return false;
+    if (
+      prod.hasVariants &&
+      Array.isArray(prod.variants) &&
+      prod.variants.length > 0
+    ) {
+      return prod.variants.every((v) => {
+        const vStock =
+          v.stockQuantity !== undefined
+            ? Number(v.stockQuantity)
+            : v.stock !== undefined
+              ? Number(v.stock)
+              : 0;
+        return vStock <= 0;
+      });
+    }
+    const stockVal =
+      prod.inventory?.stockQuantity !== undefined
+        ? Number(prod.inventory.stockQuantity)
+        : prod.stockQuantity !== undefined
+        ? Number(prod.stockQuantity)
+        : prod.stock !== undefined
+        ? Number(prod.stock)
+        : prod.countInStock !== undefined
+        ? Number(prod.countInStock)
+        : 0;
+
+    return stockVal <= 0;
+  };
+
+  const isOutOfStock = checkIsOutOfStock(product);
+
   const handleAdd = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isOutOfStock) {
+      toast.error(`Sorry, ${product.name} is currently out of stock!`);
+      return;
+    }
     dispatch(addToCart({ product, quantity: 1 }));
     toast.success(`${product.name} added to cart!`);
   };
@@ -33,15 +70,23 @@ export default function ProductCard({ product }) {
     <div className="group bg-white border border-gray-100 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col h-full relative">
       {/* Product Image & Badges */}
       <div className="relative pt-[100%] bg-gray-50 overflow-hidden shrink-0">
-        {discountPercent > 0 && (
-          <span className="absolute top-4 left-4 z-10 bg-indigo-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm">
-            {discountPercent}% OFF
+        {isOutOfStock ? (
+          <span className="absolute top-4 left-4 z-10 bg-rose-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-full shadow-sm tracking-wider">
+            Out of Stock
           </span>
+        ) : (
+          discountPercent > 0 && (
+            <span className="absolute top-4 left-4 z-10 bg-indigo-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm">
+              {discountPercent}% OFF
+            </span>
+          )
         )}
         <img
           src={imageUrl}
           alt={product.name}
-          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-300"
+          className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-300 ${
+            isOutOfStock ? "opacity-75 grayscale-[30%]" : ""
+          }`}
         />
 
         {/* Hover overlay with quick links */}
@@ -55,8 +100,13 @@ export default function ProductCard({ product }) {
           </Link>
           <button
             onClick={handleAdd}
-            className="p-3 bg-white text-gray-900 rounded-full hover:bg-indigo-600 hover:text-white transition shadow-lg shadow-black/10 cursor-pointer"
-            title="Add to Cart"
+            disabled={isOutOfStock}
+            className={`p-3 rounded-full transition shadow-lg shadow-black/10 ${
+              isOutOfStock
+                ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                : "bg-white text-gray-900 hover:bg-indigo-600 hover:text-white cursor-pointer"
+            }`}
+            title={isOutOfStock ? "Out of Stock" : "Add to Cart"}
           >
             <ShoppingCart size={18} />
           </button>
