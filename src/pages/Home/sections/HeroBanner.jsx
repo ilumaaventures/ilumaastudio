@@ -18,7 +18,11 @@ export default function HeroBanner() {
       // Try fetching generic Banner API first
       let bRes;
       try {
-        bRes = await getPublicBanners({ type: "hero" });
+        bRes = await getPublicBanners({
+          type: "hero",
+          businessCategory: "E-Commerce",
+          listedOn: "superadmin",
+        });
       } catch (_) {}
 
       const bannerData = bRes?.banners || bRes?.data || [];

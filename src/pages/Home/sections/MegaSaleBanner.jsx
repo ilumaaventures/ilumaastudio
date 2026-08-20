@@ -20,7 +20,11 @@ function MegaSaleBanner({
     let isMounted = true;
     const loadBanners = async () => {
       try {
-        const res = await getPublicBanners({ type: bannerType });
+        const res = await getPublicBanners({
+          type: bannerType,
+          businessCategory: "E-Commerce",
+          listedOn: "superadmin",
+        });
         const list = res?.banners || res?.data || [];
 
         if (isMounted) {

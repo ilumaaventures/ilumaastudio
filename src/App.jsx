@@ -60,6 +60,9 @@ import ProductListing from "./pages/Product/ProductListing";
 import ServiceListing from "./pages/Services/ServiceListing";
 import HelpCenter from "./pages/Help/HelpCenter";
 
+// Order Tracking Page
+import TrackOrder from "./pages/Order/TrackOrder";
+
 import { getUserLocation } from "./utils/location";
 
 function App() {
@@ -140,6 +143,7 @@ function App() {
           <Route path="/flash-deals" element={<FlashDeals />} />
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/help-center" element={<HelpCenter />} />
+          <Route path="/track-order" element={<TrackOrder />} />
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/profile" element={<Profile />} />
