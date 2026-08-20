@@ -20,7 +20,7 @@ import { getallProducts } from "../../api/productService";
 import { ProductGridSkeleton } from "../../Components/Skeletons";
 import GiftingProductsSection from "../Home/sections/GiftingProductsSection";
 import NewArrivalsSection from "../Home/sections/NewArrivalsSection";
-import BannerSection from "../../components/BannerSection";
+import BannerSection from "../../Components/BannerSection";
 import MegaSaleBanner from "../Home/sections/MegaSaleBanner";
 import toast from "react-hot-toast";
 
@@ -126,12 +126,12 @@ function ProductCard({ product }) {
       product.inventory?.stockQuantity !== undefined
         ? Number(product.inventory.stockQuantity)
         : product.stockQuantity !== undefined
-        ? Number(product.stockQuantity)
-        : product.stock !== undefined
-        ? Number(product.stock)
-        : product.countInStock !== undefined
-        ? Number(product.countInStock)
-        : 1;
+          ? Number(product.stockQuantity)
+          : product.stock !== undefined
+            ? Number(product.stock)
+            : product.countInStock !== undefined
+              ? Number(product.countInStock)
+              : 1;
     return s > 0;
   })();
 
@@ -266,7 +266,9 @@ function ProductCard({ product }) {
         {/* Stock Status Indicator */}
         <div
           className={`text-[10px] font-bold flex items-center gap-1 pt-1 ${
-            inStock ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+            inStock
+              ? "text-emerald-600 dark:text-emerald-400"
+              : "text-rose-600 dark:text-rose-400"
           }`}
         >
           <div
@@ -354,11 +356,11 @@ function ProductSection({ title, subtitle, products, icon }) {
         ref={scrollRef}
         className="flex items-stretch gap-4 sm:gap-5 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 hide-scrollbar"
       >
-          {products.map((product) => (
-            <ProductCard key={product._id || product.id} product={product} />
-          ))}
-        </div>
+        {products.map((product) => (
+          <ProductCard key={product._id || product.id} product={product} />
+        ))}
       </div>
+    </div>
   );
 }
 
@@ -420,7 +422,7 @@ export default function ProductListing() {
   }, []);
 
   const featuredProducts = productList.filter(
-    (p) => p.isFeatured || p.badge === "Featured" || p.badge === "Popular"
+    (p) => p.isFeatured || p.badge === "Featured" || p.badge === "Popular",
   );
   const trendingProducts = productList.filter(
     (p) => p.badge === "Trending" || p.badge === "Popular",
@@ -462,7 +464,8 @@ export default function ProductListing() {
               No Products Returned from Backend API
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto font-medium">
-              We couldn't find any products in the database. Please verify your backend server status or add products via the admin panel.
+              We couldn't find any products in the database. Please verify your
+              backend server status or add products via the admin panel.
             </p>
           </div>
         ) : (
