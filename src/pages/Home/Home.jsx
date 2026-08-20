@@ -16,7 +16,7 @@ import FeaturedProductCategory from "./sections/FeaturedProductCategory";
 
 import GiftingProductsSection from "./sections/GiftingProductsSection";
 import NewArrivalsSection from "./sections/NewArrivalsSection";
-import BannerSection from "../../components/BannerSection";
+import BannerSection from "../../Components/BannerSection";
 
 function Home() {
   const [products, setProducts] = useState([]);
