@@ -88,3 +88,11 @@ export const googleLogin = async (code, role = "user") => {
   }
 };
 
+export const sendOTP = async (name, email) => {
+  try {
+    const response = await baseApi.post("/auth/send-otp", { name, email });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

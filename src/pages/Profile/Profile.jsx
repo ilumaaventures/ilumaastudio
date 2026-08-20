@@ -21,6 +21,10 @@ import {
   Calendar,
   Clock,
   Sparkles,
+  Gift,
+  Copy,
+  Award,
+  RefreshCw,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
@@ -35,6 +39,14 @@ import {
 } from "../../api/profileService.js";
 import { getMyOrders } from "../../api/orderService";
 import { getBookings } from "../../api/bookingService";
+import {
+  getLoyaltyAccount,
+  getLoyaltyTransactions,
+  getReferrals,
+  getActiveRewards,
+  redeemReward,
+  getMyRedemptions,
+} from "../../api/loyaltyService";
 import toast from "react-hot-toast";
 
 const INITIAL_FALLBACK_ADDRESSES = [
@@ -68,7 +80,7 @@ export default function Profile() {
 
   const { user, isAuthenticated } = useSelector((state) => state.auth);
 
-  const [activeTab, setActiveTab] = useState("profile"); // 'profile' | 'orders' | 'bookings' | 'addresses' | 'security'
+  const [activeTab, setActiveTab] = useState("profile"); // 'profile' | 'loyalty' | 'orders' | 'bookings' | 'addresses' | 'security'
   const [profileData, setProfileData] = useState(null);
   const [customerOrders, setCustomerOrders] = useState([]);
   const [customerBookings, setCustomerBookings] = useState([]);
@@ -77,6 +89,16 @@ export default function Profile() {
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Loyalty System state
+  const [loyaltyAccount, setLoyaltyAccount] = useState(null);
+  const [loyaltyTx, setLoyaltyTx] = useState([]);
+  const [referralsInfo, setReferralsInfo] = useState(null);
+  const [rewardsList, setRewardsList] = useState([]);
+  const [myRedemptions, setMyRedemptions] = useState([]);
+  const [loadingLoyalty, setLoadingLoyalty] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [redeemingId, setRedeemingId] = useState(null);
 
   // Address Modal State
   const [showAddressModal, setShowAddressModal] = useState(false);
@@ -96,6 +118,49 @@ export default function Profile() {
     email: user?.email || "",
     phone: user?.phone || "",
   });
+
+  const fetchLoyaltyData = async () => {
+    try {
+      setLoadingLoyalty(true);
+      const [acc, txRes, refRes, rewRes, redRes] = await Promise.all([
+        getLoyaltyAccount(),
+        getLoyaltyTransactions(),
+        getReferrals(),
+        getActiveRewards(),
+        getMyRedemptions(),
+      ]);
+      setLoyaltyAccount(acc);
+      setLoyaltyTx(Array.isArray(txRes) ? txRes : txRes.transactions || []);
+      setReferralsInfo(refRes);
+      setRewardsList(Array.isArray(rewRes) ? rewRes : []);
+      setMyRedemptions(Array.isArray(redRes) ? redRes : []);
+    } catch (err) {
+      console.error("Error loading loyalty data:", err);
+    } finally {
+      setLoadingLoyalty(false);
+    }
+  };
+
+  const handleRedeemRewardAction = async (rewardId) => {
+    try {
+      setRedeemingId(rewardId);
+      const res = await redeemReward(rewardId);
+      toast.success(res.message || "Reward redeemed successfully!");
+      fetchLoyaltyData();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to redeem reward");
+    } finally {
+      setRedeemingId(null);
+    }
+  };
+
+  const handleCopyCode = (code) => {
+    if (!code) return;
+    navigator.clipboard.writeText(code);
+    setCopiedCode(true);
+    toast.success("Referral code copied to clipboard!");
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
 
   useEffect(() => {
     const loadProfileData = async () => {
@@ -154,7 +219,14 @@ export default function Profile() {
     loadOrdersData();
     loadBookingsData();
     loadAddressesData();
+    fetchLoyaltyData();
   }, [user]);
+
+  useEffect(() => {
+    if (activeTab === "loyalty") {
+      fetchLoyaltyData();
+    }
+  }, [activeTab]);
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
@@ -184,9 +256,7 @@ export default function Profile() {
 
     try {
       await apiAddAddress(newAddress);
-    } catch (_) {
-      // Local state fallback
-    }
+    } catch (_) {}
 
     setAddresses((prev) => {
       let updated = [...prev];
@@ -287,6 +357,11 @@ export default function Profile() {
                 id: "profile",
                 label: "Account Details",
                 icon: <User size={16} />,
+              },
+              {
+                id: "loyalty",
+                label: "Loyalty & Rewards",
+                icon: <Gift size={16} />,
               },
               {
                 id: "orders",
@@ -412,6 +487,233 @@ export default function Profile() {
                     {isSubmitting ? "Saving..." : "Save Changes"}
                   </button>
                 </form>
+              </div>
+            )}
+
+            {/* TAB: LOYALTY & REWARDS */}
+            {activeTab === "loyalty" && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                  <div>
+                    <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                      <Gift className="text-[#2563eb]" size={20} />
+                      Loyalty Points & Platform Rewards
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Earn points on purchases and referrals, share your code, and redeem rewards
+                    </p>
+                  </div>
+                  <button
+                    onClick={fetchLoyaltyData}
+                    className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-xl transition cursor-pointer"
+                  >
+                    <RefreshCw size={16} className={loadingLoyalty ? "animate-spin" : ""} />
+                  </button>
+                </div>
+
+                {/* Loyalty Balance Banner Card */}
+                <div className="bg-gradient-to-tr from-slate-900 via-[#1e293b] to-[#2563eb] rounded-3xl p-6 sm:p-8 text-white shadow-xl space-y-6 relative overflow-hidden">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-blue-300 text-xs font-black uppercase tracking-widest">
+                        <Award size={16} /> Total Loyalty Points
+                      </div>
+                      <div className="text-4xl sm:text-5xl font-black tracking-tight text-white flex items-baseline gap-2">
+                        {(loyaltyAccount?.loyaltyPoint ?? 100).toLocaleString("en-IN")}
+                        <span className="text-sm font-bold text-blue-300">PTS</span>
+                      </div>
+                    </div>
+
+                    {/* Referral Code Container */}
+                    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 sm:p-5 text-left w-full sm:w-auto">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-blue-200 mb-1">
+                        Your Unique Referral Code
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-xl font-black tracking-widest text-white">
+                          {loyaltyAccount?.referralCode || "..."}
+                        </span>
+                        <button
+                          onClick={() => handleCopyCode(loyaltyAccount?.referralCode)}
+                          className="bg-white text-[#2563eb] hover:bg-blue-50 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow"
+                        >
+                          {copiedCode ? <Check size={14} /> : <Copy size={14} />}
+                          {copiedCode ? "Copied" : "Copy"}
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-blue-100 mt-1.5 font-medium">
+                        Share this code: Both you & your friend get <strong className="text-white">+50 Points</strong> on qualifying purchase!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Redeemable Rewards Grid */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                    Available Rewards
+                  </h3>
+                  {rewardsList.length === 0 ? (
+                    <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 text-center text-xs text-slate-500">
+                      No active platform rewards available right now.
+                    </div>
+                  ) : (
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {rewardsList.map((reward) => {
+                        const userPoints = loyaltyAccount?.loyaltyPoint ?? 0;
+                        const isEligible = userPoints >= reward.requiredPoints;
+
+                        return (
+                          <div
+                            key={reward._id}
+                            className={`p-5 rounded-2xl border transition-all flex flex-col justify-between space-y-4 ${
+                              isEligible
+                                ? "bg-white dark:bg-slate-800 border-blue-200 dark:border-blue-700/60 shadow-xs"
+                                : "bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/40"
+                            }`}
+                          >
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-[#2563eb] border border-blue-200 dark:border-blue-800">
+                                  {reward.rewardType.replace(/_/g, " ")}
+                                </span>
+                                <span className="text-xs font-black text-blue-600 dark:text-blue-400">
+                                  {reward.requiredPoints.toLocaleString("en-IN")} PTS
+                                </span>
+                              </div>
+                              <h4 className="font-extrabold text-slate-900 dark:text-white text-sm">
+                                {reward.name}
+                              </h4>
+                              {reward.description && (
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                  {reward.description}
+                                </p>
+                              )}
+                            </div>
+
+                            <button
+                              onClick={() => handleRedeemRewardAction(reward._id)}
+                              disabled={!isEligible || redeemingId === reward._id}
+                              className={`w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                                isEligible
+                                  ? "bg-[#2563eb] hover:bg-[#1d4ed8] text-white shadow-md shadow-blue-500/20"
+                                  : "bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed"
+                              }`}
+                            >
+                              {redeemingId === reward._id ? (
+                                <RefreshCw size={14} className="animate-spin" />
+                              ) : isEligible ? (
+                                "Redeem Reward"
+                              ) : (
+                                `Requires ${reward.requiredPoints} Points`
+                              )}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* My Redeemed Vouchers */}
+                {myRedemptions.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                      My Redeemed Vouchers
+                    </h3>
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      {myRedemptions.map((red) => (
+                        <div
+                          key={red._id}
+                          className="p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20 flex items-center justify-between"
+                        >
+                          <div>
+                            <p className="text-xs font-bold text-slate-900 dark:text-white">
+                              {red.reward?.name || "Redeemed Reward"}
+                            </p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
+                              Code: <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{red.code}</span>
+                            </p>
+                          </div>
+                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                            {red.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Points Transaction History */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                    Points Transaction History
+                  </h3>
+                  {loyaltyTx.length === 0 ? (
+                    <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 text-center text-xs text-slate-500">
+                      No points transactions recorded yet.
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 overflow-hidden">
+                      {loyaltyTx.map((tx) => (
+                        <div key={tx._id} className="p-4 flex items-center justify-between text-xs">
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${
+                                  tx.source === "WELCOME_BONUS"
+                                    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200"
+                                    : tx.source === "REFERRAL"
+                                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                    : tx.source === "REWARD_REDEEM"
+                                    ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
+                                    : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                }`}
+                              >
+                                {tx.source.replace(/_/g, " ")}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-semibold">
+                                {new Date(tx.createdAt).toLocaleDateString("en-IN")}
+                              </span>
+                            </div>
+                            <p className="font-bold text-slate-800 dark:text-slate-200">{tx.description}</p>
+                          </div>
+
+                          <span
+                            className={`font-black text-sm ${
+                              tx.points > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+                            }`}
+                          >
+                            {tx.points > 0 ? `+${tx.points}` : tx.points} PTS
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Referral Activity Summary */}
+                {referralsInfo && (
+                  <div className="space-y-3">
+                    <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                      My Referral Activity
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-center">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">Successful</p>
+                        <p className="text-xl font-black text-slate-900 dark:text-white mt-1">{referralsInfo.successfulCount || 0}</p>
+                      </div>
+                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-center">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">Pending</p>
+                        <p className="text-xl font-black text-slate-900 dark:text-white mt-1">{referralsInfo.pendingCount || 0}</p>
+                      </div>
+                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-center col-span-2 sm:col-span-1">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">Total Referral Earned</p>
+                        <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">+{referralsInfo.totalEarned || 0} PTS</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -802,23 +1104,23 @@ export default function Profile() {
                         isDefault: e.target.checked,
                       })
                     }
-                    className="rounded text-[#2563eb]"
+                    className="accent-[#2563eb] w-3.5 h-3.5"
                   />
-                  <span>Make Default</span>
+                  <span>Set as default</span>
                 </label>
               </div>
 
-              <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowAddressModal(false)}
-                  className="px-4 py-2.5 rounded-xl font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-5 py-2.5 rounded-xl font-bold transition-colors cursor-pointer shadow-md"
+                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#2563eb] hover:bg-[#1d4ed8]"
                 >
                   Save Address
                 </button>

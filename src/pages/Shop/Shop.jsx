@@ -681,7 +681,7 @@ export default function ShopPage() {
           <main className="col-span-1 lg:col-span-9 space-y-6">
             {/* Loading Skeleton Grid */}
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 gap-3 sm:gap-4">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <ProductSkeletonCard key={i} />
                 ))}
@@ -708,8 +708,8 @@ export default function ShopPage() {
                 )}
               </div>
             ) : viewMode === "grid" ? (
-              /* Grid Layout (Optimized responsive columns: 1 on xs, 2 on sm, 3 on md, 4 on xl) */
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+              /* Grid Layout (2 cols on mobile, 3 on sm, 4 on lg, 6 on 2xl) */
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 gap-3 sm:gap-4">
                 {paginatedProducts.map((prod) => {
                   const isWished = wishlistItems.some(
                     (i) => i._id === prod._id,

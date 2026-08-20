@@ -26,71 +26,6 @@ const FALLBACK_STORES = [
       "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
     verified: true,
   },
-  {
-    _id: "st2",
-    name: "Tech World Electronics",
-    storeName: "Tech World",
-    slug: "tech-world",
-    category: "Electronics",
-    rating: 4.7,
-    reviews: 218,
-    location: "Hazratganj, Lucknow",
-    image:
-      "https://images.unsplash.com/photo-1526738549149-8e07eca6c147?auto=format&fit=crop&w=800&q=80",
-    verified: true,
-  },
-  {
-    _id: "st3",
-    name: "Fresh Basket Mart",
-    storeName: "Fresh Basket",
-    slug: "fresh-basket",
-    category: "Grocery & Daily Needs",
-    rating: 4.9,
-    reviews: 512,
-    location: "Aliganj, Lucknow",
-    image:
-      "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80",
-    verified: true,
-  },
-  {
-    _id: "st4",
-    name: "Glow Beauty Care",
-    storeName: "Glow Beauty",
-    slug: "glow-beauty",
-    category: "Beauty & Personal Care",
-    rating: 4.6,
-    reviews: 189,
-    location: "Indira Nagar, Lucknow",
-    image:
-      "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80",
-    verified: true,
-  },
-  {
-    _id: "st5",
-    name: "Home Living Decor",
-    storeName: "Home Living",
-    slug: "home-living",
-    category: "Home & Furniture",
-    rating: 4.8,
-    reviews: 276,
-    location: "Mahanagar, Lucknow",
-    image:
-      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=800&q=80",
-    verified: true,
-  },
-  {
-    _id: "st6",
-    name: "The Shoe Hub",
-    storeName: "The Shoe Hub",
-    slug: "the-shoe-hub",
-    category: "Footwear & Accessories",
-    rating: 4.5,
-    reviews: 143,
-    location: "Charbagh, Lucknow",
-    image:
-      "https://images.unsplash.com/photo-1555529771-835f59fc5efe?auto=format&fit=crop&w=800&q=80",
-    verified: true,
-  },
 ];
 
 export default function BusinessStoreListing() {
@@ -102,19 +37,33 @@ export default function BusinessStoreListing() {
     const loadStores = async () => {
       try {
         setLoading(true);
-        const res = await getShops();
+        const res = await getShops({
+          businessType: ["Gifting", "E-Commerce"],
+        });
         const list = Array.isArray(res) ? res : res?.stores || res?.data || [];
         if (list.length > 0) {
           const formatted = list.map((s, idx) => ({
             _id: s._id || `st_${idx}`,
-            name: s.businessName || s.name || s.storeName || "Local Vendor Store",
+            name:
+              s.businessName || s.name || s.storeName || "Local Vendor Store",
             storeName: s.storeName || s.name || s.businessName || "Vendor",
-            slug: s.slug || (s.businessName || s.name || "").toLowerCase().replace(/\s+/g, "-") || "store",
+            slug:
+              s.slug ||
+              (s.businessName || s.name || "")
+                .toLowerCase()
+                .replace(/\s+/g, "-") ||
+              "store",
             category: s.businessCategory || s.category || "General Store",
             rating: s.rating || 4.7,
             reviews: s.reviewsCount || 0,
-            location: typeof s.location === "object" ? (s.location.city || s.location.address || "Lucknow") : (s.city || s.location || "Lucknow"),
-            image: s.logo || s.banner || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
+            location:
+              typeof s.location === "object"
+                ? s.location.city || s.location.address || "Lucknow"
+                : s.city || s.location || "Lucknow",
+            image:
+              s.logo ||
+              s.banner ||
+              "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
             verified: true,
           }));
           setStores(formatted);
@@ -134,21 +83,25 @@ export default function BusinessStoreListing() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-200 transition-colors pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        
         {/* Header Title */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 dark:border-slate-800 pb-6">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-              <Link to="/" className="hover:text-[#2563eb]">Home</Link>
+              <Link to="/" className="hover:text-[#2563eb]">
+                Home
+              </Link>
               <ChevronRight size={12} />
-              <span className="text-slate-900 dark:text-white font-bold">Business Shops</span>
+              <span className="text-slate-900 dark:text-white font-bold">
+                Business Shops
+              </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
               <Store size={26} className="text-[#2563eb]" />
               Browse All Business Shops
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
-              Discover verified local vendors, retailers, and brand stores on ILumaaStudio
+              Discover verified local vendors, retailers, and brand stores on
+              ILumaaStudio
             </p>
           </div>
 
@@ -224,9 +177,14 @@ export default function BusinessStoreListing() {
                         </span>
 
                         <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md font-bold text-amber-700 dark:text-amber-400 text-[11px]">
-                          <Star size={11} className="fill-amber-400 text-amber-400" />
+                          <Star
+                            size={11}
+                            className="fill-amber-400 text-amber-400"
+                          />
                           <span>{store.rating}</span>
-                          <span className="text-slate-400 font-normal">({store.reviews})</span>
+                          <span className="text-slate-400 font-normal">
+                            ({store.reviews})
+                          </span>
                         </div>
                       </div>
 
@@ -253,7 +211,6 @@ export default function BusinessStoreListing() {
             })}
           </div>
         )}
-
       </div>
     </div>
   );

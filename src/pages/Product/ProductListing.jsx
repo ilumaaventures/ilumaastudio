@@ -18,6 +18,10 @@ import { addToCart } from "../../redux/reducers/cartReducer";
 import { toggleWishlist } from "../../redux/reducers/wishlistReducer";
 import { getallProducts } from "../../api/productService";
 import { ProductGridSkeleton } from "../../Components/Skeletons";
+import GiftingProductsSection from "../Home/sections/GiftingProductsSection";
+import NewArrivalsSection from "../Home/sections/NewArrivalsSection";
+import BannerSection from "../../components/BannerSection";
+import MegaSaleBanner from "../Home/sections/MegaSaleBanner";
 import toast from "react-hot-toast";
 
 const FALLBACK_PRODUCTS = [
@@ -116,6 +120,21 @@ function ProductCard({ product }) {
       : 0;
   const reviewsCount = getReviewCount(product.reviews);
 
+  const inStock = (() => {
+    if (product.inStock !== undefined) return Boolean(product.inStock);
+    const s =
+      product.inventory?.stockQuantity !== undefined
+        ? Number(product.inventory.stockQuantity)
+        : product.stockQuantity !== undefined
+        ? Number(product.stockQuantity)
+        : product.stock !== undefined
+        ? Number(product.stock)
+        : product.countInStock !== undefined
+        ? Number(product.countInStock)
+        : 1;
+    return s > 0;
+  })();
+
   const handleToggleWishlist = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -130,6 +149,10 @@ function ProductCard({ product }) {
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!inStock) {
+      toast.error("Sorry, this item is out of stock!");
+      return;
+    }
     dispatch(
       addToCart({
         product: {
@@ -147,7 +170,7 @@ function ProductCard({ product }) {
   return (
     <div
       onClick={() => navigate(`/products/${prodId}`)}
-      className="group shrink-0 w-[185px] sm:w-[215px] lg:w-[230px] snap-start cursor-pointer"
+      className="group shrink-0 w-[185px] sm:w-[215px] lg:w-[230px] snap-start cursor-pointer flex flex-col justify-between"
     >
       {/* Image */}
       <div className="relative aspect-[0.88] overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800">
@@ -240,15 +263,39 @@ function ProductCard({ product }) {
           )}
         </div>
 
-        {/* Add to Cart Button */}
-        <button
-          type="button"
-          onClick={handleAddToCart}
-          className="w-full mt-2 py-2 rounded-xl bg-slate-900 hover:bg-[#2563eb] text-white text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+        {/* Stock Status Indicator */}
+        <div
+          className={`text-[10px] font-bold flex items-center gap-1 pt-1 ${
+            inStock ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+          }`}
         >
-          <ShoppingBag size={13} />
-          <span>Add to Cart</span>
-        </button>
+          <div
+            className={`w-1.5 h-1.5 rounded-full ${
+              inStock ? "bg-emerald-500" : "bg-rose-500"
+            }`}
+          />
+          <span>{inStock ? "In Stock" : "Out of Stock"}</span>
+        </div>
+
+        {/* Add to Cart / Out of Stock Button */}
+        {inStock ? (
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            className="w-full mt-2 py-2 rounded-xl bg-slate-900 hover:bg-[#2563eb] text-white text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+          >
+            <ShoppingBag size={13} />
+            <span>Add to Cart</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="w-full mt-2 py-2 rounded-xl bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 border border-slate-200 dark:border-slate-700 text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-not-allowed"
+          >
+            <span>Out of Stock</span>
+          </button>
+        )}
       </div>
     </div>
   );
@@ -372,6 +419,9 @@ export default function ProductListing() {
     loadProducts();
   }, []);
 
+  const featuredProducts = productList.filter(
+    (p) => p.isFeatured || p.badge === "Featured" || p.badge === "Popular"
+  );
   const trendingProducts = productList.filter(
     (p) => p.badge === "Trending" || p.badge === "Popular",
   );
@@ -417,6 +467,21 @@ export default function ProductListing() {
           </div>
         ) : (
           <>
+            {/* New Arrivals Section */}
+            <NewArrivalsSection />
+
+            {/* Featured Products Section */}
+            <ProductSection
+              title="Featured Products"
+              subtitle="Handpicked premium picks and top quality highlights"
+              products={
+                featuredProducts.length > 0 ? featuredProducts : productList
+              }
+              icon={
+                <Sparkles size={20} className="text-amber-500 fill-amber-500" />
+              }
+            />
+
             {/* Trending Section */}
             <ProductSection
               title="Trending Now"
@@ -429,29 +494,14 @@ export default function ProductListing() {
               }
             />
 
-            {/* Promo Banner 1 */}
-            <div className="relative rounded-3xl bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white p-6 sm:p-8 overflow-hidden shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="space-y-2 z-10 max-w-xl">
-                <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-[11px] font-extrabold uppercase tracking-wider border border-blue-400/20">
-                  Mega Festival Sale
-                </span>
-                <h3 className="text-xl sm:text-2xl font-black text-white leading-tight">
-                  Up to 40% OFF on Top Tech, Electronics & Accessories
-                </h3>
-                <p className="text-xs text-slate-300 font-medium">
-                  Free express shipping on all orders over ₹999. Use coupon{" "}
-                  <span className="font-bold text-amber-300">STUDIO40</span>.
-                </p>
-              </div>
-
-              <Link
-                to="/shop"
-                className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-6 py-3 rounded-2xl text-xs font-black transition-all shadow-md shrink-0 flex items-center gap-1.5 cursor-pointer z-10"
-              >
-                <span>Shop Deals</span>
-                <ArrowRight size={15} />
-              </Link>
-            </div>
+            {/* Promo Banner 1 - Dynamic Auto-carousel */}
+            <MegaSaleBanner
+              bannerType="promotion"
+              title="Up to 40% OFF on Top Tech & Accessories"
+              description="Free express shipping on all orders over ₹999. Use coupon STUDIO40."
+              imageUrl="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&q=80"
+              linkUrl="/shop"
+            />
 
             {/* Best Sellers Section */}
             <ProductSection
@@ -461,29 +511,14 @@ export default function ProductListing() {
               icon={<span className="text-lg">🏆</span>}
             />
 
-            {/* Promo Banner 2 */}
-            <div className="relative rounded-3xl bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white p-6 sm:p-8 overflow-hidden shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="space-y-2 z-10 max-w-xl">
-                <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-extrabold uppercase tracking-wider border border-emerald-400/20">
-                  Exclusive Brand Partners
-                </span>
-                <h3 className="text-xl sm:text-2xl font-black text-white leading-tight">
-                  Discover Authentic Local Stores & Verified Brands
-                </h3>
-                <p className="text-xs text-slate-300 font-medium">
-                  Direct from manufacturer warranties, easy 7-day returns, and
-                  100% genuine products.
-                </p>
-              </div>
+            {/* Featured Gifting Products Section */}
+            <GiftingProductsSection />
 
-              <Link
-                to="/store"
-                className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 px-6 py-3 rounded-2xl text-xs font-black transition-all shadow-md shrink-0 flex items-center gap-1.5 cursor-pointer z-10"
-              >
-                <span>Visit Stores</span>
-                <ArrowRight size={15} />
-              </Link>
-            </div>
+            {/* Category / Campaign Banners */}
+            <BannerSection bannerType="category" />
+
+            {/* Promo Banner 2 - Dynamic Auto-carousel */}
+            <BannerSection bannerType="flashSale" />
 
             {/* Top Rated Section */}
             <ProductSection

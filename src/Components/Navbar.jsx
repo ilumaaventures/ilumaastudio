@@ -208,6 +208,64 @@ function Navbar() {
         </div>
       </div>
 
+      {/* Attached E-Commerce Category Navigation Bar */}
+      <div className="bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200/80 dark:border-slate-800/80 py-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1.5 sm:gap-2 text-xs">
+          <span className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[10px] shrink-0 mr-1 flex items-center gap-1">
+            <Grid size={12} className="text-[#2563eb]" />
+            Categories:
+          </span>
+
+          <button
+            type="button"
+            onClick={() => navigate("/shop")}
+            className="px-3 py-1 rounded-full font-bold transition shrink-0 bg-blue-50 dark:bg-blue-950/50 text-[#2563eb] dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 cursor-pointer"
+          >
+            All Products
+          </button>
+
+          <Link
+            to="/flash-deals"
+            className="px-3 py-1 rounded-full font-black transition shrink-0 bg-amber-500 text-white hover:bg-amber-600 cursor-pointer flex items-center gap-1 shadow-xs"
+          >
+            <span>Flash Deals</span>
+          </Link>
+
+          {(categories.length > 0
+            ? categories
+            : [
+                { name: "Fashion" },
+                { name: "Electronics" },
+                { name: "Home & Living" },
+                { name: "Beauty & Care" },
+                { name: "Sports & Outdoors" },
+                { name: "Books & Stationery" },
+                { name: "Gifting" },
+              ]
+          ).map((cat, idx) => {
+            const catName = cat.name || cat.title;
+            return (
+              <button
+                key={cat._id || `cat_nav_${idx}`}
+                type="button"
+                onClick={() =>
+                  navigate(`/shop?category=${encodeURIComponent(catName)}`)
+                }
+                className="px-3 py-1 rounded-full font-semibold transition shrink-0 text-[#2563eb] sm:text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+              >
+                {catName}
+              </button>
+            );
+          })}
+          <button
+            onClick={() => navigate("/productlisting")}
+            className="px-3 py-1 rounded-full font-semibold transition shrink-0 text-[#2563eb] sm:text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+          >
+            Explore more
+          </button>
+        </div>
+      </div>
+
       {/* Mobile Drawer */}
       {mobileMenu && (
         <div className="lg:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-4 space-y-4">

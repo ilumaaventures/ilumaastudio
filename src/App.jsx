@@ -13,6 +13,7 @@ import { loadUser } from "./redux/actions/authActions";
 // Layout Components
 import Navbar from "./Components/Navbar";
 import Footer from "./Components/Footer";
+import GlobalNotificationContainer from "./components/GlobalNotificationContainer";
 
 // Public Pages
 import Home from "./pages/Home/Home";
@@ -29,11 +30,13 @@ import ForgotPassword from "./pages/Auth/ForgotPassword";
 // Dashboard Pages
 import Profile from "./pages/Profile/Profile";
 import BusinessRegistration from "./pages/Auth/BusinessRegistration";
+import BusinessPricing from "./pages/Auth/BusinessPricing";
 import ProductDetails from "./pages/Product/ProductDetails";
 import Cart from "./pages/Cart/Cart";
 import NotFound from "./Components/NotFound";
 import Wishlist from "./pages/Wishlist/Wishlist";
 import Offers from "./pages/Offers/Offers";
+import FlashDeals from "./pages/FlashDeals/FlashDeals";
 
 // Services & Bookings Pages
 import Services from "./pages/Services/Services";
@@ -110,6 +113,7 @@ function App() {
   function PublicLayout() {
     return (
       <>
+        <GlobalNotificationContainer />
         <Navbar />
         <Outlet />
         <Footer />
@@ -133,6 +137,7 @@ function App() {
           <Route path="/booking-success" element={<BookingSuccessPage />} />
           <Route path="/categories" element={<Category />} />
           <Route path="/offers" element={<Offers />} />
+          <Route path="/flash-deals" element={<FlashDeals />} />
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/help-center" element={<HelpCenter />} />
           {/* Protected Routes */}
@@ -147,6 +152,7 @@ function App() {
             path="/businessRegistration"
             element={<BusinessRegistration />}
           />
+          <Route path="/business-pricing" element={<BusinessPricing />} />
           <Route path="/store" element={<BusinessStoreListing />} />
           <Route path="/productlisting" element={<ProductListing />} />
           <Route path="/servicelisting" element={<ServiceListing />} />

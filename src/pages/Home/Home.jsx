@@ -14,6 +14,10 @@ import { getProducts } from "../../api/productService";
 import { fetchCategories } from "../../api/categoryService";
 import FeaturedProductCategory from "./sections/FeaturedProductCategory";
 
+import GiftingProductsSection from "./sections/GiftingProductsSection";
+import NewArrivalsSection from "./sections/NewArrivalsSection";
+import BannerSection from "../../components/BannerSection";
+
 function Home() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -51,12 +55,17 @@ function Home() {
     <div className="min-h-screen bg-[#fafafa] font-sans antialiased text-slate-900 pb-12 space-y-6 sm:space-y-8">
       {/* Hero Carousel Banner */}
       <HeroBanner />
+      {/* Flash Deals */}
+      <FlashDeals />
 
       {/* AI Personal Assistant, Weather Card & Our Services 4 Cards */}
       <MarketplaceHub />
 
-      {/* Flash Deals */}
-      <FlashDeals />
+      {/* Promotional Banners from Generic Banner System */}
+      <BannerSection bannerType="promotion" />
+
+      {/* New Arrivals Section */}
+      <NewArrivalsSection />
 
       <MegaSaleBanner
         title="Craving Something Delicious?"
@@ -85,6 +94,9 @@ function Home() {
       />
       {/* Store Coupons & Rewards Grid */}
       <CouponsOffers />
+
+      {/* Gifting Products Section */}
+      <GiftingProductsSection />
 
       {/* Our Occasion & Our Collection */}
       <OccasionsAndCollections />

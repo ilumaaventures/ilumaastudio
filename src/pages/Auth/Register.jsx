@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { FaGoogle, FaApple } from "react-icons/fa";
-import { User, Mail, Phone, Lock, Eye, EyeOff, ArrowLeft, ShieldCheck } from "lucide-react";
+import { User, Mail, Phone, Lock, Eye, EyeOff, ArrowLeft, ShieldCheck, CheckCircle2, Gift } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { registerUser } from "../../redux/actions/authActions";
 import toast from "react-hot-toast";
+import { sendOTP as sendOTPApi, verifyOTP as verifyOTPApi } from "../../api/authService";
 
 const Register = () => {
   const dispatch = useDispatch();
@@ -18,7 +19,16 @@ const Register = () => {
     email: "",
     phone: "",
     password: "",
+    referralCode: "",
   });
+
+  const [sendingOTP, setSendingOTP] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [verifyingOTP, setVerifyingOTP] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [timer, setTimer] = useState(60);
+  const [startTimer, setStartTimer] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,6 +40,61 @@ const Register = () => {
 
   const isValidEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const startOtpTimer = () => {
+    setTimer(60);
+    setStartTimer(true);
+    const interval = setInterval(() => {
+      setTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setStartTimer(false);
+          return 60;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleSendOTP = async () => {
+    if (!formData.name.trim() || !formData.email.trim()) {
+      toast.error("Please enter your Full Name and Email Address first");
+      return;
+    }
+    if (!isValidEmail(formData.email.trim())) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    try {
+      setSendingOTP(true);
+      const res = await sendOTPApi(formData.name.trim(), formData.email.trim());
+      setOtpSent(true);
+      startOtpTimer();
+      toast.success(res?.message || `OTP sent to ${formData.email}`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to send OTP");
+    } finally {
+      setSendingOTP(false);
+    }
+  };
+
+  const handleVerifyEmail = async () => {
+    if (!otp.trim() || otp.trim().length !== 6) {
+      toast.error("Please enter the 6-digit OTP sent to your email");
+      return;
+    }
+    try {
+      setVerifyingOTP(true);
+      await verifyOTPApi(formData.email.trim(), otp.trim());
+      setEmailVerified(true);
+      toast.success("Email verified successfully!");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Invalid or expired OTP");
+    } finally {
+      setVerifyingOTP(false);
+    }
   };
 
   const getPasswordQuality = (password) => {
@@ -50,6 +115,12 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!emailVerified) {
+      toast.error("Please verify your email address with OTP before creating account");
+      return;
+    }
+
     if (
       !formData.name ||
       !formData.email ||
@@ -60,20 +131,8 @@ const Register = () => {
       return;
     }
 
-    if (!isValidEmail(formData.email)) {
-      toast.error("Please enter a valid email address (e.g. name@domain.com)");
-      return;
-    }
-
     if (formData.password.length < 6) {
       toast.error("Password must be at least 6 characters long.");
-      return;
-    }
-
-    const hasLetter = /[a-zA-Z]/.test(formData.password);
-    const hasNumberOrSymbol = /[0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password);
-    if (!hasLetter || !hasNumberOrSymbol) {
-      toast.error("High quality password required: please include both letters and numbers/special characters.");
       return;
     }
 
@@ -81,10 +140,11 @@ const Register = () => {
       setIsSubmitting(true);
       await dispatch(
         registerUser({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
           password: formData.password,
+          referralCode: formData.referralCode.trim().toUpperCase(),
         })
       );
       toast.success("Registration Successful!");
@@ -118,13 +178,13 @@ const Register = () => {
           {/* Center Promo Copy */}
           <div className="relative z-10 space-y-4 my-auto py-12">
             <span className="inline-block px-3 py-1 bg-white/15 text-blue-100 text-[10px] font-extrabold uppercase tracking-widest rounded-full backdrop-blur-sm">
-              Join Our Marketplace
+              Join Our Platform
             </span>
             <h2 className="text-3xl font-black leading-tight tracking-tight text-white">
-              Start Your Premium Shopping Journey Today
+              Unlock Exclusive Rewards & Instant Perks
             </h2>
             <p className="text-xs text-blue-100/90 leading-relaxed font-medium">
-              Create your free account to access exclusive deals, fast checkout, saved addresses, and real-time order tracking across ILumaaStudio.
+              Create your account to automatically receive 100 welcome loyalty points, earn referral rewards, and track orders across ILumaaStudio.
             </p>
           </div>
 
@@ -135,7 +195,7 @@ const Register = () => {
               <span>100% Secure</span>
             </div>
             <span className="opacity-40">•</span>
-            <span>Easy Returns</span>
+            <span>Global Rewards</span>
           </div>
         </div>
 
@@ -166,36 +226,38 @@ const Register = () => {
               Create Account
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              Enter your details below to register your ILumaaStudio account
+              Fill in your details below to register your ILumaaStudio account.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-            {/* Full Name & Email */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px]">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    name="name"
-                    required
-                    placeholder="John Doe"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#2563eb] transition-colors text-slate-900 dark:text-white font-medium"
-                  />
-                </div>
+            {/* Full Name */}
+            <div className="space-y-1">
+              <label className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px]">
+                Full Name *
+              </label>
+              <div className="relative">
+                <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  placeholder="John Doe"
+                  value={formData.name}
+                  onChange={handleChange}
+                  disabled={emailVerified}
+                  className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#2563eb] transition-colors text-slate-900 dark:text-white font-medium"
+                />
               </div>
+            </div>
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px]">
-                  Email Address
-                </label>
-                <div className="relative">
+            {/* Email Address & Inline Send OTP */}
+            <div className="space-y-1">
+              <label className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px]">
+                Email Address *
+              </label>
+              <div className="flex gap-2 items-center">
+                <div className="relative flex-1">
                   <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="email"
@@ -204,74 +266,158 @@ const Register = () => {
                     placeholder="john@example.com"
                     value={formData.email}
                     onChange={handleChange}
+                    disabled={emailVerified}
                     className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#2563eb] transition-colors text-slate-900 dark:text-white font-medium"
                   />
                 </div>
-              </div>
-            </div>
-
-            {/* Mobile & Password */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px]">
-                  Mobile Number
-                </label>
-                <div className="relative">
-                  <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="tel"
-                    name="phone"
-                    required
-                    placeholder="+91 98765 43210"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#2563eb] transition-colors text-slate-900 dark:text-white font-medium"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px]">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    required
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="w-full pl-9 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#2563eb] transition-colors text-slate-900 dark:text-white font-medium"
-                  />
+                {!emailVerified && (
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                    onClick={handleSendOTP}
+                    disabled={sendingOTP || startTimer}
+                    className="px-4 py-2.5 bg-[#2563eb] hover:bg-[#1d4ed8] disabled:opacity-50 text-white rounded-xl text-xs font-bold shrink-0 transition shadow-sm cursor-pointer whitespace-nowrap"
                   >
-                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                    {sendingOTP
+                      ? "Sending..."
+                      : startTimer
+                      ? `Resend (${timer}s)`
+                      : otpSent
+                      ? "Resend OTP"
+                      : "Send OTP"}
                   </button>
-                </div>
-                {formData.password && (
-                  <p className={`text-[10px] font-bold mt-1 ${getPasswordQuality(formData.password)?.color}`}>
-                    Quality: {getPasswordQuality(formData.password)?.text}
-                  </p>
+                )}
+                {emailVerified && (
+                  <div className="flex items-center gap-1 bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-2.5 rounded-xl shrink-0">
+                    <CheckCircle2 size={16} /> Verified
+                  </div>
                 )}
               </div>
             </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white py-3 rounded-xl font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer text-center"
-            >
-              {isSubmitting ? "Creating Account..." : "Create Account"}
-            </button>
+            {/* OTP Verification Block */}
+            {otpSent && !emailVerified && (
+              <div className="p-3.5 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-2xl space-y-2.5 animate-fadeIn">
+                <label className="block text-xs font-bold text-blue-900 dark:text-blue-200 uppercase tracking-wider">
+                  Enter 6-Digit OTP Sent to Email
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="tel"
+                    maxLength={6}
+                    placeholder="123456"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    className="w-full border border-blue-300 dark:border-blue-700 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/30 transition bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono tracking-widest text-center font-bold"
+                  />
+                  <button
+                    onClick={handleVerifyEmail}
+                    type="button"
+                    disabled={verifyingOTP}
+                    className="px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl text-xs font-bold shrink-0 shadow transition cursor-pointer"
+                  >
+                    {verifyingOTP ? "Verifying..." : "Verify OTP"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Secondary Form Fields (Visible once Email Verified) */}
+            {emailVerified && (
+              <div className="space-y-4 pt-1 animate-fadeIn">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Mobile Number */}
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px]">
+                      Mobile Number *
+                    </label>
+                    <div className="relative">
+                      <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="tel"
+                        name="phone"
+                        required
+                        placeholder="+91 98765 43210"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#2563eb] transition-colors text-slate-900 dark:text-white font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password */}
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px]">
+                      Password *
+                    </label>
+                    <div className="relative">
+                      <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        required
+                        placeholder="••••••••"
+                        value={formData.password}
+                        onChange={handleChange}
+                        className="w-full pl-9 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#2563eb] transition-colors text-slate-900 dark:text-white font-medium"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                      >
+                        {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                    {formData.password && (
+                      <p className={`text-[10px] font-bold mt-1 ${getPasswordQuality(formData.password)?.color}`}>
+                        Quality: {getPasswordQuality(formData.password)?.text}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Referral Code */}
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[10px] flex items-center justify-between">
+                    <span>Referral Code (Optional)</span>
+                    <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1">
+                      <Gift size={12} /> Earn 50 Loyalty Points
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    name="referralCode"
+                    placeholder="e.g. ADITYA50"
+                    value={formData.referralCode}
+                    onChange={handleChange}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#2563eb] transition-colors text-slate-900 dark:text-white font-mono uppercase tracking-wider font-bold"
+                  />
+                  <p className="text-[11px] text-slate-400 font-medium">
+                    Entering a valid friend's referral code earns both of you +50 bonus loyalty points after your first purchase!
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Single Submit Button */}
+            <div className="pt-2">
+              {emailVerified ? (
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white py-3 rounded-xl font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer text-center"
+                >
+                  {isSubmitting ? "Creating Account..." : "Create Account"}
+                </button>
+              ) : (
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-center text-xs font-bold text-amber-800 dark:text-amber-300">
+                  Please click "Send OTP" above and verify your email to unlock registration.
+                </div>
+              )}
+            </div>
           </form>
 
-          {/* Or Divider */}
+          {/* Social Logins */}
           <div className="space-y-4 pt-2">
             <div className="relative flex items-center justify-center">
               <div className="absolute inset-0 flex items-center">
@@ -300,7 +446,7 @@ const Register = () => {
             </div>
           </div>
 
-          {/* Footer Navigation */}
+          {/* Footer Links */}
           <div className="text-center text-xs space-y-1 pt-2 border-t border-slate-100 dark:border-slate-800">
             <p className="text-slate-500 dark:text-slate-400">
               Already have an account?{" "}
