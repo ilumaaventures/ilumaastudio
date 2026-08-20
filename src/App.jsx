@@ -13,7 +13,7 @@ import { loadUser } from "./redux/actions/authActions";
 // Layout Components
 import Navbar from "./Components/Navbar";
 import Footer from "./Components/Footer";
-import GlobalNotificationContainer from "./components/GlobalNotificationContainer";
+import GlobalNotificationContainer from "./Components/GlobalNotificationContainer";
 
 // Public Pages
 import Home from "./pages/Home/Home";
