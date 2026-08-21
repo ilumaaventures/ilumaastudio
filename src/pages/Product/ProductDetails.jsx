@@ -24,8 +24,13 @@ import {
   Image as ImageIcon,
   Trash2,
   Upload,
+  Building2,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Package,
 } from "lucide-react";
-import { getProductById } from "../../api/productService";
+import { getProductById, checkCustomerDelivery } from "../../api/productService";
 import {
   getProductReviews,
   createReview as createProductReview,
@@ -48,15 +53,18 @@ function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState("");
-  const [selectedColor, setSelectedColor] = useState("");
   const [qty, setQty] = useState(1);
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Pincode state
+  // Variant Selection State
+  const [selectedOptions, setSelectedOptions] = useState({});
+
+  // Pincode Delivery Check state
   const [pincode, setPincode] = useState("");
+  const [checkingPincode, setCheckingPincode] = useState(false);
   const [pincodeMsg, setPincodeMsg] = useState(null);
 
-  // Review form state (Inline form, no modal)
+  // Review form state
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [reviewImageUrl, setReviewImageUrl] = useState("");
@@ -69,7 +77,7 @@ function ProductDetails() {
   const [helpfulState, setHelpfulState] = useState({});
   const [lightboxImage, setLightboxImage] = useState(null);
 
-  // Fetch product & reviews from API only
+  // Fetch product & reviews
   useEffect(() => {
     const fetchDetails = async () => {
       try {
@@ -102,6 +110,17 @@ function ProductDetails() {
           setSelectedImage(pData.images[0].url);
         }
 
+        // Initialize default selected options for variants
+        if (pData?.hasVariants && Array.isArray(pData?.optionDefinitions)) {
+          const initialOpts = {};
+          pData.optionDefinitions.forEach((opt) => {
+            if (opt.name && Array.isArray(opt.values) && opt.values.length > 0) {
+              initialOpts[opt.name] = opt.values[0];
+            }
+          });
+          setSelectedOptions(initialOpts);
+        }
+
         const rData =
           rRes.status === "fulfilled"
             ? rRes.value?.reviews || rRes.value?.data || []
@@ -115,6 +134,61 @@ function ProductDetails() {
     };
     fetchDetails();
   }, [id]);
+
+  // Compute active matching variant
+  const activeVariant = useMemo(() => {
+    if (!product?.hasVariants || !Array.isArray(product.variants)) return null;
+    return product.variants.find((v) => {
+      if (!v.optionValues || typeof v.optionValues !== "object") return false;
+      const selEntries = Object.entries(selectedOptions);
+      if (selEntries.length === 0) return false;
+
+      return selEntries.every(([key, val]) => {
+        const matchedKey = Object.keys(v.optionValues).find(
+          (k) => k.toLowerCase() === key.toLowerCase()
+        );
+        if (!matchedKey) return false;
+        return (
+          String(v.optionValues[matchedKey]).trim().toLowerCase() ===
+          String(val).trim().toLowerCase()
+        );
+      });
+    });
+  }, [product, selectedOptions]);
+
+  // Dynamic Effective Price Resolution (Variant price override vs Product fallback)
+  const effectivePrice = useMemo(() => {
+    if (
+      activeVariant &&
+      activeVariant.price !== null &&
+      activeVariant.price !== undefined &&
+      activeVariant.price !== "" &&
+      !isNaN(Number(activeVariant.price))
+    ) {
+      return Number(activeVariant.price);
+    }
+    return Number(product?.price || 0);
+  }, [activeVariant, product]);
+
+  const effectiveCompareAtPrice = useMemo(() => {
+    if (
+      activeVariant &&
+      activeVariant.compareAtPrice !== null &&
+      activeVariant.compareAtPrice !== undefined &&
+      activeVariant.compareAtPrice !== "" &&
+      !isNaN(Number(activeVariant.compareAtPrice))
+    ) {
+      return Number(activeVariant.compareAtPrice);
+    }
+    return product?.compareAtPrice ? Number(product.compareAtPrice) : null;
+  }, [activeVariant, product]);
+
+  // Update image when active variant changes and has image
+  useEffect(() => {
+    if (activeVariant?.image?.url) {
+      setSelectedImage(activeVariant.image.url);
+    }
+  }, [activeVariant]);
 
   if (loading) return <DetailSkeleton />;
 
@@ -146,28 +220,62 @@ function ProductDetails() {
   const inStock = (() => {
     if (displayProduct.inStock !== undefined) return Boolean(displayProduct.inStock);
     const s =
-      displayProduct.inventory?.stockQuantity !== undefined
+      activeVariant?.stockQuantity !== undefined
+        ? Number(activeVariant.stockQuantity)
+        : displayProduct.inventory?.stockQuantity !== undefined
         ? Number(displayProduct.inventory.stockQuantity)
         : displayProduct.stockQuantity !== undefined
         ? Number(displayProduct.stockQuantity)
         : displayProduct.stock !== undefined
         ? Number(displayProduct.stock)
-        : displayProduct.countInStock !== undefined
-        ? Number(displayProduct.countInStock)
         : 1;
     return s > 0;
   })();
 
   const imagesList = displayProduct.images || [];
-  const colorsList = displayProduct.colors || [];
-  const specsList = displayProduct.specs || [];
 
-  const handlePincodeCheck = (e) => {
+  const handleOptionSelect = (optionName, optionVal) => {
+    setSelectedOptions((prev) => ({
+      ...prev,
+      [optionName]: optionVal,
+    }));
+  };
+
+  const handlePincodeCheck = async (e) => {
     e.preventDefault();
-    if (pincode.trim().length === 6) {
-      setPincodeMsg({ success: true, text: "Delivery available! Estimated delivery by tomorrow." });
-    } else {
+    if (pincode.trim().length !== 6) {
       setPincodeMsg({ success: false, text: "Please enter a valid 6-digit Pincode." });
+      return;
+    }
+
+    try {
+      setCheckingPincode(true);
+      const res = await checkCustomerDelivery({
+        pincode: pincode.trim(),
+        businessId: displayProduct.business?._id || displayProduct.business,
+        vendorId: displayProduct.vendor?._id || displayProduct.vendor,
+        productId: displayProduct._id,
+      });
+
+      if (res.available) {
+        setPincodeMsg({
+          success: true,
+          text: res.message || `Delivery available to ${pincode}! Served by ${res.warehouse?.name || "local hub"}.`,
+        });
+      } else {
+        setPincodeMsg({
+          success: false,
+          text: res.message || "Delivery currently unavailable for this location.",
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      setPincodeMsg({
+        success: false,
+        text: "Could not verify pincode availability. Please try again.",
+      });
+    } finally {
+      setCheckingPincode(false);
     }
   };
 
@@ -181,8 +289,11 @@ function ProductDetails() {
         product: {
           _id: displayProduct._id,
           name: displayProduct.name,
-          price: displayProduct.price,
+          price: effectivePrice,
           image: selectedImage || imagesList[0]?.url || "",
+          selectedOptions: displayProduct.hasVariants ? selectedOptions : null,
+          variantSku: activeVariant?.sku || displayProduct.sku || null,
+          variantId: activeVariant?._id || null,
         },
         quantity: qty,
       })
@@ -293,44 +404,6 @@ function ProductDetails() {
     }
   };
 
-  const handleToggleHelpful = async (rev, e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const revId = rev._id || rev.id;
-    if (!revId) return;
-
-    const isValidMongoId = /^[0-9a-fA-F]{24}$/.test(String(revId));
-
-    try {
-      const isHelpful = helpfulState[revId];
-
-      if (isValidMongoId) {
-        await toggleReviewHelpful(revId).catch(() => null);
-      }
-
-      const currentCount = Array.isArray(rev.helpful) ? rev.helpful.length : Number(rev.helpfulCount || 0);
-      const newCount = Math.max(0, currentCount + (isHelpful ? -1 : 1));
-
-      setHelpfulState((prev) => ({ ...prev, [revId]: !isHelpful }));
-      setLiveReviews((prev) =>
-        prev.map((r) => {
-          if ((r._id || r.id) === revId) {
-            return { ...r, helpfulCount: newCount, helpful: new Array(newCount).fill("user") };
-          }
-          return r;
-        })
-      );
-
-      if (!isHelpful) {
-        toast.success("Marked as helpful!");
-      } else {
-        toast.success("Helpful mark removed");
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-200 transition-colors pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
@@ -408,23 +481,36 @@ function ProductDetails() {
           {/* Product Specs & Purchase Action Column */}
           <div className="lg:col-span-6 space-y-6">
             <div className="space-y-2">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-[#2563eb] bg-blue-50 dark:bg-blue-950/60 px-2.5 py-1 rounded-full">
-                {displayProduct.brand || displayProduct.category?.name || "Premium Quality"}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-[#2563eb] bg-blue-50 dark:bg-blue-950/60 px-2.5 py-1 rounded-full">
+                  {displayProduct.brand || displayProduct.category?.name || "Premium Quality"}
+                </span>
+                {displayProduct.vendor?.storeName && (
+                  <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full">
+                    <Building2 size={12} /> {displayProduct.vendor.storeName}
+                  </span>
+                )}
+              </div>
 
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-tight tracking-tight">
                 {displayProduct.name}
               </h1>
 
-              {/* Rating */}
-              <div className="flex items-center gap-2 pt-1">
+              {/* Rating & SKU */}
+              <div className="flex items-center gap-4 pt-1">
                 <div className="flex items-center gap-1 text-amber-400">
                   <Star size={16} fill="currentColor" />
                   <span className="text-xs font-black text-slate-900 dark:text-white">
                     {displayProduct.rating || 4.5}
                   </span>
+                  <span className="text-xs text-slate-400">({liveReviews.length} reviews)</span>
                 </div>
-                <span className="text-xs text-slate-400">({liveReviews.length} reviews)</span>
+
+                {(activeVariant?.sku || displayProduct.sku) && (
+                  <span className="text-xs font-mono font-bold text-slate-400">
+                    SKU: {activeVariant?.sku || displayProduct.sku}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -432,11 +518,11 @@ function ProductDetails() {
             <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-1 shadow-2xs">
               <div className="flex items-baseline gap-3">
                 <span className="text-3xl font-black text-[#2563eb]">
-                  ₹{(displayProduct.price || 0).toLocaleString()}
+                  ₹{effectivePrice.toLocaleString()}
                 </span>
-                {displayProduct.originalPrice && (
+                {effectiveCompareAtPrice && effectiveCompareAtPrice > effectivePrice && (
                   <span className="text-sm text-slate-400 line-through">
-                    ₹{displayProduct.originalPrice.toLocaleString()}
+                    ₹{effectiveCompareAtPrice.toLocaleString()}
                   </span>
                 )}
                 {displayProduct.discount && (
@@ -445,31 +531,49 @@ function ProductDetails() {
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-slate-400">Inclusive of all taxes & free shipping</p>
+              <p className="text-[10px] text-slate-400">Inclusive of all taxes & delivery resolution</p>
             </div>
 
-            {/* Colors */}
-            {colorsList.length > 0 && (
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">Color Option</label>
-                <div className="flex items-center gap-2">
-                  {colorsList.map((col, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setSelectedColor(col)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer border ${
-                        selectedColor === col
-                          ? "bg-[#2563eb] text-white border-[#2563eb]"
-                          : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
-                      }`}
-                    >
-                      {col}
-                    </button>
-                  ))}
+            {/* Dynamic Variant Options Selectors */}
+            {displayProduct.hasVariants &&
+              Array.isArray(displayProduct.optionDefinitions) &&
+              displayProduct.optionDefinitions.length > 0 && (
+                <div className="space-y-4 p-4 bg-slate-100/60 dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800">
+                  {displayProduct.optionDefinitions.map((opt, oIdx) => {
+                    const optName = opt.name;
+                    const optValues = Array.isArray(opt.values) ? opt.values : [];
+                    if (!optName || optValues.length === 0) return null;
+
+                    return (
+                      <div key={oIdx} className="space-y-2">
+                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex justify-between">
+                          <span>Select {optName}:</span>
+                          <span className="text-[#2563eb]">{selectedOptions[optName]}</span>
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {optValues.map((val, vIdx) => {
+                            const isSelected = selectedOptions[optName] === val;
+                            return (
+                              <button
+                                key={vIdx}
+                                type="button"
+                                onClick={() => handleOptionSelect(optName, val)}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer border ${
+                                  isSelected
+                                    ? "bg-[#2563eb] text-white border-[#2563eb] shadow-2xs"
+                                    : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-slate-400"
+                                }`}
+                              >
+                                {val}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Quantity Selector */}
             <div className="space-y-2">
@@ -520,28 +624,43 @@ function ProductDetails() {
               </button>
             </div>
 
-            {/* Delivery Pincode */}
+            {/* Delivery Pincode Availability Check */}
             <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-2">
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <Truck size={15} className="text-[#2563eb]" /> Check Delivery Pincode
+                <Truck size={15} className="text-[#2563eb]" /> Check Delivery Pincode Availability
               </span>
               <form onSubmit={handlePincodeCheck} className="flex gap-2">
                 <input
                   type="text"
                   maxLength={6}
-                  placeholder="Enter 6-digit Pincode"
+                  placeholder="Enter 6-digit Pincode (e.g. 226001)"
                   value={pincode}
-                  onChange={(e) => setPincode(e.target.value)}
+                  onChange={(e) => {
+                    setPincode(e.target.value);
+                    setPincodeMsg(null);
+                  }}
                   className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs outline-none focus:border-[#2563eb]"
                 />
-                <button type="submit" className="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold">
-                  Check
+                <button
+                  type="submit"
+                  disabled={checkingPincode}
+                  className="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold disabled:opacity-50 cursor-pointer"
+                >
+                  {checkingPincode ? "Checking..." : "Check"}
                 </button>
               </form>
+
               {pincodeMsg && (
-                <p className={`text-[11px] font-semibold ${pincodeMsg.success ? "text-emerald-600" : "text-rose-500"}`}>
-                  {pincodeMsg.text}
-                </p>
+                <div
+                  className={`p-3 rounded-xl text-xs font-semibold flex items-center gap-2 ${
+                    pincodeMsg.success
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-rose-50 text-rose-600 border border-rose-200"
+                  }`}
+                >
+                  {pincodeMsg.success ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                  <span>{pincodeMsg.text}</span>
+                </div>
               )}
             </div>
 
@@ -559,19 +678,17 @@ function ProductDetails() {
                 activeTab === "overview" ? "border-[#2563eb] text-[#2563eb]" : "border-transparent"
               }`}
             >
-              Description & Details
+              Description & Overview
             </button>
-            {specsList.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setActiveTab("specs")}
-                className={`pb-3 transition-colors cursor-pointer border-b-2 ${
-                  activeTab === "specs" ? "border-[#2563eb] text-[#2563eb]" : "border-transparent"
-                }`}
-              >
-                Specifications
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setActiveTab("specs")}
+              className={`pb-3 transition-colors cursor-pointer border-b-2 ${
+                activeTab === "specs" ? "border-[#2563eb] text-[#2563eb]" : "border-transparent"
+              }`}
+            >
+              Specifications & Origin
+            </button>
             <button
               type="button"
               onClick={() => setActiveTab("reviews")}
@@ -590,251 +707,71 @@ function ProductDetails() {
             </div>
           )}
 
-          {/* Specs */}
+          {/* Specs & Customer Info */}
           {activeTab === "specs" && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs max-w-2xl">
-              {specsList.map((spec, idx) => (
-                <div key={idx} className="flex justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200/60">
-                  <span className="font-semibold text-slate-500">{spec.label}</span>
-                  <span className="font-bold text-slate-900 dark:text-white">{spec.value}</span>
+              <div className="flex justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200/60">
+                <span className="font-semibold text-slate-500">Requires Shipping</span>
+                <span className="font-bold text-slate-900 dark:text-white">
+                  {displayProduct.requiresShipping ? "Yes" : "No"}
+                </span>
+              </div>
+              <div className="flex justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200/60">
+                <span className="font-semibold text-slate-500">Weight</span>
+                <span className="font-bold text-slate-900 dark:text-white">
+                  {displayProduct.weight ? `${displayProduct.weight} kg` : "N/A"}
+                </span>
+              </div>
+              <div className="flex justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200/60">
+                <span className="font-semibold text-slate-500">Dimensions (L × W × H)</span>
+                <span className="font-bold text-slate-900 dark:text-white">
+                  {displayProduct.dimensions?.length || 0} × {displayProduct.dimensions?.width || 0} × {displayProduct.dimensions?.height || 0} cm
+                </span>
+              </div>
+              <div className="flex justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200/60">
+                <span className="font-semibold text-slate-500">Country of Origin</span>
+                <span className="font-bold text-slate-900 dark:text-white">
+                  {displayProduct.countryOfOrigin || "India"}
+                </span>
+              </div>
+              <div className="flex justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200/60">
+                <span className="font-semibold text-slate-500">Product Type</span>
+                <span className="font-bold text-slate-900 dark:text-white">
+                  {displayProduct.productType || "E-Commerce"}
+                </span>
+              </div>
+              {displayProduct.vendor?.storeName && (
+                <div className="flex justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200/60">
+                  <span className="font-semibold text-slate-500">Seller / Store</span>
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    {displayProduct.vendor.storeName}
+                  </span>
                 </div>
-              ))}
+              )}
             </div>
           )}
 
-          {/* Reviews Tab with INLINE Review Form (No Modal) */}
+          {/* Customer Reviews */}
           {activeTab === "reviews" && (
-            <div className="space-y-8">
-              
-              {/* INLINE WRITE A REVIEW FORM CARD */}
-              <div className="p-6 bg-slate-50 dark:bg-slate-800/90 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 space-y-4 shadow-xs">
-                <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-700/80 pb-3">
-                  <div>
-                    <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                      <Camera size={16} className="text-[#2563eb]" />
-                      <span>Write a Customer Review</span>
-                    </h3>
-                    <p className="text-[11px] text-slate-400 font-medium mt-0.5">
-                      Share your rating, experience and attach real photos
-                    </p>
-                  </div>
-                </div>
-
-                <form onSubmit={handleAddReviewSubmit} className="space-y-4 text-xs">
-                  
-                  {/* Rating Selector */}
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-700 dark:text-slate-300">Your Star Rating</label>
-                    <div className="flex items-center gap-1 text-amber-400 cursor-pointer">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          size={24}
-                          fill={star <= reviewRating ? "currentColor" : "none"}
-                          onClick={() => setReviewRating(star)}
-                          className="hover:scale-110 transition-transform"
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Comment Textarea */}
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-700 dark:text-slate-300">Your Feedback</label>
-                    <textarea
-                      required
-                      rows={3}
-                      placeholder="What did you like or dislike about this product?"
-                      value={reviewComment}
-                      onChange={(e) => setReviewComment(e.target.value)}
-                      className="w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs outline-none focus:border-[#2563eb]"
-                    />
-                  </div>
-
-                  {/* Photo Upload & URL Attachment */}
-                  <div className="space-y-2">
-                    <label className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                      <ImageIcon size={14} className="text-[#2563eb]" />
-                      <span>Attach Photos (Upload File or Paste Link)</span>
-                    </label>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {/* Upload File Input */}
-                      <div className="relative border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-[#2563eb] rounded-2xl p-3 text-center cursor-pointer transition bg-white dark:bg-slate-900 flex items-center justify-center gap-2">
-                        <Upload size={16} className="text-[#2563eb]" />
-                        <span className="font-bold text-xs text-slate-700 dark:text-slate-300">Upload Photo File</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleFileSelect}
-                          className="absolute inset-0 opacity-0 cursor-pointer"
-                        />
-                      </div>
-
-                      {/* Paste URL */}
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="url"
-                          placeholder="Paste image URL..."
-                          value={reviewImageUrl}
-                          onChange={(e) => setReviewImageUrl(e.target.value)}
-                          className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs outline-none focus:border-[#2563eb]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (reviewImageUrl.trim()) {
-                              setReviewImagesList((prev) => [
-                                ...prev,
-                                { url: reviewImageUrl.trim(), public_id: `img_${Date.now()}` },
-                              ]);
-                              setReviewImageUrl("");
-                              toast.success("Photo attached!");
-                            }
-                          }}
-                          className="bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 text-white px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition cursor-pointer"
-                        >
-                          Attach
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Previews */}
-                    {reviewImagesList.length > 0 && (
-                      <div className="flex items-center gap-2 pt-2 overflow-x-auto">
-                        {reviewImagesList.map((img, i) => (
-                          <div key={i} className="relative w-14 h-14 rounded-xl overflow-hidden border border-slate-300">
-                            <img src={img.url} alt="Preview" className="w-full h-full object-cover" />
-                            <button
-                              type="button"
-                              onClick={() => setReviewImagesList((prev) => prev.filter((_, idx) => idx !== i))}
-                              className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-rose-500 text-white flex items-center justify-center text-[10px]"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={submittingReview}
-                    className="py-3 px-6 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-2xl font-bold transition-colors cursor-pointer shadow-md shadow-blue-500/20"
-                  >
-                    {submittingReview ? "Posting Review..." : "Post Review"}
-                  </button>
-                </form>
-              </div>
-
+            <div className="space-y-6">
               {/* Reviews List */}
               <div className="space-y-4">
-                <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">
-                  Customer Reviews List ({liveReviews.length})
-                </h4>
-
                 {liveReviews.length === 0 ? (
-                  <div className="p-8 bg-slate-50 dark:bg-slate-800/40 rounded-2xl text-center">
-                    <p className="text-xs text-slate-500 font-medium">
-                      No reviews posted yet for this product. Be the first to write a review!
-                    </p>
-                  </div>
+                  <p className="text-xs text-slate-400 italic">No reviews yet. Be the first to review this product!</p>
                 ) : (
-                  liveReviews.map((rev, idx) => {
-                    const revId = rev._id || rev.id || `rev_${idx}`;
-                    const userName = typeof rev.user === "object" ? rev.user?.name : rev.user || "Verified Customer";
-                    const isHelpfulActive = Boolean(helpfulState[revId]);
-                    const countHelpful = Array.isArray(rev.helpful)
-                      ? rev.helpful.length
-                      : Number(rev.helpfulCount || 0);
-
-                    const revImages = Array.isArray(rev.images) ? rev.images : [];
-
-                    return (
-                      <div
-                        key={revId}
-                        className="p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-3 shadow-2xs"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950/60 text-[#2563eb] font-black text-xs flex items-center justify-center">
-                              {userName.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <span className="font-bold text-xs text-slate-900 dark:text-white block">
-                                {userName}
-                              </span>
-                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                                Verified Purchase
-                              </span>
-                            </div>
-                          </div>
-                          <span className="text-[10px] text-slate-400 font-medium">
-                            {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString() : rev.date || "Recently"}
-                          </span>
-                        </div>
-
-                        {/* Stars */}
-                        <div className="flex items-center gap-1 text-amber-400">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              size={12}
-                              fill={i < rev.rating ? "currentColor" : "none"}
-                            />
-                          ))}
-                        </div>
-
-                        {/* Comment */}
-                        <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-normal">
-                          {rev.comment}
-                        </p>
-
-                        {/* Review Attached Images Gallery */}
-                        {revImages.length > 0 && (
-                          <div className="flex items-center gap-2 pt-1 overflow-x-auto">
-                            {revImages.map((imgObj, iIdx) => {
-                              const imgUrl = typeof imgObj === "object" ? imgObj.url : imgObj;
-                              return (
-                                <button
-                                  key={iIdx}
-                                  type="button"
-                                  onClick={() => setLightboxImage(imgUrl)}
-                                  className="w-16 h-16 rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-700 border border-slate-300 shrink-0 group relative cursor-pointer"
-                                >
-                                  <img
-                                    src={imgUrl}
-                                    alt="Review attach"
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                                  />
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        {/* Helpful Counter Button */}
-                        <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
-                          <button
-                            type="button"
-                            onClick={(e) => handleToggleHelpful(rev, e)}
-                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer border ${
-                              isHelpfulActive
-                                ? "bg-blue-50 dark:bg-blue-950/60 border-[#2563eb] text-[#2563eb]"
-                                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100"
-                            }`}
-                          >
-                            <ThumbsUp
-                              size={13}
-                              className={isHelpfulActive ? "fill-[#2563eb]" : ""}
-                            />
-                            <span>Helpful ({countHelpful})</span>
-                          </button>
+                  liveReviews.map((rev, idx) => (
+                    <div key={idx} className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/60 dark:border-slate-800 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-900 dark:text-white">
+                          {rev.user?.name || "Verified Buyer"}
+                        </span>
+                        <div className="flex items-center gap-1 text-amber-400 text-xs font-black">
+                          <Star size={12} fill="currentColor" /> {rev.rating || 5}
                         </div>
                       </div>
-                    );
-                  })
+                      <p className="text-xs text-slate-600 dark:text-slate-300">{rev.comment}</p>
+                    </div>
+                  ))
                 )}
               </div>
             </div>
@@ -843,25 +780,6 @@ function ProductDetails() {
         </div>
 
       </div>
-
-      {/* Review Image Lightbox Modal */}
-      {lightboxImage && (
-        <div
-          onClick={() => setLightboxImage(null)}
-          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer"
-        >
-          <div className="relative max-w-2xl max-h-[85vh] overflow-hidden rounded-2xl bg-black p-2 shadow-2xl">
-            <button
-              onClick={() => setLightboxImage(null)}
-              className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black"
-            >
-              <X size={18} />
-            </button>
-            <img src={lightboxImage} alt="Enlarged review photo" className="max-w-full max-h-[80vh] object-contain rounded-xl" />
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }

@@ -13,6 +13,11 @@ export const getProductById = async (id) => {
   return response.data;
 };
 
+export const checkCustomerDelivery = async (deliveryData) => {
+  const response = await baseApi.post("/warehouses/check-delivery", deliveryData);
+  return response.data;
+};
+
 export const createProduct = async (productData) => {
   const response = await baseApi.post("/products", productData, {
     headers: {

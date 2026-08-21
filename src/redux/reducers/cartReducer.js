@@ -22,8 +22,12 @@ const mapDbCartToRedux = (dbItems) => {
         : 0;
     return {
       _id: prod._id || item.product,
+      cartItemId: item._id,
       name: prod.name || "Unknown Product",
       price: item.price !== undefined ? item.price : (prod.price || 0),
+      selectedOptions: item.selectedOptions || null,
+      sku: item.sku || prod.sku || "",
+      variantId: item.variantId || null,
       category: prod.category?.name || "Uncategorized",
       image: prod.images?.[0]?.url || "https://via.placeholder.com/400x300?text=No+Image",
       stock: effectiveStock,
@@ -69,7 +73,12 @@ export const addToCart = createAsyncThunk(
     }
 
     try {
-      const response = await cartService.addToCart(product._id, quantity);
+      const response = await cartService.addToCart(product._id, quantity, {
+        selectedOptions: product.selectedOptions,
+        variantSku: product.variantSku,
+        variantId: product.variantId,
+        price: product.price,
+      });
       return mapDbCartToRedux(response.items);
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
