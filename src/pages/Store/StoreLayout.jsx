@@ -5,6 +5,7 @@ import Navbar from "../../Components/store/Navbar";
 import Footer from "../../Components/store/Footer";
 import { Store, AlertTriangle, ArrowLeft } from "lucide-react";
 import customStoresRegistry from "./registry";
+import { getTenantSubdomain } from "../../utils/tenant";
 
 const StoreContext = createContext(null);
 
@@ -18,6 +19,7 @@ export const useStore = () => {
 
 export default function StoreLayout() {
   const { businessName } = useParams();
+  const activeTenant = businessName || getTenantSubdomain();
   const [business, setBusiness] = useState(null);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -29,8 +31,8 @@ export default function StoreLayout() {
 
   useEffect(() => {
     const fetchStoreData = async () => {
-      if (!businessName) return;
-      const decodedName = decodeURIComponent(businessName);
+      if (!activeTenant) return;
+      const decodedName = decodeURIComponent(activeTenant);
 
       try {
         setLoading(true);
@@ -92,7 +94,7 @@ export default function StoreLayout() {
     };
 
     fetchStoreData();
-  }, [businessName]);
+  }, [activeTenant]);
 
   // Loading State
   if (loading) {
@@ -123,7 +125,7 @@ export default function StoreLayout() {
             <p className="text-gray-500 text-xs leading-relaxed">
               We couldn't find a storefront registered under the name{" "}
               <span className="font-bold text-indigo-600">
-                "{decodeURIComponent(businessName)}"
+                "{decodeURIComponent(activeTenant || "")}"
               </span>
               .
             </p>
@@ -168,8 +170,8 @@ export default function StoreLayout() {
     );
   }
 
-  const normalizedName = businessName
-    ? businessName.toLowerCase().replace(/[\s-]/g, "")
+  const normalizedName = activeTenant
+    ? activeTenant.toLowerCase().replace(/[\s-]/g, "")
     : "";
   const CustomNavbar = customStoresRegistry[normalizedName]?.Navbar;
   const CustomFooter = customStoresRegistry[normalizedName]?.Footer;

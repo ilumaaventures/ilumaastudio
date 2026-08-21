@@ -1,6 +1,7 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 import customStoresRegistry from "../registry";
+import { getTenantSubdomain } from "../../../utils/tenant";
 
 // Default Page Components
 import DefaultStoreHome from "../StoreHome";
@@ -13,7 +14,10 @@ import DefaultStoreContact from "../Contact";
 const createDispatcher = (DefaultComponent, pageKey) => {
   return function Dispatcher(props) {
     const { businessName } = useParams();
-    const normalizedName = businessName ? businessName.toLowerCase().replace(/[\s-]/g, "") : "";
+    const identifier = businessName || getTenantSubdomain();
+    const normalizedName = identifier
+      ? identifier.toLowerCase().replace(/[\s-]/g, "")
+      : "";
 
     // Resolve custom page override from registry
     const CustomComponent = customStoresRegistry[normalizedName]?.[pageKey];

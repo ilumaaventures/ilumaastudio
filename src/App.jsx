@@ -64,6 +64,7 @@ import HelpCenter from "./pages/Help/HelpCenter";
 import TrackOrder from "./pages/Order/TrackOrder";
 
 import { getUserLocation } from "./utils/location";
+import { isTenantHost } from "./utils/tenant";
 
 function App() {
   const dispatch = useDispatch();
@@ -124,6 +125,41 @@ function App() {
     );
   }
 
+  // Dynamic Tenant Subdomain Routing (e.g. rajeshbakery.ilumaa.com or rajeshbakery.localhost:5173)
+  if (isTenantHost()) {
+    return (
+      <BrowserRouter>
+        <ScrollToTop />
+        <Routes>
+          <Route path="/" element={<StoreLayout />}>
+            <Route index element={<StoreHomeDispatcher />} />
+            <Route path="products" element={<StoreProductsDispatcher />} />
+            <Route
+              path="product/:id"
+              element={<StoreProductDetailsDispatcher />}
+            />
+            <Route path="about" element={<StoreAboutDispatcher />} />
+            <Route path="contact" element={<StoreContactDispatcher />} />
+          </Route>
+          {/* Direct Auth / Customer Profile Routes on Storefront */}
+          <Route element={<AuthRedirectRoute />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+          </Route>
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/wishlist" element={<Wishlist />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/my-bookings" element={<MyBookingsPage />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    );
+  }
+
+  // Marketplace & Directory Routing (e.g. ilumaastudio.ilumaa.com or ilumaastudio.localhost:5173)
   return (
     <BrowserRouter>
       <ScrollToTop />
@@ -168,7 +204,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
         </Route>
-        {/* Storefront Routes */}
+        {/* Storefront Routes (Legacy path-based previews) */}
         <Route path="/:businessName" element={<StoreLayout />}>
           <Route index element={<StoreHomeDispatcher />} />
           <Route path="products" element={<StoreProductsDispatcher />} />
