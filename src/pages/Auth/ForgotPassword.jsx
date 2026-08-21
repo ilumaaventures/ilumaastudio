@@ -15,6 +15,7 @@ function ForgotPassword() {
     password: "",
     confirmPassword: "",
   });
+  const [resetToken, setResetToken] = useState("");
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -43,7 +44,10 @@ function ForgotPassword() {
           setLoading(false);
           return;
         }
-        await verifyOTP(formData.email, formData.otp);
+        const res = await verifyOTP(formData.email, formData.otp);
+        if (res?.resetToken) {
+          setResetToken(res.resetToken);
+        }
         toast.success("OTP Verified Successfully!");
         setStep(3);
       } else {
@@ -57,7 +61,7 @@ function ForgotPassword() {
           setLoading(false);
           return;
         }
-        await resetPassword(formData.email, formData.password);
+        await resetPassword(resetToken, formData.password);
         toast.success("Password reset successfully!");
         setSuccess(true);
       }

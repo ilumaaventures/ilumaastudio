@@ -1,7 +1,8 @@
 import axios from "axios";
 
-export const BASE_URL =
+const rawBaseUrl =
   import.meta.env.VITE_API_URL || "https://ilumaasocial-backend.onrender.com";
+export const BASE_URL = rawBaseUrl.replace(/\/+$/, "");
 
 export const API_URL = `${BASE_URL}/api`;
 
