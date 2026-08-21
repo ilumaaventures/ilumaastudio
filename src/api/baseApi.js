@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getTenantSubdomain } from "../utils/tenant";
 
 const rawBaseUrl =
   import.meta.env.VITE_API_URL || "https://ilumaasocial-backend.onrender.com";
@@ -19,6 +20,10 @@ baseApi.interceptors.request.use(
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    const tenant = getTenantSubdomain();
+    if (tenant) {
+      config.headers["X-Tenant-Subdomain"] = tenant;
     }
     return config;
   },
