@@ -6,17 +6,9 @@ export default function StarlingAbout() {
     <>
       <section
         id="about-us"
-        className="reveal grid bg-cream md:grid-cols-2 py-10"
+        className="reveal grid bg-cream md:grid-cols-2 py-10 scroll-mt-20 items-center"
       >
-        <img
-          className="w-full h-[410px] sm:h-[540px] md:h-[635px] lg:h-[820px] object-cover self-center"
-          src="https://starlingtales.vercel.app/23.png"
-          alt="Handcrafted toys and soft textiles reflecting Starling Tales philosophy"
-          loading="lazy"
-          decoding="async"
-        />
-        <div className="relative overflow-hidden px-5 py-16 md:px-12 lg:px-20 lg:py-24">
-          {/* <Botanical className="absolute -right-10 bottom-6 h-48 w-48 text-blue-muted opacity-20" /> */}
+        <div className="order-1 relative overflow-hidden px-5 py-12 md:px-12 lg:px-20 lg:py-16">
           <div className="relative z-10 max-w-xl">
             <p className="text-sm font-medium tracking-[0.26em] leading-normal uppercase text-text-dark max-md:text-xs max-md:tracking-[0.22em] text-left">
               Our Philosophy
@@ -44,10 +36,16 @@ export default function StarlingAbout() {
               Tales companion brings a gentle, enduring sense of comfort,
               imagination, and peace into your home.
             </p>
-            <div className="mt-9">
-              {/* <ButtonLink href="#about-us">Our Story</ButtonLink> */}
-            </div>
           </div>
+        </div>
+        <div className="order-2 p-4 md:p-8 flex items-center justify-center">
+          <img
+            className="w-full max-h-[600px] rounded-2xl shadow-md object-cover self-center"
+            src="https://starlingtales.vercel.app/23.png"
+            alt="Handcrafted toys and soft textiles reflecting Starling Tales philosophy"
+            loading="lazy"
+            decoding="async"
+          />
         </div>
       </section>
     </>

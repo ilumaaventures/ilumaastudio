@@ -10,14 +10,18 @@ import {
   Store,
 } from "lucide-react";
 import { useSelector } from "react-redux";
-import { useStore } from "../../pages/Store/StoreLayout";
+import { useStore } from "../../pages/Store/StoreContext";
 
 export default function Navbar() {
-  const { business } = useStore();
+  const { business, storeHomePath } = useStore();
   const [mobileMenu, setMobileMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+
+  const basePath =
+    storeHomePath ||
+    `/${encodeURIComponent(business?.subdomain || business?.slug || business?.businessName || "")}`;
 
   const cartItems = useSelector((s) => s.cart?.cartItems || []);
   const wishlistItems = useSelector((s) => s.wishlist?.items || []);
@@ -34,7 +38,7 @@ export default function Navbar() {
     e.preventDefault();
     if (searchTerm.trim()) {
       navigate(
-        `/${encodeURIComponent(business.businessName)}/products?search=${encodeURIComponent(searchTerm.trim())}`,
+        `${basePath}/products?search=${encodeURIComponent(searchTerm.trim())}`,
       );
       setSearchTerm("");
       setMobileMenu(false);
@@ -42,19 +46,19 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { name: "Home", path: `/${encodeURIComponent(business.businessName)}` },
+    { name: "Home", path: `${basePath}` },
     {
       name: "Products",
-      path: `/${encodeURIComponent(business.businessName)}/products`,
+      path: `${basePath}/products`,
     },
     {
       name: "About",
-      path: `/${encodeURIComponent(business.businessName)}/about`,
+      path: `${basePath}/about`,
     },
-    // {
-    //   name: "Contact",
-    //   path: `/${encodeURIComponent(business.businessName)}/contact`,
-    // },
+    {
+      name: "Contact",
+      path: `${basePath}/contact`,
+    },
   ];
 
   return (
@@ -69,13 +73,13 @@ export default function Navbar() {
         <div className="h-16 flex items-center justify-between gap-6">
           {/* Logo */}
           <Link
-            to={`/${encodeURIComponent(business.businessName)}`}
+            to={basePath}
             className="flex items-center gap-2.5 shrink-0"
           >
-            {business.logo ? (
+            {business?.logo ? (
               <img
                 src={business.logo}
-                alt={business.businessName}
+                alt={business.businessName || "Store"}
                 className="h-9 w-auto object-contain rounded-lg"
               />
             ) : (
@@ -84,7 +88,7 @@ export default function Navbar() {
               </div>
             )}
             <span className="font-extrabold text-gray-900 text-lg tracking-tight capitalize">
-              {business.businessName}
+              {business?.businessName || "Storefront"}
             </span>
           </Link>
 
@@ -151,7 +155,7 @@ export default function Navbar() {
               )}
             </Link>
             <Link
-              to="/dashboard"
+              to="/profile"
               className="p-2 text-gray-600 hover:text-indigo-600 transition"
             >
               <User size={20} />
@@ -160,7 +164,7 @@ export default function Navbar() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenu(!mobileMenu)}
-              className="md:hidden p-2 text-gray-600 hover:text-gray-900 focus:outline-none"
+              className="md:hidden p-2 text-gray-600 hover:text-gray-900 focus:outline-none cursor-pointer"
             >
               {mobileMenu ? <X size={22} /> : <Menu size={22} />}
             </button>

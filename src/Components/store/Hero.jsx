@@ -1,42 +1,49 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
-import { useStore } from "../../pages/Store/StoreLayout";
-import baseApi from "../../api/baseApi";
+import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { useStore } from "../../pages/Store/StoreContext";
 
 export default function Hero() {
-  const { business, products } = useStore();
-  const [slides, setSlides] = useState([]);
+  const { business, products, storeHomePath, heroBanners, banners, slides } = useStore();
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
-  useEffect(() => {
-    const fetchSlides = async () => {
-      if (!business?._id) return;
-      try {
-        const res = await baseApi.get(`/marketing/public/slides/${business._id}`);
-        if (res.data && res.data.length > 0) {
-          setSlides(res.data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch slides for business:", err);
-      }
-    };
-    fetchSlides();
-  }, [business?._id]);
+  // Collect all available hero slides & banners
+  const allHeroSlides = useMemo(() => {
+    const fromBanners = (heroBanners && heroBanners.length > 0)
+      ? heroBanners
+      : (banners || []).filter((b) => b.type === "hero");
 
-  // Featured Products
+    if (fromBanners.length > 0) {
+      return fromBanners;
+    }
+
+    if (slides && slides.length > 0) {
+      return slides;
+    }
+
+    // Default placeholder hero
+    return [
+      {
+        title: business?.businessName || "Welcome to Our Store",
+        subtitle: "✨ Premium Handcrafted & Curated Collection",
+        description:
+          business?.description ||
+          "Explore carefully curated products, unbeatable prices, secure checkout and premium shopping experience.",
+        image: business?.coverImage || business?.banner || "",
+        buttonText: "Shop Catalog",
+      },
+    ];
+  }, [heroBanners, banners, slides, business]);
+
+  // Featured Products for fallback image
   const featuredProducts = useMemo(() => {
     if (!products?.length) return [];
-
     const featured = products.filter((p) => p.isFeatured);
-
     return featured.length ? featured : products.slice(0, 4);
   }, [products]);
 
-  // Hero Product
   const heroProduct = featuredProducts[0];
-
-  // Image helper
-  const productImage =
+  const fallbackProductImage =
     heroProduct?.featuredImage?.url ||
     heroProduct?.featuredImage ||
     heroProduct?.thumbnail?.url ||
@@ -45,94 +52,140 @@ export default function Hero() {
     heroProduct?.images?.[0] ||
     "/placeholder-product.png";
 
-  const activeSlide = slides[0];
-  const displayTitle = activeSlide?.title || business?.businessName;
-  const displayDesc = activeSlide?.subtitle || business?.description || "Explore carefully curated products, unbeatable prices, secure checkout and premium shopping experience.";
-  const displayBgImage = activeSlide?.bgImage || business?.coverImage || business?.banner;
-  const displayImage = activeSlide?.bgImage || productImage;
-  const ctaLabel = activeSlide?.ctaLabel || "Shop Now";
-  const ctaLink = activeSlide?.ctaLink || `/${encodeURIComponent(business?.businessName)}/products`;
+  // Auto-carousel timer if multiple hero slides exist
+  useEffect(() => {
+    if (allHeroSlides.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentSlideIndex((prev) => (prev + 1) % allHeroSlides.length);
+    }, 5500);
+
+    return () => clearInterval(interval);
+  }, [allHeroSlides.length]);
+
+  const activeSlide = allHeroSlides[currentSlideIndex] || allHeroSlides[0];
+
+  const displayTitle = activeSlide?.title || business?.businessName || "Welcome to Our Store";
+  const displaySubtitle = activeSlide?.subtitle || "✨ Premium Curated Collection";
+  const displayDesc =
+    activeSlide?.description ||
+    activeSlide?.subtitle ||
+    business?.description ||
+    "Explore carefully curated products, unbeatable prices, secure checkout and premium shopping experience.";
+
+  const displayBgImage =
+    activeSlide?.image ||
+    activeSlide?.bgImage ||
+    business?.coverImage ||
+    business?.banner;
+
+  const displayImage =
+    activeSlide?.mobileImage ||
+    activeSlide?.image ||
+    activeSlide?.bgImage ||
+    fallbackProductImage;
+
+  const ctaLabel =
+    activeSlide?.buttonText ||
+    activeSlide?.ctaLabel ||
+    "Shop Now";
+
+  const basePath =
+    storeHomePath ||
+    `/${encodeURIComponent(business?.subdomain || business?.slug || business?.businessName || "")}`;
+
+  const ctaLink =
+    activeSlide?.targetUrl ||
+    activeSlide?.ctaLink ||
+    (activeSlide?.targetId
+      ? `${basePath}/product/${activeSlide.targetId}`
+      : `${basePath}/products`);
+
+  const handleNext = () => {
+    setCurrentSlideIndex((prev) => (prev + 1) % allHeroSlides.length);
+  };
+
+  const handlePrev = () => {
+    setCurrentSlideIndex((prev) => (prev - 1 + allHeroSlides.length) % allHeroSlides.length);
+  };
 
   return (
-    <section className="relative overflow-hidden min-h-[560px] flex items-center bg-slate-950">
-      {/* Background */}
+    <section className="relative overflow-hidden min-h-[560px] flex items-center bg-slate-950 text-white">
+      {/* Background with Ambient Glow */}
       {displayBgImage ? (
         <>
           <img
             src={displayBgImage}
-            alt={business?.businessName}
-            className="absolute inset-0 w-full h-full object-cover opacity-20"
+            alt={displayTitle}
+            className="absolute inset-0 w-full h-full object-cover opacity-25 transition-all duration-700"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/90 to-slate-900/60" />
         </>
       ) : (
         <>
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-slate-950 to-slate-900" />
-
           <div className="absolute -top-32 -left-20 h-96 w-96 rounded-full bg-indigo-600/20 blur-[120px]" />
-
           <div className="absolute bottom-0 right-0 h-[450px] w-[450px] rounded-full bg-cyan-500/10 blur-[140px]" />
         </>
       )}
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 w-full">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
-          {/* LEFT */}
-          <div>
-            <span className="inline-flex px-4 py-2 rounded-full bg-indigo-500/20 text-indigo-300 text-sm font-medium">
-              ✨ Premium Collection
-            </span>
+          {/* LEFT CONTENT */}
+          <div className="space-y-6">
+            {displaySubtitle && (
+              <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-bold uppercase tracking-wider">
+                <Sparkles size={13} className="text-cyan-400" />
+                {displaySubtitle}
+              </span>
+            )}
 
-            <h1 className="mt-6 text-5xl md:text-6xl font-black leading-tight text-white">
-              Discover
-              <span className="block bg-gradient-to-r from-indigo-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black leading-tight text-white tracking-tight">
+              <span className="block bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
                 {displayTitle}
               </span>
             </h1>
 
-            <p className="mt-6 text-lg text-slate-300 leading-8 max-w-xl">
+            <p className="text-base sm:text-lg text-slate-300 leading-relaxed max-w-xl font-medium">
               {displayDesc}
             </p>
 
-            <div className="flex flex-wrap gap-4 mt-10">
+            <div className="flex flex-wrap items-center gap-4 pt-4">
               <Link
-                to={ctaLink.startsWith("http") ? ctaLink : ctaLink}
-                className="group flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 px-7 py-4 rounded-xl font-semibold text-white transition"
+                to={ctaLink}
+                className="group flex items-center gap-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 px-8 py-4 rounded-2xl font-bold text-white transition-all duration-300 shadow-xl shadow-indigo-600/25 hover:shadow-indigo-600/40 cursor-pointer"
               >
-                {ctaLabel}
+                <span>{ctaLabel}</span>
                 <ArrowRight
                   size={18}
-                  className="group-hover:translate-x-1 transition"
+                  className="group-hover:translate-x-1 transition duration-200"
                 />
               </Link>
 
               <Link
-                to={`/${encodeURIComponent(business?.businessName)}/about`}
-                className="px-7 py-4 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 text-white transition"
+                to={`${basePath}/about`}
+                className="px-7 py-4 rounded-2xl border border-white/20 bg-white/5 hover:bg-white/10 text-white font-bold transition duration-200 backdrop-blur-sm cursor-pointer"
               >
                 About Store
               </Link>
             </div>
           </div>
 
-          {/* RIGHT */}
+          {/* RIGHT MEDIA CARD */}
           <div className="hidden lg:flex justify-center">
             <div className="relative">
-              <div className="absolute inset-0 bg-indigo-500/30 blur-3xl rounded-[40px]" />
+              <div className="absolute inset-0 bg-indigo-500/25 blur-3xl rounded-[40px]" />
 
-              <div className="relative w-[420px] rounded-[32px] border border-white/10 bg-white/10 backdrop-blur-xl p-6 shadow-2xl">
+              <div className="relative w-[440px] h-[440px] rounded-[36px] border border-white/15 bg-white/10 backdrop-blur-xl p-6 shadow-2xl flex items-center justify-center overflow-hidden">
                 {displayImage ? (
-                  <>
-                    <div className="flex items-center justify-center">
-                      <img
-                        src={displayImage}
-                        alt={displayTitle}
-                        className="max-h-full max-w-full object-contain drop-shadow-2xl hover:scale-105 transition duration-500"
-                      />
-                    </div>
-                  </>
+                  <img
+                    key={displayImage}
+                    src={displayImage}
+                    alt={displayTitle}
+                    className="max-h-full max-w-full object-contain drop-shadow-2xl hover:scale-105 transition-all duration-500 animate-fadeIn"
+                  />
                 ) : (
-                  <div className="h-[420px] flex items-center justify-center text-slate-400">
+                  <div className="text-slate-400 font-semibold text-sm">
                     No Featured Product Available
                   </div>
                 )}
@@ -140,6 +193,45 @@ export default function Hero() {
             </div>
           </div>
         </div>
+
+        {/* CAROUSEL CONTROLS IF MULTIPLE HERO BANNERS */}
+        {allHeroSlides.length > 1 && (
+          <div className="flex items-center justify-between pt-10 border-t border-white/10 mt-10">
+            {/* Dots */}
+            <div className="flex items-center gap-2">
+              {allHeroSlides.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentSlideIndex(idx)}
+                  className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                    idx === currentSlideIndex
+                      ? "w-8 bg-indigo-400"
+                      : "w-2 bg-white/30 hover:bg-white/60"
+                  }`}
+                  aria-label={`Slide ${idx + 1}`}
+                />
+              ))}
+            </div>
+
+            {/* Prev / Next Arrows */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handlePrev}
+                className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
+                title="Previous Slide"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                onClick={handleNext}
+                className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
+                title="Next Slide"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

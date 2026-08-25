@@ -6,15 +6,24 @@ import { formatPrice } from '../constants';
 
 export default function ProductCard({ product, isWishlisted, onWishlist, onQuickView, onAddToCart }) {
   return (
-    <article className="group relative overflow-hidden rounded-xl bg-white shadow-[0_2px_12px_rgba(44,62,53,0.07)] cursor-pointer transition-all duration-220 hover:-translate-y-1.25 hover:shadow-[0_8px_28px_rgba(44,62,53,0.13)] flex flex-col h-full justify-between" data-product-id={product.id}>
-      <div className="relative aspect-[4/5] overflow-hidden">
+    <article className="group relative overflow-hidden rounded-2xl bg-white border border-[#E8DFC8]/40 shadow-[0_2px_12px_rgba(44,62,53,0.07)] cursor-pointer transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_32px_rgba(44,62,53,0.12)] flex flex-col h-full justify-between" data-product-id={product.id}>
+      <div className="relative aspect-[4/5] overflow-hidden bg-[#FAF7F2] flex items-center justify-center p-3">
         <button
-          className="h-full w-full text-left"
+          className="h-full w-full text-left flex items-center justify-center"
           type="button"
           onClick={() => onQuickView(product.id)}
           aria-label={`View details of ${product.name}`}
         >
-          <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform duration-350 group-hover:scale-104 motion-reduce:group-hover:scale-100" loading="lazy" decoding="async" />
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-contain object-center transition-transform duration-350 group-hover:scale-105 motion-reduce:group-hover:scale-100 drop-shadow-sm"
+            loading="lazy"
+            decoding="async"
+            onError={(e) => {
+              e.target.src = "https://via.placeholder.com/600x600?text=Starling+Tales";
+            }}
+          />
         </button>
 
         {product.badge ? (

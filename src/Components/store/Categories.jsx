@@ -1,55 +1,104 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useStore } from "../../pages/Store/StoreLayout";
-import { Tag } from "lucide-react";
+import { useStore } from "../../pages/Store/StoreContext";
+import { Sparkles, ArrowRight, Tag } from "lucide-react";
 
-export default function Categories() {
-  const { business, categories } = useStore();
+export default function Categories({ theme = null }) {
+  const { business, categories, storeHomePath, products } = useStore();
+  const basePath =
+    storeHomePath ||
+    `/${encodeURIComponent(business?.subdomain || business?.slug || business?.businessName || "")}`;
 
   if (!categories || categories.length === 0) {
     return null;
   }
 
+  const primaryColor = theme?.colors?.primary || "#4F46E5";
+
   return (
-    <section className="py-12 bg-white">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-          <div>
-            <h2 className="text-2xl font-black text-gray-900 tracking-tight">Shop by Category</h2>
-            <p className="text-gray-500 text-xs mt-1">Explore our wide selection of curated items</p>
-          </div>
-          <Link
-            to={`/${encodeURIComponent(business.businessName)}/products`}
-            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition"
+    <section className="py-12 px-6 max-w-7xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
+        <div className="space-y-1 text-left">
+          <span
+            className="text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1.5"
+            style={{ color: primaryColor }}
           >
-            View All Products &rarr;
-          </Link>
+            <Sparkles size={12} /> Curated Departments
+          </span>
+          <h2
+            className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight"
+            style={{ color: theme?.colors?.textColor || "#0f172a" }}
+          >
+            Explore Categories
+          </h2>
+          <p className="text-slate-500 text-xs font-medium">
+            Browse our handpicked inventory selections
+          </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {categories.map((category) => (
+        <Link
+          to={`${basePath}/products`}
+          className="text-xs font-bold transition flex items-center gap-1 hover:underline"
+          style={{ color: primaryColor }}
+        >
+          <span>View Full Catalog</span>
+          <ArrowRight size={14} />
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
+        {categories.map((cat) => {
+          const catCount = (products || []).filter(
+            (p) =>
+              p.category === cat._id ||
+              p.category?._id === cat._id ||
+              p.category?.name === cat.name,
+          ).length;
+
+          return (
             <Link
-              key={category._id}
-              to={`/${encodeURIComponent(business.businessName)}/products?category=${encodeURIComponent(category.name)}`}
-              className="group border border-gray-100 rounded-2xl p-4 bg-gray-50/50 hover:bg-white hover:border-indigo-100 hover:shadow-md transition duration-200 flex flex-col items-center justify-center text-center gap-3 cursor-pointer"
+              key={cat._id}
+              to={`${basePath}/products?category=${encodeURIComponent(cat.name)}`}
+              className="group relative rounded-3xl p-5 border border-slate-100/90 bg-white hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 flex flex-col items-center justify-center text-center gap-3 cursor-pointer overflow-hidden"
+              style={{
+                backgroundColor: theme?.colors?.cardBg || "#FFFFFF",
+              }}
             >
-              <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition duration-200">
-                {category.image || category.icon ? (
+              <div
+                className="w-16 h-16 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 overflow-hidden shadow-xs"
+                style={{
+                  backgroundColor: `${primaryColor}10`,
+                  color: primaryColor,
+                }}
+              >
+                {cat.image || cat.icon ? (
                   <img
-                    src={category.image || category.icon}
-                    alt={category.name}
-                    className="w-full h-full object-cover rounded-xl"
+                    src={cat.image || cat.icon}
+                    alt={cat.name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 ) : (
-                  <Tag size={20} />
+                  <Tag size={24} />
                 )}
               </div>
-              <span className="text-xs font-bold text-gray-800 group-hover:text-indigo-600 transition capitalize">
-                {category.name}
-              </span>
+
+              <div className="space-y-0.5">
+                <span
+                  className="text-xs font-black text-slate-800 group-hover:text-indigo-600 transition block capitalize"
+                  style={{ color: theme?.colors?.textColor || "#1e293b" }}
+                >
+                  {cat.name}
+                </span>
+                {catCount > 0 && (
+                  <span className="text-[10px] text-slate-400 font-semibold block">
+                    {catCount} {catCount === 1 ? "Item" : "Items"}
+                  </span>
+                )}
+              </div>
             </Link>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </section>
   );

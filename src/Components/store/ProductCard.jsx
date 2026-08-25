@@ -1,14 +1,17 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ShoppingCart, Eye, Star } from "lucide-react";
+import { ShoppingCart, Eye, Star, Coins, Check } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/reducers/cartReducer";
 import toast from "react-hot-toast";
-import { useStore } from "../../pages/Store/StoreLayout";
+import { useStore } from "../../pages/Store/StoreContext";
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, theme = null }) {
   const dispatch = useDispatch();
-  const { business } = useStore();
+  const { business, storeHomePath } = useStore();
+  const basePath =
+    storeHomePath ||
+    `/${encodeURIComponent(business?.subdomain || business?.slug || business?.businessName || "")}`;
 
   const checkIsOutOfStock = (prod) => {
     if (!prod) return false;
@@ -31,12 +34,12 @@ export default function ProductCard({ product }) {
       prod.inventory?.stockQuantity !== undefined
         ? Number(prod.inventory.stockQuantity)
         : prod.stockQuantity !== undefined
-        ? Number(prod.stockQuantity)
-        : prod.stock !== undefined
-        ? Number(prod.stock)
-        : prod.countInStock !== undefined
-        ? Number(prod.countInStock)
-        : 0;
+          ? Number(prod.stockQuantity)
+          : prod.stock !== undefined
+            ? Number(prod.stock)
+            : prod.countInStock !== undefined
+              ? Number(prod.countInStock)
+              : 0;
 
     return stockVal <= 0;
   };
@@ -50,10 +53,18 @@ export default function ProductCard({ product }) {
       toast.error(`Sorry, ${product.name} is currently out of stock!`);
       return;
     }
-    const defaultVariant = product.hasVariants && Array.isArray(product.variants) ? product.variants[0] : null;
-    const effectivePrice = (defaultVariant && defaultVariant.price !== null && defaultVariant.price !== undefined && defaultVariant.price !== "" && !isNaN(Number(defaultVariant.price)))
-      ? Number(defaultVariant.price)
-      : Number(product.price || 0);
+    const defaultVariant =
+      product.hasVariants && Array.isArray(product.variants)
+        ? product.variants[0]
+        : null;
+    const effectivePrice =
+      defaultVariant &&
+      defaultVariant.price !== null &&
+      defaultVariant.price !== undefined &&
+      defaultVariant.price !== "" &&
+      !isNaN(Number(defaultVariant.price))
+        ? Number(defaultVariant.price)
+        : Number(product.price || 0);
 
     dispatch(
       addToCart({
@@ -65,7 +76,7 @@ export default function ProductCard({ product }) {
           variantId: defaultVariant ? defaultVariant._id : null,
         },
         quantity: 1,
-      })
+      }),
     );
     toast.success(`${product.name} added to cart!`);
   };
@@ -79,112 +90,161 @@ export default function ProductCard({ product }) {
       : 0;
 
   const imageUrl =
+    product.featuredImage?.url ||
+    product.featuredImage ||
+    product.thumbnail?.url ||
+    product.thumbnail ||
     product.images?.[0]?.url ||
-    "https://via.placeholder.com/400x300?text=No+Image";
+    product.images?.[0] ||
+    "https://via.placeholder.com/400x400?text=No+Image";
+
+  const primaryColor = theme?.colors?.primary || "#4F46E5";
 
   return (
-    <div className="group bg-white border border-gray-100 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col h-full relative">
-      {/* Product Image & Badges */}
-      <div className="relative pt-[100%] bg-gray-50 overflow-hidden shrink-0">
-        {isOutOfStock ? (
-          <span className="absolute top-4 left-4 z-10 bg-rose-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-full shadow-sm tracking-wider">
-            Out of Stock
-          </span>
-        ) : (
-          discountPercent > 0 && (
-            <span className="absolute top-4 left-4 z-10 bg-indigo-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm">
-              {discountPercent}% OFF
+    <div
+      className="group bg-white rounded-3xl overflow-hidden border border-slate-100/80 hover:border-indigo-200 hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-300 flex flex-col h-full relative"
+      style={{
+        backgroundColor: theme?.colors?.cardBg || "#FFFFFF",
+      }}
+    >
+      {/* Product Image & Floating Badges */}
+      <div className="relative pt-[100%] bg-slate-50 overflow-hidden shrink-0">
+        <div className="absolute top-3.5 left-3.5 z-10 flex flex-col gap-1.5 items-start">
+          {isOutOfStock ? (
+            <span className="bg-rose-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded-full shadow-sm tracking-wider">
+              Out of Stock
             </span>
-          )
-        )}
+          ) : (
+            discountPercent > 0 && (
+              <span
+                className="text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm"
+                style={{ backgroundColor: primaryColor }}
+              >
+                {discountPercent}% OFF
+              </span>
+            )
+          )}
+          {product.isFeatured && !isOutOfStock && (
+            <span className="bg-amber-500 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full shadow-xs">
+              ★ Featured
+            </span>
+          )}
+        </div>
+
         <img
           src={imageUrl}
           alt={product.name}
-          className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-300 ${
-            isOutOfStock ? "opacity-75 grayscale-[30%]" : ""
+          className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${
+            isOutOfStock ? "opacity-70 grayscale-[25%]" : ""
           }`}
+          loading="lazy"
         />
 
-        {/* Hover overlay with quick links */}
-        <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-3">
+        {/* Hover Quick Actions */}
+        <div className="absolute inset-0 bg-slate-950/20 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
           <Link
-            to={`/${encodeURIComponent(business.businessName)}/product/${product._id}`}
-            className="p-3 bg-white text-gray-900 rounded-full hover:bg-indigo-600 hover:text-white transition shadow-lg shadow-black/10 cursor-pointer"
-            title="View Details"
+            to={`${basePath}/product/${product._id}`}
+            className="p-3 bg-white text-slate-900 rounded-2xl hover:bg-slate-950 hover:text-white transition-all duration-200 shadow-lg cursor-pointer"
+            title="Quick View"
           >
-            <Eye size={18} />
+            <Eye size={17} />
           </Link>
           <button
             onClick={handleAdd}
             disabled={isOutOfStock}
-            className={`p-3 rounded-full transition shadow-lg shadow-black/10 ${
+            className={`p-3 rounded-2xl transition-all duration-200 shadow-lg cursor-pointer ${
               isOutOfStock
                 ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                : "bg-white text-gray-900 hover:bg-indigo-600 hover:text-white cursor-pointer"
+                : "bg-white text-slate-900 hover:bg-indigo-600 hover:text-white"
             }`}
+            style={{
+              "--hover-bg": primaryColor,
+            }}
             title={isOutOfStock ? "Out of Stock" : "Add to Cart"}
           >
-            <ShoppingCart size={18} />
+            <ShoppingCart size={17} />
           </button>
         </div>
       </div>
 
-      {/* Product Info */}
-      <div className="p-5 flex-1 flex flex-col justify-between">
-        <div className="space-y-1.5">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
-            {product.category?.name || "General"}
+      {/* Product Content Details */}
+      <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
+        <div className="space-y-1.5 text-left">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">
+            {product.category?.name || "Premium Collection"}
           </span>
+
           <Link
-            to={`/${encodeURIComponent(business.businessName)}/product/${product._id}`}
-            className="font-bold text-gray-900 group-hover:text-indigo-600 transition line-clamp-1 block leading-tight text-sm"
+            to={`${basePath}/product/${product._id}`}
+            className="font-bold text-slate-900 group-hover:text-indigo-600 transition line-clamp-1 block leading-snug text-sm tracking-tight"
+            style={{
+              color: theme?.colors?.textColor || "#0f172a",
+            }}
           >
             {product.name}
           </Link>
 
-          {/* Rating */}
-          <div className="flex items-center gap-1">
-            <div className="flex text-amber-400">
-              <Star size={12} fill="currentColor" />
+          {/* Rating & Coin Rewards */}
+          <div className="flex items-center justify-between gap-2 pt-0.5">
+            <div className="flex items-center gap-1">
+              <Star size={12} className="text-amber-400 fill-amber-400" />
+              <span className="text-[11px] font-bold text-slate-600">
+                {product.rating || "4.9"}
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium">
+                ({product.numReviews || 12})
+              </span>
             </div>
-            <span className="text-[10px] font-bold text-gray-500">
-              {product.rating || "4.8"} ({product.numReviews || 8})
-            </span>
+
+            {product.coinReward > 0 && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+                <Coins size={10} className="text-amber-500" /> +{product.coinReward}
+              </span>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2 mt-4 pt-4 border-t border-gray-50">
-          <div className="flex items-baseline gap-1.5 flex-wrap">
-            <span className="font-extrabold text-gray-900 text-base">
-              {product.hasVariants &&
-              product.variants &&
-              product.variants.length > 0
-                ? (() => {
-                    const prices = product.variants
-                      .map((v) => v.price)
-                      .filter((p) => p !== undefined && p !== null);
-                    if (prices.length > 0) {
-                      const minPrice = Math.min(...prices);
-                      const maxPrice = Math.max(...prices);
-                      if (minPrice === maxPrice) {
-                        return `₹${minPrice.toLocaleString("en-IN")}`;
+        {/* Pricing & CTA Button */}
+        <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-100">
+          <div className="flex flex-col">
+            <div className="flex items-baseline gap-1.5 flex-wrap">
+              <span className="font-black text-slate-900 text-base sm:text-lg tracking-tight">
+                {product.hasVariants &&
+                product.variants &&
+                product.variants.length > 0
+                  ? (() => {
+                      const prices = product.variants
+                        .map((v) => v.price)
+                        .filter((p) => p !== undefined && p !== null);
+                      if (prices.length > 0) {
+                        const minPrice = Math.min(...prices);
+                        const maxPrice = Math.max(...prices);
+                        if (minPrice === maxPrice) {
+                          return `₹${minPrice.toLocaleString("en-IN")}`;
+                        }
+                        return `₹${minPrice.toLocaleString("en-IN")} - ₹${maxPrice.toLocaleString("en-IN")}`;
                       }
-                      return `₹${minPrice.toLocaleString("en-IN")} - ₹${maxPrice.toLocaleString("en-IN")}`;
-                    }
-                    return `₹${Number(product.price).toLocaleString("en-IN")}`;
-                  })()
-                : `₹${Number(product.price).toLocaleString("en-IN")}`}
-            </span>
-            {product.compareAtPrice > product.price && (
-              <span className="text-xs text-gray-400 font-medium line-through">
-                ₹{product.compareAtPrice}
+                      return `₹${Number(product.price).toLocaleString("en-IN")}`;
+                    })()
+                  : `₹${Number(product.price || 0).toLocaleString("en-IN")}`}
               </span>
-            )}
+
+              {product.compareAtPrice > product.price && (
+                <span className="text-xs text-slate-400 font-medium line-through">
+                  ₹{Number(product.compareAtPrice).toLocaleString("en-IN")}
+                </span>
+              )}
+            </div>
           </div>
 
           <button
             onClick={handleAdd}
-            className="p-2 bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-xl transition cursor-pointer"
+            disabled={isOutOfStock}
+            className={`p-2.5 rounded-xl transition-all duration-200 cursor-pointer shadow-xs ${
+              isOutOfStock
+                ? "bg-slate-100 text-slate-300 cursor-not-allowed"
+                : "bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white"
+            }`}
             title="Add to Cart"
           >
             <ShoppingCart size={16} />

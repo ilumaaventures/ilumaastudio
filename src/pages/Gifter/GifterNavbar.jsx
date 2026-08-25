@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Menu, X, ShoppingCart, Heart, User, Gift } from "lucide-react";
 import { useSelector } from "react-redux";
-import { useStore } from "../Store/StoreLayout";
+import { useStore } from "../Store/StoreContext";
 
 export default function GifterNavbar() {
-  const { business } = useStore();
+  const { business, storeHomePath } = useStore();
+  const basePath = storeHomePath || `/${encodeURIComponent(business?.subdomain || business?.slug || business?.businessName || "")}`;
   const [mobileMenu, setMobileMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
@@ -22,9 +23,9 @@ export default function GifterNavbar() {
   }, []);
 
   const navLinks = [
-    { name: "Gifting Home", path: `/${encodeURIComponent(business.businessName)}` },
-    { name: "Browse Hampers", path: `/${encodeURIComponent(business.businessName)}/products` },
-    { name: "Our Vows", path: `/${encodeURIComponent(business.businessName)}/about` },
+    { name: "Gifting Home", path: `${basePath}` },
+    { name: "Browse Hampers", path: `${basePath}/products` },
+    { name: "Our Vows", path: `${basePath}/about` },
   ];
 
   return (
@@ -39,7 +40,7 @@ export default function GifterNavbar() {
         <div className="h-20 flex items-center justify-between gap-6">
           {/* Logo & Brand */}
           <Link
-            to={`/${encodeURIComponent(business.businessName)}`}
+            to={basePath}
             className="flex items-center gap-3 shrink-0 group"
           >
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#5C1A29] to-[#7E2437] flex items-center justify-center text-white group-hover:scale-105 transition-transform duration-300 shadow-sm">
@@ -63,10 +64,9 @@ export default function GifterNavbar() {
                 to={link.path}
                 end
                 className={({ isActive }) =>
-                  `font-sans text-xs tracking-wider uppercase font-bold transition-all duration-300 relative py-1 hover:text-[#E1A990] ${
-                    isActive
-                      ? "text-[#E1A990]"
-                      : "text-[#5C1A29]"
+                  `font-sans text-xs tracking-wider uppercase font-bold transition-all duration-300 relative py-1 hover:text-[#E1A990] ${isActive
+                    ? "text-[#E1A990]"
+                    : "text-[#5C1A29]"
                   }`
                 }
               >

@@ -2,14 +2,35 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Botanical from "./components/Botanical";
 import HeartDivider from "./components/HeartDivider";
-import { useStore } from "../../pages/Store/StoreLayout";
+import { useStore } from "../Store/StoreContext";
 import baseApi from "../../api/baseApi";
 
 function StarlingTalesHero() {
-  const { business } = useStore();
+  const {
+    business,
+    storeHomePath: contextHomePath,
+    heroBanners,
+    banners,
+    slides: ctxSlides,
+  } = useStore();
   const [slides, setSlides] = useState([]);
 
+  const storeHomePath =
+    contextHomePath ||
+    (business?.subdomain
+      ? `/${encodeURIComponent(business.subdomain)}`
+      : business?.slug
+        ? `/${encodeURIComponent(business.slug)}`
+        : business?.businessName
+          ? `/${encodeURIComponent(business.businessName)}`
+          : "");
+
   useEffect(() => {
+    if (ctxSlides && ctxSlides.length > 0) {
+      setSlides(ctxSlides);
+      return;
+    }
+
     const fetchSlides = async () => {
       if (!business?._id) return;
 
@@ -17,8 +38,6 @@ function StarlingTalesHero() {
         const res = await baseApi.get(
           `/marketing/public/slides/${business._id}`,
         );
-
-        console.log("Fetched slides:", res.data);
 
         if (Array.isArray(res.data)) {
           setSlides(res.data);
@@ -28,13 +47,12 @@ function StarlingTalesHero() {
           setSlides([]);
         }
       } catch (err) {
-        console.error(err);
         setSlides([]);
       }
     };
 
     fetchSlides();
-  }, [business?._id]);
+  }, [business?._id, ctxSlides]);
 
   const slide = useMemo(() => {
     if (!slides.length) return null;
@@ -52,41 +70,47 @@ function StarlingTalesHero() {
     return item;
   }, [slides]);
 
+  const activeBanner =
+    heroBanners?.[0] || banners?.find((b) => b.type === "hero") || slide;
+  console.log("Active Banner:", activeBanner);
   // ===========================
   // Dynamic values with fallback
   // ===========================
 
-  const subtitle = slide?.subtitle || "Handcrafted Soft Companions";
+  const subtitle = activeBanner?.subtitle || "Handcrafted Soft Companions";
 
-  const title = slide?.title || "THE WORLD OF STARLING TALES";
+  const title = activeBanner?.title || "THE WORLD OF STARLING TALES";
 
   const description =
-    slide?.description ||
+    activeBanner?.description ||
     `Welcome to our home and meet our residents.
 
 Lovingly handcrafted, stitched with care and created with gentle fabrics. Every companion is thoughtfully designed to bring comfort, imagination and meaningful memories into childhood.`;
 
   const buttonText =
-    slide?.ctaLabel || slide?.buttonText || "Explore Our World";
+    activeBanner?.buttonText ||
+    activeBanner?.ctaLabel ||
+    activeBanner?.buttonText ||
+    "Explore Our World";
 
   const buttonLink =
-    slide?.ctaLink ||
-    slide?.buttonLink ||
-    `/${encodeURIComponent(business?.businessName || "")}/products`;
+    activeBanner?.targetUrl ||
+    activeBanner?.ctaLink ||
+    activeBanner?.buttonLink ||
+    (activeBanner?.targetId
+      ? `${storeHomePath}/product/${activeBanner.targetId}`
+      : `${storeHomePath}/products`);
 
   const image =
-    slide?.bgImage ||
-    slide?.image ||
-    slide?.imageUrl ||
+    activeBanner?.image ||
+    activeBanner?.bgImage ||
+    activeBanner?.imageUrl ||
     "https://starlingtales.vercel.app/22.png";
-
-  console.log("Current Slide:", slide);
-  console.log("Image:", image);
 
   return (
     <section
       id="home"
-      className="relative overflow-hidden bg-[#FCFAF7] border-b border-[#E8DFD2] py-10 lg:py-14"
+      className="relative overflow-hidden bg-[#FCFAF7] border-b border-[#E8DFD2] py-10 lg:py-14 scroll-mt-20"
     >
       {/* Decorations */}
       <Botanical className="absolute -left-10 top-12 w-36 opacity-20 pointer-events-none" />

@@ -12,14 +12,14 @@ export default function ProductModal({
   const drawerRef = useRef(null);
   const [mainImage, setMainImage] = useState(product?.image || "");
   const [selectedVariant, setSelectedVariant] = useState(
-    product?.variants[0] || null,
+    product?.variants?.[0] || null,
   );
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     if (!product) return;
-    setMainImage(product.image);
-    setSelectedVariant(product.variants[0] || null);
+    setMainImage(product.image || product.images?.[0]?.url || "");
+    setSelectedVariant(product.variants?.[0] || null);
     setQuantity(1);
   }, [product]);
 
@@ -82,14 +82,17 @@ export default function ProductModal({
         </button>
 
         <div className="grid min-h-full grid-cols-1 lg:grid-cols-2">
-          <div className="relative p-4 sm:p-6 lg:p-10 px-7.5 bg-white">
-            <div className="relative aspect-square sm:aspect-[4/5] overflow-hidden rounded-lg mb-3">
+          <div className="relative p-4 sm:p-6 lg:p-10 px-7.5 bg-white flex flex-col justify-start">
+            <div className="relative aspect-square sm:aspect-[4/5] overflow-hidden rounded-2xl mb-4 bg-[#FAF7F2] border border-[#E8DFC8]/50 flex items-center justify-center p-4">
               <img
                 src={mainImage}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain object-center transition-transform duration-300 hover:scale-105 drop-shadow-sm"
                 loading="eager"
                 decoding="async"
+                onError={(e) => {
+                  e.target.src = "https://via.placeholder.com/600x600?text=Starling+Tales";
+                }}
               />
               <button
                 className={`absolute top-3 right-3 flex h-11 w-11 items-center justify-center border-none rounded-full bg-white text-text-muted shadow-[0_2px_10px_rgba(0,0,0,0.12)] transition-all duration-200 hover:text-danger hover:scale-108 focus-visible:text-danger focus-visible:scale-108 ${isWishlisted ? "text-danger fill-danger" : ""}`}
@@ -103,30 +106,32 @@ export default function ProductModal({
                 />
               </button>
             </div>
-            <div
-              className="flex flex-wrap gap-2"
-              role="list"
-              aria-label="Product images"
-            >
-              {product.gallery.map((image, index) => (
-                <button
-                  key={image}
-                  className={`w-14 h-14 sm:w-16 sm:h-16 overflow-hidden border-2 rounded bg-cream transition-colors duration-150 ${mainImage === image ? "border-blue-soft" : "border-transparent hover:border-blue-soft focus-visible:border-blue-soft"}`}
-                  type="button"
-                  role="listitem"
-                  onClick={() => setMainImage(image)}
-                  aria-label={`View image ${index + 1}`}
-                >
-                  <img
-                    src={image}
-                    alt={`${product.name} view ${index + 1}`}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </button>
-              ))}
-            </div>
+            {product.gallery?.length > 1 && (
+              <div
+                className="flex flex-wrap gap-2.5"
+                role="list"
+                aria-label="Product images"
+              >
+                {product.gallery.map((image, index) => (
+                  <button
+                    key={image}
+                    className={`w-14 h-14 sm:w-16 sm:h-16 overflow-hidden border-2 rounded-xl bg-[#FAF7F2] p-1 transition-all duration-150 flex items-center justify-center ${mainImage === image ? "border-blue-soft ring-2 ring-blue-soft/20 shadow-sm" : "border-[#E8DFC8]/50 hover:border-blue-soft"}`}
+                    type="button"
+                    role="listitem"
+                    onClick={() => setMainImage(image)}
+                    aria-label={`View image ${index + 1}`}
+                  >
+                    <img
+                      src={image}
+                      alt={`${product.name} view ${index + 1}`}
+                      className="w-full h-full object-contain"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="overflow-y-auto p-4 sm:p-6 lg:p-10 pr-9 pl-7.5">

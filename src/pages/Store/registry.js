@@ -7,6 +7,7 @@ import GifterFooter from "../Gifter/GifterFooter";
 import StarlingAbout from "../StarlingTales/StarlingAbout";
 import StarlingTalesHome from "../StarlingTales/StarlingTalesHome";
 import StarlingTalesProduct from "../StarlingTales/StarlingTalesProduct";
+import StarlingGiftHampers from "../StarlingTales/StarlingGiftHampers";
 import StarlingNavbar from "../StarlingTales/components/StarlingNavbar";
 import StarlingFooter from "../StarlingTales/components/StarlingFooter";
 
@@ -24,6 +25,7 @@ const customStoresRegistry = {
     StoreAbout: StarlingAbout,
     StoreHome: StarlingTalesHome,
     StoreProducts: StarlingTalesProduct,
+    StoreGiftHampers: StarlingGiftHampers,
   },
 };
 

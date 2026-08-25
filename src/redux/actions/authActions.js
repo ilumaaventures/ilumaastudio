@@ -51,14 +51,20 @@ const syncCartAndWishlist = () => async (dispatch, getState) => {
 
 export const loadUser = () => async (dispatch) => {
   try {
+    const existingToken = localStorage.getItem("token");
     dispatch(loginStart());
     const response = await getProfile();
     const userPermissions = (response.permissions || []).map((p) =>
       typeof p === "object" ? p.name : p,
     );
+    const token = response.token || existingToken;
+    if (token) {
+      localStorage.setItem("token", token);
+    }
     dispatch(
       loginSuccess({
         user: response,
+        token: token,
         permissions: userPermissions,
       }),
     );
@@ -66,6 +72,9 @@ export const loadUser = () => async (dispatch) => {
     dispatch(syncCartAndWishlist());
     return response;
   } catch (error) {
+    if (localStorage.getItem("token")) {
+      localStorage.removeItem("token");
+    }
     dispatch(loginFailure(error.response?.data?.message || "Session expired"));
     dispatch(logout());
   }
@@ -81,10 +90,15 @@ export const loginUser = (credentials) => async (dispatch) => {
       typeof p === "object" ? p.name : p,
     );
 
+    const token = data.token || data.accessToken || data.jwt;
+    if (token) {
+      localStorage.setItem("token", token);
+    }
+
     dispatch(
       loginSuccess({
         user: data,
-        token: data.token,
+        token: token,
         permissions: userPermissions,
       }),
     );
@@ -108,9 +122,15 @@ export const registerUser = (userData) => async (dispatch) => {
       typeof p === "object" ? p.name : p,
     );
 
+    const token = data.token || data.accessToken || data.jwt;
+    if (token) {
+      localStorage.setItem("token", token);
+    }
+
     dispatch(
       loginSuccess({
         user: data,
+        token: token,
         permissions: userPermissions,
       }),
     );
@@ -131,6 +151,7 @@ export const logoutUser = () => async (dispatch) => {
   } catch (error) {
     console.error("Logout API call failed:", error);
   }
+  localStorage.removeItem("token");
   dispatch(logout());
   // Clear cart and wishlist from Redux store and localStorage
   dispatch(clearLocalCart());
@@ -151,9 +172,15 @@ export const loginWithGoogle =
         typeof p === "object" ? p.name : p,
       );
 
+      const token = data.token || data.accessToken || data.jwt;
+      if (token) {
+        localStorage.setItem("token", token);
+      }
+
       dispatch(
         loginSuccess({
           user: data,
+          token: token,
           permissions: userPermissions,
         }),
       );
@@ -167,3 +194,4 @@ export const loginWithGoogle =
       throw error;
     }
   };
+

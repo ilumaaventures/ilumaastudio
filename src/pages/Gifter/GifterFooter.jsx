@@ -1,10 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Gift, Mail, Phone, MapPin, Heart } from "lucide-react";
-import { useStore } from "../Store/StoreLayout";
+import { useStore } from "../Store/StoreContext";
 
 export default function GifterFooter() {
-  const { business } = useStore();
+  const { business, storeHomePath } = useStore();
+  const basePath = storeHomePath || `/${encodeURIComponent(business?.subdomain || business?.slug || business?.businessName || "")}`;
 
   return (
     <footer className="bg-[#3D0A16] text-[#FFF9FB] border-t border-[#E1A990]/35 font-sans">
@@ -32,17 +33,17 @@ export default function GifterFooter() {
             </h4>
             <ul className="space-y-2.5 text-xs text-[#FFF9FB]/80">
               <li>
-                <Link to={`/${encodeURIComponent(business.businessName)}/products`} className="hover:text-[#E1A990] transition-colors duration-200">
+                <Link to={`${basePath}/products`} className="hover:text-[#E1A990] transition-colors duration-200">
                   Occasion Hampers
                 </Link>
               </li>
               <li>
-                <Link to={`/${encodeURIComponent(business.businessName)}/products`} className="hover:text-[#E1A990] transition-colors duration-200">
+                <Link to={`${basePath}/products`} className="hover:text-[#E1A990] transition-colors duration-200">
                   Corporate Gifting
                 </Link>
               </li>
               <li>
-                <Link to={`/${encodeURIComponent(business.businessName)}/about`} className="hover:text-[#E1A990] transition-colors duration-200">
+                <Link to={`${basePath}/about`} className="hover:text-[#E1A990] transition-colors duration-200">
                   Custom Greetings
                 </Link>
               </li>

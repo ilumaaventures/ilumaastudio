@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import "./StarlingTales.css";
-import { useStore } from "../Store/StoreLayout";
+import { useStore } from "../Store/StoreContext";
 import {
   addToCart,
   updateCartQuantity,

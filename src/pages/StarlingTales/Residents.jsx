@@ -137,7 +137,7 @@ function Residents() {
   return (
     <section
       id="our-residents"
-      className="py-10 px-6 max-w-7xl mx-auto space-y-12"
+      className="py-10 px-6 max-w-7xl mx-auto space-y-12 scroll-mt-20"
     >
       <div className="text-center space-y-3.5">
         <span className="text-[10px] font-semibold tracking-[0.22em] uppercase text-blue-soft block">

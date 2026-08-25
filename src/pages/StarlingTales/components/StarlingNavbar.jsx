@@ -2,10 +2,10 @@ import React, { useCallback, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ShoppingCart, Heart, User, Store } from "lucide-react";
 import { useSelector } from "react-redux";
-import { useStore } from "../../Store/StoreLayout";
+import { useStore } from "../../Store/StoreContext";
 
 export default function StarlingNavbar() {
-  const { business } = useStore();
+  const { business, storeHomePath: contextHomePath } = useStore();
   const [mobileMenu, setMobileMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { pathname, hash } = useLocation();
@@ -14,7 +14,15 @@ export default function StarlingNavbar() {
   const wishlistItems = useSelector((s) => s.wishlist?.items || []);
   const totalQty = cartItems.reduce((acc, i) => acc + (i.quantity || 0), 0);
   const wishlistQty = wishlistItems.length;
-  const storeHomePath = `/${encodeURIComponent(business.businessName)}`;
+  const storeHomePath =
+    contextHomePath ||
+    (business?.subdomain
+      ? `/${encodeURIComponent(business.subdomain)}`
+      : business?.slug
+        ? `/${encodeURIComponent(business.slug)}`
+        : business?.businessName
+          ? `/${encodeURIComponent(business.businessName)}`
+          : "");
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 10);
@@ -23,41 +31,57 @@ export default function StarlingNavbar() {
   }, []);
 
   const scrollToSection = useCallback((sectionHash) => {
+    if (!sectionHash) return;
     const id = sectionHash.replace("#", "");
     const el = document.getElementById(id);
 
     if (!el) return;
 
-    const navOffset = 96;
+    const headerElement = document.querySelector("header");
+    const navOffset = headerElement ? headerElement.offsetHeight : 80;
     const y = el.getBoundingClientRect().top + window.scrollY - navOffset;
-    window.scrollTo({ top: y, behavior: "smooth" });
+    window.scrollTo({ top: Math.max(0, Math.round(y)), behavior: "smooth" });
   }, []);
 
   useEffect(() => {
     if (!hash) return;
-
-    requestAnimationFrame(() => scrollToSection(hash));
+    const timeout = setTimeout(() => {
+      scrollToSection(hash);
+    }, 80);
+    return () => clearTimeout(timeout);
   }, [hash, pathname, scrollToSection]);
 
   const navLinks = [
     { name: "HOME", path: `${storeHomePath}#home` },
     {
-      name: "OUR RESIDENTS",
-      path: `${storeHomePath}#our-residents`,
-    },
-    {
-      name: "GIFT HAMPERS ",
-      path: `${storeHomePath}#gift-hampers`,
+      name: "ABOUT US",
+      path: `${storeHomePath}#about-us`,
     },
     {
       name: "NURSERY COLLECTION",
       path: `${storeHomePath}/products`,
     },
     {
-      name: "ABOUT US",
-      path: `${storeHomePath}#about-us`,
+      name: "GIFT HAMPERS",
+      path: `${storeHomePath}/gift-hampers`,
     },
   ];
+
+  const handleLinkClick = (e, linkPath) => {
+    const [linkPathname, linkHash] = linkPath.split("#");
+    if (linkHash) {
+      const currentClean = pathname.replace(/\/$/, "");
+      const targetClean = (linkPathname || "").replace(/\/$/, "");
+      if (
+        currentClean === targetClean ||
+        currentClean === storeHomePath.replace(/\/$/, "")
+      ) {
+        e.preventDefault();
+        window.history.pushState(null, "", `${linkPathname}#${linkHash}`);
+        scrollToSection(`#${linkHash}`);
+      }
+    }
+  };
 
   const isLinkActive = (linkPath) => {
     const [linkPathname, linkHash] = linkPath.split("#");
@@ -79,13 +103,14 @@ export default function StarlingNavbar() {
         <div className="h-20 flex items-center justify-between gap-6">
           {/* Logo & Brand */}
           <Link
-            to={`/${encodeURIComponent(business.businessName)}`}
+            to={`${storeHomePath}#home`}
+            onClick={(e) => handleLinkClick(e, `${storeHomePath}#home`)}
             className="flex items-center gap-2.5 shrink-0"
           >
-            {business.logo ? (
+            {business?.logo ? (
               <img
                 src={business.logo}
-                alt={business.businessName}
+                alt={business?.businessName || "Starling Tales"}
                 className="h-9 w-auto object-contain rounded-lg"
               />
             ) : (
@@ -93,8 +118,8 @@ export default function StarlingNavbar() {
                 <Store size={18} />
               </div>
             )}
-            <span className="font-extrabold text-gray-900 text-lg tracking-tight capitalize">
-              {business.businessName}
+            <span className="font-extrabold text-gray-900 text-lg tracking-tight capitalize font-serif">
+              {business?.businessName || "Starling Tales"}
             </span>
           </Link>
 
@@ -106,12 +131,7 @@ export default function StarlingNavbar() {
                 <Link
                   key={link.name}
                   to={link.path}
-                  onClick={() => {
-                    const [, linkHash] = link.path.split("#");
-                    if (pathname === storeHomePath && linkHash) {
-                      scrollToSection(`#${linkHash}`);
-                    }
-                  }}
+                  onClick={(e) => handleLinkClick(e, link.path)}
                   className={`font-serif text-sm tracking-wider font-semibold transition-all duration-300 relative py-1 hover:text-[#C5A880] ${
                     active ? "text-[#C5A880]" : "text-[#2C3E35]"
                   }`}
@@ -174,12 +194,9 @@ export default function StarlingNavbar() {
               <Link
                 key={link.name}
                 to={link.path}
-                onClick={() => {
+                onClick={(e) => {
                   setMobileMenu(false);
-                  const [, linkHash] = link.path.split("#");
-                  if (pathname === storeHomePath && linkHash) {
-                    scrollToSection(`#${linkHash}`);
-                  }
+                  handleLinkClick(e, link.path);
                 }}
                 className="font-serif text-base font-bold text-[#2C3E35] hover:text-[#C5A880] transition-colors"
               >

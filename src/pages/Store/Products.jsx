@@ -1,12 +1,22 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useStore } from "./StoreLayout";
+import { useStore } from "./StoreContext";
 import ProductCard from "../../Components/store/ProductCard";
-import { Search, Filter, RefreshCw, Grid } from "lucide-react";
+import { Search, Filter, RefreshCw, Grid, Sparkles, Tag } from "lucide-react";
 
 export default function Products() {
-  const { products, categories, template } = useStore();
+  const { products, categories, template, theme: layoutTheme } = useStore();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const theme = template?.selectedTheme || layoutTheme || {
+    colors: {
+      primary: "#4F46E5",
+      secondary: "#818CF8",
+      background: "#F8FAFC",
+      cardBg: "#FFFFFF",
+      textColor: "#0F172A",
+    },
+  };
 
   // Selected filters from search params
   const initialCategory = searchParams.get("category") || "All Categories";
@@ -56,223 +66,212 @@ export default function Products() {
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       const matchesSearch =
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase());
+        product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesCategory =
         selectedCategory === "All Categories" ||
-        (product.category && product.category.name.toLowerCase() === selectedCategory.toLowerCase());
+        (product.category &&
+          (typeof product.category === "object"
+            ? product.category.name?.toLowerCase() === selectedCategory.toLowerCase()
+            : product.category?.toLowerCase() === selectedCategory.toLowerCase()));
 
       return matchesSearch && matchesCategory;
     });
   }, [products, searchQuery, selectedCategory]);
 
-  // If custom template is active, render dynamically
-  if (template && template.productLayout && template.productLayout.length > 0) {
-    const theme = template.selectedTheme || {
-      colors: { primary: "#4F46E5", secondary: "#818CF8", background: "#F3F4F6", cardBg: "#FFFFFF", textColor: "#1F2937" }
-    };
+  const primaryColor = theme?.colors?.primary || "#4F46E5";
 
-    return (
-      <div 
-        className="max-w-7xl mx-auto px-6 py-10 w-full transition-all duration-300 min-h-screen text-left"
-        style={{
-          backgroundColor: theme.colors?.background,
-          color: theme.colors?.textColor,
-          fontFamily: template.selectedFont?.fontFamily || "inherit"
-        }}
-      >
-        <div className="space-y-6">
-          {template.productLayout.map((sec, idx) => {
-            const { type, activeVariant } = sec;
+  return (
+    <div
+      className="w-full min-h-screen py-10 px-6 transition-all duration-300"
+      style={{
+        backgroundColor: theme.colors?.background || "#F8FAFC",
+        color: theme.colors?.textColor || "#0F172A",
+        fontFamily: template?.selectedFont?.fontFamily || "inherit",
+      }}
+    >
+      <div className="max-w-7xl mx-auto space-y-8 text-left">
+        {/* Header Title Section */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-black/[0.06]">
+          <div className="space-y-1">
+            <span
+              className="text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1.5"
+              style={{ color: primaryColor }}
+            >
+              <Sparkles size={12} /> Explore Collection
+            </span>
+            <h1
+              className="text-3xl sm:text-4xl font-black tracking-tight"
+              style={{ color: theme.colors?.textColor }}
+            >
+              Product Catalog
+            </h1>
+            <p className="text-xs opacity-75 font-medium">
+              Browse and discover all available products from our store
+            </p>
+          </div>
 
-            // 1. SEARCH BAR
-            if (type === "search_bar") {
-              return (
-                <div key={sec.id || idx} className="relative max-w-xl">
-                  <Search className="absolute left-3 top-2.5 text-gray-400" size={15} />
-                  <input
-                    type="text"
-                    placeholder="Search catalog..."
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                    className="w-full pl-9 pr-4 py-2 text-xs border border-gray-200 bg-white outline-none focus:ring-1 transition"
-                    style={{ 
-                      borderRadius: activeVariant === "search_s1" ? "9999px" : "6px",
-                      borderColor: theme.colors?.primary,
-                      color: theme.colors?.textColor
-                    }}
-                  />
-                </div>
-              );
-            }
+          <span className="text-xs font-bold opacity-60">
+            Showing {filteredProducts.length} of {products.length} Items
+          </span>
+        </div>
 
-            // 2. FILTER WIDGET
-            if (type === "filter") {
-              return (
-                <div key={sec.id || idx} className="flex flex-wrap gap-2 py-2">
+        {/* Catalog Main Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+          {/* Sidebar Filters */}
+          <div className="space-y-6 lg:col-span-1">
+            {/* Search Card */}
+            <div
+              className="p-5 rounded-3xl border border-black/[0.06] shadow-xs space-y-3"
+              style={{
+                backgroundColor: theme.colors?.cardBg || "#FFFFFF",
+              }}
+            >
+              <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 opacity-90">
+                <Search size={14} style={{ color: primaryColor }} /> Search Products
+              </h3>
+              <div className="relative">
+                <Search
+                  className="absolute left-3.5 top-3 opacity-40"
+                  size={15}
+                />
+                <input
+                  type="text"
+                  placeholder="Type keywords..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="w-full pl-9 pr-4 py-2.5 text-xs border border-slate-200 rounded-2xl outline-none focus:ring-2 transition bg-slate-50/50 focus:bg-white"
+                  style={{
+                    color: theme.colors?.textColor,
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Category Filter Card */}
+            <div
+              className="p-5 rounded-3xl border border-black/[0.06] shadow-xs space-y-3"
+              style={{
+                backgroundColor: theme.colors?.cardBg || "#FFFFFF",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 opacity-90">
+                  <Filter size={14} style={{ color: primaryColor }} /> Categories
+                </h3>
+                {(selectedCategory !== "All Categories" || searchQuery) && (
                   <button
-                    onClick={() => handleCategorySelect("All Categories")}
-                    className="px-3 py-1.5 rounded-full text-xs font-bold border transition cursor-pointer"
-                    style={{
-                      backgroundColor: selectedCategory === "All Categories" ? theme.colors?.primary : "white",
-                      color: selectedCategory === "All Categories" ? "white" : theme.colors?.textColor,
-                      borderColor: theme.colors?.primary
-                    }}
+                    onClick={resetFilters}
+                    className="text-[10px] font-black transition flex items-center gap-1 cursor-pointer hover:underline"
+                    style={{ color: primaryColor }}
                   >
-                    All Categories
+                    <RefreshCw size={10} /> Reset
                   </button>
-                  {categories.map((cat) => (
+                )}
+              </div>
+
+              <div className="flex flex-col gap-1.5 max-h-72 overflow-y-auto pr-1">
+                <button
+                  onClick={() => handleCategorySelect("All Categories")}
+                  className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                    selectedCategory === "All Categories"
+                      ? "text-white shadow-xs"
+                      : "opacity-80 hover:opacity-100 hover:bg-black/[0.03]"
+                  }`}
+                  style={{
+                    backgroundColor:
+                      selectedCategory === "All Categories"
+                        ? primaryColor
+                        : "transparent",
+                  }}
+                >
+                  <span>All Categories</span>
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                      selectedCategory === "All Categories"
+                        ? "bg-white/20 text-white"
+                        : "bg-black/[0.05] opacity-60"
+                    }`}
+                  >
+                    {products.length}
+                  </span>
+                </button>
+
+                {categories.map((cat) => {
+                  const isSelected =
+                    selectedCategory.toLowerCase() === cat.name.toLowerCase();
+                  const count = products.filter((p) => {
+                    const cName =
+                      typeof p.category === "object"
+                        ? p.category?.name
+                        : p.category;
+                    return cName?.toLowerCase() === cat.name?.toLowerCase();
+                  }).length;
+
+                  return (
                     <button
                       key={cat._id}
                       onClick={() => handleCategorySelect(cat.name)}
-                      className="px-3 py-1.5 rounded-full text-xs font-bold border transition cursor-pointer"
+                      className={`w-full text-left px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                        isSelected
+                          ? "text-white shadow-xs"
+                          : "opacity-80 hover:opacity-100 hover:bg-black/[0.03]"
+                      }`}
                       style={{
-                        backgroundColor: selectedCategory.toLowerCase() === cat.name.toLowerCase() ? theme.colors?.primary : "white",
-                        color: selectedCategory.toLowerCase() === cat.name.toLowerCase() ? "white" : theme.colors?.textColor,
-                        borderColor: theme.colors?.primary
+                        backgroundColor: isSelected
+                          ? primaryColor
+                          : "transparent",
                       }}
                     >
-                      {cat.name}
+                      <span className="capitalize truncate">{cat.name}</span>
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                          isSelected
+                            ? "bg-white/20 text-white"
+                            : "bg-black/[0.05] opacity-60"
+                        }`}
+                      >
+                        {count}
+                      </span>
                     </button>
-                  ))}
-                </div>
-              );
-            }
-
-            // 3. PRODUCT GRID
-            if (type === "product_grid") {
-              const gridCols = activeVariant === "grid_s2" ? "grid-cols-2 md:grid-cols-4" : "grid-cols-1 md:grid-cols-3";
-              return (
-                <div key={sec.id || idx} className="space-y-4">
-                  {filteredProducts.length === 0 ? (
-                    <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
-                      <Search size={32} className="text-gray-300 mx-auto mb-2" />
-                      <p className="text-xs text-gray-500 font-semibold">No matches found.</p>
-                    </div>
-                  ) : (
-                    <div className={`grid gap-6 ${gridCols}`}>
-                      {filteredProducts.map((product) => (
-                        <ProductCard key={product._id} product={product} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            }
-
-            return null;
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  // Classic fallback UI
-  return (
-    <div className="max-w-7xl mx-auto px-6 py-10 w-full text-left">
-      <div className="mb-8 border-b border-gray-100 pb-5">
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-2">
-          <Grid size={24} className="text-indigo-650" /> Catalog
-        </h1>
-        <p className="text-gray-500 text-xs mt-1">Browse all available products from our store</p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <div className="space-y-6 lg:col-span-1">
-          <div className="bg-white border border-gray-100 p-5 rounded-2xl shadow-sm space-y-3">
-            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
-              <Search size={14} className="text-indigo-650" /> Search Products
-            </h3>
-            <div className="relative">
-              <Search className="absolute left-3 top-2.5 text-gray-400" size={15} />
-              <input
-                type="text"
-                placeholder="Type keywords..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                className="w-full pl-9 pr-4 py-2 text-xs border border-gray-200 rounded-xl outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition bg-gray-50/50 focus:bg-white"
-              />
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          <div className="bg-white border border-gray-100 p-5 rounded-2xl shadow-sm space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
-                <Filter size={14} className="text-indigo-650" /> Filter by Category
-              </h3>
-              {(selectedCategory !== "All Categories" || searchQuery) && (
+          {/* Product Grid Area */}
+          <div className="lg:col-span-3 space-y-6">
+            {filteredProducts.length === 0 ? (
+              <div
+                className="text-center py-20 rounded-3xl border border-black/[0.06] p-8 shadow-xs space-y-3"
+                style={{
+                  backgroundColor: theme.colors?.cardBg || "#FFFFFF",
+                }}
+              >
+                <Search size={36} className="opacity-30 mx-auto" />
+                <p className="font-bold text-sm">No products found matching filters.</p>
                 <button
                   onClick={resetFilters}
-                  className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1 cursor-pointer"
+                  className="text-xs font-black hover:underline cursor-pointer"
+                  style={{ color: primaryColor }}
                 >
-                  <RefreshCw size={10} /> Reset
+                  Clear all filters
                 </button>
-              )}
-            </div>
-            
-            <div className="flex flex-col gap-1.5 max-h-64 overflow-y-auto">
-              <button
-                onClick={() => handleCategorySelect("All Categories")}
-                className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-between cursor-pointer ${
-                  selectedCategory === "All Categories"
-                    ? "bg-indigo-50 text-indigo-650 font-extrabold"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }`}
-              >
-                <span>All Categories</span>
-                <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full font-bold">
-                  {products.length}
-                </span>
-              </button>
-
-              {categories.map((cat) => {
-                const count = products.filter(
-                  (p) => p.category && p.category.name.toLowerCase() === cat.name.toLowerCase()
-                ).length;
-                return (
-                  <button
-                    key={cat._id}
-                    onClick={() => handleCategorySelect(cat.name)}
-                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-between cursor-pointer ${
-                      selectedCategory.toLowerCase() === cat.name.toLowerCase()
-                        ? "bg-indigo-50 text-indigo-650 font-extrabold"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                    }`}
-                  >
-                    <span className="capitalize">{cat.name}</span>
-                    <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full font-bold">
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProducts.map((product) => (
+                  <ProductCard
+                    key={product._id}
+                    product={product}
+                    theme={theme}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-
-        <div className="lg:col-span-3 space-y-6">
-          <div className="flex items-center justify-between border-b border-gray-50 pb-4">
-            <span className="text-xs font-bold text-gray-400">
-              Showing {filteredProducts.length} of {products.length} products
-            </span>
-          </div>
-
-          {filteredProducts.length === 0 ? (
-            <div className="text-center py-20 bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
-              <Search size={40} className="text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-500 font-bold text-sm">No products found matching filters.</p>
-              <button onClick={resetFilters} className="mt-3 text-xs font-bold text-indigo-600 hover:underline cursor-pointer">
-                Clear all filters
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product._id} product={product} />
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>

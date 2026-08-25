@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import "./StarlingTales.css";
-import { useStore } from "../Store/StoreLayout";
+import { useStore } from "../Store/StoreContext";
 import {
   addToCart,
   updateCartQuantity,
@@ -20,11 +20,18 @@ import { Link } from "react-router-dom";
 import { MoveRight } from "lucide-react";
 export default function StarlingCollection() {
   const dispatch = useDispatch();
-  const { business } = useStore();
+  const { business, products, storeHomePath: contextHomePath } = useStore();
+  const storeHomePath =
+    contextHomePath ||
+    (business?.subdomain
+      ? `/${encodeURIComponent(business.subdomain)}`
+      : business?.slug
+        ? `/${encodeURIComponent(business.slug)}`
+        : business?.businessName
+          ? `/${encodeURIComponent(business.businessName)}`
+          : "");
 
   const navigate = useNavigate();
-  // Retrieve data from Store Context (API fetched)
-  const { products } = useStore();
 
   // Retrieve data from Redux Store
   const cartItems = useSelector((s) => s.cart?.cartItems || []);
@@ -128,12 +135,12 @@ export default function StarlingCollection() {
       origProduct.inventory?.stockQuantity !== undefined
         ? Number(origProduct.inventory.stockQuantity)
         : origProduct.stockQuantity !== undefined
-        ? Number(origProduct.stockQuantity)
-        : origProduct.stock !== undefined
-        ? Number(origProduct.stock)
-        : origProduct.countInStock !== undefined
-        ? Number(origProduct.countInStock)
-        : 0;
+          ? Number(origProduct.stockQuantity)
+          : origProduct.stock !== undefined
+            ? Number(origProduct.stock)
+            : origProduct.countInStock !== undefined
+              ? Number(origProduct.countInStock)
+              : 0;
 
     if (availableStock <= 0) {
       toast.error(`Sorry, ${origProduct.name} is currently out of stock!`);
@@ -145,7 +152,7 @@ export default function StarlingCollection() {
 
     if (currentCartQty + qty > availableStock) {
       toast.error(
-        `Cannot add more. Only ${availableStock} units available in inventory (${currentCartQty} already in cart).`
+        `Cannot add more. Only ${availableStock} units available in inventory (${currentCartQty} already in cart).`,
       );
       return;
     }
@@ -154,8 +161,10 @@ export default function StarlingCollection() {
     const remaining = availableStock - (currentCartQty + qty);
     toast.success(
       `${origProduct.name} added to cart! ${
-        remaining > 0 ? `(${remaining} units left in stock)` : "(Reached max available stock)"
-      }`
+        remaining > 0
+          ? `(${remaining} units left in stock)`
+          : "(Reached max available stock)"
+      }`,
     );
     setCartOpen(true);
   };
@@ -170,19 +179,27 @@ export default function StarlingCollection() {
       ? origProduct.inventory?.stockQuantity !== undefined
         ? Number(origProduct.inventory.stockQuantity)
         : origProduct.stockQuantity !== undefined
-        ? Number(origProduct.stockQuantity)
-        : origProduct.stock !== undefined
-        ? Number(origProduct.stock)
-        : origProduct.countInStock !== undefined
-        ? Number(origProduct.countInStock)
-        : 0
+          ? Number(origProduct.stockQuantity)
+          : origProduct.stock !== undefined
+            ? Number(origProduct.stock)
+            : origProduct.countInStock !== undefined
+              ? Number(origProduct.countInStock)
+              : 0
       : 99;
 
     if (newQty > availableStock) {
-      toast.error(`Cannot increase. Only ${availableStock} units available in inventory.`);
+      toast.error(
+        `Cannot increase. Only ${availableStock} units available in inventory.`,
+      );
       return;
     }
-    dispatch(updateCartQuantity({ productId: productId, _id: productId, quantity: newQty }));
+    dispatch(
+      updateCartQuantity({
+        productId: productId,
+        _id: productId,
+        quantity: newQty,
+      }),
+    );
   };
 
   const handleRemoveFromCart = (productId, sku) => {
@@ -213,10 +230,13 @@ export default function StarlingCollection() {
   return (
     <div className="min-h-screen bg-cream text-text-dark font-sans selection:bg-blue-light selection:text-blue-soft relative overflow-x-hidden w-full">
       {/* Main Section */}
-      <main className="py-16 px-6 max-w-7xl mx-auto space-y-12">
+      <main
+        id="collection"
+        className="py-16 px-6 max-w-7xl mx-auto space-y-12 scroll-mt-20"
+      >
         <div className="text-center space-y-3.5">
           <h1 className="text-4xl font-display font-semibold text-text-dark">
-            Our Collection
+            Meet Our Residents
           </h1>
           <div
             className="flex w-full max-w-[190px] items-center gap-3 text-blue-soft mx-auto"
@@ -249,7 +269,7 @@ export default function StarlingCollection() {
         {/* Right section  */}
         <div className="flex justify-end ">
           <Link
-            to={`/${encodeURIComponent(business.businessName)}/products`}
+            to={`${storeHomePath}/products`}
             className="text-dark font-semibold"
           >
             Show more <MoveRight className="inline-block h-4 w-4 ml-1" />

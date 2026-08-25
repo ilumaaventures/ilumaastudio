@@ -2,12 +2,14 @@ import React, { useEffect, useRef } from 'react';
 import Icon from './Icon';
 import { formatPrice, FREE_SHIPPING_THRESHOLD } from '../constants';
 
-export default function CartDrawer({ cart, products, onClose, onQty, onRemove, onCheckout }) {
+export default function CartDrawer({ open, cart = [], products = [], onClose, onQty, onRemove, onCheckout }) {
+  if (open !== undefined && !open) return null;
+
   const panelRef = useRef(null)
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
-  const subtotal = cart.reduce((sum, item) => {
-    const product = products.find((entry) => entry.id === item.productId)
-    return sum + (product ? product.price * item.quantity : 0)
+  const cartCount = (cart || []).reduce((sum, item) => sum + (item.quantity || 0), 0)
+  const subtotal = (cart || []).reduce((sum, item) => {
+    const product = (products || []).find((entry) => entry.id === item.productId || entry._id === item.productId || entry.id === item.sku)
+    return sum + (product ? product.price * (item.quantity || 1) : 0)
   }, 0)
   const shipping = subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : 99
   const remaining = FREE_SHIPPING_THRESHOLD - subtotal

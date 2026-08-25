@@ -52,6 +52,7 @@ import {
   StoreProductDetailsDispatcher,
   StoreAboutDispatcher,
   StoreContactDispatcher,
+  StoreGiftHampersDispatcher,
 } from "./pages/Store/dispatchers/StoreDispatchers";
 import ScrollToTop from "./Components/ScrollToTop";
 
@@ -178,6 +179,9 @@ function App() {
           />
           <Route path="about" element={<StoreAboutDispatcher />} />
           <Route path="contact" element={<StoreContactDispatcher />} />
+          <Route path="gift-hampers" element={<StoreGiftHampersDispatcher />} />
+          <Route path="gifthampers" element={<StoreGiftHampersDispatcher />} />
+          <Route path="hampers" element={<StoreGiftHampersDispatcher />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
