@@ -76,10 +76,13 @@ function App() {
   } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    dispatch(loadUser());
+    const token = localStorage.getItem("token");
+    if (token && token !== "undefined" && token !== "null") {
+      dispatch(loadUser());
+    }
   }, [dispatch]);
 
-  if (loading) {
+  if (loading && localStorage.getItem("token")) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9]">
         <div className="flex flex-col items-center gap-3">

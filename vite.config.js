@@ -8,9 +8,6 @@ export default defineConfig({
   server: {
     port: 5183,
     host: true,
-    hmr: {
-      clientPort: 5173,
-    },
   },
 });
 

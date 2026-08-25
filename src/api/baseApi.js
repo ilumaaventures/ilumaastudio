@@ -1,9 +1,13 @@
 import axios from "axios";
+import { BASE_URL, API_URL } from "../config/env";
 
-export const BASE_URL =
-  import.meta.env.VITE_API_URL || "https://ilumaasocial-backend.onrender.com";
+export { BASE_URL, API_URL };
 
-export const API_URL = `${BASE_URL}/api`;
+if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
+  console.error(
+    "VITE_API_URL is not set for this production build — falling back to default backend URL.",
+  );
+}
 
 const baseApi = axios.create({
   baseURL: API_URL,
@@ -21,7 +25,7 @@ baseApi.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 export default baseApi;
