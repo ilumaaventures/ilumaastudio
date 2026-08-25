@@ -17,14 +17,14 @@ export const API_URL = `${BASE_URL}/api`;
 
 export const APPS = {
   studio: isProd
-    ? `https://ilumaastudio.${ROOT_DOMAIN}`
-    : `http://ilumaastudio.localhost:5173`,
+    ? `https://studio.${ROOT_DOMAIN}`
+    : `http://studio.localhost:5173`,
   superadmin: isProd
-    ? `https://ilumaasuperadmin.${ROOT_DOMAIN}`
-    : `http://ilumaasuperadmin.localhost:5173`,
+    ? `https://superadmin.${ROOT_DOMAIN}`
+    : `http://superadmin.localhost:5173`,
   dashboard: isProd
-    ? `https://ilumaadashboard.${ROOT_DOMAIN}`
-    : `http://ilumaadashboard.localhost:5173`,
+    ? `https://dashboard.${ROOT_DOMAIN}`
+    : `http://dashboard.localhost:5173`,
   social: isProd
     ? `https://social.${ROOT_DOMAIN}`
     : `http://social.localhost:5173`,
@@ -75,8 +75,8 @@ export const getStorefrontUrl = (slug, slugType = "path", customDomain = null) =
   }
   // Default 'path' type
   return isProd
-    ? `https://ilumaastudio.${ROOT_DOMAIN}/${slug}`
-    : `http://ilumaastudio.localhost:5173/${slug}`;
+    ? `https://studio.${ROOT_DOMAIN}/${slug}`
+    : `http://studio.localhost:5173/${slug}`;
 };
 
 export default {
