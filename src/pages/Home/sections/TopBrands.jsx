@@ -15,7 +15,10 @@ function TopBrands() {
   const fetchLocalShops = async () => {
     try {
       setLoading(true);
-      const response = await getShops();
+      const response = await getShops({
+        businessCategory: "ECOMMERCE",
+        anySlugType: true,
+      });
       const shopsData = response?.data ?? response;
       const shops = Array.isArray(shopsData)
         ? shopsData
@@ -151,14 +154,38 @@ function TopBrands() {
                 const shopImage = shop.logo || shop.image || DEFAULT_SHOP_IMAGE;
 
                 const shopCategory =
-                  shop.businessCategory ||
-                  shop.businessType ||
-                  "Local Business";
+                  (typeof shop.businessCategory === "object"
+                    ? shop.businessCategory?.name
+                    : shop.businessCategory) ||
+                  (typeof shop.businessType === "object"
+                    ? shop.businessType?.name
+                    : shop.businessType) ||
+                  "E-Commerce";
+
+                const shopType =
+                  (typeof shop.businessType === "object"
+                    ? shop.businessType?.name
+                    : shop.businessType) ||
+                  (typeof shop.businessCategory === "object"
+                    ? shop.businessCategory?.name
+                    : shop.businessCategory) ||
+                  "Business";
 
                 const shopDescription =
                   shop.description ||
                   `Explore products and services from ${shopName}.`;
-                const storeRoute = `/${shop.slug || shop.businessName}`;
+
+                const shopSlug =
+                  shop.slugName ||
+                  (typeof shop.slug === "object" ? shop.slug?.slugName : shop.slug) ||
+                  shop.businessSlug ||
+                  shop.subdomain ||
+                  (shop.businessName || shop.name || "")
+                    .toLowerCase()
+                    .replace(/\s+/g, "-") ||
+                  "store";
+
+                const storeRoute = `/${shopSlug}`;
 
                 return (
                   <Link
@@ -219,7 +246,7 @@ function TopBrands() {
                         text-slate-800
                       "
                       >
-                        {shop.businessType || "Business"}
+                        {shopType}
                       </span>
                     </div>
 
@@ -266,11 +293,15 @@ function TopBrands() {
                         {shopDescription}
                       </p>
 
-                      <div className="flex items-center gap-1.5 mt-3 text-slate-400">
-                        <MapPin size={13} />
-
-                        <span className="text-[11px] font-medium">
-                          Available near you
+                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-slate-400 text-[11px]">
+                        <div className="flex items-center gap-1.5">
+                          <MapPin size={13} />
+                          <span className="font-medium">
+                            Available near you
+                          </span>
+                        </div>
+                        <span className="font-bold text-[#1e6091] group-hover:underline">
+                          Visit Shop →
                         </span>
                       </div>
                     </div>
@@ -287,7 +318,7 @@ function TopBrands() {
 
         {/* Mobile See All */}
         <div className="mt-4 sm:hidden text-center">
-          <Link to="/shops" className="text-sm font-bold text-[#1e6091]">
+          <Link to="/store" className="text-sm font-bold text-[#1e6091]">
             See all shops →
           </Link>
         </div>

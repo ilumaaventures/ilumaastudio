@@ -48,12 +48,25 @@ export default function BusinessStoreListing() {
               s.businessName || s.name || s.storeName || "Local Vendor Store",
             storeName: s.storeName || s.name || s.businessName || "Vendor",
             slug:
-              s.slug ||
+              s.slugName ||
+              (typeof s.slug === "object" ? s.slug?.slugName : s.slug) ||
+              s.businessSlug ||
+              s.subdomain ||
               (s.businessName || s.name || "")
                 .toLowerCase()
                 .replace(/\s+/g, "-") ||
               "store",
-            category: s.businessCategory || s.category || "General Store",
+            category:
+              (typeof s.businessCategory === "object"
+                ? s.businessCategory?.name
+                : s.businessCategory) ||
+              (typeof s.businessType === "object"
+                ? s.businessType?.name
+                : s.businessType) ||
+              (typeof s.category === "object"
+                ? s.category?.name
+                : s.category) ||
+              "General Store",
             rating: s.rating || 4.7,
             reviews: s.reviewsCount || 0,
             location:
