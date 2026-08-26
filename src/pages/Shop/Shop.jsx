@@ -24,9 +24,9 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../redux/reducers/cartReducer";
 import { toggleWishlist } from "../../redux/reducers/wishlistReducer";
-import toast from "react-hot-toast";
 import { getallProducts } from "../../api/productService";
 import { fetchCategories } from "../../api/categoryService";
+import ProductCard from "../../Components/ProductCard";
 
 // Helper to extract category name from backend product object or string
 const getCategoryName = (product) => {
@@ -164,12 +164,12 @@ export default function ShopPage() {
             p.inventory?.stockQuantity !== undefined
               ? Number(p.inventory.stockQuantity)
               : p.stockQuantity !== undefined
-              ? Number(p.stockQuantity)
-              : p.stock !== undefined
-              ? Number(p.stock)
-              : p.countInStock !== undefined
-              ? Number(p.countInStock)
-              : 0;
+                ? Number(p.stockQuantity)
+                : p.stock !== undefined
+                  ? Number(p.stock)
+                  : p.countInStock !== undefined
+                    ? Number(p.countInStock)
+                    : 0;
           return s > 0;
         })(),
         isBestseller: p.isBestseller || false,
@@ -383,11 +383,10 @@ export default function ShopPage() {
                   handleCategorySelect(cat.name);
                   if (mobileFilterOpen) setMobileFilterOpen(false);
                 }}
-                className={`w-full flex items-center justify-between text-left transition-colors cursor-pointer py-1 px-1.5 rounded-lg ${
-                  isSelected
-                    ? "bg-blue-50 dark:bg-slate-800 text-[#2563eb] font-bold"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
-                }`}
+                className={`w-full flex items-center justify-between text-left transition-colors cursor-pointer py-1 px-1.5 rounded-lg ${isSelected
+                  ? "bg-blue-50 dark:bg-slate-800 text-[#2563eb] font-bold"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
+                  }`}
               >
                 <span>{cat.name}</span>
                 <span className="text-[10px] text-slate-400 font-semibold">
@@ -511,11 +510,10 @@ export default function ShopPage() {
                 );
                 setCurrentPage(1);
               }}
-              className={`w-full flex items-center justify-between text-left py-1.5 px-2 rounded-md transition-colors cursor-pointer ${
-                selectedRating === item.rating
-                  ? "bg-blue-50 dark:bg-slate-800 text-[#2563eb] font-bold"
-                  : "hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400"
-              }`}
+              className={`w-full flex items-center justify-between text-left py-1.5 px-2 rounded-md transition-colors cursor-pointer ${selectedRating === item.rating
+                ? "bg-blue-50 dark:bg-slate-800 text-[#2563eb] font-bold"
+                : "hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400"
+                }`}
             >
               <div className="flex items-center gap-1">
                 <div className="flex items-center text-amber-400">
@@ -613,22 +611,20 @@ export default function ShopPage() {
             <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-800">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`p-1.5 transition-colors cursor-pointer ${
-                  viewMode === "grid"
-                    ? "bg-[#2563eb] text-white"
-                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                className={`p-1.5 transition-colors cursor-pointer ${viewMode === "grid"
+                  ? "bg-[#2563eb] text-white"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                  }`}
                 title="Grid View"
               >
                 <Grid size={16} />
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={`p-1.5 transition-colors cursor-pointer ${
-                  viewMode === "list"
-                    ? "bg-[#2563eb] text-white"
-                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                className={`p-1.5 transition-colors cursor-pointer ${viewMode === "list"
+                  ? "bg-[#2563eb] text-white"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                  }`}
                 title="List View"
               >
                 <List size={16} />
@@ -681,7 +677,7 @@ export default function ShopPage() {
           <main className="col-span-1 lg:col-span-9 space-y-6">
             {/* Loading Skeleton Grid */}
             {loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-4 gap-3 sm:gap-4">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <ProductSkeletonCard key={i} />
                 ))}
@@ -709,130 +705,10 @@ export default function ShopPage() {
               </div>
             ) : viewMode === "grid" ? (
               /* Grid Layout (2 cols on mobile, 3 on sm, 4 on lg, 6 on 2xl) */
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 gap-3 sm:gap-4">
-                {paginatedProducts.map((prod) => {
-                  const isWished = wishlistItems.some(
-                    (i) => i._id === prod._id,
-                  );
-                  return (
-                    <div
-                      key={prod._id}
-                      className="group bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 flex flex-col justify-between hover:shadow-md hover:border-[#2563eb]/40 transition-all relative overflow-hidden"
-                    >
-                      {/* Top Badges & Wishlist */}
-                      <div className="flex items-center justify-between gap-1 z-10">
-                        <div className="flex items-center gap-1">
-                          {prod.discount && (
-                            <span className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded">
-                              -{prod.discount}
-                            </span>
-                          )}
-                          {prod.isBestseller && (
-                            <span className="bg-emerald-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                              Bestseller <Check size={10} />
-                            </span>
-                          )}
-                        </div>
-
-                        <button
-                          onClick={(e) => handleToggleWishlist(prod, e)}
-                          className="text-slate-400 hover:text-red-500 transition-colors p-1 cursor-pointer"
-                          title="Wishlist"
-                        >
-                          <Heart
-                            size={15}
-                            className={
-                              isWished ? "fill-red-500 text-red-500" : ""
-                            }
-                          />
-                        </button>
-                      </div>
-
-                      {/* Image Box */}
-                      <Link
-                        to={`/products/${prod._id}`}
-                        className="my-2 aspect-square flex items-center justify-center overflow-hidden rounded-lg bg-slate-50 dark:bg-slate-800 p-2"
-                      >
-                        <img
-                          src={prod.image}
-                          alt={prod.name}
-                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </Link>
-
-                      {/* Product Content */}
-                      <div className="space-y-1.5">
-                        <Link to={`/products/${prod._id}`}>
-                          <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-1 group-hover:text-[#2563eb] transition-colors">
-                            {prod.name}
-                          </h3>
-                        </Link>
-                        <p className="text-[10px] text-slate-400 truncate">
-                          {prod.subtitle}
-                        </p>
-
-                        {/* Rating */}
-                        <div className="flex items-center gap-1 text-[10px]">
-                          <span className="font-bold text-slate-700 dark:text-slate-300">
-                            {prod.rating}
-                          </span>
-                          <Star
-                            size={10}
-                            fill="currentColor"
-                            className="text-amber-400"
-                          />
-                          <span className="text-slate-400">
-                            ({prod.reviewsCount})
-                          </span>
-                        </div>
-
-                        {/* Price */}
-                        <div className="flex items-baseline gap-1.5 pt-0.5">
-                          <span className="text-sm font-black text-slate-900 dark:text-white">
-                            ₹{prod.price.toLocaleString()}
-                          </span>
-                          {prod.originalPrice && (
-                            <span className="text-[10px] text-slate-400 line-through">
-                              ₹{prod.originalPrice.toLocaleString()}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Stock status */}
-                        <div
-                          className={`text-[10px] font-bold flex items-center gap-1 ${
-                            prod.inStock ? "text-emerald-600" : "text-rose-600"
-                          }`}
-                        >
-                          <div
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              prod.inStock ? "bg-emerald-500" : "bg-rose-500"
-                            }`}
-                          />
-                          <span>{prod.inStock ? "In Stock" : "Out of Stock"}</span>
-                        </div>
-
-                        {/* Add to Cart Button */}
-                        {prod.inStock ? (
-                          <button
-                            onClick={(e) => handleAddToCart(prod, e)}
-                            className="w-full mt-2 py-1.5 border border-[#2563eb] text-[#2563eb] dark:text-blue-400 hover:bg-[#2563eb] hover:text-white dark:hover:bg-[#2563eb] dark:hover:text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
-                          >
-                            <ShoppingCart size={13} />
-                            <span>Add to Cart</span>
-                          </button>
-                        ) : (
-                          <button
-                            disabled
-                            className="w-full mt-2 py-1.5 bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold flex items-center justify-center gap-1 cursor-not-allowed"
-                          >
-                            <span>Out of Stock</span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-4 gap-3 sm:gap-4">
+                {paginatedProducts.map((prod) => (
+                  <ProductCard key={prod._id} product={prod} />
+                ))}
               </div>
             ) : (
               /* List Layout */
@@ -947,11 +823,10 @@ export default function ShopPage() {
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                          page === currentPage
-                            ? "bg-[#2563eb] text-white shadow-sm"
-                            : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50"
-                        }`}
+                        className={`w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer ${page === currentPage
+                          ? "bg-[#2563eb] text-white shadow-sm"
+                          : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50"
+                          }`}
                       >
                         {page}
                       </button>

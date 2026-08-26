@@ -64,6 +64,14 @@ import HelpCenter from "./pages/Help/HelpCenter";
 // Order Tracking Page
 import TrackOrder from "./pages/Order/TrackOrder";
 
+// Legal, Policies, Shipping & Contact Pages
+import PrivacyPolicy from "./pages/Legal/PrivacyPolicy";
+import TermsOfService from "./pages/Legal/TermsOfService";
+import ContactUs from "./pages/Contact/ContactUs";
+import ShippingInfo from "./pages/Shipping/ShippingInfo";
+import RefundReturnPolicy from "./pages/Legal/RefundReturnPolicy";
+import BusinessPoliciesPage from "./pages/Legal/BusinessPoliciesPage";
+
 import { getUserLocation } from "./utils/location";
 
 function App() {
@@ -145,6 +153,25 @@ function App() {
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/help-center" element={<HelpCenter />} />
           <Route path="/track-order" element={<TrackOrder />} />
+
+          {/* Legal, Support, Shipping & Policies Routes */}
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/terms-and-conditions" element={<TermsOfService />} />
+          <Route path="/contact" element={<ContactUs />} />
+          <Route path="/contact-us" element={<ContactUs />} />
+          <Route path="/shipping" element={<ShippingInfo />} />
+          <Route path="/shipping-info" element={<ShippingInfo />} />
+          <Route path="/shipping-policy" element={<ShippingInfo />} />
+          <Route path="/returns" element={<RefundReturnPolicy />} />
+          <Route path="/refund-policy" element={<RefundReturnPolicy />} />
+          <Route path="/return-policy" element={<RefundReturnPolicy />} />
+          <Route path="/cancellation" element={<RefundReturnPolicy />} />
+          <Route path="/policies" element={<BusinessPoliciesPage />} />
+          <Route path="/business-policies" element={<BusinessPoliciesPage />} />
+
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/profile" element={<Profile />} />

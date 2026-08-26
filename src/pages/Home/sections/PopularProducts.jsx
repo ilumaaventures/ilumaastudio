@@ -7,6 +7,7 @@ import { toggleWishlist } from "../../../redux/reducers/wishlistReducer";
 import toast from "react-hot-toast";
 import { getFeaturedProducts } from "../../../api/productService";
 import { ProductGridSkeleton } from "../../../Components/Skeletons";
+import ProductCard from "../../../Components/ProductCard";
 
 const FALLBACK_POPULAR = [
   {
@@ -206,111 +207,13 @@ function PopularProducts() {
         <ProductGridSkeleton count={5} />
       ) : (
         <div className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          {featuredProducts.map((prod) => {
-            const prodId = prod._id || prod.id;
-            const isWished = wishlistItems.some(
-              (i) => (i._id || i.id || i) === prodId || String(i) === String(prodId)
-            );
-
-            return (
-              <div
-                key={prodId}
-                onClick={() => navigate(`/products/${prodId}`)}
-                className="group shrink-0 w-[175px] sm:w-[200px] md:w-[220px] snap-start cursor-pointer flex flex-col justify-between bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 shadow-2xs hover:shadow-md transition-all"
-              >
-                {/* Image */}
-                <div className="relative aspect-square overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
-                  <button
-                    type="button"
-                    onClick={(e) => handleToggleWishlist(prod, e)}
-                    className="absolute top-2.5 right-2.5 z-10 w-7 h-7 rounded-full bg-white/90 dark:bg-slate-900/90 shadow-2xs flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
-                    aria-label="Add to wishlist"
-                  >
-                    <Heart
-                      size={14}
-                      className={isWished ? "fill-rose-500 text-rose-500" : ""}
-                    />
-                  </button>
-
-                  <img
-                    src={prod.image}
-                    alt={prod.name}
-                    className="w-full h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-
-                {/* Info */}
-                <div className="mt-3 space-y-1">
-                  <p className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400">
-                    {prod.category}
-                  </p>
-
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-xs leading-4 line-clamp-2">
-                    {prod.name}
-                  </h3>
-
-                  {/* Rating */}
-                  <div className="flex items-center gap-1 text-[10px] pt-0.5">
-                    <div className="flex items-center gap-0.5 text-amber-400">
-                      <Star size={11} fill="currentColor" />
-                      <span className="font-bold text-slate-700 dark:text-slate-300">
-                        {prod.rating}
-                      </span>
-                    </div>
-                    <span className="text-slate-400">({prod.reviews})</span>
-                  </div>
-
-                  {/* Price */}
-                  <div className="flex items-baseline gap-1.5 pt-0.5">
-                    <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
-                      ₹{(prod.price || 0).toLocaleString("en-IN")}
-                    </span>
-                    {prod.originalPrice > prod.price && (
-                      <span className="text-[10px] text-slate-400 font-semibold line-through">
-                        ₹{prod.originalPrice.toLocaleString("en-IN")}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Stock Status Indicator */}
-                  <div
-                    className={`text-[9px] font-bold flex items-center gap-1 pt-1 ${
-                      prod.inStock
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-rose-600 dark:text-rose-400"
-                    }`}
-                  >
-                    <div
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        prod.inStock ? "bg-emerald-500" : "bg-rose-500"
-                      }`}
-                    />
-                    <span>{prod.inStock ? "In Stock" : "Out of Stock"}</span>
-                  </div>
-
-                  {/* Add to Cart / Out of Stock Button */}
-                  {prod.inStock ? (
-                    <button
-                      type="button"
-                      onClick={(e) => handleAddToCart(prod, e)}
-                      className="w-full mt-2 py-1.5 bg-slate-900 hover:bg-[#2563eb] text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
-                    >
-                      <ShoppingBag size={12} />
-                      <span>Add to Cart</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled
-                      className="w-full mt-2 py-1.5 bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1 cursor-not-allowed"
-                    >
-                      <span>Out of Stock</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          {featuredProducts.map((prod) => (
+            <ProductCard
+              key={prod._id || prod.id}
+              product={prod}
+              isCarousel={true}
+            />
+          ))}
         </div>
       )}
     </section>

@@ -9,9 +9,9 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import toast from "react-hot-toast";
 import { getActiveFlashDeals } from "../../api/flashDealService";
 import baseApi from "../../api/baseApi";
+import ProductCard from "../../Components/ProductCard";
 
 function CountdownTimer({ targetDate }) {
   const [timeLeft, setTimeLeft] = useState({
@@ -162,68 +162,17 @@ export default function FlashDeals() {
 
               {/* Products Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {(Array.isArray(deal.products) ? deal.products : []).map((item) => {
-                  const imageSrc =
-                    typeof item.images?.[0] === "string"
-                      ? item.images[0]
-                      : item.images?.[0]?.url || item.image || "/placeholder.png";
-
-                  return (
-                    <div
-                      key={item._id}
-                      className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
-                    >
-                      <div className="relative aspect-square overflow-hidden bg-slate-100 dark:bg-slate-800">
-                        <img
-                          src={imageSrc}
-                          alt={item.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <span className="absolute top-3 left-3 px-2.5 py-1 bg-red-600 text-white font-black text-[10px] uppercase tracking-wider rounded-xl shadow-md">
-                          {item.discountPercentage}% OFF
-                        </span>
-                      </div>
-
-                      <div className="p-5 space-y-4 flex-1 flex flex-col justify-between">
-                        <div className="space-y-1.5">
-                          <span className="text-[10px] font-black uppercase text-[#2563eb] tracking-wider">
-                            {item.category?.name || "Flash Sale"}
-                          </span>
-                          <Link
-                            to={`/products/${item._id}`}
-                            className="font-extrabold text-sm text-slate-900 dark:text-white hover:text-[#2563eb] line-clamp-2 block leading-snug"
-                          >
-                            {item.name}
-                          </Link>
-                        </div>
-
-                        <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-                          <div className="flex items-baseline justify-between">
-                            <div className="space-x-2">
-                              <span className="text-xl font-black text-emerald-600">
-                                ₹{item.dealPrice}
-                              </span>
-                              <span className="text-xs text-slate-400 line-through font-semibold">
-                                ₹{item.originalPrice}
-                              </span>
-                            </div>
-                            <span className="text-[10px] font-bold text-amber-600">
-                              Only {item.remainingQuantity} left
-                            </span>
-                          </div>
-
-                          <button
-                            onClick={() => handleAddToCart(item._id)}
-                            className="w-full py-2.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-black rounded-xl transition cursor-pointer flex items-center justify-center gap-2 shadow-md shadow-blue-500/20"
-                          >
-                            <ShoppingCart size={15} />
-                            <span>Add to Cart</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                {(Array.isArray(deal.products) ? deal.products : []).map((item) => (
+                  <ProductCard
+                    key={item._id}
+                    product={{
+                      ...item,
+                      price: item.dealPrice || item.price,
+                      originalPrice: item.originalPrice,
+                      badge: `${item.discountPercentage}% OFF`,
+                    }}
+                  />
+                ))}
               </div>
             </div>
           ))

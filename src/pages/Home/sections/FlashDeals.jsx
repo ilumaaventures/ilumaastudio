@@ -4,8 +4,8 @@ import { Heart, ShoppingBag, Clock, Star, Zap } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { addToCart } from "../../../redux/reducers/cartReducer";
 import { toggleWishlist } from "../../../redux/reducers/wishlistReducer";
-import toast from "react-hot-toast";
 import { getActiveFlashDeals } from "../../../api/flashDealService";
+import ProductCard from "../../../Components/ProductCard";
 
 function FlashDeals() {
   const dispatch = useDispatch();
@@ -182,84 +182,17 @@ function FlashDeals() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {deals.map((item) => {
-          const itemId = item._id;
-          const imageSrc =
-            item.images && item.images.length > 0
-              ? item.images[0].url
-              : "/placeholder.png";
-          const isWished = wishlistItems.some(
-            (i) =>
-              (i._id || i.id || i) === itemId || String(i) === String(itemId),
-          );
-
-          return (
-            <div
-              key={itemId}
-              onClick={() => navigate(`/products/${itemId}`)}
-              className="bg-white border border-slate-200/80 dark:border-slate-800 dark:bg-slate-900 rounded-2xl p-3 sm:p-4 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between group relative cursor-pointer"
-            >
-              {/* Image Container */}
-              <div className="relative w-full aspect-square rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center p-2 overflow-hidden">
-                <span className="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black tracking-wider uppercase shadow-xs">
-                  {item.discountPercentage}% OFF
-                </span>
-
-                {/* Wishlist Button */}
-                <button
-                  type="button"
-                  onClick={(e) => handleToggleWishlist(item, e)}
-                  className="absolute top-2.5 right-2.5 z-10 w-7 h-7 rounded-full bg-white/90 dark:bg-slate-900/90 shadow-2xs flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
-                  aria-label="Add to wishlist"
-                >
-                  <Heart
-                    size={15}
-                    className={isWished ? "fill-rose-500 text-rose-500" : ""}
-                  />
-                </button>
-
-                <img
-                  src={imageSrc}
-                  alt={item.name}
-                  className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-
-              {/* Details */}
-              <div className="mt-3 space-y-1.5">
-                <h3 className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm line-clamp-1">
-                  {item.name}
-                </h3>
-
-                {/* Price */}
-                <div className="flex items-baseline gap-1.5 pt-0.5">
-                  <span className="text-sm sm:text-base font-black text-rose-600 dark:text-rose-400">
-                    ₹{item.dealPrice}
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-semibold line-through">
-                    ₹{item.originalPrice}
-                  </span>
-                </div>
-
-                {/* Stock Status Indicator */}
-                <div className="text-[10px] font-bold flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span>Only {item.remainingQuantity} left</span>
-                </div>
-
-                {/* Add to Cart Button */}
-                <button
-                  type="button"
-                  onClick={(e) => handleAddToCart(item, e)}
-                  className="w-full mt-2 py-2 rounded-xl bg-slate-900 hover:bg-[#2563eb] text-white text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
-                >
-                  <ShoppingBag size={13} />
-                  <span>Claim Deal</span>
-                </button>
-              </div>
-            </div>
-          );
-        })}
+        {deals.map((item) => (
+          <ProductCard
+            key={item._id}
+            product={{
+              ...item,
+              price: item.dealPrice || item.price,
+              originalPrice: item.originalPrice,
+              badge: `${item.discountPercentage}% OFF`,
+            }}
+          />
+        ))}
       </div>
     </section>
   );

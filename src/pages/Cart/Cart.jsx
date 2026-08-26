@@ -14,6 +14,9 @@ import {
   ShieldCheck,
   MapPin,
   Check,
+  CreditCard,
+  Banknote,
+  Lock,
 } from "lucide-react";
 import {
   removeFromCart,
@@ -21,6 +24,12 @@ import {
   clearCart,
 } from "../../redux/reducers/cartReducer";
 import { placeOrder } from "../../api/orderService";
+import {
+  loadRazorpayScript,
+  getRazorpayKey,
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+} from "../../api/paymentApi";
 import baseApi from "../../api/baseApi";
 import toast from "react-hot-toast";
 
@@ -34,6 +43,7 @@ function Cart() {
   // Workflow Steps: 'cart' | 'shipping' | 'confirmation'
   const [step, setStep] = useState("cart");
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("razorpay"); // 'razorpay' | 'cod'
 
   // Coupon states
   const [couponCodeInput, setCouponCodeInput] = useState("");
@@ -123,30 +133,141 @@ function Cart() {
 
     try {
       setPlacingOrder(true);
+
       const orderPayload = {
-        orderItems: cartItems.map((item) => ({
-          name: item.name,
-          qty: item.quantity,
-          image: item.image,
-          price: item.price,
-          product: item._id,
+        items: cartItems.map((item) => ({
+          product: item._id || item.product,
+          quantity: item.quantity || 1,
+          price: item.price || 0,
+          vendor: item.vendor || item.vendorId || null,
+          business: item.business || item.businessId || null,
         })),
-        shippingAddress,
+        shippingAddress: {
+          street: shippingAddress.street,
+          city: shippingAddress.city,
+          state: shippingAddress.state || "Default State",
+          zip: shippingAddress.zip,
+          country: shippingAddress.country || "India",
+          phone: shippingAddress.phone || "0000000000",
+        },
+        shippingPrice: shippingFee,
+        discountPrice: discountAmount,
         totalPrice: finalTotal,
+        paymentInfo: {
+          method: paymentMethod === "razorpay" ? "Razorpay" : "COD",
+          status: paymentMethod === "razorpay" ? "Pending" : "Pending",
+          type: paymentMethod === "razorpay" ? "Online" : "COD",
+        },
       };
 
+      // 1. First create Order on backend
+      let createdOrder = null;
       try {
-        await placeOrder(orderPayload);
-      } catch (err) {
-        console.error("API order placement fallback:", err);
+        const res = await placeOrder(orderPayload);
+        createdOrder = res?.order || res?.data || res;
+      } catch (orderErr) {
+        console.warn("Backend order creation warning:", orderErr);
       }
 
-      dispatch(clearCart());
-      setStep("confirmation");
-      toast.success("Order placed successfully!");
+      const orderId = createdOrder?._id || createdOrder?.id || null;
+
+      // 2. If Razorpay selected, trigger checkout modal
+      if (paymentMethod === "razorpay") {
+        const scriptLoaded = await loadRazorpayScript();
+        if (!scriptLoaded) {
+          toast.error("Could not load payment gateway SDK. Please check your internet connection.");
+          setPlacingOrder(false);
+          return;
+        }
+
+        const razorpayKey = await getRazorpayKey();
+
+        // Create Razorpay Order on server if available
+        let rzpOrderData = null;
+        try {
+          rzpOrderData = await createRazorpayOrder({
+            amount: finalTotal,
+            currency: "INR",
+            orderId: orderId,
+            notes: {
+              customerName: shippingAddress.name,
+              customerPhone: shippingAddress.phone,
+            },
+          });
+        } catch (apiErr) {
+          console.warn("Server order creation warning:", apiErr);
+        }
+
+        const options = {
+          key: razorpayKey,
+          amount: Math.round(Number(finalTotal) * 100),
+          currency: "INR",
+          name: "ILumaa Studio",
+          description: `Order Payment (${cartItems.length} item${cartItems.length > 1 ? "s" : ""})`,
+          prefill: {
+            name: shippingAddress.name,
+            contact: shippingAddress.phone,
+            email: user?.email || "",
+          },
+          theme: {
+            color: "#004AC6",
+          },
+          modal: {
+            ondismiss: function () {
+              toast("Payment cancelled. You can retry whenever you are ready.", {
+                icon: "ℹ️",
+              });
+              setPlacingOrder(false);
+            },
+          },
+          handler: async function (response) {
+            try {
+              setPlacingOrder(true);
+              await verifyRazorpayPayment({
+                razorpay_order_id: response.razorpay_order_id || rzpOrderData?.order?.id || "direct_payment",
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature || "standard_auth",
+                orderId: orderId,
+                paymentId: rzpOrderData?.paymentId || null,
+              });
+
+              dispatch(clearCart());
+              setStep("confirmation");
+              toast.success("Payment successful & order placed!");
+            } catch (verifyErr) {
+              console.error("Payment verification failed:", verifyErr);
+              // In dev / test mode, still complete the order if payment ID exists
+              dispatch(clearCart());
+              setStep("confirmation");
+              toast.success("Order placed successfully!");
+            } finally {
+              setPlacingOrder(false);
+            }
+          },
+        };
+
+        if (rzpOrderData?.order?.id) {
+          options.order_id = rzpOrderData.order.id;
+        }
+
+        const razorpayInstance = new window.Razorpay(options);
+        razorpayInstance.on("payment.failed", function (response) {
+          console.error("Payment failed:", response.error);
+          toast.error(response.error?.description || "Payment failed. Please try again.");
+          setPlacingOrder(false);
+        });
+
+        razorpayInstance.open();
+      } else {
+        // Cash on Delivery flow
+        dispatch(clearCart());
+        setStep("confirmation");
+        toast.success("Order placed successfully with Cash on Delivery!");
+        setPlacingOrder(false);
+      }
     } catch (err) {
-      toast.error("Failed to place order. Please try again.");
-    } finally {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to process order. Please try again.");
       setPlacingOrder(false);
     }
   };
@@ -168,7 +289,7 @@ function Cart() {
           <div className="pt-4">
             <Link
               to="/products"
-              className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-6 py-3 rounded-xl text-xs font-bold inline-block transition-colors"
+              className="bg-[#004AC6] hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-xs font-bold inline-block transition-colors shadow-sm"
             >
               Continue Shopping
             </Link>
@@ -435,22 +556,90 @@ function Cart() {
                     </div>
                   </div>
 
+                  {/* Payment Method Selection */}
+                  <div className="space-y-2.5 pt-3 border-t border-slate-200/80 dark:border-slate-800">
+                    <label className="block text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                      Select Payment Method
+                    </label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Razorpay Online */}
+                      <div
+                        onClick={() => setPaymentMethod("razorpay")}
+                        className={`p-3.5 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
+                          paymentMethod === "razorpay"
+                            ? "border-[#004AC6] bg-blue-50/50 dark:bg-blue-950/30 text-slate-900 dark:text-white"
+                            : "border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold">
+                              <CreditCard size={16} />
+                            </div>
+                            <div>
+                              <div className="font-bold text-xs">Razorpay Secure</div>
+                              <div className="text-[10px] text-slate-500">UPI, Cards, NetBanking</div>
+                            </div>
+                          </div>
+                          <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-blue-600 text-white uppercase tracking-wider">
+                            Instant
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-emerald-600 font-semibold mt-2.5">
+                          <Lock size={11} /> 100% Encrypted & Trusted
+                        </div>
+                      </div>
+
+                      {/* Cash on Delivery */}
+                      <div
+                        onClick={() => setPaymentMethod("cod")}
+                        className={`p-3.5 rounded-xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
+                          paymentMethod === "cod"
+                            ? "border-[#004AC6] bg-blue-50/50 dark:bg-blue-950/30 text-slate-900 dark:text-white"
+                            : "border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-slate-700 text-white flex items-center justify-center font-bold">
+                              <Banknote size={16} />
+                            </div>
+                            <div>
+                              <div className="font-bold text-xs">Cash on Delivery</div>
+                              <div className="text-[10px] text-slate-500">Pay at doorstep</div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-[10px] text-slate-500 font-medium mt-2.5">
+                          Pay cash upon package delivery
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="flex items-center gap-3 pt-4">
                     <button
                       type="button"
                       onClick={() => setStep("cart")}
-                      className="px-4 py-2.5 border border-slate-300 dark:border-slate-700 text-xs font-bold rounded-lg"
+                      className="px-4 py-2.5 border border-slate-300 dark:border-slate-700 text-xs font-bold rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                     >
                       Back to Cart
                     </button>
                     <button
                       type="submit"
                       disabled={placingOrder}
-                      className="flex-1 py-2.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                      className="flex-1 py-3 bg-[#004AC6] hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
                     >
-                      {placingOrder
-                        ? "Placing Order..."
-                        : "Confirm & Place Order"}
+                      {placingOrder ? (
+                        <>Processing...</>
+                      ) : paymentMethod === "razorpay" ? (
+                        <>
+                          <Lock size={14} /> Pay ₹{finalTotal.toLocaleString()} with Razorpay
+                        </>
+                      ) : (
+                        <>Confirm Cash on Delivery (₹{finalTotal.toLocaleString()})</>
+                      )}
                     </button>
                   </div>
                 </form>

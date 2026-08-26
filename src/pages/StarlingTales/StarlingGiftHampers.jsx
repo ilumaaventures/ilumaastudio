@@ -34,7 +34,7 @@ import CartDrawer from "./components/CartDrawer";
 
 export default function StarlingGiftHampers() {
   const dispatch = useDispatch();
-  const { products: apiProducts } = useStore();
+  const { products: apiProducts, categories } = useStore();
 
   const cartItems = useSelector((s) => s.cart?.cartItems || []);
   const wishlistItems = useSelector((s) => s.wishlist?.items || []);
@@ -43,60 +43,119 @@ export default function StarlingGiftHampers() {
   const [quickViewHamper, setQuickViewHamper] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
 
-  // Filter backend products if any are hampers, otherwise strictly use GIFT_HAMPERS
+  // Helper to check if product belongs to Gift Hamper category
+  const isGiftHamperProduct = (p) => {
+    const directCatName = (
+      p.category?.name ||
+      p.category?.title ||
+      (typeof p.category === "string" ? p.category : "") ||
+      p.categoryName ||
+      ""
+    ).toLowerCase().trim();
+
+    let resolvedCatName = directCatName;
+    if (categories && Array.isArray(categories) && p.category) {
+      const catId = p.category?._id || p.category;
+      const foundCat = categories.find((c) => (c._id || c.id) === catId);
+      if (foundCat?.name) {
+        resolvedCatName = foundCat.name.toLowerCase().trim();
+      }
+    }
+
+    const matchesCategory =
+      resolvedCatName.includes("hamper") ||
+      resolvedCatName.includes("gift set") ||
+      resolvedCatName.includes("gift-set") ||
+      resolvedCatName.includes("gift basket");
+
+    const matchesTags =
+      Array.isArray(p.tags) &&
+      p.tags.some((t) => {
+        const tag = String(t).toLowerCase().trim();
+        return (
+          tag.includes("hamper") ||
+          tag.includes("gift set") ||
+          tag.includes("gifthamper")
+        );
+      });
+
+    const matchesName = (p.name || "").toLowerCase().includes("hamper");
+
+    return matchesCategory || matchesTags || matchesName;
+  };
+
+  // Strictly filter products whose category is gift hamper
   const hampersList = useMemo(() => {
-    const apiHampers = (apiProducts || [])
-      .filter(
-        (p) =>
-          p.category?.name?.toLowerCase().includes("hamper") ||
-          p.tags?.some((t) => t.toLowerCase().includes("hamper")),
-      )
-      .map((p, idx) => ({
-        id: p._id,
-        name: p.name,
-        tagline:
-          p.tagline || (p.description ? p.description.split(".")[0] + "." : p.name),
-        price: p.price,
-        originalPrice: p.compareAtPrice || null,
-        image: p.images?.[0]?.url || "https://starlingtales.vercel.app/19.jpeg",
-        gallery:
-          p.images?.length > 0
-            ? p.images.map((img) => img.url)
-            : ["https://starlingtales.vercel.app/19.jpeg"],
-        category: "Gift Hampers",
-        occasion: "Newborn & Baby Shower",
-        badge: idx % 2 === 0 ? "Bestseller" : "Gift Set",
-        rating: p.rating || 4.9,
-        reviews: p.numReviews || 24,
-        inStock: p.stock === undefined || p.stock > 0,
-        description: p.description || "",
-        includedItems: [
-          "Handcrafted Companion Toy",
-          "Organic Cotton Muslin Textile",
-          "Woven Keepsake Storage Basket",
-          "Calligraphy Card & Wax Seal",
-        ],
-        details: p.details || [
-          "100% GOTS Certified Organic Cotton",
-          "Safety certified & hypoallergenic",
-          "Reusable heirloom container",
-        ],
-        tags: p.tags || ["hamper", "gift"],
-        variants: p.variants?.length
-          ? p.variants.map((v, i) => ({
-              label: v.label || v.name || `Option ${i + 1}`,
-              sku: v.sku || `${p._id}-${i}`,
-            }))
-          : [{ label: "Standard Set", sku: p._id }],
-      }));
+    const allProducts = Array.isArray(apiProducts) ? apiProducts : [];
 
-    const existingNames = new Set(apiHampers.map((h) => h.name.toLowerCase()));
-    const filteredCurated = GIFT_HAMPERS.filter(
-      (h) => !existingNames.has(h.name.toLowerCase()),
-    );
+    // If backend products are loaded for this business
+    if (allProducts.length > 0) {
+      const matchedApiHampers = allProducts
+        .filter(isGiftHamperProduct)
+        .map((p, idx) => {
+          const categoryTitle =
+            p.category?.name ||
+            p.category?.title ||
+            (typeof p.category === "string" ? p.category : "") ||
+            "Gift Hampers";
 
-    return [...apiHampers, ...filteredCurated];
-  }, [apiProducts]);
+          return {
+            id: p._id,
+            name: p.name,
+            tagline:
+              p.tagline ||
+              (p.description ? p.description.split(".")[0] + "." : p.name),
+            price: p.price,
+            originalPrice: p.compareAtPrice || null,
+            image: p.images?.[0]?.url || "https://starlingtales.vercel.app/19.jpeg",
+            gallery:
+              p.images?.length > 0
+                ? p.images.map((img) => img.url)
+                : ["https://starlingtales.vercel.app/19.jpeg"],
+            category: categoryTitle,
+            occasion: p.occasion || "Gift Hampers",
+            badge:
+              p.badge ||
+              (p.compareAtPrice > p.price
+                ? "Sale"
+                : idx % 2 === 0
+                  ? "Bestseller"
+                  : "Gift Set"),
+            rating: p.rating || 4.9,
+            reviews: p.numReviews || 24,
+            inStock: p.stock === undefined || p.stock > 0,
+            description: p.description || "",
+            includedItems: p.includedItems?.length
+              ? p.includedItems
+              : [
+                "Handcrafted Companion Toy",
+                "Organic Cotton Muslin Textile",
+                "Woven Keepsake Storage Basket",
+                "Calligraphy Card & Wax Seal",
+              ],
+            details: p.details?.length
+              ? p.details
+              : [
+                "100% GOTS Certified Organic Cotton",
+                "Safety certified & hypoallergenic",
+                "Reusable heirloom container",
+              ],
+            tags: p.tags || ["hamper", "gift"],
+            variants: p.variants?.length
+              ? p.variants.map((v, i) => ({
+                label: v.label || v.name || `Option ${i + 1}`,
+                sku: v.sku || `${p._id}-${i}`,
+              }))
+              : [{ label: "Standard Set", sku: p._id }],
+          };
+        });
+
+      return matchedApiHampers;
+    }
+
+    // Default template demo data if no backend products exist
+    return GIFT_HAMPERS;
+  }, [apiProducts, categories]);
 
   // Filter by occasion
   const filteredHampers = useMemo(() => {
@@ -212,36 +271,22 @@ export default function StarlingGiftHampers() {
             and safe keepsakes that make gifting feel personal.
           </p>
 
-          {/* Categories / Occasions Tab Bar */}
-          <div
-            className="flex flex-wrap items-center justify-center gap-2 pt-4"
-            role="tablist"
-            aria-label="Gift Hamper occasions"
-          >
-            {HAMPER_OCCASIONS.map((occasion) => {
-              const active = activeOccasion === occasion;
-              return (
-                <button
-                  key={occasion}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => setActiveOccasion(occasion)}
-                  className={`min-h-[38px] px-5 py-1.5 rounded-full text-xs font-medium transition-all duration-150 cursor-pointer ${
-                    active
-                      ? "bg-text-dark text-cream"
-                      : "bg-white border border-cream-dark text-text-body hover:border-blue-soft hover:text-blue-soft"
-                  }`}
-                >
-                  {occasion}
-                </button>
-              );
-            })}
-          </div>
+
         </div>
 
-        {/* Hampers Editorial Cards with mx-auto & small gap */}
-        <div className="space-y-8 md:space-y-12">
+        {/* Hampers Editorial Cards or Empty State */}
+        {filteredHampers.length === 0 ? (
+          <div className="text-center py-16 bg-cream-dark/60 rounded-3xl border border-[#E8DFC8]/60 p-8 max-w-xl mx-auto space-y-4">
+            <Gift size={36} className="mx-auto text-gold" />
+            <h3 className="font-display text-xl font-semibold text-text-dark">
+              No Gift Hampers Found
+            </h3>
+            <p className="text-xs text-text-muted font-light leading-relaxed">
+              We currently don't have items matching the Gift Hamper category for this collection.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-8 md:space-y-12">
             {filteredHampers.map((hamper, index) => {
               const wishlisted = isWishlisted(hamper.id);
               const reverse = index % 2 !== 0;
@@ -252,9 +297,8 @@ export default function StarlingGiftHampers() {
                   className="mx-auto max-w-6xl rounded-3xl overflow-hidden border border-[#E8DFC8]/60 bg-cream-dark shadow-[0_4px_24px_rgba(44,62,53,0.06)] transition-all duration-300 hover:shadow-[0_12px_36px_rgba(44,62,53,0.1)]"
                 >
                   <div
-                    className={`grid md:grid-cols-2 ${
-                      reverse ? "md:[&>div:first-child]:order-2" : ""
-                    }`}
+                    className={`grid md:grid-cols-2 ${reverse ? "md:[&>div:first-child]:order-2" : ""
+                      }`}
                   >
                     {/* IMAGE COLUMN */}
                     <div className="relative min-h-[380px] sm:min-h-[440px] md:min-h-[520px] bg-[#F2EDE2] flex items-center justify-center overflow-hidden group">
@@ -443,7 +487,8 @@ export default function StarlingGiftHampers() {
                 </div>
               );
             })}
-        </div>
+          </div>
+        )}
       </main>
 
       {/* Perks Showcase */}

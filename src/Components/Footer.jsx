@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Facebook, Instagram, Twitter, Youtube, ArrowUp } from "lucide-react";
+import ilumaIcon from "../assests/iluma_icon.png";
 
 function Footer() {
   const scrollToTop = () => {
@@ -16,10 +17,12 @@ function Footer() {
           
           {/* Col 1: Brand Info */}
           <div className="space-y-3">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-[#2563eb] flex items-center justify-center text-white font-black text-sm">
-                S
-              </div>
+            <Link to="/" className="flex items-center gap-2.5 group">
+              <img
+                src={ilumaIcon}
+                alt="ILumaa Studio"
+                className="w-8 h-8 object-contain rounded-lg group-hover:scale-105 transition-transform"
+              />
               <span className="font-black text-lg text-white tracking-tight">
                 ILumaa<span className="text-[#2563eb]">Studio</span>
               </span>
@@ -95,11 +98,12 @@ function Footer() {
               Policies
             </h4>
             <ul className="space-y-2 text-[11px]">
+              <li><Link to="/policies" className="hover:text-white transition-colors">Business Policies</Link></li>
               <li><Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
               <li><Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
-              <li><Link to="/refund-policy" className="hover:text-white transition-colors">Refund Policy</Link></li>
-              <li><Link to="/shipping-policy" className="hover:text-white transition-colors">Shipping Policy</Link></li>
-              <li><Link to="/cancellation" className="hover:text-white transition-colors">Cancellation Policy</Link></li>
+              <li><Link to="/returns" className="hover:text-white transition-colors">Return & Refund Policy</Link></li>
+              <li><Link to="/shipping" className="hover:text-white transition-colors">Shipping Policy</Link></li>
+              <li><Link to="/cancellation" className="hover:text-white transition-colors">Cancellation Guidelines</Link></li>
             </ul>
 
             {/* Payment Icons */}
