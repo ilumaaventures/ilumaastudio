@@ -138,7 +138,7 @@ function Navbar() {
               alt="ILUMAA Studio"
               className="w-10 h-10 object-contain rounded-xl shadow-xs group-hover:scale-105 transition-transform"
             />
-            <div className="flex flex-col">
+            <div className="hidden sm:flex flex-col">
               <span className="font-black text-slate-900 text-xl tracking-tight leading-none flex items-center">
                 ILUMAA<span className="text-[#2563eb]">Studio</span>
               </span>

@@ -88,10 +88,11 @@ export default function BusinessPoliciesPage() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-        
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-          <Link to="/" className="hover:text-[#2563eb]">Home</Link>
+          <Link to="/" className="hover:text-[#2563eb]">
+            Home
+          </Link>
           <ChevronRight size={12} />
           <span className="text-slate-900 font-bold">Business Policies</span>
         </div>
@@ -103,10 +104,11 @@ export default function BusinessPoliciesPage() {
             Governance & Consumer Protection
           </div>
           <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-            ILumaaStudio Business Policies
+            ILUMAA Studio Business Policies
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
-            Explore our comprehensive operating standards, merchant agreements, buyer protection frameworks, and customer service commitments.
+            Explore our comprehensive operating standards, merchant agreements,
+            buyer protection frameworks, and customer service commitments.
           </p>
         </div>
 
@@ -169,7 +171,10 @@ export default function BusinessPoliciesPage() {
                   <CheckCircle2 size={13} />
                   <span>Enforced & Active</span>
                 </div>
-                <Link to="/contact" className="text-[#2563eb] hover:underline text-xs">
+                <Link
+                  to="/contact"
+                  className="text-[#2563eb] hover:underline text-xs"
+                >
                   Inquire
                 </Link>
               </div>
@@ -180,9 +185,12 @@ export default function BusinessPoliciesPage() {
         {/* Bottom Contact Help */}
         <div className="p-8 rounded-3xl bg-white border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="space-y-1 text-center sm:text-left">
-            <h3 className="font-black text-slate-900 text-base">Have a Question About Our Policies?</h3>
+            <h3 className="font-black text-slate-900 text-base">
+              Have a Question About Our Policies?
+            </h3>
             <p className="text-xs text-slate-500">
-              Our compliance and merchant operations team can clarify any policy questions or requirements.
+              Our compliance and merchant operations team can clarify any policy
+              questions or requirements.
             </p>
           </div>
           <Link
@@ -192,7 +200,6 @@ export default function BusinessPoliciesPage() {
             Contact Compliance Team
           </Link>
         </div>
-
       </div>
     </div>
   );

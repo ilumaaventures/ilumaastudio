@@ -24,7 +24,7 @@ function TrackOrder() {
     status: "Out for Delivery",
     customer: "Rahul Rai",
     address: "Lucknow, Uttar Pradesh",
-    courier: "ILumaa Delivery",
+    courier: "ILUMAA Delivery",
     trackingId: "ILM458921763",
     items: [
       {

@@ -66,7 +66,7 @@ function TopBar() {
             href="/businessRegistration"
             className="hover:text-white transition-colors"
           >
-            Sell on ILumaaStudio
+            Sell on ILUMAAStudio
           </a>
 
           <span className="text-slate-600">|</span>

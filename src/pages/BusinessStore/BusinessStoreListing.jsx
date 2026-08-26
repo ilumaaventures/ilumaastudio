@@ -101,7 +101,7 @@ export default function BusinessStoreListing() {
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
               Discover verified local vendors, retailers, and brand stores on
-              ILumaaStudio
+              ILUMAAStudio
             </p>
           </div>
 

@@ -262,7 +262,7 @@ export default function Services() {
                   className="text-indigo-600 flex-shrink-0 mt-0.5"
                 />
                 <p className="text-[11px] text-indigo-950 font-medium leading-relaxed">
-                  All service providers on ILumaaStudio are verified and
+                  All service providers on ILUMAAStudio are verified and
                   background-checked for quality assurance.
                 </p>
               </div>
