@@ -52,6 +52,9 @@ const syncCartAndWishlist = () => async (dispatch, getState) => {
 export const loadUser = () => async (dispatch) => {
   try {
     const existingToken = localStorage.getItem("token");
+    if (!existingToken || existingToken === "undefined" || existingToken === "null") {
+      return null;
+    }
     dispatch(loginStart());
     const response = await getProfile();
     const userPermissions = (response.permissions || []).map((p) =>
