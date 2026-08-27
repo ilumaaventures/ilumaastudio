@@ -26,11 +26,11 @@ export const pillars = [
     text: "Made with gentle fabrics and safe, high quality fillings",
     icon: "leaf",
   },
-  {
-    title: "Made With Love",
-    text: "Handcrafted with care in every little detail",
-    icon: "heart",
-  },
+  // {
+  //   title: "Made With Love",
+  //   text: "Handcrafted with care in every little detail",
+  //   icon: "heart",
+  // },
   {
     title: "Perfect For Gifting",
     text: "Beautifully packaged for meaningful moments",
@@ -449,22 +449,26 @@ export const HAMPER_PERKS = [
   {
     icon: "gift",
     title: "Artisanal Keepsake Box",
-    description: "Nestled inside reusable woven baskets or handcrafted pine boxes tied with botanical satin ribbon.",
+    description:
+      "Nestled inside reusable woven baskets or handcrafted pine boxes tied with botanical satin ribbon.",
   },
   {
     icon: "heart",
     title: "Handwritten Calligraphy Card",
-    description: "Complimentary custom wax-sealed note with your personalized heartfelt message.",
+    description:
+      "Complimentary custom wax-sealed note with your personalized heartfelt message.",
   },
   {
     icon: "leaf",
     title: "100% Gentle & Organic",
-    description: "Pure cotton muslin, hypoallergenic plush fibers, and baby-safe non-toxic natural dyes.",
+    description:
+      "Pure cotton muslin, hypoallergenic plush fibers, and baby-safe non-toxic natural dyes.",
   },
   {
     icon: "truck",
     title: "White Glove Pan-India Delivery",
-    description: "Carefully bubble-protected and delivered promptly for surprise milestone moments.",
+    description:
+      "Carefully bubble-protected and delivered promptly for surprise milestone moments.",
   },
 ];
 
@@ -472,7 +476,8 @@ export const GIFT_HAMPERS = [
   {
     id: "hamper-1",
     name: "The Heirloom Welcome Hamper",
-    tagline: "A signature newborn welcome gift with hand-stitched companion and cosy muslin essentials.",
+    tagline:
+      "A signature newborn welcome gift with hand-stitched companion and cosy muslin essentials.",
     price: 3999,
     originalPrice: 4599,
     image: "https://starlingtales.vercel.app/19.jpeg",
@@ -514,7 +519,8 @@ export const GIFT_HAMPERS = [
   {
     id: "hamper-2",
     name: "Bunny Family Keepsake Basket",
-    tagline: "Three handcrafted linen bunnies in their bespoke embroidered home.",
+    tagline:
+      "Three handcrafted linen bunnies in their bespoke embroidered home.",
     price: 4499,
     originalPrice: 4999,
     image: "https://starlingtales.vercel.app/14.jpeg",
@@ -554,7 +560,8 @@ export const GIFT_HAMPERS = [
   {
     id: "hamper-3",
     name: "Nursery Woodland Symphony Set",
-    tagline: "A dreamscape collection featuring Ellie Elephant and reversible unicorn muslin quilt.",
+    tagline:
+      "A dreamscape collection featuring Ellie Elephant and reversible unicorn muslin quilt.",
     price: 4899,
     originalPrice: 5499,
     image: "https://starlingtales.vercel.app/11.jpeg",
@@ -593,7 +600,8 @@ export const GIFT_HAMPERS = [
   {
     id: "hamper-4",
     name: "The Little Dreamer Celebration Trunk",
-    tagline: "An imaginative toddler milestone gift with Dreamer Doll & personalised waffle backpack.",
+    tagline:
+      "An imaginative toddler milestone gift with Dreamer Doll & personalised waffle backpack.",
     price: 5299,
     originalPrice: 5999,
     image: "https://starlingtales.vercel.app/6.jpeg",
@@ -632,7 +640,8 @@ export const GIFT_HAMPERS = [
   {
     id: "hamper-5",
     name: "Sweet Serenade Newborn Basket",
-    tagline: "Gentle kangaroo companion with hidden pocket surprises and organic swaddles.",
+    tagline:
+      "Gentle kangaroo companion with hidden pocket surprises and organic swaddles.",
     price: 3699,
     originalPrice: 4199,
     image: "https://starlingtales.vercel.app/1.jpeg",
@@ -671,7 +680,8 @@ export const GIFT_HAMPERS = [
   {
     id: "hamper-6",
     name: "Tiny Explorer Milestone Hamper",
-    tagline: "Playful Milo Monkey set in a ticking stripe storage bin for joyful days ahead.",
+    tagline:
+      "Playful Milo Monkey set in a ticking stripe storage bin for joyful days ahead.",
     price: 4199,
     originalPrice: 4699,
     image: "https://starlingtales.vercel.app/13.jpeg",
@@ -709,7 +719,8 @@ export const GIFT_HAMPERS = [
   {
     id: "hamper-7",
     name: "Buttercup Lamb & Floral Dreams Box",
-    tagline: "Pure boucle softness with matching vintage velvet bonnet and floral swaddle.",
+    tagline:
+      "Pure boucle softness with matching vintage velvet bonnet and floral swaddle.",
     price: 3799,
     originalPrice: 4299,
     image: "https://starlingtales.vercel.app/4.jpeg",
@@ -747,7 +758,8 @@ export const GIFT_HAMPERS = [
   {
     id: "hamper-8",
     name: "The Royal Starling Heritage Trunk",
-    tagline: "The ultimate luxury grand keepsake trunk with two heirloom toys & twin quilts.",
+    tagline:
+      "The ultimate luxury grand keepsake trunk with two heirloom toys & twin quilts.",
     price: 7999,
     originalPrice: 8999,
     image: "https://starlingtales.vercel.app/12.jpeg",
@@ -793,21 +805,24 @@ export const HAMPER_TESTIMONIALS = [
     name: "Aanya Singhania",
     location: "Mumbai",
     occasion: "Sister's Baby Shower",
-    comment: "The Heirloom Welcome Hamper took everyone's breath away! The presentation with the wax seal, the softness of the Benny Dog toy, and the organic blanket felt like an old European fairytale. Worth every rupee.",
+    comment:
+      "The Heirloom Welcome Hamper took everyone's breath away! The presentation with the wax seal, the softness of the Benny Dog toy, and the organic blanket felt like an old European fairytale. Worth every rupee.",
     rating: 5,
   },
   {
     name: "Rohan & Devika Verma",
     location: "Bengaluru",
     occasion: "First Birthday Gift",
-    comment: "Ordered the Little Dreamer Celebration Trunk for our niece. The personalized embroidery on the waffle backpack was exquisite. She hugs her Dreamer Doll to sleep every single night.",
+    comment:
+      "Ordered the Little Dreamer Celebration Trunk for our niece. The personalized embroidery on the waffle backpack was exquisite. She hugs her Dreamer Doll to sleep every single night.",
     rating: 5,
   },
   {
     name: "Priyanka Nair",
     location: "New Delhi",
     occasion: "Twin Nephews Arrival",
-    comment: "Finding a hamper fit for twins was tough until I found the Bunny Family Keepsake Basket. The craftsmanship is pure poetry. Arrived safely packaged without a single crease.",
+    comment:
+      "Finding a hamper fit for twins was tough until I found the Bunny Family Keepsake Basket. The craftsmanship is pure poetry. Arrived safely packaged without a single crease.",
     rating: 5,
   },
 ];
@@ -815,18 +830,22 @@ export const HAMPER_TESTIMONIALS = [
 export const HAMPER_FAQS = [
   {
     question: "Can I include a personalized handwritten message?",
-    answer: "Absolutely! Every Starling Tales gift hamper includes a complimentary archival calligraphy card. During checkout or by contacting our concierge, you can specify your exact message, which will be hand-lettered and sealed with our signature botanical wax stamp.",
+    answer:
+      "Absolutely! Every Starling Tales gift hamper includes a complimentary archival calligraphy card. During checkout or by contacting our concierge, you can specify your exact message, which will be hand-lettered and sealed with our signature botanical wax stamp.",
   },
   {
     question: "Are all items inside safe for newborn babies?",
-    answer: "Yes, 100%. All plush companions are stitched with hypoallergenic cotton and safety-tested details. All textiles are made from GOTS-certified organic cotton, and wooden items are crafted from untreated natural beechwood with non-toxic finishes.",
+    answer:
+      "Yes, 100%. All plush companions are stitched with hypoallergenic cotton and safety-tested details. All textiles are made from GOTS-certified organic cotton, and wooden items are crafted from untreated natural beechwood with non-toxic finishes.",
   },
   {
     question: "How are the gift hampers packed for shipping?",
-    answer: "Each hamper is placed within its decorative keepsake container (woven basket or wooden pine chest), wrapped in botanical tissue paper, tied with a satin ribbon, and then encased in heavy-duty protective double-corrugated shipping cartons to arrive in pristine condition.",
+    answer:
+      "Each hamper is placed within its decorative keepsake container (woven basket or wooden pine chest), wrapped in botanical tissue paper, tied with a satin ribbon, and then encased in heavy-duty protective double-corrugated shipping cartons to arrive in pristine condition.",
   },
   {
     question: "Can I create a custom hamper or request corporate/bulk gifting?",
-    answer: "Yes! Our gifting concierge can assist you with custom curated sets, corporate baby gifting, baby shower favors, and personalized monograms. Use our 'Build Your Own Hamper' option or reach out directly to our team.",
+    answer:
+      "Yes! Our gifting concierge can assist you with custom curated sets, corporate baby gifting, baby shower favors, and personalized monograms. Use our 'Build Your Own Hamper' option or reach out directly to our team.",
   },
 ];

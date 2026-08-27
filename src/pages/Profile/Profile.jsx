@@ -25,6 +25,7 @@ import {
   Copy,
   Award,
   RefreshCw,
+  Edit3,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
@@ -34,6 +35,7 @@ import {
   updateProfile,
   getAddresses,
   addAddress as apiAddAddress,
+  updateAddress as apiUpdateAddress,
   deleteAddress as apiDeleteAddress,
   setDefaultAddress as apiSetDefaultAddress,
 } from "../../api/profileService.js";
@@ -241,7 +243,24 @@ export default function Profile() {
     }
   };
 
+  const [editingAddressId, setEditingAddressId] = useState(null);
+
   // Address Actions
+  const handleEditAddressInit = (addr) => {
+    setEditingAddressId(addr._id);
+    setNewAddress({
+      fullName: addr.fullName || user?.name || "",
+      phone: addr.phone || user?.phone || "",
+      street: addr.street || "",
+      city: addr.city || "Lucknow",
+      state: addr.state || "Uttar Pradesh",
+      pincode: addr.pincode || addr.zip || "",
+      type: addr.type || "Home",
+      isDefault: !!addr.isDefault,
+    });
+    setShowAddressModal(true);
+  };
+
   const handleAddAddressSubmit = async (e) => {
     e.preventDefault();
     if (!newAddress.street || !newAddress.pincode || !newAddress.phone) {
@@ -249,53 +268,77 @@ export default function Profile() {
       return;
     }
 
-    const createdAddr = {
-      _id: `addr_${Date.now()}`,
-      ...newAddress,
-    };
-
     try {
-      await apiAddAddress(newAddress);
-    } catch (_) {}
+      if (editingAddressId) {
+        await apiUpdateAddress(editingAddressId, newAddress);
+        setAddresses((prev) =>
+          prev.map((a) =>
+            a._id === editingAddressId
+              ? { ...a, ...newAddress }
+              : newAddress.isDefault
+              ? { ...a, isDefault: false }
+              : a
+          )
+        );
+        toast.success("Address updated successfully!");
+      } else {
+        const res = await apiAddAddress(newAddress);
+        const createdAddr = {
+          _id: res?._id || `addr_${Date.now()}`,
+          ...newAddress,
+        };
 
-    setAddresses((prev) => {
-      let updated = [...prev];
-      if (newAddress.isDefault) {
-        updated = updated.map((a) => ({ ...a, isDefault: false }));
+        setAddresses((prev) => {
+          let updated = [...prev];
+          if (newAddress.isDefault) {
+            updated = updated.map((a) => ({ ...a, isDefault: false }));
+          }
+          return [createdAddr, ...updated];
+        });
+        toast.success("Address saved successfully!");
       }
-      return [createdAddr, ...updated];
-    });
-
-    toast.success("Address saved successfully!");
-    setShowAddressModal(false);
-    setNewAddress({
-      fullName: user?.name || "",
-      phone: user?.phone || "",
-      street: "",
-      city: "Lucknow",
-      state: "Uttar Pradesh",
-      pincode: "",
-      type: "Home",
-      isDefault: false,
-    });
+    } catch (err) {
+      console.error("Address save error:", err);
+      toast.error(err.response?.data?.message || "Failed to save address");
+    } finally {
+      setShowAddressModal(false);
+      setEditingAddressId(null);
+      setNewAddress({
+        fullName: user?.name || "",
+        phone: user?.phone || "",
+        street: "",
+        city: "Lucknow",
+        state: "Uttar Pradesh",
+        pincode: "",
+        type: "Home",
+        isDefault: false,
+      });
+    }
   };
 
   const handleSetDefaultAddress = async (id) => {
     try {
       await apiSetDefaultAddress(id);
-    } catch (_) {}
-    setAddresses((prev) =>
-      prev.map((a) => ({ ...a, isDefault: a._id === id }))
-    );
-    toast.success("Default address updated!");
+      setAddresses((prev) =>
+        prev.map((a) => ({ ...a, isDefault: a._id === id }))
+      );
+      toast.success("Default address updated!");
+    } catch (err) {
+      console.error("Set default error:", err);
+      toast.error(err.response?.data?.message || "Failed to update default address");
+    }
   };
 
   const handleDeleteAddress = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this address?")) return;
     try {
       await apiDeleteAddress(id);
-    } catch (_) {}
-    setAddresses((prev) => prev.filter((a) => a._id !== id));
-    toast.success("Address removed!");
+      setAddresses((prev) => prev.filter((a) => a._id !== id));
+      toast.success("Address removed!");
+    } catch (err) {
+      console.error("Delete address error:", err);
+      toast.error(err.response?.data?.message || "Failed to remove address");
+    }
   };
 
   const handleLogout = () => {
@@ -905,6 +948,15 @@ export default function Profile() {
                       {/* Actions */}
                       <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
                         <button
+                          type="button"
+                          onClick={() => handleEditAddressInit(addr)}
+                          className="flex items-center gap-1 text-[#2563eb] hover:text-[#1d4ed8] text-[11px] font-bold cursor-pointer"
+                        >
+                          <Edit3 size={12} />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => handleDeleteAddress(addr._id)}
                           className="flex items-center gap-1 text-red-500 hover:text-red-700 text-[11px] font-bold cursor-pointer"
                         >
@@ -958,7 +1010,7 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* ADD ADDRESS MODAL */}
+      {/* ADD / EDIT ADDRESS MODAL */}
       {showAddressModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 w-full max-w-lg space-y-5 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
@@ -966,10 +1018,13 @@ export default function Profile() {
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
                 <MapPin size={18} className="text-[#2563eb]" />
-                Add New Delivery Address
+                <span>{editingAddressId ? "Edit Delivery Address" : "Add New Delivery Address"}</span>
               </h3>
               <button
-                onClick={() => setShowAddressModal(false)}
+                onClick={() => {
+                  setShowAddressModal(false);
+                  setEditingAddressId(null);
+                }}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 cursor-pointer"
               >
                 <X size={18} />
@@ -980,7 +1035,7 @@ export default function Profile() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="font-bold text-slate-700 dark:text-slate-300">
-                    Full Name
+                    Full Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -996,7 +1051,7 @@ export default function Profile() {
 
                 <div className="space-y-1">
                   <label className="font-bold text-slate-700 dark:text-slate-300">
-                    Mobile Number
+                    Mobile Number <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
@@ -1013,7 +1068,7 @@ export default function Profile() {
 
               <div className="space-y-1">
                 <label className="font-bold text-slate-700 dark:text-slate-300">
-                  Street Address / House No. / Area
+                  Street Address / House No. / Area <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   required
@@ -1030,7 +1085,7 @@ export default function Profile() {
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1">
                   <label className="font-bold text-slate-700 dark:text-slate-300">
-                    City
+                    City <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -1045,7 +1100,7 @@ export default function Profile() {
 
                 <div className="space-y-1">
                   <label className="font-bold text-slate-700 dark:text-slate-300">
-                    State
+                    State <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -1060,7 +1115,7 @@ export default function Profile() {
 
                 <div className="space-y-1">
                   <label className="font-bold text-slate-700 dark:text-slate-300">
-                    Pincode
+                    6-Digit Pincode <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -1113,16 +1168,19 @@ export default function Profile() {
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowAddressModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  onClick={() => {
+                    setShowAddressModal(false);
+                    setEditingAddressId(null);
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#2563eb] hover:bg-[#1d4ed8]"
+                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#2563eb] hover:bg-[#1d4ed8] cursor-pointer shadow-xs"
                 >
-                  Save Address
+                  {editingAddressId ? "Save Changes" : "Save Address"}
                 </button>
               </div>
             </form>

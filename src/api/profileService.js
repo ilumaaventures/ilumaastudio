@@ -28,6 +28,11 @@ export const addAddress = async (addressData) => {
     return response.data;
 };
 
+export const updateAddress = async (addressId, addressData) => {
+    const response = await baseApi.put(`/users/addresses/${addressId}`, addressData);
+    return response.data;
+};
+
 export const deleteAddress = async (addressId) => {
     const response = await baseApi.delete(`/users/addresses/${addressId}`);
     return response.data;
