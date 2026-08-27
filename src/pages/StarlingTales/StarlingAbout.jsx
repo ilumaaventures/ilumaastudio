@@ -6,7 +6,7 @@ export default function StarlingAbout() {
     <>
       <section
         id="about-us"
-        className="reveal grid bg-cream md:grid-cols-2 py-10 scroll-mt-20 items-center"
+        className="reveal grid bg-cream md:grid-cols-2 scroll-mt-20 items-center"
       >
         <div className="order-1 relative overflow-hidden px-5 py-12 md:px-12 lg:px-20 lg:py-16">
           <div className="relative z-10 max-w-xl">
@@ -38,7 +38,7 @@ export default function StarlingAbout() {
             </p>
           </div>
         </div>
-        <div className="order-2 p-4 md:p-8 flex items-center justify-center">
+        <div className="order-2 px-4 py-2 md:px-8 flex items-center justify-center">
           <img
             className="w-full max-h-[600px] rounded-2xl shadow-md object-cover self-center"
             src="https://starlingtales.vercel.app/23.png"

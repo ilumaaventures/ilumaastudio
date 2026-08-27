@@ -91,7 +91,8 @@ export default function ProductModal({
                 loading="eager"
                 decoding="async"
                 onError={(e) => {
-                  e.target.src = "https://via.placeholder.com/600x600?text=Starling+Tales";
+                  e.target.src =
+                    "https://via.placeholder.com/600x600?text=Starling+Tales";
                 }}
               />
               <button
@@ -298,26 +299,6 @@ export default function ProductModal({
                 </span>
               </button>
             </div>
-
-            <div className="flex gap-3 mb-6 border border-cream-dark rounded-lg p-3.5 bg-white">
-              {[
-                ["shield", "Safety Tested"],
-                ["truck", "Free Shipping ₹1000+"],
-                ["refresh", "Easy Returns"],
-              ].map(([icon, label]) => (
-                <div
-                  className="flex flex-1 flex-col items-center gap-1 text-text-muted text-[10px] tracking-wide text-center"
-                  key={label}
-                >
-                  <Icon
-                    name={icon}
-                    className="h-[18px] w-[18px] text-blue-soft"
-                  />
-                  <span>{label}</span>
-                </div>
-              ))}
-            </div>
-
             <div className="border-t border-cream-dark">
               <details className="border-b border-cream-dark" open>
                 <summary className="flex items-center justify-between py-4 text-text-dark cursor-pointer text-[13px] font-medium tracking-wide list-none select-none">

@@ -157,6 +157,28 @@
   font-family: "Playfair Display", Georgia, Cambria, serif;
 }
 
+.font-script {
+  font-family: "Great Vibes", "Alex Brush", cursive;
+}
+
+.font-handwriting {
+  font-family: "Caveat", cursive;
+}
+
+/* Vintage Paper & Stamp Utilities */
+.vintage-stamp {
+  background-color: #FAF6F0;
+  border: 2px dashed #D5C7B2;
+  box-shadow: 0 4px 14px rgba(60, 47, 35, 0.08);
+}
+
+.torn-paper-edge {
+  position: relative;
+  background-color: #FAF7F2;
+  background-image: radial-gradient(#E8DFC8 0.75px, transparent 0.75px);
+  background-size: 14px 14px;
+}
+
 /* Custom Micro-Animations */
 @keyframes fadeIn {
   from {

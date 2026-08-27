@@ -35,7 +35,11 @@ import {
   HelpCircle,
   ArrowRight,
 } from "lucide-react";
-import { getProductById, checkCustomerDelivery, getallProducts } from "../../api/productService";
+import {
+  getProductById,
+  checkCustomerDelivery,
+  getallProducts,
+} from "../../api/productService";
 import {
   getProductReviews,
   createReview as createProductReview,
@@ -116,6 +120,100 @@ function ProductDetails() {
 
   // Live reviews state & helpful tracking
   const [liveReviews, setLiveReviews] = useState([]);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [newRating, setNewRating] = useState(5);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [newTitle, setNewTitle] = useState("");
+  const [newComment, setNewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [helpfulVoting, setHelpfulVoting] = useState({});
+
+  // Submit new review
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      toast.error("Please log in to submit a review");
+      navigate("/login", { state: { from: `/product/${id}` } });
+      return;
+    }
+    if (!newComment.trim()) {
+      toast.error("Please enter your review comments");
+      return;
+    }
+
+    try {
+      setSubmittingReview(true);
+      await createProductReview({
+        reviewType: "product",
+        reviewFor: id,
+        rating: newRating,
+        title: newTitle.trim(),
+        comment: newComment.trim(),
+      });
+
+      toast.success("Thank you! Your review has been submitted successfully.");
+      setNewTitle("");
+      setNewComment("");
+      setNewRating(5);
+      setShowReviewForm(false);
+
+      // Re-fetch reviews to show the new one
+      const rRes = await getProductReviews(id);
+      const rData =
+        rRes?.reviews || rRes?.data || (Array.isArray(rRes) ? rRes : []);
+      if (Array.isArray(rData)) {
+        setLiveReviews(rData);
+      }
+    } catch (err) {
+      console.error("Error submitting review:", err);
+      toast.error(
+        err.response?.data?.message ||
+          "Failed to submit review. Please try again.",
+      );
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  // Toggle helpful vote on a review
+  const handleToggleHelpful = async (reviewId) => {
+    if (!isAuthenticated) {
+      toast.error("Please log in to vote on reviews");
+      return;
+    }
+    try {
+      setHelpfulVoting((prev) => ({ ...prev, [reviewId]: true }));
+      const res = await toggleReviewHelpful(reviewId);
+      setLiveReviews((prev) =>
+        prev.map((r) => {
+          if (r._id === reviewId) {
+            const hasVoted =
+              Array.isArray(r.helpful) && r.helpful.includes(user?._id);
+            const updatedHelpful = hasVoted
+              ? r.helpful.filter((uid) => uid !== user?._id)
+              : [...(r.helpful || []), user?._id];
+            return {
+              ...r,
+              helpful: updatedHelpful,
+              helpfulCount:
+                res?.helpfulCount !== undefined
+                  ? res.helpfulCount
+                  : updatedHelpful.length,
+            };
+          }
+          return r;
+        }),
+      );
+      toast.success("Thank you for your feedback!");
+    } catch (err) {
+      console.error("Error updating helpful count:", err);
+      toast.error(
+        err.response?.data?.message || "Could not record helpful vote.",
+      );
+    } finally {
+      setHelpfulVoting((prev) => ({ ...prev, [reviewId]: false }));
+    }
+  };
 
   // Fetch product, reviews, policies, and recommendations
   useEffect(() => {
@@ -135,7 +233,9 @@ function ProductDetails() {
             : null;
 
         const fetchedPolicies =
-          pRes.status === "fulfilled" && Array.isArray(pRes.value?.policies) && pRes.value.policies.length > 0
+          pRes.status === "fulfilled" &&
+          Array.isArray(pRes.value?.policies) &&
+          pRes.value.policies.length > 0
             ? pRes.value.policies
             : DEFAULT_POLICIES;
 
@@ -162,7 +262,11 @@ function ProductDetails() {
         if (pData?.hasVariants && Array.isArray(pData?.optionDefinitions)) {
           const initialOpts = {};
           pData.optionDefinitions.forEach((opt) => {
-            if (opt.name && Array.isArray(opt.values) && opt.values.length > 0) {
+            if (
+              opt.name &&
+              Array.isArray(opt.values) &&
+              opt.values.length > 0
+            ) {
               initialOpts[opt.name] = opt.values[0];
             }
           });
@@ -183,7 +287,7 @@ function ProductDetails() {
             ? recRes
             : recRes?.products || recRes?.data || [];
           const filtered = recList.filter(
-            (item) => String(item._id || item.id) !== String(id)
+            (item) => String(item._id || item.id) !== String(id),
           );
           setRelatedProducts(filtered.slice(0, 8));
         } catch (e) {
@@ -210,7 +314,7 @@ function ProductDetails() {
 
       return selEntries.every(([key, val]) => {
         const matchedKey = Object.keys(v.optionValues).find(
-          (k) => k.toLowerCase() === key.toLowerCase()
+          (k) => k.toLowerCase() === key.toLowerCase(),
         );
         if (!matchedKey) return false;
         return (
@@ -264,8 +368,12 @@ function ProductDetails() {
           <div className="w-16 h-16 rounded-full bg-slate-200 flex items-center justify-center mx-auto text-2xl">
             📦
           </div>
-          <h2 className="text-xl font-black text-slate-900">Product Not Found</h2>
-          <p className="text-xs text-slate-500">The product you are looking for is unavailable or has been removed.</p>
+          <h2 className="text-xl font-black text-slate-900">
+            Product Not Found
+          </h2>
+          <p className="text-xs text-slate-500">
+            The product you are looking for is unavailable or has been removed.
+          </p>
           <Link
             to="/shop"
             className="inline-block bg-[#2563eb] text-white px-6 py-2.5 rounded-xl font-bold text-xs"
@@ -279,7 +387,9 @@ function ProductDetails() {
 
   const displayProduct = product;
   const isWished = wishlistItems.some(
-    (i) => (i._id || i.id || i) === displayProduct._id || String(i) === String(displayProduct._id)
+    (i) =>
+      (i._id || i.id || i) === displayProduct._id ||
+      String(i) === String(displayProduct._id),
   );
 
   const inStock = (() => {
@@ -318,7 +428,7 @@ function ProductDetails() {
             : null,
         },
         quantity: qty,
-      })
+      }),
     );
     toast.success(`${displayProduct.name} added to cart!`);
   };
@@ -337,7 +447,7 @@ function ProductDetails() {
         price: effectivePrice,
         image: selectedImage || displayProduct.images?.[0]?.url,
         category: displayProduct.category?.name || displayProduct.category,
-      })
+      }),
     );
     if (isWished) {
       toast.success("Removed from Wishlist");
@@ -349,7 +459,10 @@ function ProductDetails() {
   const handlePincodeCheck = async (e) => {
     e.preventDefault();
     if (!pincode || pincode.trim().length !== 6) {
-      setPincodeMsg({ success: false, text: "Please enter a valid 6-digit pincode." });
+      setPincodeMsg({
+        success: false,
+        text: "Please enter a valid 6-digit pincode.",
+      });
       return;
     }
 
@@ -384,12 +497,15 @@ function ProductDetails() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
-        
         {/* Breadcrumb Navigation */}
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 overflow-x-auto whitespace-nowrap py-1">
-          <Link to="/" className="hover:text-[#2563eb]">Home</Link>
+          <Link to="/" className="hover:text-[#2563eb]">
+            Home
+          </Link>
           <ChevronRight size={12} />
-          <Link to="/shop" className="hover:text-[#2563eb]">Shop</Link>
+          <Link to="/shop" className="hover:text-[#2563eb]">
+            Shop
+          </Link>
           <ChevronRight size={12} />
           {displayProduct.category && (
             <>
@@ -408,7 +524,6 @@ function ProductDetails() {
 
         {/* Main Product Showcase Area */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
-          
           {/* Left Column: Image Gallery (5 cols) */}
           <div className="lg:col-span-5 space-y-4">
             {/* Main Stage Image */}
@@ -433,7 +548,11 @@ function ProductDetails() {
               </button>
 
               <img
-                src={selectedImage || displayProduct.images?.[0]?.url || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=600"}
+                src={
+                  selectedImage ||
+                  displayProduct.images?.[0]?.url ||
+                  "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=600"
+                }
                 alt={displayProduct.name}
                 className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
               />
@@ -466,7 +585,6 @@ function ProductDetails() {
 
           {/* Right Column: Product Info & Actions (7 cols) */}
           <div className="lg:col-span-7 space-y-6">
-            
             {/* Title & Ratings */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -478,7 +596,10 @@ function ProductDetails() {
                 {displayProduct.vendor?.storeName && (
                   <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
                     <Building2 size={13} className="text-slate-400" />
-                    Sold by: <span className="font-bold text-slate-800">{displayProduct.vendor.storeName}</span>
+                    Sold by:{" "}
+                    <span className="font-bold text-slate-800">
+                      {displayProduct.vendor.storeName}
+                    </span>
                   </span>
                 )}
               </div>
@@ -493,7 +614,9 @@ function ProductDetails() {
                   <span className="text-xs font-black text-slate-900">
                     {displayProduct.rating || 4.5}
                   </span>
-                  <span className="text-xs text-slate-400">({liveReviews.length} reviews)</span>
+                  <span className="text-xs text-slate-400">
+                    ({liveReviews.length} reviews)
+                  </span>
                 </div>
 
                 {(activeVariant?.sku || displayProduct.sku) && (
@@ -510,18 +633,21 @@ function ProductDetails() {
                 <span className="text-3xl font-black text-[#2563eb]">
                   ₹{effectivePrice.toLocaleString()}
                 </span>
-                {effectiveCompareAtPrice && effectiveCompareAtPrice > effectivePrice && (
-                  <span className="text-sm text-slate-400 line-through">
-                    ₹{effectiveCompareAtPrice.toLocaleString()}
-                  </span>
-                )}
+                {effectiveCompareAtPrice &&
+                  effectiveCompareAtPrice > effectivePrice && (
+                    <span className="text-sm text-slate-400 line-through">
+                      ₹{effectiveCompareAtPrice.toLocaleString()}
+                    </span>
+                  )}
                 {displayProduct.discount && (
                   <span className="bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded-full text-[10px] font-black">
                     Save {displayProduct.discount}
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-slate-400">Inclusive of all taxes & verified warranty</p>
+              <p className="text-[10px] text-slate-400">
+                Inclusive of all taxes & verified warranty
+              </p>
             </div>
 
             {/* Dynamic Variant Options Selectors */}
@@ -531,14 +657,18 @@ function ProductDetails() {
                 <div className="space-y-4 p-4 bg-slate-50 rounded-2xl border border-slate-200/60">
                   {displayProduct.optionDefinitions.map((opt, oIdx) => {
                     const optName = opt.name;
-                    const optValues = Array.isArray(opt.values) ? opt.values : [];
+                    const optValues = Array.isArray(opt.values)
+                      ? opt.values
+                      : [];
                     if (!optName || optValues.length === 0) return null;
 
                     return (
                       <div key={oIdx} className="space-y-2">
                         <label className="text-xs font-bold text-slate-700 flex justify-between">
                           <span>Select {optName}:</span>
-                          <span className="text-[#2563eb]">{selectedOptions[optName]}</span>
+                          <span className="text-[#2563eb]">
+                            {selectedOptions[optName]}
+                          </span>
                         </label>
                         <div className="flex flex-wrap gap-2">
                           {optValues.map((val, vIdx) => {
@@ -567,7 +697,9 @@ function ProductDetails() {
 
             {/* Quantity Selector */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 block">Quantity</label>
+              <label className="text-xs font-bold text-slate-700 block">
+                Quantity
+              </label>
               <div className="flex items-center gap-3">
                 <div className="flex items-center border border-slate-200 rounded-xl bg-white p-1">
                   <button
@@ -577,7 +709,9 @@ function ProductDetails() {
                   >
                     <Minus size={14} />
                   </button>
-                  <span className="px-4 text-xs font-bold text-slate-900">{qty}</span>
+                  <span className="px-4 text-xs font-bold text-slate-900">
+                    {qty}
+                  </span>
                   <button
                     type="button"
                     onClick={() => setQty((q) => q + 1)}
@@ -616,7 +750,9 @@ function ProductDetails() {
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center gap-2">
                 <Truck size={18} className="text-[#2563eb] shrink-0" />
                 <div>
-                  <h4 className="text-[11px] font-black text-slate-900">Fast Shipping</h4>
+                  <h4 className="text-[11px] font-black text-slate-900">
+                    Fast Shipping
+                  </h4>
                   <p className="text-[9px] text-slate-500">3-5 Days Delivery</p>
                 </div>
               </div>
@@ -624,7 +760,9 @@ function ProductDetails() {
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center gap-2">
                 <RotateCcw size={18} className="text-[#2563eb] shrink-0" />
                 <div>
-                  <h4 className="text-[11px] font-black text-slate-900">7 Days Return</h4>
+                  <h4 className="text-[11px] font-black text-slate-900">
+                    7 Days Return
+                  </h4>
                   <p className="text-[9px] text-slate-500">Easy Replacement</p>
                 </div>
               </div>
@@ -632,15 +770,21 @@ function ProductDetails() {
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center gap-2">
                 <ShieldCheck size={18} className="text-[#2563eb] shrink-0" />
                 <div>
-                  <h4 className="text-[11px] font-black text-slate-900">100% Quality</h4>
-                  <p className="text-[9px] text-slate-500">Authentic Certified</p>
+                  <h4 className="text-[11px] font-black text-slate-900">
+                    100% Quality
+                  </h4>
+                  <p className="text-[9px] text-slate-500">
+                    Authentic Certified
+                  </p>
                 </div>
               </div>
 
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center gap-2">
                 <Lock size={18} className="text-[#2563eb] shrink-0" />
                 <div>
-                  <h4 className="text-[11px] font-black text-slate-900">Secure Pay</h4>
+                  <h4 className="text-[11px] font-black text-slate-900">
+                    Secure Pay
+                  </h4>
                   <p className="text-[9px] text-slate-500">256-bit Encrypted</p>
                 </div>
               </div>
@@ -649,7 +793,8 @@ function ProductDetails() {
             {/* Delivery Pincode Availability Check */}
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
               <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                <Truck size={15} className="text-[#2563eb]" /> Check Delivery Pincode Availability
+                <Truck size={15} className="text-[#2563eb]" /> Check Delivery
+                Pincode Availability
               </span>
               <form onSubmit={handlePincodeCheck} className="flex gap-2">
                 <input
@@ -680,24 +825,28 @@ function ProductDetails() {
                       : "bg-rose-50 text-rose-600 border border-rose-200"
                   }`}
                 >
-                  {pincodeMsg.success ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                  {pincodeMsg.success ? (
+                    <CheckCircle2 size={16} />
+                  ) : (
+                    <AlertCircle size={16} />
+                  )}
                   <span>{pincodeMsg.text}</span>
                 </div>
               )}
             </div>
-
           </div>
         </div>
 
         {/* Tabbed Info & Business Policies & Reviews Section */}
         <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
-          
           <div className="flex border-b border-slate-200 text-xs font-bold text-slate-500 gap-4 sm:gap-8 overflow-x-auto whitespace-nowrap pb-1">
             <button
               type="button"
               onClick={() => setActiveTab("overview")}
               className={`pb-3 transition-colors cursor-pointer border-b-2 ${
-                activeTab === "overview" ? "border-[#2563eb] text-[#2563eb]" : "border-transparent"
+                activeTab === "overview"
+                  ? "border-[#2563eb] text-[#2563eb]"
+                  : "border-transparent"
               }`}
             >
               Description & Overview
@@ -706,7 +855,9 @@ function ProductDetails() {
               type="button"
               onClick={() => setActiveTab("policies")}
               className={`pb-3 transition-colors cursor-pointer border-b-2 flex items-center gap-1.5 ${
-                activeTab === "policies" ? "border-[#2563eb] text-[#2563eb]" : "border-transparent"
+                activeTab === "policies"
+                  ? "border-[#2563eb] text-[#2563eb]"
+                  : "border-transparent"
               }`}
             >
               <FileText size={14} />
@@ -716,7 +867,9 @@ function ProductDetails() {
               type="button"
               onClick={() => setActiveTab("specs")}
               className={`pb-3 transition-colors cursor-pointer border-b-2 ${
-                activeTab === "specs" ? "border-[#2563eb] text-[#2563eb]" : "border-transparent"
+                activeTab === "specs"
+                  ? "border-[#2563eb] text-[#2563eb]"
+                  : "border-transparent"
               }`}
             >
               Specifications
@@ -725,17 +878,80 @@ function ProductDetails() {
               type="button"
               onClick={() => setActiveTab("reviews")}
               className={`pb-3 transition-colors cursor-pointer border-b-2 ${
-                activeTab === "reviews" ? "border-[#2563eb] text-[#2563eb]" : "border-transparent"
+                activeTab === "reviews"
+                  ? "border-[#2563eb] text-[#2563eb]"
+                  : "border-transparent"
               }`}
             >
               Customer Reviews ({liveReviews.length})
             </button>
           </div>
 
-          {/* Overview */}
+          {/* Overview Tab */}
           {activeTab === "overview" && (
-            <div className="space-y-4 text-xs text-slate-600 leading-relaxed max-w-3xl">
-              <p>{displayProduct.description || "High quality product built to the highest standards."}</p>
+            <div className="space-y-6 text-xs text-slate-600 leading-relaxed max-w-4xl">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 mb-2">
+                  Product Description
+                </h3>
+                <p className="whitespace-pre-line text-slate-700 leading-relaxed">
+                  {displayProduct.description ||
+                    "High quality product built to the highest standards."}
+                </p>
+              </div>
+
+              {/* Point-wise Features */}
+              {Array.isArray(displayProduct.features) &&
+                displayProduct.features.length > 0 && (
+                  <div className="space-y-3 pt-4 border-t border-slate-100">
+                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                      <Sparkles size={16} className="text-[#2563eb]" /> Key
+                      Features & Highlights
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {displayProduct.features.map((feat, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-start gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-200/70"
+                        >
+                          <CheckCircle2
+                            size={16}
+                            className="text-emerald-600 shrink-0 mt-0.5"
+                          />
+                          <span className="font-semibold text-slate-800 text-xs">
+                            {feat}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              {/* Key Specifications Table */}
+              {Array.isArray(displayProduct.details) &&
+                displayProduct.details.length > 0 && (
+                  <div className="space-y-3 pt-4 border-t border-slate-100">
+                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                      <Package size={16} className="text-[#2563eb]" /> Product
+                      Specifications
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {displayProduct.details.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-200/70 text-xs"
+                        >
+                          <span className="text-slate-500 font-medium">
+                            {item.title}
+                          </span>
+                          <span className="font-bold text-slate-900">
+                            {item.value}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
             </div>
           )}
 
@@ -749,7 +965,8 @@ function ProductDetails() {
                     Product Business & Store Policies
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Official terms, warranties, and shipping standards applicable to this item.
+                    Official terms, warranties, and shipping standards
+                    applicable to this item.
                   </p>
                 </div>
                 {displayProduct.business?.businessName && (
@@ -768,7 +985,9 @@ function ProductDetails() {
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-blue-100 text-[#2563eb] tracking-wider">
-                          {pol.targetScope === "VENDOR" ? "Vendor Store Policy" : "Business Policy"}
+                          {pol.targetScope === "VENDOR"
+                            ? "Vendor Store Policy"
+                            : "Business Policy"}
                         </span>
                         {pol.version && (
                           <span className="text-[9px] text-slate-400 font-mono">
@@ -793,75 +1012,405 @@ function ProductDetails() {
             </div>
           )}
 
-          {/* Specs & Customer Info */}
+          {/* Specs & Detailed Information Tab */}
           {activeTab === "specs" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs max-w-2xl">
-              <div className="flex justify-between p-3 bg-slate-50 rounded-lg border border-slate-200/60">
-                <span className="font-semibold text-slate-500">Requires Shipping</span>
-                <span className="font-bold text-slate-900">
-                  {displayProduct.requiresShipping ? "Yes" : "No"}
-                </span>
-              </div>
-              <div className="flex justify-between p-3 bg-slate-50 rounded-lg border border-slate-200/60">
-                <span className="font-semibold text-slate-500">Weight</span>
-                <span className="font-bold text-slate-900">
-                  {displayProduct.weight ? `${displayProduct.weight} kg` : "N/A"}
-                </span>
-              </div>
-              <div className="flex justify-between p-3 bg-slate-50 rounded-lg border border-slate-200/60">
-                <span className="font-semibold text-slate-500">Dimensions (L × W × H)</span>
-                <span className="font-bold text-slate-900">
-                  {displayProduct.dimensions?.length || 0} × {displayProduct.dimensions?.width || 0} × {displayProduct.dimensions?.height || 0} cm
-                </span>
-              </div>
-              <div className="flex justify-between p-3 bg-slate-50 rounded-lg border border-slate-200/60">
-                <span className="font-semibold text-slate-500">Country of Origin</span>
-                <span className="font-bold text-slate-900">
-                  {displayProduct.countryOfOrigin || "India"}
-                </span>
-              </div>
-              <div className="flex justify-between p-3 bg-slate-50 rounded-lg border border-slate-200/60">
-                <span className="font-semibold text-slate-500">Product Type</span>
-                <span className="font-bold text-slate-900">
-                  {displayProduct.productType || "E-Commerce"}
-                </span>
-              </div>
-              {displayProduct.vendor?.storeName && (
-                <div className="flex justify-between p-3 bg-slate-50 rounded-lg border border-slate-200/60">
-                  <span className="font-semibold text-slate-500">Seller / Store</span>
-                  <span className="font-bold text-slate-900">
-                    {displayProduct.vendor.storeName}
-                  </span>
+            <div className="space-y-6 max-w-4xl">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                  <FileText size={16} className="text-[#2563eb]" /> Technical
+                  Attributes & Info
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+                  <div className="flex flex-col p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                    <span className="font-semibold text-slate-400 text-[11px] uppercase tracking-wider">
+                      SKU
+                    </span>
+                    <span className="font-bold text-slate-900 mt-1">
+                      {displayProduct.sku || "N/A"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                    <span className="font-semibold text-slate-400 text-[11px] uppercase tracking-wider">
+                      Requires Shipping
+                    </span>
+                    <span className="font-bold text-slate-900 mt-1">
+                      {displayProduct.requiresShipping ? "Yes" : "No"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                    <span className="font-semibold text-slate-400 text-[11px] uppercase tracking-wider">
+                      Weight
+                    </span>
+                    <span className="font-bold text-slate-900 mt-1">
+                      {displayProduct.weight
+                        ? `${displayProduct.weight} kg`
+                        : "N/A"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                    <span className="font-semibold text-slate-400 text-[11px] uppercase tracking-wider">
+                      Dimensions (L × W × H)
+                    </span>
+                    <span className="font-bold text-slate-900 mt-1">
+                      {displayProduct.dimensions?.length || 0} ×{" "}
+                      {displayProduct.dimensions?.width || 0} ×{" "}
+                      {displayProduct.dimensions?.height || 0} cm
+                    </span>
+                  </div>
+                  <div className="flex flex-col p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                    <span className="font-semibold text-slate-400 text-[11px] uppercase tracking-wider">
+                      Country of Origin
+                    </span>
+                    <span className="font-bold text-slate-900 mt-1">
+                      {displayProduct.countryOfOrigin || "India"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                    <span className="font-semibold text-slate-400 text-[11px] uppercase tracking-wider">
+                      Product Type
+                    </span>
+                    <span className="font-bold text-slate-900 mt-1">
+                      {displayProduct.productType || "Standard"}
+                    </span>
+                  </div>
+                  {displayProduct.vendor?.storeName && (
+                    <div className="flex flex-col p-3 bg-slate-50 rounded-xl border border-slate-200/70 sm:col-span-2">
+                      <span className="font-semibold text-slate-400 text-[11px] uppercase tracking-wider">
+                        Seller / Vendor
+                      </span>
+                      <span className="font-bold text-slate-900 mt-1">
+                        {displayProduct.vendor.storeName}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
+
+              {/* Point-wise Features */}
+              {Array.isArray(displayProduct.features) &&
+                displayProduct.features.length > 0 && (
+                  <div className="pt-4 border-t border-slate-100 space-y-3">
+                    <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                      <Sparkles size={16} className="text-[#2563eb]" /> Features
+                      & Bullet Points
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {displayProduct.features.map((feat, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-start gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-200/70"
+                        >
+                          <CheckCircle2
+                            size={16}
+                            className="text-emerald-600 shrink-0 mt-0.5"
+                          />
+                          <span className="font-semibold text-slate-800 text-xs">
+                            {feat}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              {/* Detailed Specifications */}
+              {Array.isArray(displayProduct.details) &&
+                displayProduct.details.length > 0 && (
+                  <div className="pt-4 border-t border-slate-100 space-y-3">
+                    <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                      <Package size={16} className="text-[#2563eb]" /> Detailed
+                      Key-Value Specifications
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {displayProduct.details.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-200/70 text-xs"
+                        >
+                          <span className="text-slate-500 font-medium">
+                            {item.title}
+                          </span>
+                          <span className="font-bold text-slate-900">
+                            {item.value}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
             </div>
           )}
 
-          {/* Customer Reviews */}
+          {/* Customer Reviews Tab with Complete Form & Helpful Votes */}
           {activeTab === "reviews" && (
-            <div className="space-y-6">
+            <div className="space-y-8 max-w-4xl">
+              {/* Reviews Summary & Write Action Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-slate-50 p-6 rounded-3xl border border-slate-200/80">
+                <div className="flex items-center gap-5">
+                  <div>
+                    <h3 className="text-base font-black text-slate-900">
+                      Customer Feedback
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Verified customer ratings & real product experiences.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowReviewForm((prev) => !prev)}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer self-start sm:self-auto"
+                >
+                  <MessageSquare size={15} />
+                  <span>
+                    {showReviewForm ? "Cancel Review" : "Write a Review"}
+                  </span>
+                </button>
+              </div>
+
+              {/* Collapsible Write Review Form */}
+              {showReviewForm && (
+                <form
+                  onSubmit={handleSubmitReview}
+                  className="bg-white border-2 border-[#2563eb]/30 rounded-3xl p-6 sm:p-8 space-y-5 shadow-md animate-fade-in"
+                >
+                  <div className="border-b border-slate-100 pb-3">
+                    <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                      <Sparkles size={16} className="text-[#2563eb]" /> Write a
+                      Customer Review
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Share your genuine thoughts to help others make informed
+                      shopping decisions.
+                    </p>
+                  </div>
+
+                  {/* Rating Selector */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-2">
+                      Overall Rating <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                        {[1, 2, 3, 4, 5].map((star) => {
+                          const isFilled = (hoverRating || newRating) >= star;
+                          return (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setNewRating(star)}
+                              onMouseEnter={() => setHoverRating(star)}
+                              onMouseLeave={() => setHoverRating(0)}
+                              className="p-1 text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
+                              aria-label={`${star} Stars`}
+                            >
+                              <Star
+                                size={22}
+                                className={
+                                  isFilled
+                                    ? "fill-amber-400 text-amber-400"
+                                    : "text-slate-300"
+                                }
+                              />
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <span className="text-xs font-bold text-slate-600 ml-2">
+                        {newRating === 5 && "★★★★★ 5.0 - Excellent!"}
+                        {newRating === 4 && "★★★★☆ 4.0 - Very Good"}
+                        {newRating === 3 && "★★★☆☆ 3.0 - Good"}
+                        {newRating === 2 && "★★☆☆☆ 2.0 - Fair"}
+                        {newRating === 1 && "★☆☆☆☆ 1.0 - Poor"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Review Title Input */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                      Review Title (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Excellent quality, fast dispatch and beautiful finish!"
+                      value={newTitle}
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 outline-none focus:bg-white focus:border-[#2563eb] transition-all font-medium"
+                    />
+                  </div>
+
+                  {/* Review Comments */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                      Review Comments <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      rows={4}
+                      placeholder="Write your review here. What did you like or dislike? How was the fit, material, or packaging?"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      required
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-800 outline-none focus:bg-white focus:border-[#2563eb] transition-all font-medium leading-relaxed"
+                    />
+                  </div>
+
+                  {/* Form Action Buttons */}
+                  <div className="flex items-center gap-3 pt-2">
+                    <button
+                      type="submit"
+                      disabled={submittingReview}
+                      className="px-7 py-3 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                    >
+                      {submittingReview
+                        ? "Submitting Review..."
+                        : "Submit Review"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowReviewForm(false)}
+                      className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Reviews List */}
               <div className="space-y-4">
                 {liveReviews.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic">No reviews yet. Be the first to review this product!</p>
+                  <div className="text-center py-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200 space-y-3">
+                    <MessageSquare
+                      size={32}
+                      className="mx-auto text-slate-300"
+                    />
+                    <p className="text-xs text-slate-500 font-semibold">
+                      No reviews yet for this product.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowReviewForm(true)}
+                      className="inline-block text-xs font-bold text-[#2563eb] hover:underline cursor-pointer"
+                    >
+                      Be the first to share your review!
+                    </button>
+                  </div>
                 ) : (
-                  liveReviews.map((rev, idx) => (
-                    <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-slate-200/60 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs text-slate-900">
-                          {rev.user?.name || "Verified Buyer"}
-                        </span>
-                        <div className="flex items-center gap-1 text-amber-400 text-xs font-black">
-                          <Star size={12} fill="currentColor" /> {rev.rating || 5}
+                  liveReviews.map((rev, idx) => {
+                    const isHelpfulActive =
+                      Array.isArray(rev.helpful) &&
+                      rev.helpful.includes(user?._id);
+                    const helpfulCount =
+                      rev.helpfulCount !== undefined
+                        ? rev.helpfulCount
+                        : Array.isArray(rev.helpful)
+                          ? rev.helpful.length
+                          : 0;
+
+                    return (
+                      <div
+                        key={rev._id || idx}
+                        className="p-5 sm:p-6 bg-slate-50/80 rounded-3xl border border-slate-200/80 space-y-3 hover:border-slate-300 transition-all"
+                      >
+                        {/* Header: User, Verified, Rating & Date */}
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/60 pb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#2563eb] to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                              {(rev.user?.name || "Verified Buyer")
+                                .charAt(0)
+                                .toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-xs text-slate-900">
+                                  {rev.user?.name || "Verified Buyer"}
+                                </span>
+                                <span className="inline-flex items-center gap-0.5 text-[9.5px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full">
+                                  <CheckCircle2 size={10} /> Verified
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-slate-400">
+                                {rev.createdAt
+                                  ? new Date(rev.createdAt).toLocaleDateString(
+                                      "en-IN",
+                                      {
+                                        year: "numeric",
+                                        month: "short",
+                                        day: "numeric",
+                                      },
+                                    )
+                                  : "Recent purchase"}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Star Rating Badge */}
+                          <div className="flex items-center gap-1 bg-white px-2.5 py-1 rounded-full border border-slate-200 text-amber-500 font-bold text-xs shadow-2xs">
+                            <div className="flex">
+                              {[...Array(5)].map((_, sIdx) => (
+                                <Star
+                                  key={sIdx}
+                                  size={12}
+                                  className={
+                                    sIdx < (rev.rating || 5)
+                                      ? "fill-amber-400 text-amber-400"
+                                      : "text-slate-200"
+                                  }
+                                />
+                              ))}
+                            </div>
+                            <span className="text-slate-800 ml-1">
+                              {rev.rating || 5}.0
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Review Title & Content */}
+                        <div className="space-y-1.5">
+                          {rev.title && (
+                            <h4 className="text-xs font-black text-slate-900">
+                              {rev.title}
+                            </h4>
+                          )}
+                          <p className="text-xs text-slate-700 leading-relaxed font-normal">
+                            {rev.comment}
+                          </p>
+                        </div>
+
+                        {/* Footer: Helpful voting */}
+                        <div className="pt-2 flex items-center justify-between border-t border-slate-200/50 text-xs">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleHelpful(rev._id)}
+                            disabled={helpfulVoting[rev._id]}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                              isHelpfulActive
+                                ? "bg-blue-100 text-[#2563eb] border border-blue-200"
+                                : "bg-white text-slate-600 hover:text-[#2563eb] border border-slate-200/80"
+                            }`}
+                          >
+                            <ThumbsUp
+                              size={13}
+                              className={
+                                isHelpfulActive ? "fill-[#2563eb]" : ""
+                              }
+                            />
+                            <span>Helpful ({helpfulCount})</span>
+                          </button>
+
+                          <span className="text-[10px] text-slate-400">
+                            Verified Review
+                          </span>
                         </div>
                       </div>
-                      <p className="text-xs text-slate-600">{rev.comment}</p>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
           )}
-
         </div>
 
         {/* Recommendations / Related Products Section */}
@@ -888,7 +1437,10 @@ function ProductDetails() {
           {loadingRelated ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {Array.from({ length: 4 }).map((_, idx) => (
-                <div key={idx} className="h-64 rounded-2xl bg-slate-200 animate-pulse" />
+                <div
+                  key={idx}
+                  className="h-64 rounded-2xl bg-slate-200 animate-pulse"
+                />
               ))}
             </div>
           ) : relatedProducts.length > 0 ? (
@@ -901,10 +1453,11 @@ function ProductDetails() {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-slate-400 italic">No related recommendations found.</p>
+            <p className="text-xs text-slate-400 italic">
+              No related recommendations found.
+            </p>
           )}
         </section>
-
       </div>
     </div>
   );
