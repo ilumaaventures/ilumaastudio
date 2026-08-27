@@ -277,6 +277,18 @@ export default function StarlingGiftHampers() {
             ? p.images.map((img) => (typeof img === "object" ? img.url : img))
             : [LOCAL_DEFAULT_HAMPERS[idx % LOCAL_DEFAULT_HAMPERS.length].image];
 
+        const stockCount =
+          p.stock !== undefined
+            ? Number(p.stock)
+            : p.countInStock !== undefined
+            ? Number(p.countInStock)
+            : p.quantity !== undefined
+            ? Number(p.quantity)
+            : 99;
+
+        const isInStock =
+          p.inStock !== undefined ? Boolean(p.inStock) : stockCount > 0;
+
         return {
           id: p._id,
           name: p.name,
@@ -298,7 +310,8 @@ export default function StarlingGiftHampers() {
                 : "Gift Set"),
           rating: p.rating || 4.9,
           reviews: p.numReviews || 24,
-          inStock: p.stock === undefined || p.stock > 0,
+          inStock: isInStock,
+          stock: stockCount,
           description: p.description || "",
           includedItems: p.includedItems?.length
             ? p.includedItems
@@ -364,6 +377,36 @@ export default function StarlingGiftHampers() {
 
     if (!product) return;
 
+    // Check stock availability
+    const availableStock =
+      product.stock !== undefined
+        ? Number(product.stock)
+        : product.countInStock !== undefined
+        ? Number(product.countInStock)
+        : product.quantity !== undefined
+        ? Number(product.quantity)
+        : 99;
+
+    const isOutOfStock = product.inStock === false || availableStock <= 0;
+
+    if (isOutOfStock) {
+      toast.error(`Sorry, "${product.name}" is currently out of stock!`);
+      return;
+    }
+
+    // Check if adding exceeds available stock
+    const existingItem = cartItems.find(
+      (item) => item._id === (product.id || product._id)
+    );
+    const currentQtyInCart = existingItem?.quantity || 0;
+
+    if (currentQtyInCart + qty > availableStock) {
+      toast.error(
+        `Only ${availableStock} units available for "${product.name}". You already have ${currentQtyInCart} in your bag.`
+      );
+      return;
+    }
+
     dispatch(
       addToCart({
         product: {
@@ -371,7 +414,7 @@ export default function StarlingGiftHampers() {
           name: product.name,
           price: product.price,
           images: [{ url: product.image }],
-          stock: 99,
+          stock: availableStock,
         },
         quantity: qty,
       }),
