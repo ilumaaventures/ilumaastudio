@@ -274,8 +274,8 @@ function Cart() {
     0,
   );
 
-  const shipping = subtotal > 2000 || subtotal === 0 ? 0 : 99;
-  const tax = Math.round(subtotal * 0.18);
+  const shipping = subtotal >= 5000 || subtotal === 0 ? 0 : 99;
+  const tax = Math.round(subtotal * 0.12);
   const total = Math.max(0, subtotal + shipping + tax - discountAmount);
 
   const handleProceedToCheckout = () => {
@@ -547,17 +547,16 @@ function Cart() {
                     item.stock !== undefined
                       ? Number(item.stock)
                       : item.countInStock !== undefined
-                      ? Number(item.countInStock)
-                      : 99;
+                        ? Number(item.countInStock)
+                        : 99;
 
                   return (
                     <div
                       key={item._id}
-                      className={`bg-white rounded-3xl p-5 shadow-2xs border transition-all ${
-                        !isItemAvailable && shippingAddress.zip?.length === 6
-                          ? "border-rose-300 bg-rose-50/20"
-                          : "border-slate-200/80"
-                      }`}
+                      className={`bg-white rounded-3xl p-5 shadow-2xs border transition-all ${!isItemAvailable && shippingAddress.zip?.length === 6
+                        ? "border-rose-300 bg-rose-50/20"
+                        : "border-slate-200/80"
+                        }`}
                     >
                       <div className="flex flex-col sm:flex-row gap-5">
                         {/* Image */}
@@ -637,11 +636,10 @@ function Cart() {
                                   );
                                 }
                               }}
-                              className={`p-2 hover:bg-slate-200 transition ${
-                                item.quantity >= itemStock
-                                  ? "opacity-40 cursor-not-allowed"
-                                  : "cursor-pointer"
-                              }`}
+                              className={`p-2 hover:bg-slate-200 transition ${item.quantity >= itemStock
+                                ? "opacity-40 cursor-not-allowed"
+                                : "cursor-pointer"
+                                }`}
                               disabled={item.quantity >= itemStock}
                               aria-label="Increase quantity"
                             >
@@ -680,7 +678,7 @@ function Cart() {
                     </div>
 
                     <div className="flex justify-between">
-                      <span>GST (18%)</span>
+                      <span>GST (12%)</span>
                       <span className="font-bold text-slate-900">₹{tax}</span>
                     </div>
 
@@ -764,7 +762,7 @@ function Cart() {
                       <span>Free Express Shipping</span>
                     </div>
                     <p className="text-[11px] text-emerald-700">
-                      On orders above ₹2000 across serviceable PIN codes.
+                      On orders above ₹5000 across serviceable PIN codes.
                     </p>
                   </div>
                 </div>
@@ -925,11 +923,10 @@ function Cart() {
                     <div className="grid sm:grid-cols-2 gap-3 pt-1">
                       {/* Cash on Delivery */}
                       <label
-                        className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                          paymentMethod === "cod"
-                            ? "border-[#2563eb] bg-blue-50/50"
-                            : "border-slate-200 bg-white hover:border-slate-300"
-                        }`}
+                        className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer ${paymentMethod === "cod"
+                          ? "border-[#2563eb] bg-blue-50/50"
+                          : "border-slate-200 bg-white hover:border-slate-300"
+                          }`}
                       >
                         <input
                           type="radio"
@@ -954,11 +951,10 @@ function Cart() {
 
                       {/* Online Razorpay */}
                       <label
-                        className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                          paymentMethod === "razorpay"
-                            ? "border-[#2563eb] bg-blue-50/50"
-                            : "border-slate-200 bg-white hover:border-slate-300"
-                        }`}
+                        className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer ${paymentMethod === "razorpay"
+                          ? "border-[#2563eb] bg-blue-50/50"
+                          : "border-slate-200 bg-white hover:border-slate-300"
+                          }`}
                       >
                         <input
                           type="radio"
@@ -991,10 +987,10 @@ function Cart() {
                     {placingOrder
                       ? "Processing Order..."
                       : !pincodeValidation.allAvailable
-                      ? "Cannot Place Order (Unavailable Products)"
-                      : paymentMethod === "cod"
-                      ? `Confirm & Place Order (₹${total})`
-                      : `Pay & Place Order (₹${total})`}
+                        ? "Cannot Place Order (Unavailable Products)"
+                        : paymentMethod === "cod"
+                          ? `Confirm & Place Order (₹${total})`
+                          : `Pay & Place Order (₹${total})`}
                   </button>
                 </form>
               </div>
@@ -1050,7 +1046,7 @@ function Cart() {
                       <span className="font-bold text-slate-900">₹{subtotal}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>GST (18%)</span>
+                      <span>GST (12%)</span>
                       <span className="font-bold text-slate-900">₹{tax}</span>
                     </div>
                     <div className="flex justify-between">

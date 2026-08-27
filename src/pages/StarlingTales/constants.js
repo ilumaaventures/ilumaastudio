@@ -1,4 +1,4 @@
-export const FREE_SHIPPING_THRESHOLD = 1000;
+export const FREE_SHIPPING_THRESHOLD = 5000;
 
 export function formatPrice(price) {
   return `₹${price.toLocaleString("en-IN")}`;
