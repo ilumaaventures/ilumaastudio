@@ -45,7 +45,22 @@ function GiftHamper() {
               textiles, and safe keepsakes into harmonious sets designed to
               delight both parents and little ones.
             </p>
-
+            <ul className="mt-6 mb-8 space-y-3.5 p-0 list-none text-text-body text-[14px] font-light">
+              <li className="flex items-center gap-3">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-soft shrink-0" />
+                <span>
+                  Pick from our wide range of handcrafted treasures and create a
+                  hamper that’s uniquely yours.
+                </span>
+              </li>
+              <li className="flex items-center gap-3">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-soft shrink-0" />
+                <span>
+                  Curate it, personalise it, and make every gift truly special.
+                  Custom embroidery & name personalisation available.{" "}
+                </span>
+              </li>
+            </ul>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Link
                 to={`${storeHomePath}/gift-hampers`}
