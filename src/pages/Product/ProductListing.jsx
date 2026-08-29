@@ -20,6 +20,7 @@ import { getallProducts } from "../../api/productService";
 import { ProductGridSkeleton } from "../../Components/Skeletons";
 import GiftingProductsSection from "../Home/sections/GiftingProductsSection";
 import NewArrivalsSection from "../Home/sections/NewArrivalsSection";
+import BestSellingProducts from "../Home/sections/BestSellingProducts";
 import BannerSection from "../../Components/BannerSection";
 import MegaSaleBanner from "../Home/sections/MegaSaleBanner";
 import toast from "react-hot-toast";
@@ -306,13 +307,8 @@ export default function ProductListing() {
               linkUrl="/shop"
             />
 
-            {/* Best Sellers Section */}
-            <ProductSection
-              title="Best Sellers"
-              subtitle="Products customers keep coming back for"
-              products={bestSellers}
-              icon={<span className="text-lg">🏆</span>}
-            />
+            {/* Dedicated Best Selling Products Section */}
+            <BestSellingProducts />
 
             {/* Featured Gifting Products Section */}
             <GiftingProductsSection />

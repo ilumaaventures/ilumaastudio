@@ -194,7 +194,7 @@ function Navbar() {
 
             <Link
               to="/offers"
-              className="hiddenflex items-center gap-1.5 text-slate-700 hover:text-[#2563eb] transition-colors font-semibold"
+              className="flex items-center gap-1.5 text-slate-700 hover:text-[#2563eb] transition-colors font-semibold"
             >
               <Tag size={17} className="text-red-500" />
               <span>Offers</span>

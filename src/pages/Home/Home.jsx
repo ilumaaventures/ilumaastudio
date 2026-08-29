@@ -6,6 +6,7 @@ import FlashDeals from "./sections/FlashDeals";
 import TopBrands from "./sections/TopBrands";
 import PopularProducts from "./sections/PopularProducts";
 import RecommendedForYou from "./sections/RecommendedForYou";
+import BestSellingProducts from "./sections/BestSellingProducts";
 import CouponsOffers from "./sections/CouponsOffers";
 import OccasionsAndCollections from "./sections/OccasionsAndCollections";
 import MegaSaleBanner from "./sections/MegaSaleBanner";
@@ -64,6 +65,9 @@ function Home() {
       {/* Promotional Banners from Generic Banner System */}
       <BannerSection bannerType="promotion" />
 
+      {/* Best Selling Products Section */}
+      <BestSellingProducts />
+
       {/* New Arrivals Section */}
       <NewArrivalsSection />
 
@@ -76,16 +80,11 @@ function Home() {
       {/* Popular Local Shops */}
       <TopBrands />
 
-      {/* Popular Products */}
-      <PopularProducts />
-
       {/* Recommended For You */}
       <RecommendedForYou />
-      <FeaturedProductCategory
-        products={products}
-        categories={categories}
-        loading={loading}
-      />
+
+      {/* Featured Categories */}
+      <FeaturedProductCategory />
       <MegaSaleBanner
         title="Find Your Next Favorite 🛒"
         description="Shop trending products, fresh arrivals and everyday essentials — all curated in one place."

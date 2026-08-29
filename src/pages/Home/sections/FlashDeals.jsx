@@ -115,7 +115,7 @@ function FlashDeals() {
   }
 
   return (
-    <section className="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-4">
+    <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-4">
       {/* Professional Header Banner */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-rose-950 to-slate-900 text-white p-5 sm:p-6 rounded-3xl shadow-xl border border-rose-500/20 relative overflow-hidden">
         {/* Left Side: Title, Deal Name Badge & Subtitle */}
@@ -195,14 +195,11 @@ function FlashDeals() {
       {/* Horizontal Left-to-Right Scrollable Products Container */}
       <div
         ref={sliderRef}
-        className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-none py-2 px-1"
+        className="flex gap-1 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-none py-2 px-1"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {deals.map((item) => (
-          <div
-            key={item._id}
-            className="min-w-[260px] sm:min-w-[280px] max-w-[280px] snap-start shrink-0"
-          >
+          <div key={item._id} className=" snap-start shrink-0 mx-2">
             <ProductCard
               product={{
                 ...item,

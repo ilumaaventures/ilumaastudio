@@ -9,74 +9,6 @@ import { getFeaturedProducts } from "../../../api/productService";
 import { ProductGridSkeleton } from "../../../Components/Skeletons";
 import ProductCard from "../../../Components/ProductCard";
 
-const FALLBACK_POPULAR = [
-  {
-    _id: "pop_1",
-    id: "pop_1",
-    name: "Men Black Oversized Premium Hoodie",
-    category: "Fashion",
-    price: 859,
-    originalPrice: 1699,
-    rating: 4.5,
-    reviews: 128,
-    image:
-      "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=400&auto=format&fit=crop",
-    inStock: true,
-  },
-  {
-    _id: "pop_2",
-    id: "pop_2",
-    name: "iPhone 15 Pro Max (256GB)",
-    category: "Electronics",
-    price: 64999,
-    originalPrice: 79900,
-    rating: 4.8,
-    reviews: 450,
-    image:
-      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=400&auto=format&fit=crop",
-    inStock: true,
-  },
-  {
-    _id: "pop_3",
-    id: "pop_3",
-    name: "Solid Wooden Ergonomic Study Desk",
-    category: "Home & Office",
-    price: 4499,
-    originalPrice: 7999,
-    rating: 4.6,
-    reviews: 84,
-    image:
-      "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?q=80&w=400&auto=format&fit=crop",
-    inStock: true,
-  },
-  {
-    _id: "pop_4",
-    id: "pop_4",
-    name: "Hydrating Facial Repair Serum",
-    category: "Beauty",
-    price: 599,
-    originalPrice: 999,
-    rating: 4.6,
-    reviews: 210,
-    image:
-      "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=400&auto=format&fit=crop",
-    inStock: true,
-  },
-  {
-    _id: "pop_5",
-    id: "pop_5",
-    name: "Pro Official Match Basketball",
-    category: "Sports",
-    price: 699,
-    originalPrice: 1299,
-    rating: 4.4,
-    reviews: 67,
-    image:
-      "https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=400&auto=format&fit=crop",
-    inStock: true,
-  },
-];
-
 function PopularProducts() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -147,7 +79,7 @@ function PopularProducts() {
             image:
               p.images?.[0]?.url ||
               p.image ||
-              FALLBACK_POPULAR[idx % FALLBACK_POPULAR.length].image,
+              "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=400&auto=format&fit=crop",
             inStock: (() => {
               const s =
                 p.inventory?.stockQuantity !== undefined
@@ -164,11 +96,11 @@ function PopularProducts() {
           }))
         );
       } else {
-        setFeaturedProducts(FALLBACK_POPULAR);
+        setFeaturedProducts([]);
       }
     } catch (err) {
       console.error("Failed to fetch featured products:", err);
-      setFeaturedProducts(FALLBACK_POPULAR);
+      setFeaturedProducts([]);
     } finally {
       setLoading(false);
     }
@@ -177,6 +109,10 @@ function PopularProducts() {
   useEffect(() => {
     fetchFeaturedProducts();
   }, []);
+
+  if (!loading && featuredProducts.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-4">

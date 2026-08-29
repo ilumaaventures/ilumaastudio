@@ -9,79 +9,6 @@ import { getallProducts } from "../../../api/productService";
 import { ProductGridSkeleton } from "../../../Components/Skeletons";
 import ProductCard from "../../../Components/ProductCard";
 
-const FALLBACK_GIFTING_PRODUCTS = [
-  {
-    _id: "gift_1",
-    id: "gift_1",
-    name: "Luxury Artisanal Chocolate Gift Box",
-    category: "Gifting & Sweets",
-    price: 1299,
-    originalPrice: 1999,
-    discount: "35%",
-    rating: 4.9,
-    reviews: 184,
-    image:
-      "https://images.unsplash.com/photo-1549007994-cb92caebd54b?auto=format&fit=crop&w=600&q=80",
-    inStock: true,
-  },
-  {
-    _id: "gift_2",
-    id: "gift_2",
-    name: "Scented Soy Candle Gift Set",
-    category: "Home & Decor",
-    price: 999,
-    originalPrice: 1499,
-    discount: "33%",
-    rating: 4.8,
-    reviews: 142,
-    image:
-      "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=600&q=80",
-    inStock: true,
-  },
-  {
-    _id: "gift_3",
-    id: "gift_3",
-    name: "Personalized Engraved Leather Wallet Set",
-    category: "Personalised Gifts",
-    price: 1799,
-    originalPrice: 2499,
-    discount: "28%",
-    rating: 4.7,
-    reviews: 96,
-    image:
-      "https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&w=600&q=80",
-    inStock: true,
-  },
-  {
-    _id: "gift_4",
-    id: "gift_4",
-    name: "Premium Organic Tea Assortment Chest",
-    category: "Gourmet Gifting",
-    price: 1499,
-    originalPrice: 2199,
-    discount: "31%",
-    rating: 4.9,
-    reviews: 210,
-    image:
-      "https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=600&q=80",
-    inStock: true,
-  },
-  {
-    _id: "gift_5",
-    id: "gift_5",
-    name: "Handcrafted Festive Gift Hamper",
-    category: "Festive Gifting",
-    price: 2499,
-    originalPrice: 3499,
-    discount: "28%",
-    rating: 4.8,
-    reviews: 78,
-    image:
-      "https://images.unsplash.com/photo-1513885535751-8b9238bd345a?auto=format&fit=crop&w=600&q=80",
-    inStock: true,
-  },
-];
-
 export default function GiftingProductsSection() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -124,9 +51,7 @@ export default function GiftingProductsSection() {
               image:
                 p.images?.[0]?.url ||
                 p.image ||
-                FALLBACK_GIFTING_PRODUCTS[
-                  idx % FALLBACK_GIFTING_PRODUCTS.length
-                ].image,
+                "https://images.unsplash.com/photo-1549007994-cb92caebd54b?auto=format&fit=crop&w=600&q=80",
               inStock: (() => {
                 const s =
                   p.inventory?.stockQuantity !== undefined
@@ -143,11 +68,11 @@ export default function GiftingProductsSection() {
             })),
           );
         } else {
-          setGiftingProducts(FALLBACK_GIFTING_PRODUCTS);
+          setGiftingProducts([]);
         }
       } catch (err) {
         console.error("Failed to load gifting products:", err);
-        setGiftingProducts(FALLBACK_GIFTING_PRODUCTS);
+        setGiftingProducts([]);
       } finally {
         setLoading(false);
       }
@@ -190,6 +115,10 @@ export default function GiftingProductsSection() {
     );
     toast.success(`${prod.name} added to cart!`);
   };
+
+  if (!loading && giftingProducts.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-4">

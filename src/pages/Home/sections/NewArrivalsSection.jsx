@@ -9,74 +9,6 @@ import { getallProducts } from "../../../api/productService";
 import { ProductGridSkeleton } from "../../../Components/Skeletons";
 import ProductCard from "../../../Components/ProductCard";
 
-const FALLBACK_NEW_ARRIVALS = [
-  {
-    _id: "new_1",
-    id: "new_1",
-    name: "Wireless ANC Earbuds Pro",
-    category: "Electronics",
-    price: 3499,
-    originalPrice: 4999,
-    rating: 4.8,
-    reviews: 94,
-    image:
-      "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=600&q=80",
-    inStock: true,
-  },
-  {
-    _id: "new_2",
-    id: "new_2",
-    name: "Minimalist Smart Fitness Band",
-    category: "Electronics",
-    price: 2199,
-    originalPrice: 2999,
-    rating: 4.7,
-    reviews: 62,
-    image:
-      "https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?auto=format&fit=crop&w=600&q=80",
-    inStock: true,
-  },
-  {
-    _id: "new_3",
-    id: "new_3",
-    name: "Ergonomic Mechanical Keyboard",
-    category: "Electronics",
-    price: 4999,
-    originalPrice: 6999,
-    rating: 4.9,
-    reviews: 118,
-    image:
-      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80",
-    inStock: true,
-  },
-  {
-    _id: "new_4",
-    id: "new_4",
-    name: "Classic Denim Oversized Jacket",
-    category: "Fashion",
-    price: 1899,
-    originalPrice: 2799,
-    rating: 4.6,
-    reviews: 45,
-    image:
-      "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?auto=format&fit=crop&w=600&q=80",
-    inStock: true,
-  },
-  {
-    _id: "new_5",
-    id: "new_5",
-    name: "Handcrafted Ceramic Coffee Mug Set",
-    category: "Home & Kitchen",
-    price: 899,
-    originalPrice: 1299,
-    rating: 4.8,
-    reviews: 83,
-    image:
-      "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80",
-    inStock: true,
-  },
-];
-
 export default function NewArrivalsSection() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -111,7 +43,7 @@ export default function NewArrivalsSection() {
               image:
                 p.images?.[0]?.url ||
                 p.image ||
-                FALLBACK_NEW_ARRIVALS[idx % FALLBACK_NEW_ARRIVALS.length].image,
+                "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=600&q=80",
               inStock: (() => {
                 const s =
                   p.inventory?.stockQuantity !== undefined
@@ -128,11 +60,11 @@ export default function NewArrivalsSection() {
             }))
           );
         } else {
-          setNewArrivals(FALLBACK_NEW_ARRIVALS);
+          setNewArrivals([]);
         }
       } catch (err) {
         console.error("Failed to load new arrivals:", err);
-        setNewArrivals(FALLBACK_NEW_ARRIVALS);
+        setNewArrivals([]);
       } finally {
         setLoading(false);
       }
@@ -176,6 +108,10 @@ export default function NewArrivalsSection() {
     );
     toast.success(`${prod.name} added to cart!`);
   };
+
+  if (!loading && newArrivals.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-4">

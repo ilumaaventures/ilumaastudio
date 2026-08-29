@@ -2,33 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { fetchCategories } from "../../../api/categoryService";
 
-const FALLBACK_OCCASIONS = [
-  {
-    title: "Weddings",
-    name: "Weddings",
-    image: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80",
-    link: "/shop?category=Weddings",
-  },
-  {
-    title: "Birthdays",
-    name: "Birthdays",
-    image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=600&q=80",
-    link: "/shop?category=Birthdays",
-  },
-  {
-    title: "Anniversaries",
-    name: "Anniversaries",
-    image: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=600&q=80",
-    link: "/shop?category=Anniversaries",
-  },
-  {
-    title: "Festivals & Holidays",
-    name: "Festivals",
-    image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80",
-    link: "/shop?category=Festivals",
-  },
-];
-
 export default function OccasionsAndCollections() {
   const [occasionCategories, setOccasionCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,16 +23,16 @@ export default function OccasionsAndCollections() {
               image:
                 cat.image ||
                 cat.promoImage ||
-                FALLBACK_OCCASIONS[idx % FALLBACK_OCCASIONS.length].image,
+                "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80",
               link: `/shop?category=${encodeURIComponent(cat.name)}`,
             }))
           );
         } else {
-          setOccasionCategories(FALLBACK_OCCASIONS);
+          setOccasionCategories([]);
         }
       } catch (err) {
         console.error("Failed to fetch occasion categories:", err);
-        setOccasionCategories(FALLBACK_OCCASIONS);
+        setOccasionCategories([]);
       } finally {
         setLoading(false);
       }
@@ -80,6 +53,10 @@ export default function OccasionsAndCollections() {
       link: "/shop?category=Artisans",
     },
   ];
+
+  if (!loading && occasionCategories.length === 0) {
+    return null;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-6">
