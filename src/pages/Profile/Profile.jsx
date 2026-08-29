@@ -26,6 +26,7 @@ import {
   Award,
   RefreshCw,
   Edit3,
+  Truck,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
@@ -39,7 +40,7 @@ import {
   deleteAddress as apiDeleteAddress,
   setDefaultAddress as apiSetDefaultAddress,
 } from "../../api/profileService.js";
-import { getMyOrders } from "../../api/orderService";
+import { getMyOrders, cancelOrder, requestItemReturn } from "../../api/orderService";
 import { getBookings } from "../../api/bookingService";
 import {
   getLoyaltyAccount,
@@ -114,6 +115,61 @@ export default function Profile() {
     type: "Home",
     isDefault: false,
   });
+
+  // Return / Replace Modal State
+  const [returnModalItem, setReturnModalItem] = useState(null); // { orderId, item }
+  const [returnForm, setReturnForm] = useState({
+    requestType: "Return",
+    reason: "Damaged item received",
+    notes: "",
+  });
+  const [submittingReturn, setSubmittingReturn] = useState(false);
+
+  // Cancel Order Modal State
+  const [cancelModalOrder, setCancelModalOrder] = useState(null);
+  const [cancelReason, setCancelReason] = useState("Changed my mind");
+  const [submittingCancel, setSubmittingCancel] = useState(false);
+
+  const handleCancelOrderSubmit = async (e) => {
+    e.preventDefault();
+    if (!cancelModalOrder) return;
+    try {
+      setSubmittingCancel(true);
+      await cancelOrder(cancelModalOrder._id, cancelReason);
+      toast.success("Order cancelled successfully");
+      setCancelModalOrder(null);
+      // Reload orders
+      const res = await getMyOrders();
+      setCustomerOrders(Array.isArray(res) ? res : res?.orders || []);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to cancel order");
+    } finally {
+      setSubmittingCancel(false);
+    }
+  };
+
+  const handleReturnSubmit = async (e) => {
+    e.preventDefault();
+    if (!returnModalItem) return;
+    try {
+      setSubmittingReturn(true);
+      await requestItemReturn(
+        returnModalItem.item._id,
+        returnForm.reason,
+        returnForm.requestType,
+        returnForm.notes
+      );
+      toast.success(`${returnForm.requestType} request submitted successfully`);
+      setReturnModalItem(null);
+      // Reload orders
+      const res = await getMyOrders();
+      setCustomerOrders(Array.isArray(res) ? res : res?.orders || []);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to submit request");
+    } finally {
+      setSubmittingReturn(false);
+    }
+  };
 
   const [profileForm, setProfileForm] = useState({
     name: user?.name || "",
@@ -763,15 +819,28 @@ export default function Profile() {
             {/* TAB: MY ORDERS */}
             {activeTab === "orders" && (
               <div className="space-y-6">
-                <h2 className="text-lg font-black text-slate-900 dark:text-white">
-                  My Orders
-                </h2>
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                  <div>
+                    <h2 className="text-lg font-black text-slate-900 dark:text-white">
+                      My Orders & Track Fulfillment
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      View past orders, track real-time delivery status, or request returns and replacements
+                    </p>
+                  </div>
+                  <Link
+                    to="/track-order"
+                    className="bg-[#2563eb] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#1d4ed8] transition"
+                  >
+                    Track Any Order
+                  </Link>
+                </div>
 
                 {customerOrders.length === 0 ? (
                   <div className="p-8 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-center space-y-2">
                     <Package size={32} className="text-slate-400 mx-auto" />
                     <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
-                      No orders found
+                      No orders found in your account
                     </p>
                     <Link
                       to="/products"
@@ -781,30 +850,308 @@ export default function Profile() {
                     </Link>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {customerOrders.map((ord) => (
-                      <div
-                        key={ord._id}
-                        className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200/60 dark:border-slate-700/60 space-y-3 text-xs"
-                      >
-                        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
-                          <span className="font-mono font-bold text-slate-900 dark:text-white">
-                            Order #{ord._id?.slice(-8)}
-                          </span>
-                          <span className="bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded text-[10px]">
-                            {ord.status || "Processing"}
-                          </span>
+                  <div className="space-y-5">
+                    {customerOrders.map((ord) => {
+                      const isDelivered = (ord.status || "").toLowerCase().includes("delivered");
+                      const isCancelled = (ord.status || "").toLowerCase().includes("cancel");
+                      const canCancel = !isDelivered && !isCancelled;
+
+                      return (
+                        <div
+                          key={ord._id}
+                          className="bg-white dark:bg-slate-800/90 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-5 space-y-4 shadow-2xs"
+                        >
+                          {/* Order Header Bar */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3 gap-2 text-xs">
+                            <div>
+                              <span className="font-mono font-black text-slate-900 dark:text-white text-sm">
+                                Order #{ord._id ? ord._id.slice(-8).toUpperCase() : "N/A"}
+                              </span>
+                              <p className="text-[11px] text-slate-400 mt-0.5">
+                                Placed on {ord.createdAt ? new Date(ord.createdAt).toLocaleDateString("en-IN") : "N/A"}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${
+                                  isDelivered
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                    : isCancelled
+                                    ? "bg-rose-50 text-rose-700 border-rose-200"
+                                    : "bg-blue-50 text-blue-700 border-blue-200"
+                                }`}
+                              >
+                                ● {ord.status || "Processing"}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Order Items List */}
+                          <div className="divide-y divide-slate-100 dark:divide-slate-700/60">
+                            {ord.items?.map((item, idx) => {
+                              const itemStatus = item.status || ord.status || "Pending";
+                              const isItemDelivered = itemStatus === "Delivered" || isDelivered;
+                              const isRequested = item.returnRequest?.isRequested;
+
+                              return (
+                                <div
+                                  key={item._id || idx}
+                                  className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <img
+                                      src={
+                                        item.product?.images?.[0]?.url ||
+                                        item.product?.image ||
+                                        item.image ||
+                                        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=200&q=80"
+                                      }
+                                      alt={item.product?.name || "Product"}
+                                      className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700 bg-slate-50"
+                                    />
+                                    <div>
+                                      <p className="font-bold text-slate-900 dark:text-white">
+                                        {item.product?.name || item.name || "Product"}
+                                      </p>
+                                      <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                                          ₹{(item.price || 0).toLocaleString("en-IN")} × {item.quantity || 1}
+                                        </span>
+                                        <span className="inline-block text-[9px] font-black uppercase px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-600">
+                                          Product Status: {itemStatus}
+                                        </span>
+                                      </div>
+                                      {isRequested && (
+                                        <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                                          {item.returnRequest?.requestType || "Return"} Request ({item.returnRequest?.status})
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2 self-end sm:self-center">
+                                    {isItemDelivered && !isRequested && (
+                                      <button
+                                        onClick={() => setReturnModalItem({ orderId: ord._id, item })}
+                                        className="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-800 dark:text-white rounded-xl text-[11px] font-bold transition cursor-pointer"
+                                      >
+                                        Return / Replace
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Order Card Footer */}
+                          <div className="pt-3 border-t border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                            <div>
+                              <span className="text-[10px] font-bold text-slate-400 uppercase">Total Amount</span>
+                              <p className="text-sm font-black text-slate-900 dark:text-white">
+                                ₹{(ord.totalPrice || ord.total || 0).toLocaleString("en-IN")}
+                              </p>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Link
+                                to={`/track-order?id=${ord._id}`}
+                                className="px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5"
+                              >
+                                <Truck size={14} />
+                                Track Order Status
+                              </Link>
+
+                              {canCancel && (
+                                <button
+                                  onClick={() => setCancelModalOrder(ord)}
+                                  className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition cursor-pointer"
+                                >
+                                  Cancel Order
+                                </button>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex justify-between font-semibold">
-                          <span>Total Amount:</span>
-                          <span className="font-bold text-slate-900 dark:text-white">
-                            ₹{ord.totalPrice || ord.totalAmount}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Cancel Order Modal */}
+            {cancelModalOrder && (
+              <div
+                className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs"
+                onClick={() => setCancelModalOrder(null)}
+              >
+                <div
+                  className="bg-white dark:bg-slate-800 max-w-md w-full rounded-3xl p-6 space-y-4 shadow-2xl border border-slate-200 dark:border-slate-700"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3">
+                    <h3 className="font-black text-slate-900 dark:text-white text-base">
+                      Cancel Order #{cancelModalOrder._id?.slice(-8).toUpperCase()}
+                    </h3>
+                    <button
+                      onClick={() => setCancelModalOrder(null)}
+                      className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full text-slate-400"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleCancelOrderSubmit} className="space-y-4 text-xs">
+                    <div>
+                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
+                        Select Reason for Cancellation
+                      </label>
+                      <select
+                        value={cancelReason}
+                        onChange={(e) => setCancelReason(e.target.value)}
+                        className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-semibold text-slate-800 dark:text-slate-200"
+                      >
+                        <option value="Changed my mind">Changed my mind</option>
+                        <option value="Ordered by mistake">Ordered by mistake</option>
+                        <option value="Found a better price elsewhere">Found a better price elsewhere</option>
+                        <option value="Delivery duration is too long">Delivery duration is too long</option>
+                        <option value="Incorrect shipping address">Incorrect shipping address</option>
+                      </select>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setCancelModalOrder(null)}
+                        className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl"
+                      >
+                        Keep Order
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={submittingCancel}
+                        className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow cursor-pointer"
+                      >
+                        {submittingCancel ? "Cancelling..." : "Confirm Cancel Order"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* Return / Replacement Modal */}
+            {returnModalItem && (
+              <div
+                className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs"
+                onClick={() => setReturnModalItem(null)}
+              >
+                <div
+                  className="bg-white dark:bg-slate-800 max-w-lg w-full rounded-3xl p-6 space-y-4 shadow-2xl border border-slate-200 dark:border-slate-700"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3">
+                    <div>
+                      <h3 className="font-black text-slate-900 dark:text-white text-base">
+                        Request Return or Replacement
+                      </h3>
+                      <p className="text-[11px] text-slate-500">
+                        Product: {returnModalItem.item.product?.name || returnModalItem.item.name}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setReturnModalItem(null)}
+                      className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full text-slate-400"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleReturnSubmit} className="space-y-4 text-xs">
+                    {/* Select Request Type */}
+                    <div>
+                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-2">
+                        What would you like to request?
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setReturnForm({ ...returnForm, requestType: "Return" })}
+                          className={`p-3 rounded-xl border text-center font-bold transition cursor-pointer ${
+                            returnForm.requestType === "Return"
+                              ? "bg-blue-50 dark:bg-blue-950 border-[#2563eb] text-[#2563eb]"
+                              : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400"
+                          }`}
+                        >
+                          Return for Refund
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setReturnForm({ ...returnForm, requestType: "Replacement" })}
+                          className={`p-3 rounded-xl border text-center font-bold transition cursor-pointer ${
+                            returnForm.requestType === "Replacement"
+                              ? "bg-purple-50 dark:bg-purple-950 border-purple-600 text-purple-600"
+                              : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400"
+                          }`}
+                        >
+                          Free Replacement Item
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Select Reason */}
+                    <div>
+                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
+                        Reason for {returnForm.requestType}
+                      </label>
+                      <select
+                        value={returnForm.reason}
+                        onChange={(e) => setReturnForm({ ...returnForm, reason: e.target.value })}
+                        className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-semibold text-slate-800 dark:text-slate-200"
+                      >
+                        <option value="Damaged item received">Damaged item received</option>
+                        <option value="Defective / Item not working properly">Defective / Item not working properly</option>
+                        <option value="Wrong size or wrong item delivered">Wrong size or wrong item delivered</option>
+                        <option value="Item missing or incomplete package">Item missing or incomplete package</option>
+                        <option value="Quality not as expected">Quality not as expected</option>
+                        <option value="Other reason">Other reason</option>
+                      </select>
+                    </div>
+
+                    {/* Notes */}
+                    <div>
+                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
+                        Additional Notes / Comments
+                      </label>
+                      <textarea
+                        rows="3"
+                        placeholder="Provide details about the issue..."
+                        value={returnForm.notes}
+                        onChange={(e) => setReturnForm({ ...returnForm, notes: e.target.value })}
+                        className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-medium text-slate-800 dark:text-slate-200"
+                      ></textarea>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setReturnModalItem(null)}
+                        className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={submittingReturn}
+                        className="px-5 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold rounded-xl shadow cursor-pointer"
+                      >
+                        {submittingReturn ? "Submitting..." : `Submit ${returnForm.requestType} Request`}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             )}
 

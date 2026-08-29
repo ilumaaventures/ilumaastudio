@@ -1,6 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Heart, ShoppingBag, Clock, Star, Zap } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
+import {
+  Clock,
+  Zap,
+  Flame,
+  ChevronLeft,
+  ChevronRight,
+  ArrowRight,
+} from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { addToCart } from "../../../redux/reducers/cartReducer";
 import { toggleWishlist } from "../../../redux/reducers/wishlistReducer";
@@ -9,14 +16,14 @@ import ProductCard from "../../../Components/ProductCard";
 
 function FlashDeals() {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const wishlistItems = useSelector((s) => s.wishlist?.items || []);
+  const sliderRef = useRef(null);
 
   const [deals, setDeals] = useState([]);
+  const [activeDealTitle, setActiveDealTitle] = useState("");
   const [campaignEndDate, setCampaignEndDate] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Live Timer State (Counts down to closest campaign end date)
+  // Live Timer State
   const [timeLeft, setTimeLeft] = useState({
     hours: 0,
     minutes: 0,
@@ -54,11 +61,10 @@ function FlashDeals() {
         const activeCampaigns = Array.isArray(campaigns) ? campaigns : [];
 
         if (activeCampaigns.length > 0) {
-          // Find earliest ending active campaign
           const firstCampaign = activeCampaigns[0];
           setCampaignEndDate(firstCampaign.endDate);
+          setActiveDealTitle(firstCampaign.title || "Limited Time Deal");
 
-          // Extract all products across active campaigns
           const allProducts = [];
           for (const camp of activeCampaigns) {
             if (Array.isArray(camp.products)) {
@@ -86,41 +92,20 @@ function FlashDeals() {
     fetchDeals();
   }, []);
 
-  const handleToggleWishlist = (item, e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const itemId = item._id || item.id;
-    const isWished = wishlistItems.some(
-      (i) => (i._id || i.id || i) === itemId || String(i) === String(itemId),
-    );
-    dispatch(toggleWishlist({ ...item, _id: itemId }));
-    if (isWished) {
-      toast.success("Removed from Wishlist");
-    } else {
-      toast.success("Added to Wishlist!");
+  const handleScrollLeft = () => {
+    if (sliderRef.current) {
+      sliderRef.current.scrollBy({ left: -320, behavior: "smooth" });
     }
   };
 
-  const handleAddToCart = (item, e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dispatch(
-      addToCart({
-        product: {
-          _id: item._id,
-          name: item.name,
-          price: item.dealPrice || item.price,
-          image: item.images?.[0] || item.image,
-        },
-        quantity: 1,
-      }),
-    );
-    toast.success(`${item.name} added to cart!`);
+  const handleScrollRight = () => {
+    if (sliderRef.current) {
+      sliderRef.current.scrollBy({ left: 320, behavior: "smooth" });
+    }
   };
 
   const formatNumber = (num) => String(num).padStart(2, "0");
 
-  // CRITICAL REQUIREMENT: Show ONLY when products are actually added to an active Flash Deal in backend!
   if (!loading && deals.length === 0) {
     return null;
   }
@@ -132,66 +117,102 @@ function FlashDeals() {
   return (
     <section className="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-4">
       {/* Professional Header Banner */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-gradient-to-r from-slate-900 via-rose-950 to-slate-900 text-white p-4 sm:p-5 rounded-3xl shadow-lg border border-rose-500/20">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shrink-0">
-            <Zap size={22} className="animate-bounce" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                Flash Deals 🔥
-              </h2>
-              <span className="px-2.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black uppercase tracking-wider animate-pulse">
-                Live Now
-              </span>
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-rose-950 to-slate-900 text-white p-5 sm:p-6 rounded-3xl shadow-xl border border-rose-500/20 relative overflow-hidden">
+        {/* Left Side: Title, Deal Name Badge & Subtitle */}
+        <div className="flex items-center gap-3.5 z-10">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Active Deal Name Badge */}
+              {activeDealTitle && (
+                <>
+                  <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                    <span>Deal: {activeDealTitle}</span>
+                  </h2>
+                  <span className="px-2.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black uppercase tracking-wider animate-pulse">
+                    Live Now
+                  </span>
+                </>
+              )}
             </div>
+
             <p className="text-xs text-rose-200/80 font-medium">
               Limited-time promotional pricing on handpicked items. Ending soon!
             </p>
           </div>
         </div>
 
-        {/* Live Countdown Timer */}
-        <div className="flex items-center gap-2 self-stretch sm:self-auto justify-between sm:justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-rose-500/30">
-          <span className="text-[11px] font-bold text-rose-200 uppercase tracking-wider shrink-0 flex items-center gap-1">
-            <Clock size={13} className="text-rose-400" /> Ends In:
-          </span>
-          <div className="flex items-center gap-1 text-xs font-black">
-            <span className="bg-rose-500/30 border border-rose-400/40 px-2 py-1 rounded-lg min-w-[32px] text-center font-mono">
-              {formatNumber(timeLeft.hours)}h
+        {/* Right Side: Timer & Slider Controls */}
+        <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto border-t md:border-t-0 pt-3 md:pt-0 border-rose-500/30 z-10">
+          {/* Live Timer */}
+          <div className="flex items-center gap-1.5 bg-black/40 border border-rose-500/30 px-3 py-1.5 rounded-2xl">
+            <Clock size={14} className="text-rose-400 animate-pulse shrink-0" />
+            <span className="text-[10px] font-black text-rose-200 uppercase tracking-wider shrink-0 mr-1">
+              Ends In:
             </span>
-            <span className="text-rose-300 font-bold">:</span>
-            <span className="bg-rose-500/30 border border-rose-400/40 px-2 py-1 rounded-lg min-w-[32px] text-center font-mono">
-              {formatNumber(timeLeft.minutes)}m
-            </span>
-            <span className="text-rose-300 font-bold">:</span>
-            <span className="bg-rose-500 text-white px-2 py-1 rounded-lg min-w-[32px] text-center font-mono animate-pulse shadow-sm">
-              {formatNumber(timeLeft.seconds)}s
-            </span>
+            <div className="flex items-center gap-1 text-xs font-black">
+              <span className="bg-rose-500/40 px-2 py-0.5 rounded-lg min-w-[30px] text-center font-mono">
+                {formatNumber(timeLeft.hours)}h
+              </span>
+              <span className="text-rose-400 font-bold">:</span>
+              <span className="bg-rose-500/40 px-2 py-0.5 rounded-lg min-w-[30px] text-center font-mono">
+                {formatNumber(timeLeft.minutes)}m
+              </span>
+              <span className="text-rose-400 font-bold">:</span>
+              <span className="bg-rose-500 text-white px-2 py-0.5 rounded-lg min-w-[30px] text-center font-mono shadow-sm">
+                {formatNumber(timeLeft.seconds)}s
+              </span>
+            </div>
           </div>
 
-          <Link
-            to="/flash-deals"
-            className="inline-flex items-center gap-1 text-xs font-extrabold text-rose-300 hover:text-white transition-colors shrink-0 ml-2"
-          >
-            <span>See All Deals</span>
-            <span className="text-base">&rarr;</span>
-          </Link>
+          {/* Left & Right Slider Controls */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleScrollLeft}
+              className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition active:scale-95 cursor-pointer"
+              title="Scroll Left"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              onClick={handleScrollRight}
+              className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition active:scale-95 cursor-pointer"
+              title="Scroll Right"
+            >
+              <ChevronRight size={18} />
+            </button>
+
+            <Link
+              to="/flash-deals"
+              className="hidden sm:inline-flex items-center gap-1 text-xs font-extrabold text-rose-300 hover:text-white transition-colors ml-1 shrink-0"
+            >
+              <span>See All</span>
+              <ArrowRight size={14} />
+            </Link>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Horizontal Left-to-Right Scrollable Products Container */}
+      <div
+        ref={sliderRef}
+        className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-none py-2 px-1"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
         {deals.map((item) => (
-          <ProductCard
+          <div
             key={item._id}
-            product={{
-              ...item,
-              price: item.dealPrice || item.price,
-              originalPrice: item.originalPrice,
-              badge: `${item.discountPercentage}% OFF`,
-            }}
-          />
+            className="min-w-[260px] sm:min-w-[280px] max-w-[280px] snap-start shrink-0"
+          >
+            <ProductCard
+              product={{
+                ...item,
+                price: item.dealPrice || item.price,
+                originalPrice: item.originalPrice,
+                badge: `${item.discountPercentage}% OFF`,
+              }}
+              isCarousel={true}
+            />
+          </div>
         ))}
       </div>
     </section>

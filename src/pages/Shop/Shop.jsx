@@ -370,7 +370,7 @@ export default function ShopPage() {
           Categories
         </h3>
         <div className="space-y-2">
-          {(showMoreCategories
+          {(showMoreCategories || mobileFilterOpen
             ? categoryListCombined
             : categoryListCombined.slice(0, 7)
           ).map((cat) => {
@@ -395,7 +395,7 @@ export default function ShopPage() {
               </button>
             );
           })}
-          {categoryListCombined.length > 7 && (
+          {!mobileFilterOpen && categoryListCombined.length > 7 && (
             <button
               onClick={() => setShowMoreCategories(!showMoreCategories)}
               className="font-bold text-[#2563eb] hover:underline pt-1 block cursor-pointer"
@@ -552,6 +552,49 @@ export default function ShopPage() {
             <span className="text-slate-900 dark:text-white font-bold">
               {selectedCategory}
             </span>
+          </div>
+        </div>
+
+        {/* Mobile / Tablet Horizontal Category Pills ScrollBar */}
+        <div className="lg:hidden bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 shadow-2xs space-y-2">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-black text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">
+              Categories
+            </span>
+            {selectedCategory !== "All Categories" && (
+              <button
+                onClick={() => setSelectedCategory("All Categories")}
+                className="text-[11px] font-bold text-[#2563eb] hover:underline cursor-pointer"
+              >
+                Reset Category
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-0.5">
+            {categoryListCombined.map((cat) => {
+              const isSelected =
+                selectedCategory.toLowerCase() === cat.name.toLowerCase();
+              return (
+                <button
+                  key={`mobile_cat_pill_${cat.name}`}
+                  onClick={() => handleCategorySelect(cat.name)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${isSelected
+                    ? "bg-[#2563eb] text-white shadow-xs"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                    }`}
+                >
+                  <span>{cat.name}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${isSelected
+                      ? "bg-white/20 text-white"
+                      : "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                      }`}
+                  >
+                    {cat.count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 

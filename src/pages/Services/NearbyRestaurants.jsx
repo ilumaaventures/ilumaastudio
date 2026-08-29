@@ -14,10 +14,20 @@ function NearbyRestaurants() {
         const res = await getShops();
         const list = Array.isArray(res) ? res : res?.stores || res?.data || [];
         if (list.length > 0) {
+          const safeStr = (val, fallback = "") => {
+            if (!val) return fallback;
+            if (typeof val === "string") return val;
+            if (typeof val === "number") return String(val);
+            if (typeof val === "object") {
+              return val.name || val.title || val.storeName || val.businessName || fallback;
+            }
+            return String(val);
+          };
+
           const formatted = list.slice(0, 3).map((s, idx) => ({
             id: s._id || `rest_${idx}`,
-            name: s.businessName || s.name || s.storeName || "Local Partner",
-            subtitle: s.businessCategory || s.category || "Food & Dining",
+            name: safeStr(s.businessName || s.name || s.storeName, "Local Partner"),
+            subtitle: safeStr(s.businessCategory || s.category, "Food & Dining"),
             image:
               s.logo ||
               s.banner ||

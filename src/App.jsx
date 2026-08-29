@@ -156,6 +156,7 @@ function App() {
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/help-center" element={<HelpCenter />} />
           <Route path="/track-order" element={<TrackOrder />} />
+          <Route path="/track-order/:id" element={<TrackOrder />} />
 
           {/* Legal, Support, Shipping & Policies Routes */}
           <Route path="/privacy" element={<PrivacyPolicy />} />

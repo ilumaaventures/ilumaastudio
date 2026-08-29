@@ -175,6 +175,15 @@ export default function ProductCard({
         ? Number(defaultVariant.price)
         : displayPrice;
 
+    const categoryTax =
+      typeof product.category === "object" && product.category?.tax !== undefined && product.category?.tax !== null
+        ? Number(product.category.tax)
+        : product.categoryTax !== undefined && product.categoryTax !== null
+        ? Number(product.categoryTax)
+        : product.tax !== undefined && product.tax !== null
+        ? Number(product.tax)
+        : 0;
+
     dispatch(
       addToCart({
         product: {
@@ -184,7 +193,8 @@ export default function ProductCard({
           price: effectivePrice,
           originalPrice: displayOriginalPrice,
           image: imageUrl,
-          category: categoryName,
+          category: product.category || categoryName,
+          categoryTax: categoryTax,
           sku: product.sku || defaultVariant?.sku,
           variantId: defaultVariant ? defaultVariant._id : null,
           selectedOptions: defaultVariant ? defaultVariant.optionValues : null,

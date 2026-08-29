@@ -58,11 +58,13 @@ export const verifyOTP = async (email, otp) => {
   }
 };
 
-export const resetPassword = async (email, newPassword) => {
+export const resetPassword = async (resetToken, newPassword) => {
   try {
     const response = await baseApi.post("/auth/reset-password", {
-      email,
+      resetToken,
+      token: resetToken,
       newPassword,
+      password: newPassword,
     });
     return response.data;
   } catch (error) {

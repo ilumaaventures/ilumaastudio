@@ -80,6 +80,29 @@ function Cart() {
   });
   const [validatingPincode, setValidatingPincode] = useState(false);
 
+  // Dynamic category tax rate lookup map from backend
+  const [categoriesMap, setCategoriesMap] = useState({});
+
+  useEffect(() => {
+    const fetchCategoryTaxMap = async () => {
+      try {
+        const res = await baseApi.get("/categories?all=true");
+        const list = Array.isArray(res.data)
+          ? res.data
+          : res.data?.categories || res.data?.data || [];
+        const map = {};
+        list.forEach((c) => {
+          if (c._id) map[c._id.toString()] = c.tax || 0;
+          if (c.name) map[c.name.toLowerCase().trim()] = c.tax || 0;
+        });
+        setCategoriesMap(map);
+      } catch (e) {
+        // ignore fetch error
+      }
+    };
+    fetchCategoryTaxMap();
+  }, []);
+
   // Load saved addresses for logged-in user
   useEffect(() => {
     if (isAuthenticated) {
@@ -269,14 +292,65 @@ function Cart() {
     toast.success(`Removed ${unavailableItems.length} unavailable product(s)`);
   };
 
+  const getItemTaxRate = (item) => {
+    if (
+      item.categoryTax !== undefined &&
+      item.categoryTax !== null &&
+      !isNaN(Number(item.categoryTax))
+    ) {
+      return Number(item.categoryTax);
+    }
+    if (
+      item.category &&
+      typeof item.category === "object" &&
+      item.category?.tax !== undefined &&
+      item.category?.tax !== null
+    ) {
+      return Number(item.category.tax);
+    }
+    if (typeof item.category === "string" && item.category.trim()) {
+      const catKey = item.category.trim().toLowerCase();
+      if (categoriesMap[catKey] !== undefined) {
+        return Number(categoriesMap[catKey]) || 0;
+      }
+      if (categoriesMap[item.category] !== undefined) {
+        return Number(categoriesMap[item.category]) || 0;
+      }
+    }
+    if (
+      item.taxRate !== undefined &&
+      item.taxRate !== null &&
+      !isNaN(Number(item.taxRate))
+    ) {
+      return Number(item.taxRate);
+    }
+    if (
+      item.tax !== undefined &&
+      item.tax !== null &&
+      !isNaN(Number(item.tax))
+    ) {
+      return Number(item.tax);
+    }
+    return 0;
+  };
+
   const subtotal = cartItems.reduce(
     (acc, item) => acc + (item.price || 0) * (item.quantity || 1),
     0,
   );
 
+  const tax = cartItems.reduce((acc, item) => {
+    const itemSubtotal = (item.price || 0) * (item.quantity || 1);
+    const rate = getItemTaxRate(item);
+    return acc + Math.round(itemSubtotal * (rate / 100));
+  }, 0);
+
+  const platformFee = cartItems.length > 0 ? 0 : 0;
   const shipping = subtotal >= 5000 || subtotal === 0 ? 0 : 99;
-  const tax = Math.round(subtotal * 0.12);
-  const total = Math.max(0, subtotal + shipping + tax - discountAmount);
+  const total = Math.max(
+    0,
+    subtotal + tax + platformFee + shipping - discountAmount,
+  );
 
   const handleProceedToCheckout = () => {
     if (cartItems.length === 0) {
@@ -360,32 +434,37 @@ function Cart() {
         // Razorpay Online Flow
         const isLoaded = await loadRazorpayScript();
         if (!isLoaded) {
-          toast.error("Razorpay SDK failed to load. Check your internet connection.");
+          toast.error(
+            "Razorpay SDK failed to load. Check your internet connection.",
+          );
           setPlacingOrder(false);
           return;
         }
 
-        const razorpayOrder = await createRazorpayOrder({
+        const razorpayRes = await createRazorpayOrder({
           amount: total,
           currency: "INR",
           receipt: `rcpt_${Date.now()}`,
         });
 
-        const rzpKey = await getRazorpayKey();
+        const rzpOrderData = razorpayRes?.order || razorpayRes;
+        const rzpKey = razorpayRes?.key || (await getRazorpayKey());
+        const rzpOrderId = rzpOrderData?.id || null;
 
         const options = {
           key: rzpKey,
-          amount: razorpayOrder.amount,
-          currency: razorpayOrder.currency,
+          amount: rzpOrderData?.amount || Math.round(total * 100),
+          currency: rzpOrderData?.currency || "INR",
           name: "ILumaaStudio",
           description: `Payment for Order`,
-          order_id: razorpayOrder.id,
           handler: async (response) => {
             try {
               const verifyRes = await verifyRazorpayPayment({
-                razorpay_order_id: response.razorpay_order_id,
+                razorpay_order_id: response.razorpay_order_id || rzpOrderId,
                 razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
+                razorpay_signature:
+                  response.razorpay_signature || "standard_auth",
+                paymentId: razorpayRes?.paymentId || null,
               });
 
               if (verifyRes.success) {
@@ -395,6 +474,7 @@ function Cart() {
                     type: "Razorpay",
                     status: "Completed",
                     transactionId: response.razorpay_payment_id,
+                    razorpayOrderId: response.razorpay_order_id || rzpOrderId,
                   },
                 });
                 setCreatedOrder(finalOrder);
@@ -406,7 +486,9 @@ function Cart() {
               }
             } catch (err) {
               console.error("Verification error:", err);
-              toast.error("Error verifying payment.");
+              toast.error(
+                err.response?.data?.message || "Error verifying payment.",
+              );
             }
           },
           prefill: {
@@ -418,6 +500,10 @@ function Cart() {
             color: "#2563eb",
           },
         };
+
+        if (rzpOrderId) {
+          options.order_id = rzpOrderId;
+        }
 
         const paymentObject = new window.Razorpay(options);
         paymentObject.open();
@@ -434,7 +520,9 @@ function Cart() {
     return (
       <div className="min-h-screen bg-slate-50 py-20 flex flex-col items-center justify-center px-6">
         <ShoppingBag size={64} className="text-slate-300 mb-6" />
-        <h2 className="text-3xl font-black text-slate-900 mb-2">Your Cart is Empty</h2>
+        <h2 className="text-3xl font-black text-slate-900 mb-2">
+          Your Cart is Empty
+        </h2>
         <p className="text-slate-500 mb-8 max-w-sm text-center text-sm">
           Looks like you haven't added anything to your cart yet. Browse our
           handcrafted treasures and curated collections!
@@ -511,7 +599,8 @@ function Cart() {
                       <h4 className="font-bold text-sm">Delivery Notice</h4>
                       <p className="text-xs mt-0.5">
                         The following product(s) cannot be delivered to pincode{" "}
-                        <span className="font-bold">{shippingAddress.zip}</span>:{" "}
+                        <span className="font-bold">{shippingAddress.zip}</span>
+                        :{" "}
                         <span className="font-semibold">
                           {unavailableCartItems.map((i) => i.name).join(", ")}
                         </span>
@@ -553,10 +642,11 @@ function Cart() {
                   return (
                     <div
                       key={item._id}
-                      className={`bg-white rounded-3xl p-5 shadow-2xs border transition-all ${!isItemAvailable && shippingAddress.zip?.length === 6
-                        ? "border-rose-300 bg-rose-50/20"
-                        : "border-slate-200/80"
-                        }`}
+                      className={`bg-white rounded-3xl p-5 shadow-2xs border transition-all ${
+                        !isItemAvailable && shippingAddress.zip?.length === 6
+                          ? "border-rose-300 bg-rose-50/20"
+                          : "border-slate-200/80"
+                      }`}
                     >
                       <div className="flex flex-col sm:flex-row gap-5">
                         {/* Image */}
@@ -577,21 +667,27 @@ function Cart() {
                               </span>
                             )}
                             {/* Pincode Availability Badge */}
-                            {shippingAddress.zip?.length === 6 && (
-                              validatingPincode ? (
+                            {shippingAddress.zip?.length === 6 &&
+                              (validatingPincode ? (
                                 <span className="text-[10px] bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
-                                  <RefreshCw size={10} className="animate-spin" /> Verifying...
+                                  <RefreshCw
+                                    size={10}
+                                    className="animate-spin"
+                                  />{" "}
+                                  Verifying...
                                 </span>
                               ) : isItemAvailable ? (
                                 <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
-                                  <CheckCircle2 size={11} /> {valStatus?.message || `Available for ${shippingAddress.zip}`}
+                                  <CheckCircle2 size={11} />{" "}
+                                  {valStatus?.message ||
+                                    `Available for ${shippingAddress.zip}`}
                                 </span>
                               ) : (
                                 <span className="text-[10px] bg-rose-50 text-rose-600 border border-rose-200 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
-                                  <XCircle size={11} /> Not Deliverable to {shippingAddress.zip}
+                                  <XCircle size={11} /> Not Deliverable to{" "}
+                                  {shippingAddress.zip}
                                 </span>
-                              )
-                            )}
+                              ))}
                           </div>
 
                           <h3 className="font-bold text-sm text-slate-900 mt-2">
@@ -602,9 +698,19 @@ function Cart() {
                               Variant: {item.variantLabel}
                             </p>
                           )}
-                          <p className="text-sm font-black text-slate-900 mt-2">
-                            ₹{item.price}
-                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-sm font-black text-slate-900">
+                              ₹{item.price}
+                            </span>
+                            <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md">
+                              Category Tax ({getItemTaxRate(item)}%): +₹
+                              {Math.round(
+                                (item.price || 0) *
+                                  (item.quantity || 1) *
+                                  (getItemTaxRate(item) / 100),
+                              )}
+                            </span>
+                          </div>
                         </div>
 
                         {/* Actions */}
@@ -636,10 +742,11 @@ function Cart() {
                                   );
                                 }
                               }}
-                              className={`p-2 hover:bg-slate-200 transition ${item.quantity >= itemStock
-                                ? "opacity-40 cursor-not-allowed"
-                                : "cursor-pointer"
-                                }`}
+                              className={`p-2 hover:bg-slate-200 transition ${
+                                item.quantity >= itemStock
+                                  ? "opacity-40 cursor-not-allowed"
+                                  : "cursor-pointer"
+                              }`}
                               disabled={item.quantity >= itemStock}
                               aria-label="Increase quantity"
                             >
@@ -678,8 +785,15 @@ function Cart() {
                     </div>
 
                     <div className="flex justify-between">
-                      <span>GST (12%)</span>
+                      <span>Category Tax (GST)</span>
                       <span className="font-bold text-slate-900">₹{tax}</span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span>Platform Fee</span>
+                      <span className="font-bold text-slate-900">
+                        ₹{platformFee}
+                      </span>
                     </div>
 
                     <div className="flex justify-between">
@@ -747,7 +861,9 @@ function Cart() {
 
                   <button
                     onClick={handleProceedToCheckout}
-                    disabled={!pincodeValidation.allAvailable || validatingPincode}
+                    disabled={
+                      !pincodeValidation.allAvailable || validatingPincode
+                    }
                     className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white py-3.5 rounded-xl font-bold text-xs uppercase tracking-wider transition shadow-sm disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                   >
                     {!pincodeValidation.allAvailable
@@ -809,7 +925,8 @@ function Cart() {
                         <option key={addr._id} value={addr._id}>
                           {addr.isDefault ? "[DEFAULT] " : ""}
                           {addr.fullName ? `${addr.fullName} - ` : ""}
-                          {addr.street}, {addr.city}, {addr.state} - {addr.zip || addr.pincode}
+                          {addr.street}, {addr.city}, {addr.state} -{" "}
+                          {addr.zip || addr.pincode}
                         </option>
                       ))}
                       <option value="new">+ Enter New Shipping Address</option>
@@ -821,7 +938,8 @@ function Cart() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        Full Name / Recipient <span className="text-rose-500">*</span>
+                        Full Name / Recipient{" "}
+                        <span className="text-rose-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -851,7 +969,8 @@ function Cart() {
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Street Address & Landmark <span className="text-rose-500">*</span>
+                      Street Address & Landmark{" "}
+                      <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -923,10 +1042,11 @@ function Cart() {
                     <div className="grid sm:grid-cols-2 gap-3 pt-1">
                       {/* Cash on Delivery */}
                       <label
-                        className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer ${paymentMethod === "cod"
-                          ? "border-[#2563eb] bg-blue-50/50"
-                          : "border-slate-200 bg-white hover:border-slate-300"
-                          }`}
+                        className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                          paymentMethod === "cod"
+                            ? "border-[#2563eb] bg-blue-50/50"
+                            : "border-slate-200 bg-white hover:border-slate-300"
+                        }`}
                       >
                         <input
                           type="radio"
@@ -951,10 +1071,11 @@ function Cart() {
 
                       {/* Online Razorpay */}
                       <label
-                        className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer ${paymentMethod === "razorpay"
-                          ? "border-[#2563eb] bg-blue-50/50"
-                          : "border-slate-200 bg-white hover:border-slate-300"
-                          }`}
+                        className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                          paymentMethod === "razorpay"
+                            ? "border-[#2563eb] bg-blue-50/50"
+                            : "border-slate-200 bg-white hover:border-slate-300"
+                        }`}
                       >
                         <input
                           type="radio"
@@ -1043,11 +1164,19 @@ function Cart() {
                   <div className="space-y-2 border-t border-slate-100 pt-3 text-xs text-slate-600">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span className="font-bold text-slate-900">₹{subtotal}</span>
+                      <span className="font-bold text-slate-900">
+                        ₹{subtotal}
+                      </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>GST (12%)</span>
+                      <span>Category Tax (GST)</span>
                       <span className="font-bold text-slate-900">₹{tax}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Platform Fee</span>
+                      <span className="font-bold text-slate-900">
+                        ₹{platformFee}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Shipping</span>
@@ -1099,14 +1228,18 @@ function Cart() {
                 </span>
               </div>
               <div className="flex justify-between border-b border-slate-200/60 pb-2.5">
-                <span className="text-slate-500 font-medium">Payment Status:</span>
+                <span className="text-slate-500 font-medium">
+                  Payment Status:
+                </span>
                 <span className="font-bold text-emerald-600">
                   {createdOrder.paymentInfo?.status || "Pending"} (
                   {createdOrder.paymentInfo?.type || "COD"})
                 </span>
               </div>
               <div className="flex justify-between border-b border-slate-200/60 pb-2.5">
-                <span className="text-slate-500 font-medium">Total Amount:</span>
+                <span className="text-slate-500 font-medium">
+                  Total Amount:
+                </span>
                 <span className="font-black text-slate-900 text-sm">
                   ₹{createdOrder.totalPrice || createdOrder.totalAmount}
                 </span>

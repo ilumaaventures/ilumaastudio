@@ -50,8 +50,13 @@ export const updateSuperAdminOrder = async (id, updateData) => {
   return response.data;
 };
 
-export const requestItemReturn = async (itemId, reason) => {
-  const response = await baseApi.post(`/orders/item/${itemId}/return`, { reason });
+export const requestItemReturn = async (itemId, reason, requestType = "Return", notes = "") => {
+  const response = await baseApi.post(`/orders/item/${itemId}/return`, { reason, requestType, notes });
+  return response.data;
+};
+
+export const cancelOrder = async (orderId, reason = "") => {
+  const response = await baseApi.patch(`/orders/${orderId}/cancel`, { reason });
   return response.data;
 };
 

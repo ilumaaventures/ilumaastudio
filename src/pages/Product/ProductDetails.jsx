@@ -419,6 +419,8 @@ function ProductDetails() {
           price: effectivePrice,
           compareAtPrice: effectiveCompareAtPrice,
           image: selectedImage || displayProduct.images?.[0]?.url,
+          category: displayProduct.category,
+          categoryTax: typeof displayProduct.category === "object" ? (displayProduct.category?.tax ?? 0) : 0,
           selectedVariant: activeVariant
             ? {
                 sku: activeVariant.sku,
@@ -645,9 +647,18 @@ function ProductDetails() {
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-slate-400">
-                Inclusive of all taxes & verified warranty
-              </p>
+              <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 mt-2">
+                <span className="text-xs font-semibold text-slate-600">
+                  Category Tax Rate ({typeof displayProduct.category === "object" ? displayProduct.category?.name : displayProduct.category || "Category"}):
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-[#2563eb] border border-blue-200/80 font-black text-xs">
+                  {typeof displayProduct.category === "object" && displayProduct.category?.tax !== undefined && displayProduct.category?.tax !== null
+                    ? `${displayProduct.category.tax}% GST`
+                    : displayProduct.categoryTax !== undefined && displayProduct.categoryTax !== null
+                      ? `${displayProduct.categoryTax}% GST`
+                      : "0% GST"}
+                </span>
+              </div>
             </div>
 
             {/* Dynamic Variant Options Selectors */}

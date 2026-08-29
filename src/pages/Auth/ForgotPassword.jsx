@@ -9,6 +9,7 @@ function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  const [resetToken, setResetToken] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     otp: "",
@@ -34,7 +35,7 @@ function ForgotPassword() {
           setLoading(false);
           return;
         }
-        await forgotPassword(formData.email);
+        await forgotPassword(formData.email.trim());
         toast.success("Verification code sent to your email!");
         setStep(2);
       } else if (step === 2) {
@@ -43,7 +44,10 @@ function ForgotPassword() {
           setLoading(false);
           return;
         }
-        await verifyOTP(formData.email, formData.otp);
+        const res = await verifyOTP(formData.email.trim(), formData.otp.trim());
+        if (res?.resetToken) {
+          setResetToken(res.resetToken);
+        }
         toast.success("OTP Verified Successfully!");
         setStep(3);
       } else {
@@ -57,7 +61,7 @@ function ForgotPassword() {
           setLoading(false);
           return;
         }
-        await resetPassword(formData.email, formData.password);
+        await resetPassword(resetToken || formData.email.trim(), formData.password);
         toast.success("Password reset successfully!");
         setSuccess(true);
       }
