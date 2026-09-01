@@ -62,7 +62,10 @@ export const resetPassword = async (resetToken, newPassword) => {
   try {
     const response = await baseApi.post("/auth/reset-password", {
       resetToken,
+<<<<<<< HEAD
       token: resetToken,
+=======
+>>>>>>> 9d38903e872714ab84df19b3829bd2415adc6673
       newPassword,
       password: newPassword,
     });

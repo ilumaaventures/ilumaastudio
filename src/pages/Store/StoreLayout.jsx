@@ -5,7 +5,11 @@ import Navbar from "../../Components/store/Navbar";
 import Footer from "../../Components/store/Footer";
 import { Store, AlertTriangle, ArrowLeft, ArrowRight, X, AlertCircle } from "lucide-react";
 import customStoresRegistry from "./registry";
+<<<<<<< HEAD
 import { StoreContext, useStore } from "./StoreContext";
+=======
+import { getTenantSubdomain } from "../../utils/tenant";
+>>>>>>> 9d38903e872714ab84df19b3829bd2415adc6673
 
 export { StoreContext, useStore };
 
@@ -62,6 +66,7 @@ function StoreAnnouncementBar() {
 
 export default function StoreLayout() {
   const { businessName } = useParams();
+  const activeTenant = businessName || getTenantSubdomain();
   const [business, setBusiness] = useState(null);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -75,8 +80,8 @@ export default function StoreLayout() {
 
   useEffect(() => {
     const fetchStoreData = async () => {
-      if (!businessName) return;
-      const decodedName = decodeURIComponent(businessName);
+      if (!activeTenant) return;
+      const decodedName = decodeURIComponent(activeTenant);
 
       try {
         setLoading(true);
@@ -162,7 +167,7 @@ export default function StoreLayout() {
     };
 
     fetchStoreData();
-  }, [businessName]);
+  }, [activeTenant]);
 
   // Loading State
   if (loading) {
@@ -182,10 +187,29 @@ export default function StoreLayout() {
   // 404 State
   if (storeNotFound) {
     return (
+<<<<<<< HEAD
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6 text-center">
         <div className="max-w-md w-full bg-white p-8 rounded-3xl border border-gray-150 shadow-sm space-y-4">
           <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto">
             <Store size={28} />
+=======
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center font-sans">
+        <div className="max-w-md bg-white border border-gray-100 rounded-3xl p-8 shadow-sm space-y-6">
+          <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto shadow-sm">
+            <Store size={32} />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight">
+              Storefront Not Found
+            </h1>
+            <p className="text-gray-500 text-xs leading-relaxed">
+              We couldn't find a storefront registered under the name{" "}
+              <span className="font-bold text-indigo-600">
+                "{decodeURIComponent(activeTenant || "")}"
+              </span>
+              .
+            </p>
+>>>>>>> 9d38903e872714ab84df19b3829bd2415adc6673
           </div>
           <h2 className="text-2xl font-black text-gray-900 tracking-tight">
             Store Not Found
@@ -231,8 +255,8 @@ export default function StoreLayout() {
     );
   }
 
-  const normalizedName = businessName
-    ? businessName.toLowerCase().replace(/[\s-]/g, "")
+  const normalizedName = activeTenant
+    ? activeTenant.toLowerCase().replace(/[\s-]/g, "")
     : "";
   const templateKey =
     business?.customTemplateKey ||
