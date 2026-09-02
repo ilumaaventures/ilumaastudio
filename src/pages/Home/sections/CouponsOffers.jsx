@@ -1,110 +1,375 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { ChevronRight, ShoppingBag, CheckCircle, Package, Gift, Tag, Sparkles } from "lucide-react";
-import { getPublicOffers } from "../../../api/offerService";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  Tag,
+  Gift,
+  Sparkles,
+  ChevronRight,
+  Copy,
+  Check,
+  Globe,
+  Store,
+  ShoppingBag,
+  Package,
+  Clock,
+  ArrowRight,
+  ShieldCheck,
+  Percent,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import { getPublicOffers, getPublicCoupons } from "../../../api/offerService";
+
+// Safe expiry date formatter
+const formatExpiryDate = (exp) => {
+  if (!exp) return null;
+  const d = new Date(exp);
+  if (isNaN(d.getTime())) return null;
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+};
 
 function CouponsOffers() {
-  const [offers, setOffers] = useState([]);
+  const navigate = useNavigate();
+  const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [copiedCode, setCopiedCode] = useState(null);
+  const [activeScopeFilter, setActiveScopeFilter] = useState("All");
 
   useEffect(() => {
-    const fetchOffers = async () => {
+    const fetchHomeDeals = async () => {
       try {
         setLoading(true);
-        const data = await getPublicOffers();
-        const list = Array.isArray(data) ? data : data?.offers || data?.data || [];
-        setOffers(list);
+        const [couponsRes, offersRes] = await Promise.all([
+          getPublicCoupons().catch(() => []),
+          getPublicOffers().catch(() => []),
+        ]);
+
+        const couponList = Array.isArray(couponsRes)
+          ? couponsRes
+          : couponsRes?.coupons || couponsRes?.data || [];
+        const offerList = Array.isArray(offersRes)
+          ? offersRes
+          : offersRes?.offers || offersRes?.data || [];
+
+        // Format combined dataset from DB
+        const combined = [
+          ...couponList.map((c) => ({
+            _id: c._id,
+            type: "coupon",
+            title: c.title || `Save with ${c.code}`,
+            code: c.code,
+            discountType: c.discountType,
+            discountAmount: c.discountAmount,
+            maxDiscountAmount: c.maxDiscountAmount,
+            minOrderAmount: c.minOrderAmount,
+            targetScope: c.targetScope || "business",
+            business: c.business,
+            vendor: c.vendor,
+            targetProducts: c.targetProducts,
+            expiryDate: c.expiryDate,
+            subtitle:
+              c.discountType === "percentage"
+                ? `Get ${c.discountAmount}% OFF on your order`
+                : `Save FLAT ₹${c.discountAmount} at checkout`,
+          })),
+          ...offerList.map((o) => ({
+            _id: o._id,
+            type: "offer",
+            title: o.title || "Promotional Platform Offer",
+            headline: o.headline || o.subtitle || "Exclusive Deal",
+            code:
+              o.code || (o.associatedCoupon ? o.associatedCoupon.code : null),
+            targetScope: o.targetScope || "global",
+            business: o.business,
+            vendor: o.vendor,
+            expiryDate: o.expiryDate || o.expiry,
+            subtitle:
+              o.desc || o.description || "Limited time promotional offer",
+          })),
+        ];
+
+        setDeals(combined);
       } catch (err) {
-        console.error("Failed to load home coupons:", err);
-        setOffers([]);
+        console.error("Failed to load home page deals:", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchOffers();
+
+    fetchHomeDeals();
   }, []);
 
-  if (!loading && offers.length === 0) {
+  const handleCopyCode = (code, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!code) return;
+
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    toast.success(`Coupon Code '${code}' copied!`);
+    setTimeout(() => setCopiedCode(null), 3000);
+  };
+
+  const handleCardClick = (deal) => {
+    // 1. If product coupon
+    if (deal.targetProducts && deal.targetProducts.length > 0) {
+      const prod = deal.targetProducts[0];
+      const prodId = typeof prod === "object" ? prod._id : prod;
+      if (prodId) {
+        navigate(`/products/${prodId}`);
+        return;
+      }
+    }
+
+    // 2. If vendor deal
+    if (deal.vendor) {
+      const vObj = deal.vendor;
+      const vSlug =
+        typeof vObj === "object" ? vObj.slug || vObj.storeName : null;
+      if (vSlug) {
+        navigate(`/store`);
+        return;
+      }
+    }
+
+    // 3. If business deal
+    if (deal.business) {
+      const bObj = deal.business;
+      const bSlug =
+        typeof bObj === "object" ? bObj.subdomain || bObj.slug : null;
+      if (bSlug) {
+        navigate(`/${bSlug}`);
+        return;
+      }
+    }
+
+    // Default to Offers Hub
+    navigate("/offers");
+  };
+
+  // Scope pill counts
+  const filteredDeals = deals.filter((d) => {
+    if (activeScopeFilter === "All") return true;
+    return d.targetScope?.toLowerCase() === activeScopeFilter.toLowerCase();
+  });
+
+  const getScopeBadge = (scope, businessObj, vendorObj) => {
+    switch (scope?.toLowerCase()) {
+      case "global":
+        return {
+          label: "Global",
+          bg: "bg-blue-50 text-blue-700 border-blue-200",
+          icon: Globe,
+          owner: "Platform Wide",
+        };
+      case "business":
+        const bizName =
+          typeof businessObj === "object"
+            ? businessObj?.businessName
+            : "Whole Business";
+        return {
+          label: "Business",
+          bg: "bg-indigo-50 text-indigo-700 border-indigo-200",
+          icon: Store,
+          owner: bizName || "Whole Store Catalog",
+        };
+      case "vendor":
+        const vName =
+          typeof vendorObj === "object" ? vendorObj?.storeName : "Vendor Store";
+        return {
+          label: "Vendor Deal",
+          bg: "bg-purple-50 text-purple-700 border-purple-200",
+          icon: ShoppingBag,
+          owner: vName || "Vendor Store",
+        };
+      case "product":
+        return {
+          label: "Product Deal",
+          bg: "bg-amber-50 text-amber-700 border-amber-200",
+          icon: Package,
+          owner: "Selected Product Item",
+        };
+      default:
+        return {
+          label: "Special Offer",
+          bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
+          icon: Sparkles,
+          owner: "Promotional Sale",
+        };
+    }
+  };
+
+  if (!loading && deals.length === 0) {
     return null;
   }
 
   return (
-    <section className="py-4 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <Tag size={20} className="text-[#2563eb]" />
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              Coupons & Special Discounts
-            </h2>
+    <section className="py-8 bg-gradient-to-b from-slate-50 via-white to-slate-50 border-y border-slate-200/60">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        {/* Section Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#004ac6] flex items-center justify-center font-bold">
+                <Tag size={18} />
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Exclusive Coupons & Store Discounts
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 font-medium mt-1">
+              Active promotional discount vouchers and targeted store codes from
+              our database
+            </p>
           </div>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Active promotional vouchers and store discount codes from database
-          </p>
+
+          {/* Scope Quick Filters & View All Link */}
+          <div className="flex items-center gap-3 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+            <Link
+              to="/offers"
+              className="text-xs font-bold text-[#004ac6] hover:underline transition-colors flex items-center gap-1 shrink-0 bg-blue-50/80 px-3 py-1.5 rounded-xl border border-blue-100"
+            >
+              <span>Explore All ({deals.length})</span>
+              <ChevronRight size={15} />
+            </Link>
+          </div>
         </div>
 
-        <Link
-          to="/offers"
-          className="text-xs sm:text-sm font-bold text-[#2563eb] hover:underline transition-colors flex items-center gap-1 shrink-0"
-        >
-          <span>See all offers</span>
-          <ChevronRight size={16} />
-        </Link>
-      </div>
-
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-28 rounded-3xl bg-slate-200 dark:bg-slate-800" />
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {offers.slice(0, 4).map((offer, idx) => {
-            const code = offer.code || "SAVE10";
-            const title = offer.title || "Special Coupon";
-            const headline = offer.headline || offer.subtitle || "Store Discount";
-            const bgStyles = [
-              "bg-blue-50 border-blue-100 text-blue-900",
-              "bg-purple-50 border-purple-100 text-purple-900",
-              "bg-emerald-50 border-emerald-100 text-emerald-900",
-              "bg-amber-50 border-amber-100 text-amber-900",
-            ];
-            const currentStyle = bgStyles[idx % bgStyles.length];
-
-            return (
-              <Link
-                key={offer._id || offer.id || idx}
-                to="/offers"
-                className={`${currentStyle} border rounded-3xl p-4 shadow-2xs hover:shadow-md transition-all duration-300 flex items-center justify-between group`}
+        {/* Content Loading Skeleton */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="bg-white border border-slate-200 rounded-3xl p-5 h-44 animate-pulse space-y-3 shadow-xs"
               >
-                <div className="min-w-0 flex-1 pr-2">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <Sparkles size={14} className="text-amber-500 shrink-0" />
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/80 backdrop-blur-xs font-mono">
-                      {code}
-                    </span>
-                  </div>
-                  <h3 className="font-black text-sm sm:text-base truncate group-hover:text-[#2563eb] transition-colors">
-                    {title}
-                  </h3>
-                  <p className="text-[11px] opacity-80 font-medium truncate mt-0.5">
-                    {headline}
-                  </p>
-                </div>
+                <div className="h-5 bg-slate-200 rounded-md w-1/2" />
+                <div className="h-4 bg-slate-200 rounded-md w-3/4" />
+                <div className="h-10 bg-slate-100 rounded-2xl w-full" />
+              </div>
+            ))}
+          </div>
+        ) : filteredDeals.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {filteredDeals.slice(0, 4).map((deal, idx) => {
+              const scopeInfo = getScopeBadge(
+                deal.targetScope,
+                deal.business,
+                deal.vendor,
+              );
+              const ScopeIcon = scopeInfo.icon;
+              const formattedExp = formatExpiryDate(deal.expiryDate);
+              const isCopied = copiedCode === deal.code;
 
-                <div className="w-9 h-9 rounded-2xl bg-white/90 shadow-2xs flex items-center justify-center text-slate-700 group-hover:bg-[#2563eb] group-hover:text-white transition-all shrink-0">
-                  <ChevronRight size={16} />
+              return (
+                <div
+                  key={deal._id || idx}
+                  onClick={() => handleCardClick(deal)}
+                  className="group relative bg-white border border-slate-200/90 hover:border-[#004ac6]/50 rounded-3xl p-5 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between cursor-pointer overflow-hidden"
+                >
+                  {/* Side Ticket Cutouts */}
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-slate-50 border-r border-slate-200 rounded-r-full z-10 pointer-events-none" />
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-slate-50 border-l border-slate-200 rounded-l-full z-10 pointer-events-none" />
+
+                  {/* Header Badges */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${scopeInfo.bg}`}
+                      >
+                        <ScopeIcon size={11} />
+                        <span>{scopeInfo.label}</span>
+                      </span>
+
+                      {deal.discountAmount !== undefined && (
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-500 text-white font-black text-[11px] shadow-2xs">
+                          {deal.discountType === "percentage"
+                            ? `${deal.discountAmount}% OFF`
+                            : `₹${deal.discountAmount} OFF`}
+                        </span>
+                      )}
+                    </div>
+
+                    <p
+                      className="text-[10px] font-bold text-slate-400 truncate"
+                      title={scopeInfo.owner}
+                    >
+                      {scopeInfo.owner}
+                    </p>
+
+                    <h3 className="text-sm font-black text-slate-900 group-hover:text-[#004ac6] transition-colors line-clamp-1">
+                      {deal.title}
+                    </h3>
+
+                    <p className="text-[11px] text-slate-500 font-medium line-clamp-1">
+                      {deal.subtitle}
+                    </p>
+                  </div>
+
+                  {/* Voucher Box & Actions */}
+                  <div className="pt-3 space-y-2 mt-2">
+                    {deal.code ? (
+                      <div className="bg-gradient-to-r from-blue-50/80 to-indigo-50/80 border border-dashed border-blue-300 rounded-2xl p-2.5 flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                            Code
+                          </p>
+                          <p className="text-xs font-mono font-black text-slate-900 tracking-wider truncate">
+                            {deal.code}
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(e) => handleCopyCode(deal.code, e)}
+                          className={`px-3 py-1.5 rounded-xl text-[11px] font-extrabold flex items-center gap-1 transition-all shadow-2xs cursor-pointer shrink-0 ${
+                            isCopied
+                              ? "bg-emerald-600 text-white"
+                              : "bg-[#004ac6] text-white hover:bg-blue-700"
+                          }`}
+                        >
+                          {isCopied ? (
+                            <>
+                              <Check size={12} />
+                              <span>Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={12} />
+                              <span>Copy</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-full py-2 bg-blue-50 text-[#004ac6] text-xs font-bold rounded-xl flex items-center justify-center gap-1">
+                        <span>Claim Special Offer</span>
+                        <ArrowRight size={13} />
+                      </div>
+                    )}
+
+                    {formattedExp && (
+                      <p className="text-[9px] font-bold text-amber-700 flex items-center gap-1 justify-end">
+                        <Clock size={10} /> Valid till {formattedExp}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </Link>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        ) : (
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 text-center text-xs text-slate-500 font-medium">
+            No active deals found for this scope category.
+          </div>
+        )}
+      </div>
     </section>
   );
 }
 
 export default CouponsOffers;
-

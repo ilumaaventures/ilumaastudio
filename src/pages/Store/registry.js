@@ -8,6 +8,7 @@ import StarlingAbout from "../StarlingTales/StarlingAbout";
 import StarlingTalesHome from "../StarlingTales/StarlingTalesHome";
 import StarlingTalesProduct from "../StarlingTales/StarlingTalesProduct";
 import StarlingGiftHampers from "../StarlingTales/StarlingGiftHampers";
+import StarlingPolicies from "../StarlingTales/StarlingPolicies";
 import StarlingNavbar from "../StarlingTales/components/StarlingNavbar";
 import StarlingFooter from "../StarlingTales/components/StarlingFooter";
 
@@ -26,6 +27,10 @@ const customStoresRegistry = {
     StoreHome: StarlingTalesHome,
     StoreProducts: StarlingTalesProduct,
     StoreGiftHampers: StarlingGiftHampers,
+    StorePolicies: StarlingPolicies,
+    StoreReturns: StarlingPolicies,
+    StoreExchanges: StarlingPolicies,
+    StoreRefunds: StarlingPolicies,
   },
 };
 

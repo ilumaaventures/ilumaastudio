@@ -9,6 +9,16 @@ export const fetchCategories = async (params = {}) => {
   return response.data;
 };
 
+export const fetchBusinessCategories = async (params = {}) => {
+  try {
+    const response = await baseApi.get("/business-categories", { params });
+    return response.data;
+  } catch (err) {
+    console.error("Failed to fetch business categories:", err);
+    return { data: [] };
+  }
+};
+
 
 export const updateCategory = async (id, data) => {
   const response = await baseApi.put(`/categories/${id}`, data);

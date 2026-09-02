@@ -68,6 +68,7 @@ export default function StoreLayout() {
   const [vendors, setVendors] = useState([]);
   const [banners, setBanners] = useState([]);
   const [slides, setSlides] = useState([]);
+  const [policies, setPolicies] = useState([]);
   const [template, setTemplate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -104,8 +105,8 @@ export default function StoreLayout() {
           );
         }
 
-        // 2. Fetch associated products, categories, vendors, banners, slides in parallel
-        const [productsRes, categoriesRes, vendorsRes, bannersRes, slidesRes] =
+        // 2. Fetch associated products, categories, vendors, banners, slides, policies in parallel
+        const [productsRes, categoriesRes, vendorsRes, bannersRes, slidesRes, policiesRes] =
           await Promise.all([
             baseApi
               .get(`/public/store/${encodeURIComponent(decodedName)}/products`)
@@ -130,6 +131,11 @@ export default function StoreLayout() {
             baseApi
               .get(`/marketing/public/slides/${bizData._id}`)
               .catch(() => ({ data: [] })),
+            baseApi
+              .get("/business-policies/public", {
+                params: { businessId: bizData._id },
+              })
+              .catch(() => ({ data: { policies: [] } })),
           ]);
 
         setProducts(Array.isArray(productsRes.data) ? productsRes.data : []);
@@ -147,6 +153,13 @@ export default function StoreLayout() {
           ? slidesRes.data
           : slidesRes.data?.data || [];
         setSlides(extractedSlides);
+
+        const extractedPolicies = Array.isArray(policiesRes.data?.policies)
+          ? policiesRes.data.policies
+          : Array.isArray(policiesRes.data)
+            ? policiesRes.data
+            : [];
+        setPolicies(extractedPolicies);
       } catch (err) {
         console.error("Error loading store data:", err);
         if (err.response?.status === 404) {
@@ -269,6 +282,7 @@ export default function StoreLayout() {
         vendors,
         banners,
         slides,
+        policies,
         template,
         theme,
         storeSlug,

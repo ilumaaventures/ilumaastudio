@@ -8,6 +8,7 @@ import DefaultStoreProducts from "../Products";
 import DefaultStoreProductDetails from "../ProductDetails";
 import DefaultStoreAbout from "../About";
 import DefaultStoreContact from "../Contact";
+import BusinessPoliciesPage from "../../Legal/BusinessPoliciesPage";
 
 import { useStore } from "../StoreContext";
 
@@ -46,4 +47,5 @@ export const StoreProductDetailsDispatcher = createDispatcher(DefaultStoreProduc
 export const StoreAboutDispatcher = createDispatcher(DefaultStoreAbout, "StoreAbout");
 export const StoreContactDispatcher = createDispatcher(DefaultStoreContact, "StoreContact");
 export const StoreGiftHampersDispatcher = createDispatcher(DefaultStoreProducts, "StoreGiftHampers");
+export const StorePoliciesDispatcher = createDispatcher(BusinessPoliciesPage, "StorePolicies");
 

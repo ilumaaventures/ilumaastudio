@@ -68,21 +68,21 @@ export default function ServiceListing() {
   const nearbyServices = serviceList.slice(0, 5);
   const recentlyAddedServices = [...serviceList].reverse().slice(0, 5);
   const premiumServices = serviceList.filter(
-    (s) => s.price >= 500 || s.badge === "Premium"
+    (s) => s.price >= 500 || s.badge === "Premium",
   );
   const playingServices = serviceList.filter(
     (s) =>
       (s.category || "").toLowerCase().includes("play") ||
       (s.name || "").toLowerCase().includes("fitness") ||
       (s.name || "").toLowerCase().includes("sport") ||
-      (s.name || "").toLowerCase().includes("coach")
+      (s.name || "").toLowerCase().includes("coach"),
   );
   const teachingServices = serviceList.filter(
     (s) =>
       (s.category || "").toLowerCase().includes("teach") ||
       (s.name || "").toLowerCase().includes("tutor") ||
       (s.name || "").toLowerCase().includes("music") ||
-      (s.name || "").toLowerCase().includes("lesson")
+      (s.name || "").toLowerCase().includes("lesson"),
   );
 
   return (
@@ -171,6 +171,31 @@ export default function ServiceListing() {
               icon={<Zap size={22} className="text-blue-600" />}
             />
 
+            <ServiceSection
+              title="Personal Care & Wellness"
+              subtitle="Highly rated doorstep services with satisfaction guarantee"
+              services={
+                premiumServices.length > 0 ? premiumServices : serviceList
+              }
+              icon={<Zap size={22} className="text-blue-600" />}
+            />
+
+            <ServiceSection
+              title="Auto & Vehicle Services"
+              subtitle="Highly rated doorstep services with satisfaction guarantee"
+              services={
+                premiumServices.length > 0 ? premiumServices : serviceList
+              }
+              icon={<Zap size={22} className="text-blue-600" />}
+            />
+            <ServiceSection
+              title="Events & Experiences"
+              subtitle="Highly rated doorstep services with satisfaction guarantee"
+              services={
+                premiumServices.length > 0 ? premiumServices : serviceList
+              }
+              icon={<Zap size={22} className="text-blue-600" />}
+            />
             <PopularServices />
           </>
         )}

@@ -4,6 +4,7 @@ import {
   ShieldCheck,
   Truck,
   RotateCcw,
+  RefreshCw,
   Lock,
   FileText,
   ChevronRight,
@@ -19,6 +20,36 @@ export default function BusinessPoliciesPage() {
 
   const policiesList = [
     {
+      id: "returns",
+      category: "returns",
+      title: "Return Policy",
+      icon: <RotateCcw size={20} className="text-emerald-600" />,
+      scope: "BUSINESS POLICY",
+      version: "2.1",
+      content:
+        "Eligible retail products can be returned within 7 days of delivery. Items must be unused, unwashed, and in original packaging with tags intact. Doorstep pickup is scheduled at zero cost for defective or mismatched items.",
+    },
+    {
+      id: "exchanges",
+      category: "exchanges",
+      title: "Exchange Policy",
+      icon: <RefreshCw size={20} className="text-indigo-600" />,
+      scope: "BUSINESS POLICY",
+      version: "2.1",
+      content:
+        "If you need a different size, color, or variant, or if your item arrived damaged, you can request an instant product exchange within 7 days. Once requested, a fresh replacement item is dispatched immediately upon pickup.",
+    },
+    {
+      id: "refunds",
+      category: "refunds",
+      title: "Refund Policy",
+      icon: <CreditCard size={20} className="text-[#2563eb]" />,
+      scope: "BUSINESS POLICY",
+      version: "2.1",
+      content:
+        "Refunds are initiated within 24 hours of package quality verification at our hub. Prepaid orders (UPI/Card) are credited back to source within 3-5 banking days. Cash on Delivery orders are refunded via NEFT or Store Credit.",
+    },
+    {
       id: "shipping",
       category: "shipping",
       title: "Shipping & Fulfillment Standards Policy",
@@ -27,16 +58,6 @@ export default function BusinessPoliciesPage() {
       version: "2.0",
       content:
         "All verified sellers and warehouses operate under strict SLA benchmarks ensuring order dispatch within 24 to 48 hours. Real-time API courier tracking is integrated across all orders. Standard delivery is completed within 3-5 business days across India.",
-    },
-    {
-      id: "returns",
-      category: "returns",
-      title: "7-Day Return, Replacement & Refund Policy",
-      icon: <RotateCcw size={20} className="text-emerald-600" />,
-      scope: "BUSINESS POLICY",
-      version: "2.1",
-      content:
-        "Customers are entitled to a hassle-free 7-day return or exchange window from package delivery for any defective, damaged, or mismatched product. Doorstep courier pickup is coordinated at zero extra cost, and refunds are credited within 3-5 business days.",
     },
     {
       id: "quality",
@@ -116,8 +137,10 @@ export default function BusinessPoliciesPage() {
         <div className="flex gap-2 overflow-x-auto pb-1 text-xs font-bold scrollbar-none">
           {[
             { id: "all", label: "All Policies" },
+            { id: "returns", label: "Return Policy" },
+            { id: "exchanges", label: "Exchange Policy" },
+            { id: "refunds", label: "Refund Policy" },
             { id: "shipping", label: "Shipping & Delivery" },
-            { id: "returns", label: "Returns & Refunds" },
             { id: "quality", label: "Authenticity & Quality" },
             { id: "seller", label: "Seller & Vendor Rules" },
             { id: "payment", label: "Payments & Security" },

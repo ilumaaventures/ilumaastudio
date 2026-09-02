@@ -20,6 +20,7 @@ function TopBrands() {
         anySlugType: true,
       });
       const shopsData = response?.data ?? response;
+      console.log("Fetched local shops:", shopsData);
       const shops = Array.isArray(shopsData)
         ? shopsData
         : shopsData?.data || [];
@@ -170,14 +171,20 @@ function TopBrands() {
                     ? shop.businessCategory?.name
                     : shop.businessCategory) ||
                   "Business";
-
+                console.log("Slug Type:", shop.slugType, "Custom Domain:");
                 const shopDescription =
                   shop.description ||
                   `Explore products and services from ${shopName}.`;
 
+                // ---------------------------------------
+                // STOREFRONT / SLUG INFORMATION
+                // ---------------------------------------
+
                 const shopSlug =
                   shop.slugName ||
-                  (typeof shop.slug === "object" ? shop.slug?.slugName : shop.slug) ||
+                  (typeof shop.slug === "object"
+                    ? shop.slug?.slugName
+                    : shop.slug) ||
                   shop.businessSlug ||
                   shop.subdomain ||
                   (shop.businessName || shop.name || "")
@@ -185,32 +192,61 @@ function TopBrands() {
                     .replace(/\s+/g, "-") ||
                   "store";
 
-                const storeRoute = `/${shopSlug}`;
+                const slugType =
+                  shop.slugType ||
+                  (typeof shop.slug === "object"
+                    ? shop.slug?.slugType
+                    : null) ||
+                  "path";
 
-                return (
-                  <Link
-                    key={shop._id}
-                    to={storeRoute}
-                    className="
-                    group
-                    shrink-0
-                    w-[230px]
-                    sm:w-[270px]
-                    lg:w-[290px]
-                    snap-start
-                    bg-white
-                    border
-                    border-slate-100
-                    rounded-2xl
-                    overflow-hidden
-                    shadow-sm
-                    hover:shadow-lg
-                    transition-all
-                    duration-300
-                  "
-                  >
+                const customDomain =
+                  shop.customDomain ||
+                  (typeof shop.slug === "object"
+                    ? shop.slug?.customDomain
+                    : null);
+
+                // ---------------------------------------
+                // DETERMINE STOREFRONT TYPE
+                // ---------------------------------------
+
+                const isCustomDomain = slugType === "custom" && !!customDomain;
+
+                // ---------------------------------------
+                // CLEAN CUSTOM DOMAIN
+                // ---------------------------------------
+
+                const normalizedCustomDomain = customDomain
+                  ? customDomain.trim()
+                  : "";
+
+                // ---------------------------------------
+                // FINAL STORE ROUTE
+                // ---------------------------------------
+
+                const storeRoute = isCustomDomain
+                  ? normalizedCustomDomain
+                  : `/${shopSlug}`;
+
+                console.log("Storefront:", {
+                  businessId: shop._id,
+                  shopName,
+                  shopSlug,
+                  slugType,
+                  customDomain,
+                  isCustomDomain,
+                  storeRoute,
+                });
+
+                // ---------------------------------------
+                // COMMON CARD UI
+                // ---------------------------------------
+
+                const shopCard = (
+                  <>
                     {/* Image */}
                     <div className="relative h-36 sm:h-40 w-full overflow-hidden bg-slate-100">
+                      {/* Uncomment if image is required */}
+
                       <img
                         src={shopImage}
                         alt={shopName}
@@ -218,13 +254,13 @@ function TopBrands() {
                           e.currentTarget.src = DEFAULT_SHOP_IMAGE;
                         }}
                         className="
-                        w-full
-                        h-full
-                        object-cover
-                        group-hover:scale-105
-                        transition-transform
-                        duration-500
-                      "
+            w-full
+            h-full
+            object-cover
+            group-hover:scale-105
+            transition-transform
+            duration-500
+          "
                       />
 
                       {/* Overlay */}
@@ -233,18 +269,18 @@ function TopBrands() {
                       {/* Business Type */}
                       <span
                         className="
-                        absolute
-                        bottom-3
-                        left-3
-                        px-2.5
-                        py-1
-                        rounded-full
-                        bg-white/90
-                        backdrop-blur-sm
-                        text-[10px]
-                        font-bold
-                        text-slate-800
-                      "
+            absolute
+            bottom-3
+            left-3
+            px-2.5
+            py-1
+            rounded-full
+            bg-white/90
+            backdrop-blur-sm
+            text-[10px]
+            font-bold
+            text-slate-800
+          "
                       >
                         {shopType}
                       </span>
@@ -255,15 +291,15 @@ function TopBrands() {
                       <div className="flex items-start gap-2">
                         <div
                           className="
-                          w-9 h-9
-                          shrink-0
-                          rounded-xl
-                          bg-slate-100
-                          flex
-                          items-center
-                          justify-center
-                          text-[#1e6091]
-                        "
+              w-9 h-9
+              shrink-0
+              rounded-xl
+              bg-slate-100
+              flex
+              items-center
+              justify-center
+              text-[#1e6091]
+            "
                         >
                           <Store size={17} />
                         </div>
@@ -271,14 +307,14 @@ function TopBrands() {
                         <div className="min-w-0">
                           <h3
                             className="
-                            font-extrabold
-                            text-slate-900
-                            text-sm
-                            sm:text-base
-                            truncate
-                            group-hover:text-[#1e6091]
-                            transition-colors
-                          "
+                font-extrabold
+                text-slate-900
+                text-sm
+                sm:text-base
+                truncate
+                group-hover:text-[#1e6091]
+                transition-colors
+              "
                           >
                             {shopName}
                           </h3>
@@ -293,18 +329,96 @@ function TopBrands() {
                         {shopDescription}
                       </p>
 
-                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-slate-400 text-[11px]">
+                      <div
+                        className="
+            flex
+            items-center
+            justify-between
+            mt-3
+            pt-2
+            border-t
+            border-slate-100
+            text-slate-400
+            text-[11px]
+          "
+                      >
                         <div className="flex items-center gap-1.5">
                           <MapPin size={13} />
+
                           <span className="font-medium">
                             Available near you
                           </span>
                         </div>
+
                         <span className="font-bold text-[#1e6091] group-hover:underline">
                           Visit Shop →
                         </span>
                       </div>
                     </div>
+                  </>
+                );
+
+                // ---------------------------------------
+                // EXTERNAL CUSTOM DOMAIN
+                // ---------------------------------------
+
+                if (isCustomDomain) {
+                  return (
+                    <a
+                      key={shop._id}
+                      href={storeRoute}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="
+          group
+          shrink-0
+          w-[230px]
+          sm:w-[270px]
+          lg:w-[290px]
+          snap-start
+          bg-white
+          border
+          border-slate-100
+          rounded-2xl
+          overflow-hidden
+          shadow-sm
+          hover:shadow-lg
+          transition-all
+          duration-300
+        "
+                    >
+                      {shopCard}
+                    </a>
+                  );
+                }
+
+                // ---------------------------------------
+                // ILUMAA INTERNAL STOREFRONT
+                // ---------------------------------------
+
+                return (
+                  <Link
+                    key={shop._id}
+                    to={`/${shopSlug}`}
+                    className="
+        group
+        shrink-0
+        w-[230px]
+        sm:w-[270px]
+        lg:w-[290px]
+        snap-start
+        bg-white
+        border
+        border-slate-100
+        rounded-2xl
+        overflow-hidden
+        shadow-sm
+        hover:shadow-lg
+        transition-all
+        duration-300
+      "
+                  >
+                    {shopCard}
                   </Link>
                 );
               })

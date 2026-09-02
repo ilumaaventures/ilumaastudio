@@ -92,8 +92,42 @@ function Cart() {
           : res.data?.categories || res.data?.data || [];
         const map = {};
         list.forEach((c) => {
-          if (c._id) map[c._id.toString()] = c.tax || 0;
-          if (c.name) map[c.name.toLowerCase().trim()] = c.tax || 0;
+          let taxVal =
+            c.tax !== undefined && c.tax !== null
+              ? Number(c.tax)
+              : Number(c.taxRate || 0);
+
+          if (!taxVal || isNaN(taxVal)) {
+            const nameStr = (c.name || c.title || "").toLowerCase();
+            if (
+              nameStr.includes("jewel") ||
+              nameStr.includes("kundan") ||
+              nameStr.includes("earring") ||
+              nameStr.includes("gem")
+            ) {
+              taxVal = 3;
+            } else if (
+              nameStr.includes("toy") ||
+              nameStr.includes("soft") ||
+              nameStr.includes("pillow") ||
+              nameStr.includes("decor") ||
+              nameStr.includes("home")
+            ) {
+              taxVal = 12;
+            } else if (
+              nameStr.includes("apparel") ||
+              nameStr.includes("clothing") ||
+              nameStr.includes("textile")
+            ) {
+              taxVal = 5;
+            } else {
+              taxVal = 5;
+            }
+          }
+
+          if (c._id) map[c._id.toString()] = taxVal;
+          if (c.name) map[c.name.toLowerCase().trim()] = taxVal;
+          if (c.slug) map[c.slug.toLowerCase().trim()] = taxVal;
         });
         setCategoriesMap(map);
       } catch (e) {
@@ -234,7 +268,7 @@ function Cart() {
       setCouponValidating(true);
       const response = await baseApi.post("/coupons/validate", {
         code,
-        items: cartItems.map((item) => ({
+        cartItems: cartItems.map((item) => ({
           product: item._id || item.product,
           quantity: item.quantity || 1,
           price: item.price || 0,
@@ -243,23 +277,19 @@ function Cart() {
         })),
       });
 
-      const { discountAmount: disc, code: returnedCode } = response.data;
-      setDiscountAmount(disc);
-      setAppliedCouponCode(returnedCode || code);
-      toast.success(`Coupon "${returnedCode || code}" applied! Saved ₹${disc}`);
+      const { discount, discountAmount: discAmt, message, coupon } = response.data;
+      const finalDisc = discount !== undefined ? discount : (discAmt || 0);
+      const returnedCode = coupon?.code || code;
+
+      setDiscountAmount(finalDisc);
+      setAppliedCouponCode(returnedCode);
+      toast.success(message || `Coupon "${returnedCode}" applied! Saved ₹${finalDisc}`);
     } catch (err) {
       console.warn("Apply coupon error:", err);
-      // Fallback discount logic for standard demo promo codes
-      if (code === "ILUMAA500" || code === "FREESHIP" || code === "WELCOME10") {
-        const disc = code === "ILUMAA500" ? 500 : Math.round(subtotal * 0.1);
-        setDiscountAmount(disc);
-        setAppliedCouponCode(code);
-        toast.success(`Coupon "${code}" applied! Saved ₹${disc}`);
-      } else {
-        toast.error(err.response?.data?.message || "Failed to apply coupon");
-        setDiscountAmount(0);
-        setAppliedCouponCode("");
-      }
+      const errMsg = err.response?.data?.message || "Failed to apply coupon";
+      toast.error(errMsg);
+      setDiscountAmount(0);
+      setAppliedCouponCode("");
     } finally {
       setCouponValidating(false);
     }
@@ -293,10 +323,12 @@ function Cart() {
   };
 
   const getItemTaxRate = (item) => {
+    // 1. Explicit item or populated category tax rate
     if (
       item.categoryTax !== undefined &&
       item.categoryTax !== null &&
-      !isNaN(Number(item.categoryTax))
+      !isNaN(Number(item.categoryTax)) &&
+      Number(item.categoryTax) > 0
     ) {
       return Number(item.categoryTax);
     }
@@ -304,34 +336,105 @@ function Cart() {
       item.category &&
       typeof item.category === "object" &&
       item.category?.tax !== undefined &&
-      item.category?.tax !== null
+      item.category?.tax !== null &&
+      Number(item.category.tax) > 0
     ) {
       return Number(item.category.tax);
-    }
-    if (typeof item.category === "string" && item.category.trim()) {
-      const catKey = item.category.trim().toLowerCase();
-      if (categoriesMap[catKey] !== undefined) {
-        return Number(categoriesMap[catKey]) || 0;
-      }
-      if (categoriesMap[item.category] !== undefined) {
-        return Number(categoriesMap[item.category]) || 0;
-      }
     }
     if (
       item.taxRate !== undefined &&
       item.taxRate !== null &&
-      !isNaN(Number(item.taxRate))
+      !isNaN(Number(item.taxRate)) &&
+      Number(item.taxRate) > 0
     ) {
       return Number(item.taxRate);
     }
     if (
       item.tax !== undefined &&
       item.tax !== null &&
-      !isNaN(Number(item.tax))
+      !isNaN(Number(item.tax)) &&
+      Number(item.tax) > 0
     ) {
       return Number(item.tax);
     }
-    return 0;
+
+    // 2. Lookup in categoriesMap by ID or Name
+    const catObj = typeof item.category === "object" ? item.category : null;
+    const catId = catObj?._id
+      ? catObj._id.toString()
+      : typeof item.category === "string" && /^[0-9a-fA-F]{24}$/.test(item.category)
+      ? item.category
+      : null;
+    const catName =
+      catObj?.name ||
+      (typeof item.category === "string" ? item.category : item.categoryName || "");
+
+    if (
+      catId &&
+      categoriesMap[catId] !== undefined &&
+      Number(categoriesMap[catId]) > 0
+    ) {
+      return Number(categoriesMap[catId]);
+    }
+    if (
+      catName &&
+      categoriesMap[catName.trim().toLowerCase()] !== undefined &&
+      Number(categoriesMap[catName.trim().toLowerCase()]) > 0
+    ) {
+      return Number(categoriesMap[catName.trim().toLowerCase()]);
+    }
+
+    // 3. Category & product name matching for GST tax rates
+    const searchStr = `${catName} ${item.name || ""} ${item.craft || ""}`.toLowerCase();
+
+    if (
+      searchStr.includes("jewel") ||
+      searchStr.includes("kundan") ||
+      searchStr.includes("earring") ||
+      searchStr.includes("chandbali") ||
+      searchStr.includes("jadau") ||
+      searchStr.includes("necklace") ||
+      searchStr.includes("gem")
+    ) {
+      return 3; // 3% GST for Jewellery, Kundan & Gemstones
+    }
+    if (
+      searchStr.includes("toy") ||
+      searchStr.includes("soft toy") ||
+      searchStr.includes("pillow") ||
+      searchStr.includes("teddy") ||
+      searchStr.includes("plush") ||
+      searchStr.includes("decor") ||
+      searchStr.includes("home") ||
+      searchStr.includes("pottery")
+    ) {
+      return 12; // 12% GST for Soft Toys, Pillows & Home Decor
+    }
+    if (
+      searchStr.includes("apparel") ||
+      searchStr.includes("clothing") ||
+      searchStr.includes("shirt") ||
+      searchStr.includes("saree") ||
+      searchStr.includes("textile") ||
+      searchStr.includes("block print")
+    ) {
+      return 5; // 5% GST for Apparel & Textiles
+    }
+    if (
+      searchStr.includes("beauty") ||
+      searchStr.includes("cosmetic") ||
+      searchStr.includes("electronic") ||
+      searchStr.includes("gadget")
+    ) {
+      return 18; // 18% GST for Electronics & Cosmetics
+    }
+
+    // 4. Default fallback if category is present
+    if (catName || catId || item.category) {
+      return 5;
+    }
+
+    return 5;
   };
 
   const subtotal = cartItems.reduce(

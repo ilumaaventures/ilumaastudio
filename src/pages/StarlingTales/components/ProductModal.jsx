@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import Icon from "./Icon";
 import { formatPrice } from "../constants";
+import { useStore } from "../../Store/StoreContext";
+import baseApi from "../../../api/baseApi";
 
 export default function ProductModal({
   product,
@@ -9,6 +11,119 @@ export default function ProductModal({
   onWishlist,
   onAddToCart,
 }) {
+  const storeContext = useStore() || {};
+  const contextPolicies = Array.isArray(storeContext.policies) ? storeContext.policies : [];
+  const [fetchedPolicies, setFetchedPolicies] = useState(contextPolicies);
+
+  useEffect(() => {
+    if (contextPolicies.length > 0) {
+      setFetchedPolicies(contextPolicies);
+      return;
+    }
+
+    const bizId = storeContext.business?._id || product?.business || product?.businessId;
+    const bizSlug = storeContext.storeSlug || "starlingtales";
+
+    let isMounted = true;
+    async function loadBusinessPolicies() {
+      try {
+        let res;
+        if (bizId) {
+          res = await baseApi.get("/business-policies/public", { params: { businessId: bizId } });
+        } else {
+          res = await baseApi.get("/business-policies/public", { params: { subdomain: bizSlug } });
+        }
+        const policyList = Array.isArray(res.data?.policies)
+          ? res.data.policies
+          : Array.isArray(res.data)
+          ? res.data
+          : [];
+        if (isMounted && policyList.length > 0) {
+          setFetchedPolicies(policyList);
+        }
+      } catch (err) {
+        console.log("Could not load public business policies for product modal:", err);
+      }
+    }
+
+    loadBusinessPolicies();
+    return () => {
+      isMounted = false;
+    };
+  }, [contextPolicies, storeContext.business, storeContext.storeSlug, product]);
+
+  const activePolicies = fetchedPolicies.length > 0 ? fetchedPolicies : contextPolicies;
+
+  const foundReturn = activePolicies.find(
+    (p) => p.type === "return_policy" || p.type === "return" || p.type === "return_refund_policy"
+  );
+  const foundExchange = activePolicies.find(
+    (p) => p.type === "exchange_policy" || p.type === "exchange"
+  );
+  const foundRefund = activePolicies.find(
+    (p) => p.type === "refund_policy" || p.type === "refund" || p.type === "return_refund_policy"
+  );
+  const foundShipping = activePolicies.find(
+    (p) => p.type === "shipping_policy" || p.type === "shipping"
+  );
+
+  // Other business policies (custom, cancellation, etc.)
+  const additionalPolicies = activePolicies.filter(
+    (p) =>
+      !["return_policy", "return", "exchange_policy", "exchange", "refund_policy", "refund", "return_refund_policy", "shipping_policy", "shipping", "terms_and_conditions", "privacy_policy"].includes(
+        p.type?.toLowerCase()
+      )
+  );
+
+  const defaultReturnText =
+    "Eligible products can be returned within 7 days of package delivery in original, unwashed condition with tags attached. Doorstep courier pickup is arranged at zero extra cost.";
+  const defaultExchangeText =
+    "Request an instant size, color, or variant swap within 7 days. Our courier delivers your replacement item while collecting the returned item in a single visit.";
+  const defaultRefundText =
+    "Once inspected and approved at our facility (24-48h), refunds are credited to source within 3-5 banking days for Prepaid orders or issued via NEFT/Store Credit for COD orders.";
+
+  const renderPolicyContent = (text, defaultFallback) => {
+    const contentToUse = text || defaultFallback;
+    if (!contentToUse) return null;
+
+    const sections = contentToUse.split("\n\n").filter(Boolean);
+
+    return (
+      <div className="space-y-2 text-text-body text-[13px] font-light leading-relaxed">
+        {sections.map((section, idx) => {
+          if (section.startsWith("###") || section.startsWith("##") || section.startsWith("#")) {
+            const heading = section.replace(/^#+\s*/, "");
+            return (
+              <h5 key={idx} className="font-semibold text-[#2C3E35] text-xs pt-1">
+                {heading}
+              </h5>
+            );
+          }
+          if (
+            section.includes("\n•") ||
+            section.includes("\n-") ||
+            section.startsWith("•") ||
+            section.startsWith("-")
+          ) {
+            const lines = section.split("\n").filter(Boolean);
+            return (
+              <ul key={idx} className="list-disc pl-4 space-y-1 text-xs">
+                {lines.map((line, lIdx) => (
+                  <li key={lIdx}>{line.replace(/^[-•*]\s*/, "")}</li>
+                ))}
+              </ul>
+            );
+          }
+          return (
+            <p key={idx} className="whitespace-pre-line">
+              {section}
+            </p>
+          );
+        })}
+      </div>
+    );
+  };
+
   const drawerRef = useRef(null);
   const [mainImage, setMainImage] = useState(product?.image || "");
   const [selectedVariant, setSelectedVariant] = useState(
@@ -353,6 +468,86 @@ export default function ProductModal({
                   </p>
                 </div>
               </details>
+
+              {/* DYNAMIC BUSINESS POLICIES FROM API / CONTEXT */}
+              <details className="border-b border-cream-dark">
+                <summary className="flex items-center justify-between py-4 text-text-dark cursor-pointer text-[13px] font-medium tracking-wide list-none select-none">
+                  <span className="flex items-center gap-1.5 font-bold text-[#2C3E35]">
+                    {foundReturn?.title || "Return Policy"}
+                  </span>
+                  <Icon
+                    name="arrowRight"
+                    className="transition-transform duration-200 group-open:rotate-270 h-4 w-4 rotate-90"
+                  />
+                </summary>
+                <div className="pb-4">
+                  {renderPolicyContent(foundReturn?.content, defaultReturnText)}
+                </div>
+              </details>
+
+              <details className="border-b border-cream-dark">
+                <summary className="flex items-center justify-between py-4 text-text-dark cursor-pointer text-[13px] font-medium tracking-wide list-none select-none">
+                  <span className="flex items-center gap-1.5 font-bold text-[#2C3E35]">
+                    {foundExchange?.title || "Exchange Policy"}
+                  </span>
+                  <Icon
+                    name="arrowRight"
+                    className="transition-transform duration-200 group-open:rotate-270 h-4 w-4 rotate-90"
+                  />
+                </summary>
+                <div className="pb-4">
+                  {renderPolicyContent(foundExchange?.content, defaultExchangeText)}
+                </div>
+              </details>
+
+              <details className="border-b border-cream-dark">
+                <summary className="flex items-center justify-between py-4 text-text-dark cursor-pointer text-[13px] font-medium tracking-wide list-none select-none">
+                  <span className="flex items-center gap-1.5 font-bold text-[#2C3E35]">
+                    {foundRefund?.title || "Refund Policy"}
+                  </span>
+                  <Icon
+                    name="arrowRight"
+                    className="transition-transform duration-200 group-open:rotate-270 h-4 w-4 rotate-90"
+                  />
+                </summary>
+                <div className="pb-4">
+                  {renderPolicyContent(foundRefund?.content, defaultRefundText)}
+                </div>
+              </details>
+
+              {foundShipping && (
+                <details className="border-b border-cream-dark">
+                  <summary className="flex items-center justify-between py-4 text-text-dark cursor-pointer text-[13px] font-medium tracking-wide list-none select-none">
+                    <span className="flex items-center gap-1.5 font-bold text-[#2C3E35]">
+                      {foundShipping.title || "Shipping & Delivery Policy"}
+                    </span>
+                    <Icon
+                      name="arrowRight"
+                      className="transition-transform duration-200 group-open:rotate-270 h-4 w-4 rotate-90"
+                    />
+                  </summary>
+                  <div className="pb-4">
+                    {renderPolicyContent(foundShipping.content)}
+                  </div>
+                </details>
+              )}
+
+              {additionalPolicies.map((pol) => (
+                <details key={pol._id || pol.title} className="border-b border-cream-dark">
+                  <summary className="flex items-center justify-between py-4 text-text-dark cursor-pointer text-[13px] font-medium tracking-wide list-none select-none">
+                    <span className="flex items-center gap-1.5 font-bold text-[#2C3E35]">
+                      {pol.title}
+                    </span>
+                    <Icon
+                      name="arrowRight"
+                      className="transition-transform duration-200 group-open:rotate-270 h-4 w-4 rotate-90"
+                    />
+                  </summary>
+                  <div className="pb-4">
+                    {renderPolicyContent(pol.content)}
+                  </div>
+                </details>
+              ))}
             </div>
           </div>
         </div>
