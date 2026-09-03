@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Outlet, Link, useLocation } from "react-router-dom";
+import { useParams, Outlet, Link } from "react-router-dom";
 import baseApi from "../../api/baseApi";
 import Navbar from "../../Components/store/Navbar";
 import Footer from "../../Components/store/Footer";
-import { Store, AlertTriangle, ArrowLeft, ArrowRight, X, AlertCircle } from "lucide-react";
+import { Store, AlertTriangle, ArrowLeft, ArrowRight, X, AlertCircle, LayoutTemplate } from "lucide-react";
 import customStoresRegistry from "./registry";
 import { StoreContext, useStore } from "./StoreContext";
+import templateRegistry from "../../templates/registry";
+import StoreRenderer from "../../templates/StoreRenderer";
+import formatAddress from "../../utils/formatAddress";
 
 export { StoreContext, useStore };
 
@@ -63,13 +66,19 @@ function StoreAnnouncementBar() {
 export default function StoreLayout() {
   const { businessName } = useParams();
   const [business, setBusiness] = useState(null);
+  const [slugInfo, setSlugInfo] = useState(null);
+  const [hasTemplate, setHasTemplate] = useState(true);
+  const [template, setTemplate] = useState(null);
+  const [storefront, setStorefront] = useState(null);
   const [products, setProducts] = useState([]);
+  const [services, setServices] = useState([]);
   const [categories, setCategories] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [banners, setBanners] = useState([]);
   const [slides, setSlides] = useState([]);
   const [policies, setPolicies] = useState([]);
-  const [template, setTemplate] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [storeNotFound, setStoreNotFound] = useState(false);
@@ -77,97 +86,51 @@ export default function StoreLayout() {
   useEffect(() => {
     const fetchStoreData = async () => {
       if (!businessName) return;
-      const decodedName = decodeURIComponent(businessName);
+      const decodedName = decodeURIComponent(businessName).trim();
 
       try {
         setLoading(true);
         setError("");
         setStoreNotFound(false);
 
-        // 1. Fetch Store Details
-        const storeRes = await baseApi.get(
-          `/public/store/${encodeURIComponent(decodedName)}`,
-        );
-        const bizData = storeRes.data;
-        setBusiness(bizData);
+        // Single unified storefront API call returning all business catalog, template, and settings
+        const sfRes = await baseApi.get(`/storefronts/${encodeURIComponent(decodedName)}`);
 
-        // Fetch storefront custom visual template if exists
-        try {
-          const templateRes = await baseApi.get(
-            `/business/templates/public/${bizData._id}`,
-          );
-          if (templateRes.data && templateRes.data.success) {
-            setTemplate(templateRes.data.data);
-          }
-        } catch (templateErr) {
-          console.log(
-            "No published store templates found, fallback to classic default styling.",
-          );
+        if (sfRes.data && sfRes.data.success && sfRes.data.data) {
+          const data = sfRes.data.data;
+          setBusiness(data.business);
+          setSlugInfo(data.slugInfo || null);
+          setStorefront(data.storefront || null);
+          setTemplate(data.template || null);
+          setHasTemplate(Boolean(data.hasTemplate && data.template));
+          setProducts(Array.isArray(data.products) ? data.products : []);
+          setServices(Array.isArray(data.services) ? data.services : []);
+          setCategories(Array.isArray(data.categories) ? data.categories : []);
+          setBanners(Array.isArray(data.banners) ? data.banners : []);
+          setReviews(Array.isArray(data.reviews) ? data.reviews : []);
+          setPolicies(Array.isArray(data.policies) ? data.policies : []);
+          setCoupons(Array.isArray(data.coupons) ? data.coupons : []);
+        } else {
+          setStoreNotFound(true);
         }
-
-        // 2. Fetch associated products, categories, vendors, banners, slides, policies in parallel
-        const [productsRes, categoriesRes, vendorsRes, bannersRes, slidesRes, policiesRes] =
-          await Promise.all([
-            baseApi
-              .get(`/public/store/${encodeURIComponent(decodedName)}/products`)
-              .catch(() => ({ data: [] })),
-            baseApi
-              .get(`/public/store/${encodeURIComponent(decodedName)}/categories`, {
-                params: { businessType: "E-Commerce" },
-              })
-              .catch(() => ({ data: [] })),
-            baseApi
-              .get(`/public/store/${encodeURIComponent(decodedName)}/vendors`)
-              .catch(() => ({ data: [] })),
-            baseApi
-              .get("/public/banners", {
-                params: { businessId: bizData._id },
-              })
-              .catch(() =>
-                baseApi
-                  .get(`/public/store/${encodeURIComponent(decodedName)}/banners`)
-                  .catch(() => ({ data: { banners: [] } })),
-              ),
-            baseApi
-              .get(`/marketing/public/slides/${bizData._id}`)
-              .catch(() => ({ data: [] })),
-            baseApi
-              .get("/business-policies/public", {
-                params: { businessId: bizData._id },
-              })
-              .catch(() => ({ data: { policies: [] } })),
-          ]);
-
-        setProducts(Array.isArray(productsRes.data) ? productsRes.data : []);
-        setCategories(
-          Array.isArray(categoriesRes.data) ? categoriesRes.data : [],
-        );
-        setVendors(Array.isArray(vendorsRes.data) ? vendorsRes.data : []);
-
-        const extractedBanners =
-          bannersRes.data?.banners ||
-          (Array.isArray(bannersRes.data) ? bannersRes.data : []);
-        setBanners(extractedBanners);
-
-        const extractedSlides = Array.isArray(slidesRes.data)
-          ? slidesRes.data
-          : slidesRes.data?.data || [];
-        setSlides(extractedSlides);
-
-        const extractedPolicies = Array.isArray(policiesRes.data?.policies)
-          ? policiesRes.data.policies
-          : Array.isArray(policiesRes.data)
-            ? policiesRes.data
-            : [];
-        setPolicies(extractedPolicies);
       } catch (err) {
-        console.error("Error loading store data:", err);
+        console.error("Error loading storefront:", err);
         if (err.response?.status === 404) {
           setStoreNotFound(true);
+        } else if (err.response?.status === 403) {
+          setError(err.response?.data?.message || "Storefront is disabled or inaccessible.");
         } else {
-          setError(
-            err.response?.data?.message || "Failed to load storefront data",
-          );
+          // If unified storefront endpoint 404s, try fallback check
+          try {
+            const fallbackRes = await baseApi.get(`/public/store/${encodeURIComponent(decodedName)}`);
+            if (fallbackRes.data) {
+              setBusiness(fallbackRes.data);
+              setHasTemplate(false); // Do not assign default template
+              setLoading(false);
+              return;
+            }
+          } catch (_) {}
+          setError(err.response?.data?.message || "Failed to load storefront data");
         }
       } finally {
         setLoading(false);
@@ -219,7 +182,7 @@ export default function StoreLayout() {
     );
   }
 
-  // Error State
+  // Error State (Disabled or Inactive)
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6 text-center">
@@ -247,68 +210,117 @@ export default function StoreLayout() {
   const normalizedName = businessName
     ? businessName.toLowerCase().replace(/[\s-]/g, "")
     : "";
-  const templateKey =
-    business?.customTemplateKey ||
-    (business?.businessName ? business.businessName.toLowerCase().replace(/[\s-]/g, "") : "") ||
-    (business?.subdomain ? business.subdomain.toLowerCase().replace(/[\s-]/g, "") : "") ||
-    normalizedName;
 
-  const CustomNavbar =
-    customStoresRegistry[templateKey]?.Navbar ||
-    customStoresRegistry[normalizedName]?.Navbar;
-  const CustomFooter =
-    customStoresRegistry[templateKey]?.Footer ||
-    customStoresRegistry[normalizedName]?.Footer;
+  // ================= 1. GIFTER & STARLINGTALES (PRESERVED 100%) =================
+  const isGifterOrStarling =
+    normalizedName === "gifter" ||
+    normalizedName === "starlingtales" ||
+    Boolean(customStoresRegistry[normalizedName]);
 
-  const storeSlug = businessName || business?.subdomain || business?.slug || business?.businessName || "";
-  const storeHomePath = storeSlug ? `/${encodeURIComponent(storeSlug)}` : "";
+  if (isGifterOrStarling) {
+    const CustomNavbar = customStoresRegistry[normalizedName]?.Navbar;
+    const CustomFooter = customStoresRegistry[normalizedName]?.Footer;
+    const storeSlug = businessName || business?.subdomain || business?.slug || business?.businessName || "";
+    const storeHomePath = storeSlug ? `/${encodeURIComponent(storeSlug)}` : "";
 
-  const theme = template?.selectedTheme || {
-    colors: {
-      primary: "#4F46E5",
-      secondary: "#818CF8",
-      background: "#F8FAFC",
-      cardBg: "#FFFFFF",
-      textColor: "#0F172A",
-    },
+    return (
+      <StoreContext.Provider
+        value={{
+          business,
+          products,
+          categories,
+          vendors,
+          banners,
+          slides,
+          policies,
+          template,
+          storeSlug,
+          storeHomePath,
+        }}
+      >
+        <div className="min-h-screen flex flex-col font-sans">
+          <StoreAnnouncementBar />
+          {CustomNavbar ? <CustomNavbar /> : <Navbar />}
+          <main className="flex-1 flex flex-col">
+            <Outlet />
+          </main>
+          {CustomFooter ? <CustomFooter /> : <Footer />}
+        </div>
+      </StoreContext.Provider>
+    );
+  }
+
+  // ================= 2. NO TEMPLATE SELECTED: DO NOT SET DEFAULT TEMPLATE =================
+  if (!hasTemplate || !template) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
+        <div className="max-w-md w-full bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+          <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto border border-amber-100">
+            <LayoutTemplate size={28} />
+          </div>
+          <h2 className="text-xl font-black text-slate-900 tracking-tight">
+            No Storefront Template Selected
+          </h2>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            The business <span className="font-bold text-slate-800">"{business?.businessName || businessName}"</span> has not selected or published an active storefront template yet.
+          </p>
+          <p className="text-[11px] text-slate-400">
+            Store routing type: <code className="font-mono font-bold text-indigo-600">{slugInfo?.slugType || "path"}</code>
+          </p>
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2">
+            <Link
+              to="/store-template"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition"
+            >
+              Browse Template Catalog
+            </Link>
+            <Link
+              to="/"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-5 py-2.5 rounded-xl transition"
+            >
+              <ArrowLeft size={13} /> Back to Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ================= 3. RENDER THE BUSINESS'S SELECTED TEMPLATE =================
+  const resolvedTemplateKey =
+    template?.key ||
+    template?.templateKey ||
+    storefront?.templateKey ||
+    business?.customTemplateKey;
+
+  const normalizedKey = (resolvedTemplateKey || "").toLowerCase().trim();
+  const templateMeta = templateRegistry[normalizedKey] || templateRegistry["freshmart"];
+
+  const storeCustomization = {
+    ...(templateMeta?.defaultTheme || {}),
+    ...(storefront?.customization || template?.customization || {}),
   };
 
   return (
-    <StoreContext.Provider
-      value={{
-        business,
-        products,
-        categories,
-        vendors,
-        banners,
-        slides,
-        policies,
-        template,
-        theme,
-        storeSlug,
-        storeHomePath,
-      }}
-    >
-      <div
-        className="min-h-screen flex flex-col font-sans transition-colors duration-300"
-        style={{
-          backgroundColor: theme.colors?.background || "#F8FAFC",
-          color: theme.colors?.textColor || "#0F172A",
-          fontFamily: template?.selectedFont?.fontFamily || "inherit",
+    <div className="min-h-screen w-full font-sans">
+      <StoreRenderer
+        templateKey={templateMeta.key}
+        data={{
+          business: {
+            ...business,
+            name: business?.businessName || business?.name,
+            address: formatAddress(business?.address || business?.registered_business_address),
+          },
+          products: products || [],
+          services: services || [],
+          categories: categories || [],
+          banners: banners || [],
+          reviews: reviews || [],
+          policies: policies || [],
+          coupons: coupons || [],
+          customization: storeCustomization,
         }}
-      >
-        <StoreAnnouncementBar />
-        {CustomNavbar ? <CustomNavbar /> : <Navbar />}
-        <main
-          className="flex-1 flex flex-col transition-colors duration-300"
-          style={{
-            backgroundColor: theme.colors?.background || "#F8FAFC",
-          }}
-        >
-          <Outlet />
-        </main>
-        {CustomFooter ? <CustomFooter /> : <Footer />}
-      </div>
-    </StoreContext.Provider>
+      />
+    </div>
   );
 }

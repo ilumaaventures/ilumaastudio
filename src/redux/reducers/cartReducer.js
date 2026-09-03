@@ -2,7 +2,12 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import * as cartService from "../../api/cartService";
 
 const getInitialCart = () => {
-  return [];
+  try {
+    const saved = localStorage.getItem("cartItems");
+    return saved ? JSON.parse(saved) : [];
+  } catch (_) {
+    return [];
+  }
 };
 
 // Helper to map DB response (where items is [{ product: {}, quantity: n, price: p }]) to local flat structure
@@ -63,17 +68,64 @@ export const syncCart = createAsyncThunk(
 
 export const addToCart = createAsyncThunk(
   "cart/addToCart",
-  async ({ product, quantity }, { getState, rejectWithValue }) => {
-    const { auth } = getState();
+  async ({ product, quantity = 1 }, { getState, rejectWithValue }) => {
+    const { auth, cart } = getState();
 
     if (!auth.isAuthenticated) {
-      alert("Please login first to manage your cart.");
-      window.location.href = "/login";
-      return rejectWithValue("Unauthorized: Please login first");
+      const currentItems = Array.isArray(cart.cartItems) ? [...cart.cartItems] : [];
+      const prodId = product._id || product.id || String(Date.now());
+      const itemKey = product.itemKey || `${prodId}-${product.selectedVariant || product.variantId || product.selectedSize || ""}`;
+      const existingIdx = currentItems.findIndex(
+        (i) => (i.itemKey && i.itemKey === itemKey) || i._id === prodId
+      );
+
+      const effectivePrice = Number(product.price || 0);
+      const effectiveStock =
+        product.stockQuantity !== undefined
+          ? Number(product.stockQuantity)
+          : product.stock !== undefined
+          ? Number(product.stock)
+          : product.inventory?.stockQuantity !== undefined
+          ? Number(product.inventory.stockQuantity)
+          : 99;
+
+      const img =
+        product.image ||
+        (Array.isArray(product.images) && product.images[0]?.url) ||
+        (Array.isArray(product.images) && product.images[0]) ||
+        "https://via.placeholder.com/400x300?text=No+Image";
+
+      if (existingIdx > -1) {
+        currentItems[existingIdx] = {
+          ...currentItems[existingIdx],
+          quantity: (currentItems[existingIdx].quantity || 1) + Number(quantity || 1),
+        };
+      } else {
+        currentItems.push({
+          _id: prodId,
+          itemKey,
+          name: product.name || product.title || "Product",
+          price: effectivePrice,
+          image: typeof img === "object" ? img.url : img,
+          category: typeof product.category === "object" ? product.category?.name : product.category || "General",
+          selectedOptions: product.selectedOptions || product.selectedVariant || null,
+          selectedSize: product.selectedSize || product.selectedVariant || null,
+          sku: product.sku || "",
+          variantId: product.variantId || null,
+          stock: effectiveStock,
+          quantity: Number(quantity || 1),
+        });
+      }
+
+      try {
+        localStorage.setItem("cartItems", JSON.stringify(currentItems));
+      } catch (_) {}
+
+      return currentItems;
     }
 
     try {
-      const response = await cartService.addToCart(product._id, quantity, {
+      const response = await cartService.addToCart(product._id || product.id, quantity, {
         selectedOptions: product.selectedOptions,
         variantSku: product.variantSku,
         variantId: product.variantId,
@@ -89,12 +141,16 @@ export const addToCart = createAsyncThunk(
 export const removeFromCart = createAsyncThunk(
   "cart/removeFromCart",
   async (productId, { getState, rejectWithValue }) => {
-    const { auth } = getState();
+    const { auth, cart } = getState();
 
     if (!auth.isAuthenticated) {
-      alert("Please login first to manage your cart.");
-      window.location.href = "/login";
-      return rejectWithValue("Unauthorized: Please login first");
+      const currentItems = Array.isArray(cart.cartItems)
+        ? cart.cartItems.filter((i) => i._id !== productId && i.itemKey !== productId)
+        : [];
+      try {
+        localStorage.setItem("cartItems", JSON.stringify(currentItems));
+      } catch (_) {}
+      return currentItems;
     }
 
     try {
@@ -109,12 +165,20 @@ export const removeFromCart = createAsyncThunk(
 export const updateCartQuantity = createAsyncThunk(
   "cart/updateCartQuantity",
   async ({ productId, quantity }, { getState, rejectWithValue }) => {
-    const { auth } = getState();
+    const { auth, cart } = getState();
 
     if (!auth.isAuthenticated) {
-      alert("Please login first to manage your cart.");
-      window.location.href = "/login";
-      return rejectWithValue("Unauthorized: Please login first");
+      const currentItems = Array.isArray(cart.cartItems)
+        ? cart.cartItems.map((i) =>
+            i._id === productId || i.itemKey === productId
+              ? { ...i, quantity: Math.max(1, quantity) }
+              : i
+          )
+        : [];
+      try {
+        localStorage.setItem("cartItems", JSON.stringify(currentItems));
+      } catch (_) {}
+      return currentItems;
     }
 
     try {
@@ -131,10 +195,9 @@ export const clearCart = createAsyncThunk(
   async (_, { getState, rejectWithValue }) => {
     const { auth } = getState();
 
+    localStorage.removeItem("cartItems");
     if (!auth.isAuthenticated) {
-      alert("Please login first to manage your cart.");
-      window.location.href = "/login";
-      return rejectWithValue("Unauthorized: Please login first");
+      return [];
     }
 
     try {

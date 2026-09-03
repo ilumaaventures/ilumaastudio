@@ -79,10 +79,12 @@ function TopBar() {
 
           <span className="text-slate-600">|</span>
 
-          <div className="flex items-center gap-0.5 cursor-pointer hover:text-white transition-colors font-semibold">
-            <span>INR</span>
-            <ChevronDown size={12} className="text-slate-400" />
-          </div>
+          <a
+            href="/store-template"
+            className="hover:text-white transition-colors"
+          >
+            Store Template
+          </a>
         </div>
       </div>
     </div>

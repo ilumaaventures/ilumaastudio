@@ -11,6 +11,8 @@ import DefaultStoreContact from "../Contact";
 import BusinessPoliciesPage from "../../Legal/BusinessPoliciesPage";
 
 import { useStore } from "../StoreContext";
+import templateRegistry from "../../../templates/registry";
+import StoreRenderer from "../../../templates/StoreRenderer";
 
 // High-Order Component to create store page dispatchers dynamically
 const createDispatcher = (DefaultComponent, pageKey) => {
@@ -37,6 +39,25 @@ const createDispatcher = (DefaultComponent, pageKey) => {
     if (CustomComponent) {
       return <CustomComponent {...props} />;
     }
+
+    // Check if matching modern multi-template in ILUMA Studio registry
+    if (pageKey === "StoreHome" && templateRegistry[templateKey]) {
+      return (
+        <StoreRenderer
+          templateKey={templateKey}
+          data={{
+            business: storeCtx?.business,
+            products: storeCtx?.products,
+            categories: storeCtx?.categories,
+            services: storeCtx?.services,
+            banners: storeCtx?.banners,
+            reviews: storeCtx?.reviews,
+            customization: storeCtx?.template?.customization || {},
+          }}
+        />
+      );
+    }
+
     return <DefaultComponent {...props} />;
   };
 };

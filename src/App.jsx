@@ -75,6 +75,9 @@ import BusinessPoliciesPage from "./pages/Legal/BusinessPoliciesPage";
 
 import { getUserLocation } from "./utils/location";
 
+import StoreTemplate from "./pages/StoreTemplate/StoreTemplate";
+import TemplatePreviewPage from "./pages/TemplatePreview/TemplatePreviewPage";
+import SlugStorefrontPage from "./pages/Store/SlugStorefrontPage";
 function App() {
   const dispatch = useDispatch();
   const {
@@ -158,7 +161,7 @@ function App() {
           <Route path="/help-center" element={<HelpCenter />} />
           <Route path="/track-order" element={<TrackOrder />} />
           <Route path="/track-order/:id" element={<TrackOrder />} />
-
+          <Route path="/store-template" element={<StoreTemplate />} />
           {/* Legal, Support, Shipping & Policies Routes */}
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
@@ -201,6 +204,14 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
         </Route>
+
+        {/* ILUMA Multi-Template Storefront & Preview Routes */}
+        <Route
+          path="/template-preview/:templateKey"
+          element={<TemplatePreviewPage />}
+        />
+        <Route path="/store/:slug" element={<SlugStorefrontPage />} />
+
         {/* Storefront Routes */}
         <Route path="/:businessName" element={<StoreLayout />}>
           <Route index element={<StoreHomeDispatcher />} />
