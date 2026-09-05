@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ArrowRight } from "lucide-react";
 
 const LIFESTYLES = [
   {
@@ -42,10 +42,10 @@ function ShopByLifestyle() {
           </h2>
           <Link
             to="/products?lifestyle=all"
-            className="text-xs font-bold text-[#2563eb] hover:text-[#1d4ed8] flex items-center gap-0.5 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0"
           >
-            <span>View All</span>
-            <ChevronRight size={14} />
+            <span>See All</span>
+            <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-0.5" />
           </Link>
         </div>
 

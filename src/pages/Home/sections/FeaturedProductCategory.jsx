@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ChevronLeft, ChevronRight, ArrowUpRight, ArrowRight } from "lucide-react";
 import { fetchCategories } from "../../../api/categoryService";
 
 function FeaturedProductCategory() {
@@ -67,40 +67,25 @@ function FeaturedProductCategory() {
       {/* Header Bar */}
       <div className="flex items-end justify-between gap-4 border-b border-slate-200/80 pb-3">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-black uppercase tracking-[0.2em] text-[#2563eb] bg-blue-50 px-2.5 py-0.5 rounded-full">
-              Explore Collections
-            </span>
-          </div>
-
           <h2 className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-slate-900">
             Featured Categories
           </h2>
 
           <p className="mt-1 text-xs text-slate-500 max-w-xl font-medium">
-            Discover our most loved collections carefully curated for every style and occasion.
+            Discover our most loved collections carefully curated for every
+            style and occasion.
           </p>
         </div>
 
         {/* Navigation arrows */}
         <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => scroll("left")}
-              aria-label="Previous categories"
-              className="w-8 h-8 rounded-full border border-slate-200 bg-white text-slate-700 flex items-center justify-center hover:bg-[#2563eb] hover:text-white hover:border-[#2563eb] transition-all shadow-2xs cursor-pointer"
-            >
-              <ChevronLeft size={16} />
-            </button>
-
-            <button
-              onClick={() => scroll("right")}
-              aria-label="Next categories"
-              className="w-8 h-8 rounded-full border border-slate-200 bg-white text-slate-700 flex items-center justify-center hover:bg-[#2563eb] hover:text-white hover:border-[#2563eb] transition-all shadow-2xs cursor-pointer"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
+          <Link
+            to="/categories"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0"
+          >
+            <span>See All</span>
+            <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+          </Link>
         </div>
       </div>
 
@@ -220,4 +205,3 @@ function FeaturedProductCategory() {
 }
 
 export default FeaturedProductCategory;
-

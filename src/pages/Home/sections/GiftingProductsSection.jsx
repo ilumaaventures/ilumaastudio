@@ -138,10 +138,10 @@ export default function GiftingProductsSection() {
 
         <Link
           to="https://gifterilumaastudio.vercel.app/"
-          className="text-xs sm:text-sm font-extrabold text-purple-600 dark:text-purple-400 hover:text-purple-700 transition-colors flex items-center gap-1"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0"
         >
-          <span>Explore All Gifts</span>
-          <ArrowRight size={14} />
+          <span>See All</span>
+          <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-0.5" />
         </Link>
       </div>
 

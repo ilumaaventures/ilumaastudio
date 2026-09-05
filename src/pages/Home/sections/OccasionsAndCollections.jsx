@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import { fetchCategories } from "../../../api/categoryService";
 
 export default function OccasionsAndCollections() {
@@ -62,15 +63,23 @@ export default function OccasionsAndCollections() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-6">
       {/* Our Occasion Section */}
       <div>
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-end mb-4">
           <div>
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               Our Occasion
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
               Shop curated categories for every special moment
             </p>
           </div>
+
+          <Link
+            to="/shop"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0"
+          >
+            <span>See All</span>
+            <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+          </Link>
         </div>
 
         {loading ? (
@@ -107,10 +116,23 @@ export default function OccasionsAndCollections() {
 
       {/* Our Collection Section */}
       <div>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-            Our Collection
-          </h2>
+        <div className="flex justify-between items-end mb-4">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              Our Collection
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+              Curated sustainable & artisan craft selections
+            </p>
+          </div>
+
+          <Link
+            to="/shop"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0"
+          >
+            <span>See All</span>
+            <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">

@@ -18,10 +18,9 @@ import {
   Type,
   Clock,
   ShieldCheck,
-  Phone,
-  Mail,
-  MapPin,
   Plus,
+  Minus,
+  ChevronRight,
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -31,10 +30,17 @@ import {
   removeFromCart,
 } from "../../../redux/reducers/cartReducer";
 import toast from "react-hot-toast";
-import { isOutOfStock, getProductStock } from "../../../utils/stockUtils";
+import { isOutOfStock } from "../../../utils/stockUtils";
 import CartDrawer from "../../common/CartDrawer";
-import ProductDetailsPage from "../../common/ProductDetailsPage";
 import { getProductImage } from "../../../utils/productImage";
+
+// Import modular sub-components
+import Navbar from "./Navbar";
+import Footer from "./Footer";
+import ProductCard from "./ProductCard";
+import Product from "./Product";
+import ProductDetails from "./ProductDetails";
+import Offer from "./Offer";
 
 export default function BookStoreTemplate({
   business = {},
@@ -44,7 +50,7 @@ export default function BookStoreTemplate({
   reviews = [],
   customization = {},
 }) {
-  // Navigation: "home" | "stacks" | "book-club" | "rare-vault" | "calculator" | "product-detail"
+  // Navigation: "home" | "stacks" | "book-club" | "calculator" | "rare-vault" | "offers" | "product-detail"
   const [activePage, setActivePage] = useState("home");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -52,7 +58,6 @@ export default function BookStoreTemplate({
   // Search & Filters
   const [selectedGenre, setSelectedGenre] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("featured");
 
   // "Look Inside" Reading Excerpt Drawer State
   const [readingExcerptBook, setReadingExcerptBook] = useState(null);
@@ -82,71 +87,109 @@ export default function BookStoreTemplate({
       reviewCount: 68,
       badge: "Staff Favorite",
       image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=900&auto=format&fit=crop&q=80",
-      description: "A sweeping multi-generational saga exploring memory, exile, and architectural marvels along the Danube.",
+      description: "A sweeping multi-generational saga exploring memory, exile, and architectural marvels along the winter banks of the Danube.",
       excerpt:
-        "The train pulled into the station at dawn, when the morning mist still clung like spider silk to the rusted iron girders. He watched the river through the cracked glass—grey, vast, and indifferent. For forty years he had carried the blueprint in his coat pocket, folded until the paper felt as soft as worn linen.",
+        "The train pulled into the station at dawn, when the morning mist still clung like spider silk to the rusted iron girders. He watched the river through the cracked glass—grey, vast, and indifferent. For forty years he had carried the blueprint in his coat pocket, folded until the paper felt as soft as worn linen. Here, in the forgotten bend of the city, stone would remember what men had tried so desperately to erase.",
       inStock: true,
     },
     {
       _id: "book-2",
-      name: "Philosophy of Quiet Moments",
-      author: "Marcus Lindqvist",
-      price: 22.5,
-      compareAtPrice: 28.0,
-      format: "Paperback Edition",
-      genre: "Philosophy",
-      pages: 256,
-      wordCount: 64000,
-      rating: 4.9,
-      reviewCount: 114,
+      name: "Chronicles of the Old Quarter",
+      author: "Julien Mercier",
+      price: 24.0,
+      compareAtPrice: 30.0,
+      format: "Clothbound Hardcover",
+      genre: "Literary Fiction",
+      pages: 320,
+      wordCount: 82000,
+      rating: 4.8,
+      reviewCount: 45,
       badge: "Indie Bestseller",
       image: "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=900&auto=format&fit=crop&q=80",
-      description: "Reflections on mindfulness, solitude, and finding stillness amidst the hyper-connected digital landscape.",
+      description: "Lyrical vignettes of Parisian second-hand antiquarians, forgotten letters, and clandestine evening salons in the 1920s.",
       excerpt:
-        "Silence is not the absence of sound, but the presence of attention. When we surrender our constant impulse to categorize and respond, the world offers up a texture so dense that a single afternoon can feel like an entire season.",
+        "The bell above Madame Laurent's bookshop had a brass tongue that struck true twice every afternoon. Sunlight pooled in the corner where the calfskin folios leaned against one another like drowsy scholars. To open a book bound before the Great War was to inhale tobacco, cedar shavings, and the unmistakable ghost of rain on cobblestones.",
       inStock: true,
     },
     {
       _id: "book-3",
-      name: "Modernist Typography & The Grid",
-      author: "Jan Van Der Beek",
-      price: 45.0,
-      compareAtPrice: 55.0,
-      format: "Deluxe Hardcover",
-      genre: "Art & Design",
-      pages: 320,
-      wordCount: 78000,
-      rating: 5.0,
-      reviewCount: 42,
-      badge: "Collector's Press",
-      image: "https://images.unsplash.com/photo-1532012164546-f432f2e3777a?w=900&auto=format&fit=crop&q=80",
-      description: "A lavishly illustrated historical monograph on Swiss graphic design, typographic proportions, and twentieth-century type foundries.",
+      name: "On Time, Silence, and Stone",
+      author: "Dr. Alistair Finch",
+      price: 22.0,
+      compareAtPrice: 28.0,
+      format: "Paperback",
+      genre: "Philosophy & Essays",
+      pages: 256,
+      wordCount: 64000,
+      rating: 4.9,
+      reviewCount: 38,
+      badge: "Editor's Choice",
+      image: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=900&auto=format&fit=crop&q=80",
+      description: "A contemplative philosophical meditation on cathedral masonry, deep geological time, and the restorative discipline of stillness.",
       excerpt:
-        "Order creates freedom. The grid is not a cage, but a musical stave upon which the eye dances. Every point of white space is deliberate tension; every kerning decision is a breath held between syllables.",
+        "We are creatures of the ephemeral, yet we spend our finite breaths carving our names into granite that outlasts empires. What does a mountain think of our centuries? The cathedral masons understood this humility: they spent three generations laying foundations they knew their own grandchildren would never see crowned with glass.",
       inStock: true,
     },
     {
       _id: "book-4",
-      name: "Conversations with Astronomers",
-      author: "Dr. Sarah Sterling",
+      name: "The Celestial Machinist",
+      author: "Cassandra Vane",
       price: 26.0,
       compareAtPrice: 32.0,
       format: "Clothbound Hardcover",
-      genre: "Science",
-      pages: 348,
-      wordCount: 88000,
-      rating: 4.8,
-      reviewCount: 57,
-      badge: "Editor's Choice",
-      image: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=900&auto=format&fit=crop&q=80",
-      description: "Essays on deep space observatories, cosmic dust, and the human quest to map the edges of the visible universe.",
+      genre: "Speculative Fiction",
+      pages: 448,
+      wordCount: 118000,
+      rating: 5.0,
+      reviewCount: 52,
+      badge: "Hugo Nominee",
+      image: "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=900&auto=format&fit=crop&q=80",
+      description: "An intricate clockpunk astronomical odyssey across Victorian London, brass astrolabes, and alternate dimensional navigation.",
       excerpt:
-        "Look at the light from the Andromeda galaxy. It began its voyage toward your retina two and a half million years ago, when our earliest ancestors were only beginning to chip flints on the African savannah.",
+        "Beneath the brass dome of the Royal Observatory, gears larger than carriages turned with a deep, subterranean hum. Penelope aligned the crosshairs with the third satellite of Jupiter. It was not where Kepler had charted it. Something vast and metallic was moving between the rings, casting a shadow across three hundred light minutes.",
+      inStock: true,
+    },
+    {
+      _id: "book-5",
+      name: "Echoes of the High Pyrenees",
+      author: "Mateo Ortiz",
+      price: 20.0,
+      compareAtPrice: 26.0,
+      format: "Paperback",
+      genre: "Poetry & Drama",
+      pages: 180,
+      wordCount: 32000,
+      rating: 4.9,
+      reviewCount: 29,
+      badge: "Bilingual Edition",
+      image: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=900&auto=format&fit=crop&q=80",
+      description: "Bilingual verses capturing mountain shepherds, limestone cliffs, autumn shepherd flutes, and the quiet dignity of altitude.",
+      excerpt:
+        "Where the pine line ends / only stone and hawk remain / speaking a dialect older than Latin / carried by the frost.",
+      inStock: true,
+    },
+    {
+      _id: "book-6",
+      name: "The Cartographer's Daughter (Signed First)",
+      author: "Helena Blackwood",
+      price: 55.0,
+      compareAtPrice: 65.0,
+      format: "Signed First Edition",
+      genre: "Rare & Signed",
+      pages: 390,
+      wordCount: 98000,
+      rating: 5.0,
+      reviewCount: 41,
+      badge: "Author Signed",
+      image: "https://images.unsplash.com/photo-1532012164546-f432f2e3777a?w=900&auto=format&fit=crop&q=80",
+      description: "Limited collector's printing of 500 copies, individually numbered and signed by Helena Blackwood with custom hand-colored maps.",
+      excerpt:
+        "To draw an island is to invent it. My father always kept a compass of bone and silver in his left palm, tapping the brass table whenever he spoke of islands that only existed when the tide was out.",
       inStock: true,
     },
   ];
 
-  const bookList = products.length > 0 ? products : defaultBooks;
+  const bookItems = products.length > 0 ? products : defaultBooks;
 
   const brandName =
     business?.businessName ||
@@ -159,12 +202,12 @@ export default function BookStoreTemplate({
     business?.phone ||
     business?.businessPhone ||
     business?.contactPhone ||
-    "+1 (800) 442-BOOK";
+    "+1 (800) 555-READ";
   const brandEmail =
     business?.email ||
     business?.businessEmail ||
     business?.contactEmail ||
-    "curator@chapterversebooks.com";
+    "curator@chapterversepress.com";
 
   const rawAddr = business?.address || business?.registered_business_address;
   const brandAddress =
@@ -174,43 +217,15 @@ export default function BookStoreTemplate({
       ? [rawAddr.street, rawAddr.addressLine2, rawAddr.city, rawAddr.state, rawAddr.postalCode, rawAddr.country]
           .filter(Boolean)
           .join(", ")
-      : "142 Mercer Street, Soho, New York, NY 10012";
+      : "12 Bodleian Alley, Oxford, OX1 3BG, UK";
 
-  // Filtered books
-  const filteredBooks = useMemo(() => {
-    return bookList
-      .filter((b) => {
-        if (selectedGenre !== "all") {
-          const g = (b.genre || "").toLowerCase();
-          const f = (b.format || "").toLowerCase();
-          const filter = selectedGenre.toLowerCase();
-          if (!g.includes(filter) && !f.includes(filter)) return false;
-        }
-
-        if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase();
-          const matchTitle = (b.name || "").toLowerCase().includes(q);
-          const matchAuthor = (b.author || "").toLowerCase().includes(q);
-          const matchDesc = (b.description || "").toLowerCase().includes(q);
-          if (!matchTitle && !matchAuthor && !matchDesc) return false;
-        }
-        return true;
-      })
-      .sort((a, b) => {
-        if (sortBy === "price-asc") return Number(a.price) - Number(b.price);
-        if (sortBy === "price-desc") return Number(b.price) - Number(a.price);
-        if (sortBy === "rating") return (b.rating || 5) - (a.rating || 5);
-        return 0;
-      });
-  }, [bookList, selectedGenre, searchQuery, sortBy]);
-
-  const handleAddToCart = (book, qty = 1) => {
-    if (isOutOfStock(book)) {
-      toast.error(`Sorry, "${book.name}" is currently out of stock!`);
+  const handleAddToCart = (product, qty = 1) => {
+    if (isOutOfStock(product)) {
+      toast.error(`Sorry, ${product.name} is currently out of stock!`);
       return;
     }
-    dispatch(addToCart({ product: book, quantity: qty }));
-    toast.success(`"${book.name}" added to your Reading Bag! 📚`);
+    dispatch(addToCart({ product, quantity: qty }));
+    toast.success(`${product.name} added to Book Bag! 📖`);
     setCartOpen(true);
   };
 
@@ -229,137 +244,61 @@ export default function BookStoreTemplate({
 
   const cartCount = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
-  // Reading calculations for active or first book
-  const calcBook = readingExcerptBook || bookList[0];
-  const words = calcBook?.wordCount || 85000;
-  const totalMins = Math.round(words / readingSpeedWpm);
-  const totalHours = (totalMins / 60).toFixed(1);
-  const daysToFinish = Math.ceil(totalMins / dailyReadingMins);
+  const handleSelectProduct = (p) => {
+    setSelectedProduct(p);
+    setActivePage("product-detail");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Reading Speed Calculator calculations
+  const calculatedDays = useMemo(() => {
+    const targetBook = bookItems[0];
+    const totalWords = targetBook.wordCount || 105000;
+    const dailyWords = readingSpeedWpm * dailyReadingMins;
+    if (dailyWords === 0) return 14;
+    return Math.ceil(totalWords / dailyWords);
+  }, [readingSpeedWpm, dailyReadingMins, bookItems]);
 
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-[#FDFBF7] text-[#1E1B18] antialiased selection:bg-amber-100 selection:text-amber-950">
-      {/* ================= 1. HERITAGE LITERARY TOP BAR ================= */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#1E1B18]/10 shadow-2xs">
-        <div className="bg-[#1E1B18] text-[#FDFBF7] text-[11px] py-2 px-4">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2 font-medium tracking-wide">
-              <Bookmark size={13} className="text-amber-300" />
-              <span>
-                <strong>Independent Press Sanctuary:</strong> Complimentary archival letterpress bookmark & custom bookplate with every order.
-              </span>
-            </div>
-            <div className="hidden md:flex items-center gap-6 text-[11px] font-medium text-amber-200">
-              <span className="flex items-center gap-1.5">
-                <Award size={14} className="text-amber-400" /> Signed & First Editions Guaranteed Authentic
-              </span>
-              <a href={`tel:${brandPhone}`} className="hover:text-white transition flex items-center gap-1">
-                <Phone size={13} /> {brandPhone}
-              </a>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen flex flex-col font-serif bg-[#FAF7F2] text-[#1C1917] antialiased selection:bg-[#9A3412]/20 selection:text-[#9A3412]">
+      {/* ================= 1. CLASSICAL EDITORIAL NAVBAR ================= */}
+      <Navbar
+        brandName={brandName}
+        brandLogo={brandLogo}
+        brandPhone={brandPhone}
+        activePage={activePage}
+        setActivePage={setActivePage}
+        cartCount={cartCount}
+        onOpenCart={() => setCartOpen(true)}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        onOpenReadingCalc={() => {
+          setActivePage("calculator");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
 
-        {/* Main Navbar */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-22 flex items-center justify-between gap-4">
-          <div
-            onClick={() => {
-              setActivePage("home");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            className="flex items-center gap-3 cursor-pointer group"
-          >
-            {brandLogo ? (
-              <img src={brandLogo} alt={brandName} className="h-11 w-auto max-w-[150px] object-contain rounded-lg" />
-            ) : (
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#3D352E] to-[#1E1B18] text-amber-200 flex items-center justify-center shadow-md group-hover:scale-105 transition duration-300">
-                <BookOpen size={22} />
-              </div>
-            )}
-            <div className="space-y-0.5 text-left">
-              <span className="text-xl sm:text-2xl font-serif font-black tracking-tight text-[#1E1B18] block leading-none">
-                {brandName}
-              </span>
-              <span className="text-[10px] uppercase tracking-[0.25em] text-[#9A3412] font-bold block">
-                Independent Press & Rare Books
-              </span>
-            </div>
-          </div>
-
-          {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-8 text-[12px] font-bold uppercase tracking-wider text-[#3D352E]">
-            {[
-              { id: "home", label: "The Stacks" },
-              { id: "stacks", label: "Literary Catalog" },
-              { id: "book-club", label: "Monthly Book Club" },
-              { id: "calculator", label: "Reading Time Lab" },
-            ].map((tab) => {
-              const isActive = activePage === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    setActivePage(tab.id);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className={`transition cursor-pointer relative py-2 ${
-                    isActive ? "text-[#1E1B18] font-black" : "hover:text-[#9A3412] text-[#6B5E52]"
-                  }`}
-                >
-                  <span>{tab.label}</span>
-                  {isActive && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#9A3412] rounded-full" />}
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* Actions */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                setActivePage("book-club");
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-[#F5EFE6] text-[#3D352E] hover:bg-[#EAE0D3] font-bold text-xs border border-[#E0D5C5] transition cursor-pointer"
-            >
-              <Coffee size={14} className="text-[#9A3412]" />
-              <span>Join Book Club</span>
-            </button>
-
-            <button
-              onClick={() => setCartOpen(true)}
-              className="px-4 py-2.5 rounded-2xl bg-[#1E1B18] text-white hover:bg-[#3D352E] transition cursor-pointer flex items-center gap-2 font-bold text-xs shadow-md shadow-stone-900/10"
-            >
-              <ShoppingBag size={17} className="text-amber-200" />
-              <span className="hidden sm:inline">Book Bag</span>
-              <span className="bg-[#9A3412] text-white text-[11px] font-black min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center">
-                {cartCount}
-              </span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* ================= 2. MAIN CONTENT ================= */}
+      {/* ================= 2. MAIN ACTIVE VIEW ================= */}
       <main className="flex-1">
-        {/* ================= PAGE 1: HOME ================= */}
+        {/* ================= VIEW 1: HOME (FRONT STACKS) ================= */}
         {activePage === "home" && (
           <>
             {/* HERO SECTION */}
-            <section className="relative overflow-hidden bg-gradient-to-b from-[#F5EFE6] via-[#FDFBF7] to-[#FDFBF7] pt-12 pb-20 md:pt-18 md:pb-24 border-b border-[#1E1B18]/5">
+            <section className="relative overflow-hidden bg-[#FAF7F2] pt-12 pb-20 md:pt-20 md:pb-28 border-b border-[#E7DFD5]">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                   <div className="lg:col-span-7 space-y-6 text-left">
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#E0D5C5] text-[#3D352E] text-xs font-semibold shadow-2xs">
-                      <Sparkles size={14} className="text-[#9A3412]" />
-                      <span>Letterpress Bound • Curated by Resident Bibliophiles</span>
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EFE9DF] border border-[#D5C7B8] text-[#1C1917] text-xs font-bold font-sans">
+                      <Bookmark size={14} className="text-[#9A3412]" />
+                      <span>Independent Press & Archival Smyth-Sewn Stacks</span>
                     </div>
 
-                    <h1 className="text-4xl sm:text-6xl font-serif font-black tracking-tight text-[#1E1B18] leading-[1.08]">
-                      Books that Linger on the Mind and Nightstand.
+                    <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-[#1C1917] leading-[1.08]">
+                      Unhurried Literature for Enduring Bookshelves.
                     </h1>
 
-                    <p className="text-sm sm:text-base text-[#6B5E52] leading-relaxed max-w-xl font-normal">
-                      Clothbound hardcovers, overlooked translated fiction, and independent literary monographs. Every copy is wrapped in acid-free tissue paper with a signed reading card.
+                    <p className="text-sm sm:text-base text-[#574B40] leading-relaxed max-w-xl font-sans">
+                      Clothbound hardcovers, rare signed first editions, and independent literary journals printed on 80gsm acid-free Munken paper with deckled edges. Made for readers who cherish the physical weight of words.
                     </p>
 
                     <div className="flex flex-wrap gap-4 pt-2">
@@ -368,465 +307,485 @@ export default function BookStoreTemplate({
                           setActivePage("stacks");
                           window.scrollTo({ top: 0, behavior: "smooth" });
                         }}
-                        className="px-8 py-4 bg-[#1E1B18] hover:bg-[#3D352E] text-white rounded-2xl text-xs font-bold uppercase tracking-wider transition shadow-lg flex items-center gap-2.5 cursor-pointer transform hover:-translate-y-0.5"
+                        className="px-8 py-4 bg-[#1C1917] hover:bg-[#292524] text-[#FAF7F2] rounded-2xl text-xs font-bold uppercase tracking-widest transition shadow-lg flex items-center gap-2 cursor-pointer transform hover:-translate-y-0.5 active:scale-95"
                       >
-                        <BookOpen size={17} className="text-amber-300" />
-                        <span>Browse Curated Stacks</span>
+                        <BookOpen size={17} className="text-[#D97706]" />
+                        <span>Browse Front Stacks</span>
                       </button>
 
                       <button
-                        onClick={() => {
-                          setActivePage("book-club");
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                        }}
-                        className="px-7 py-4 bg-white border border-[#D5C7B5] hover:border-[#9A3412] text-[#1E1B18] rounded-2xl text-xs font-bold uppercase tracking-wider transition flex items-center gap-2 cursor-pointer"
+                        onClick={() => setReadingExcerptBook(bookItems[0])}
+                        className="px-7 py-4 bg-white border border-[#D5C7B8] hover:border-[#78350F] text-[#1C1917] rounded-2xl text-xs font-bold uppercase tracking-widest transition flex items-center gap-2 cursor-pointer shadow-sm"
                       >
-                        <Coffee size={16} className="text-[#9A3412]" />
-                        <span>Monthly Book Society</span>
+                        <BookOpen size={16} className="text-[#9A3412]" />
+                        <span>"Look Inside" Reader</span>
                       </button>
+                    </div>
+
+                    {/* Literary Specs Strip */}
+                    <div className="grid grid-cols-3 gap-4 pt-6 border-t border-[#E7DFD5] text-left">
+                      <div>
+                        <span className="text-xl sm:text-2xl font-bold text-[#1C1917]">Smyth-Sewn</span>
+                        <p className="text-[11px] text-[#78350F] font-sans mt-0.5">Permanent Flat-Laying</p>
+                      </div>
+                      <div>
+                        <span className="text-xl sm:text-2xl font-bold text-[#1C1917]">100% Acid-Free</span>
+                        <p className="text-[11px] text-[#78350F] font-sans mt-0.5">Munken Cream Stock</p>
+                      </div>
+                      <div>
+                        <span className="text-xl sm:text-2xl font-bold text-[#9A3412]">Signed Firsts</span>
+                        <p className="text-[11px] text-[#78350F] font-sans mt-0.5">Author Verified Vault</p>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Hero Book Cover Visual */}
+                  {/* Hero Visual Card */}
                   <div className="lg:col-span-5 relative">
-                    <div className="aspect-[4/3] rounded-[36px] overflow-hidden shadow-2xl border-8 border-white bg-[#F5EFE6]">
+                    <div className="aspect-[3/4] max-w-sm mx-auto rounded-[36px] overflow-hidden shadow-2xl border-4 border-white bg-[#FAF7F2] relative group">
                       <img
                         src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=900&auto=format&fit=crop&q=80"
-                        alt="Chapter & Verse Bookshop"
-                        className="w-full h-full object-cover transform hover:scale-105 transition duration-700"
+                        alt="The Architecture of Solitude"
+                        className="w-full h-full object-cover transform group-hover:scale-105 transition duration-700"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#1C1917]/75 via-transparent to-transparent" />
+
+                      <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between text-white">
+                        <div>
+                          <span className="text-xs font-bold uppercase tracking-widest text-[#FBBF24]">
+                            Curator's Staff Favorite
+                          </span>
+                          <h4 className="text-lg font-bold">The Architecture of Solitude</h4>
+                        </div>
+                        <button
+                          onClick={() => handleSelectProduct(bookItems[0])}
+                          className="p-3 bg-[#FAF7F2] hover:bg-white text-[#1C1917] rounded-xl transition cursor-pointer font-bold shadow-lg"
+                        >
+                          <ChevronRight size={18} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* CURATOR'S PICK STACKS */}
+            {/* FEATURED VOLUMES */}
             <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 text-left">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-[#1E1B18]/10 pb-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-[#E7DFD5] pb-6">
                 <div>
-                  <span className="text-xs uppercase tracking-wider text-[#9A3412] font-bold">Curator's Nightstand</span>
-                  <h2 className="text-3xl sm:text-4xl font-serif font-black text-[#1E1B18]">Staff Recommendations</h2>
-                  <p className="text-xs sm:text-sm text-[#6B5E52] mt-1">Click "Read Excerpt" to test the opening pages right in your browser.</p>
+                  <span className="text-xs uppercase tracking-widest text-[#9A3412] font-bold">
+                    Independent Literary Press
+                  </span>
+                  <h2 className="text-3xl sm:text-4xl font-black text-[#1C1917] mt-1">
+                    Featured Front Stacks
+                  </h2>
                 </div>
+
                 <button
                   onClick={() => {
                     setActivePage("stacks");
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1E1B18] hover:text-[#9A3412] hover:underline cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#9A3412] hover:underline cursor-pointer font-sans"
                 >
-                  <span>Explore Full Stacks ({bookList.length} titles)</span>
+                  <span>Explore Entire Library ({bookItems.length} volumes)</span>
                   <ArrowRight size={14} />
                 </button>
               </div>
 
-              {/* Books Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {bookList.map((book) => {
-                  const outOfStock = isOutOfStock(book);
-                  return (
-                    <div
-                      key={book._id}
-                      onClick={() => {
-                        setSelectedProduct(book);
-                        setActivePage("product-detail");
-                      }}
-                      className="bg-white rounded-3xl border border-[#1E1B18]/10 p-5 space-y-4 flex flex-col justify-between shadow-xs hover:shadow-2xl transition duration-300 cursor-pointer group relative"
-                    >
-                      <div className="space-y-3">
-                        <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-[#F5EFE6] relative">
-                          <img
-                            src={getProductImage(book, book.image)}
-                            alt={book.name}
-                            className="w-full h-full object-cover group-hover:scale-108 transition duration-500"
-                          />
-                          {book.badge && (
-                            <span className="absolute top-3 left-3 bg-[#1E1B18]/90 text-white text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full">
-                              {book.badge}
-                            </span>
-                          )}
+              {/* Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {bookItems.slice(0, 4).map((item) => (
+                  <ProductCard
+                    key={item._id}
+                    product={item}
+                    onSelectProduct={handleSelectProduct}
+                    onAddToCart={handleAddToCart}
+                    onLookInside={(book) => setReadingExcerptBook(book)}
+                  />
+                ))}
+              </div>
+            </section>
 
-                          {/* "Look Inside" Button */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setReadingExcerptBook(book);
-                            }}
-                            className="absolute bottom-3 right-3 px-3 py-1.5 rounded-xl bg-white/95 text-[#1E1B18] font-bold text-[11px] flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition shadow-md hover:bg-white"
-                          >
-                            <Eye size={13} />
-                            <span>Read Excerpt</span>
-                          </button>
-                        </div>
+            {/* INTERACTIVE SALON CALLOUT */}
+            <section className="py-16 bg-[#F3EDE3] border-y border-[#E7DFD5]">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center max-w-2xl mx-auto space-y-2 mb-10">
+                  <span className="text-xs uppercase tracking-widest text-[#9A3412] font-bold">
+                    The Literary Salon
+                  </span>
+                  <h2 className="text-3xl font-black text-[#1C1917]">
+                    Bibliophile Reading Tools
+                  </h2>
+                  <p className="text-xs text-[#574B40] font-sans">
+                    Read first chapter excerpts, estimate your completion timelines, and join our monthly curated book club.
+                  </p>
+                </div>
 
-                        <div className="flex items-center justify-between text-[11px] font-bold">
-                          <span className="text-[#9A3412] uppercase tracking-wider">{book.genre}</span>
-                          <span className="text-[#6B5E52] flex items-center gap-1">
-                            <Star size={12} className="text-amber-500 fill-amber-500" />
-                            {book.rating || 5.0} ({book.reviewCount || 30})
-                          </span>
-                        </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                  <div
+                    onClick={() => setReadingExcerptBook(bookItems[0])}
+                    className="p-6 rounded-3xl bg-white border border-[#E7DFD5] hover:border-[#78350F] transition cursor-pointer group shadow-sm"
+                  >
+                    <BookOpen size={28} className="text-[#9A3412] mb-4 group-hover:scale-110 transition duration-300" />
+                    <h3 className="text-lg font-bold text-[#1C1917] group-hover:text-[#9A3412]">"Look Inside" Reader</h3>
+                    <p className="text-xs text-[#574B40] mt-2 leading-relaxed font-sans">
+                      Preview the first chapter in our adjustable digital reading drawer with Parchment, Sepia, and Night paper modes.
+                    </p>
+                    <span className="mt-4 inline-flex items-center gap-1 text-xs text-[#9A3412] font-bold font-sans">
+                      Open Sample Chapter <ArrowRight size={13} />
+                    </span>
+                  </div>
 
-                        <h4 className="text-base font-serif font-bold text-[#1E1B18] line-clamp-1 group-hover:text-[#9A3412] transition">
-                          {book.name}
-                        </h4>
-                        <span className="text-xs text-[#6B5E52] font-medium block">by {book.author}</span>
-                        <p className="text-xs text-[#6B5E52] line-clamp-2 leading-relaxed">{book.description}</p>
-                      </div>
+                  <div
+                    onClick={() => {
+                      setActivePage("calculator");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="p-6 rounded-3xl bg-white border border-[#E7DFD5] hover:border-[#78350F] transition cursor-pointer group shadow-sm"
+                  >
+                    <Clock size={28} className="text-[#9A3412] mb-4 group-hover:scale-110 transition duration-300" />
+                    <h3 className="text-lg font-bold text-[#1C1917] group-hover:text-[#9A3412]">Reading Speed Lab</h3>
+                    <p className="text-xs text-[#574B40] mt-2 leading-relaxed font-sans">
+                      Calculate exact days to finish any volume based on your words-per-minute pace and daily reading habit.
+                    </p>
+                    <span className="mt-4 inline-flex items-center gap-1 text-xs text-[#9A3412] font-bold font-sans">
+                      Calculate Reading Pace <ArrowRight size={13} />
+                    </span>
+                  </div>
 
-                      <div className="pt-3 flex justify-between items-center border-t border-[#F5EFE6]">
-                        <span className="text-lg font-serif font-black text-[#1E1B18]">
-                          ₹{Number(book.price).toFixed(2)}
-                        </span>
-
-                        {outOfStock ? (
-                          <span className="text-[11px] font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-xl">
-                            Sold Out
-                          </span>
-                        ) : (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAddToCart(book);
-                            }}
-                            className="px-4 py-2 bg-[#1E1B18] hover:bg-[#3D352E] text-white rounded-xl text-xs font-bold cursor-pointer transition shadow-xs flex items-center gap-1"
-                          >
-                            <Plus size={14} /> Add
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                  <div
+                    onClick={() => {
+                      setActivePage("book-club");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="p-6 rounded-3xl bg-white border border-[#E7DFD5] hover:border-[#78350F] transition cursor-pointer group shadow-sm"
+                  >
+                    <Coffee size={28} className="text-[#9A3412] mb-4 group-hover:scale-110 transition duration-300" />
+                    <h3 className="text-lg font-bold text-[#1C1917] group-hover:text-[#9A3412]">The Book Club Box</h3>
+                    <p className="text-xs text-[#574B40] mt-2 leading-relaxed font-sans">
+                      Receive one hand-selected novel each month along with exclusive author letters and private salon invitations.
+                    </p>
+                    <span className="mt-4 inline-flex items-center gap-1 text-xs text-[#9A3412] font-bold font-sans">
+                      Explore Book Club <ArrowRight size={13} />
+                    </span>
+                  </div>
+                </div>
               </div>
             </section>
           </>
         )}
 
-        {/* ================= PAGE 2: LITERARY CATALOG ================= */}
+        {/* ================= VIEW 2: LIBRARY STACKS (CATALOG) ================= */}
         {activePage === "stacks" && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-10 text-left">
-            <div className="space-y-4 border-b border-[#1E1B18]/10 pb-6">
-              <span className="text-xs uppercase tracking-wider text-[#9A3412] font-bold">The Bookshop Library</span>
-              <h1 className="text-3xl sm:text-4xl font-serif font-black text-[#1E1B18]">Search & Filter Editions</h1>
-
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center pt-2">
-                <div className="md:col-span-6 relative">
-                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by title, author, or literary theme..."
-                    className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white border border-[#D5C7B5] text-xs text-[#1E1B18] focus:outline-none"
-                  />
-                </div>
-
-                <div className="md:col-span-6 flex flex-wrap gap-2 items-center">
-                  {["all", "Literary Fiction", "Philosophy", "Art & Design", "Science"].map((g) => (
-                    <button
-                      key={g}
-                      onClick={() => setSelectedGenre(g)}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition border ${
-                        selectedGenre.toLowerCase() === g.toLowerCase()
-                          ? "bg-[#1E1B18] text-white border-[#1E1B18]"
-                          : "bg-white text-[#3D352E] border-[#D5C7B5] hover:bg-[#F5EFE6]"
-                      }`}
-                    >
-                      {g === "all" ? "All Genres" : g}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {filteredBooks.map((book) => (
-                <div
-                  key={book._id}
-                  onClick={() => {
-                    setSelectedProduct(book);
-                    setActivePage("product-detail");
-                  }}
-                  className="bg-white rounded-3xl border border-[#1E1B18]/10 p-5 space-y-3 flex flex-col justify-between shadow-xs hover:shadow-xl transition cursor-pointer group"
-                >
-                  <div className="space-y-3">
-                    <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-[#F5EFE6] relative">
-                      <img src={getProductImage(book, book.image)} alt={book.name} className="w-full h-full object-cover" />
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setReadingExcerptBook(book);
-                        }}
-                        className="absolute bottom-3 right-3 px-3 py-1.5 rounded-xl bg-white/95 text-[#1E1B18] font-bold text-[11px] flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition shadow-md"
-                      >
-                        <Eye size={13} /> Read
-                      </button>
-                    </div>
-                    <span className="text-[10px] uppercase font-bold text-[#9A3412] tracking-wider block">{book.genre}</span>
-                    <h4 className="text-base font-serif font-bold text-[#1E1B18] line-clamp-1">{book.name}</h4>
-                    <span className="text-xs text-[#6B5E52] block">by {book.author}</span>
-                  </div>
-
-                  <div className="pt-3 flex justify-between items-center border-t border-[#F5EFE6]">
-                    <span className="text-lg font-serif font-black text-[#1E1B18]">₹{Number(book.price).toFixed(2)}</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddToCart(book);
-                      }}
-                      className="px-4 py-2 bg-[#1E1B18] text-white rounded-xl text-xs font-bold"
-                    >
-                      + Add
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <Product
+            products={bookItems}
+            onSelectProduct={handleSelectProduct}
+            onAddToCart={handleAddToCart}
+            onLookInside={(book) => setReadingExcerptBook(book)}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            selectedGenre={selectedGenre}
+            setSelectedGenre={setSelectedGenre}
+          />
         )}
 
-        {/* ================= PAGE 3: MONTHLY BOOK CLUB ================= */}
-        {activePage === "book-club" && (
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 text-left">
-            <div className="text-center max-w-2xl mx-auto space-y-2">
-              <span className="text-xs uppercase tracking-[0.2em] text-[#9A3412] font-bold">Literary Fellowship</span>
-              <h1 className="text-3xl sm:text-4xl font-serif font-black text-[#1E1B18]">The Bibliophile Society</h1>
-              <p className="text-xs sm:text-sm text-[#6B5E52]">
-                A hardcover book curated monthly by our master readers, accompanied by author commentary essays, letterpress bookmarks, and access to private salon discussions.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                {
-                  name: "The Paper & Ink Society",
-                  price: 799,
-                  desc: "1 Hand-selected contemporary fiction paperback, letterpress art card, and discussion questions.",
-                },
-                {
-                  name: "The Folio Collector",
-                  price: 1499,
-                  desc: "1 First-edition clothbound hardcover, author signed bookplate, and invitations to monthly virtual author salons.",
-                  popular: true,
-                },
-                {
-                  name: "The Rare & Archive Vault",
-                  price: 2499,
-                  desc: "Numbered limited pressing with deckled edges, archival slipcase, and rare literary monograph quarterly.",
-                },
-              ].map((tier) => (
-                <div
-                  key={tier.name}
-                  className={`bg-white rounded-3xl p-8 space-y-6 flex flex-col justify-between text-left relative ${
-                    tier.popular ? "border-2 border-[#1E1B18] shadow-2xl" : "border border-[#1E1B18]/10 shadow-xs"
-                  }`}
-                >
-                  <div className="space-y-3">
-                    <span className="text-[10px] font-bold uppercase text-[#9A3412] bg-amber-50 px-2.5 py-1 rounded-full">
-                      Free Shipping Nationwide
-                    </span>
-                    <h3 className="text-xl font-serif font-bold text-[#1E1B18]">{tier.name}</h3>
-                    <p className="text-xs text-[#6B5E52] leading-relaxed">{tier.desc}</p>
-                  </div>
-
-                  <div className="pt-4 border-t border-[#F5EFE6] space-y-4">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-serif font-black text-[#1E1B18]">₹{tier.price}</span>
-                      <span className="text-xs text-[#6B5E52]">/ month</span>
-                    </div>
-
-                    <button
-                      onClick={() =>
-                        handleAddToCart({
-                          _id: tier.name,
-                          name: `${tier.name} (Monthly Subscription)`,
-                          price: tier.price,
-                          image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600",
-                          description: tier.desc,
-                        })
-                      }
-                      className="w-full py-3.5 bg-[#1E1B18] hover:bg-[#3D352E] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition"
-                    >
-                      Join Society
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ================= PAGE 4: READING TIME CALCULATOR ================= */}
+        {/* ================= VIEW 3: READING SPEED LAB ================= */}
         {activePage === "calculator" && (
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 text-left">
             <div className="text-center max-w-2xl mx-auto space-y-2">
-              <span className="text-xs uppercase tracking-[0.2em] text-[#9A3412] font-bold">Pacing Science</span>
-              <h1 className="text-3xl sm:text-4xl font-serif font-black text-[#1E1B18]">Reading Pace & Schedule Calculator</h1>
-              <p className="text-xs sm:text-sm text-[#6B5E52]">
-                Find out exactly how many days it will take you to finish "{calcBook.name}" based on your natural reading rhythm.
+              <span className="text-xs uppercase tracking-[0.2em] text-[#9A3412] font-bold">
+                Bibliophile Habits
+              </span>
+              <h1 className="text-3xl sm:text-4xl font-black text-[#1C1917]">
+                Reading Speed & Goal Calculator
+              </h1>
+              <p className="text-xs sm:text-sm text-[#574B40] font-sans">
+                Determine how quickly you will complete "The Architecture of Solitude" (105,000 words) based on your daily reading habits.
               </p>
             </div>
 
-            <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#1E1B18]/10 space-y-6 shadow-xs">
+            <div className="p-8 rounded-3xl bg-white border border-[#E7DFD5] space-y-8 shadow-md">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <div className="flex justify-between text-xs font-bold text-[#1E1B18]">
-                    <span>Reading Speed: {readingSpeedWpm} Words / Min</span>
-                    <span>{readingSpeedWpm <= 200 ? "Contemplative" : readingSpeedWpm <= 300 ? "Average Reader" : "Speed Reader"}</span>
+                  <div className="flex justify-between text-xs font-bold text-[#1C1917] font-sans">
+                    <span>Reading Speed: {readingSpeedWpm} Words Per Minute</span>
+                    <span className="text-[#78350F]">{readingSpeedWpm > 300 ? "Fast Reader" : readingSpeedWpm < 200 ? "Unhurried Pace" : "Average"}</span>
                   </div>
                   <input
                     type="range"
                     min="150"
                     max="450"
-                    step="10"
+                    step="25"
                     value={readingSpeedWpm}
                     onChange={(e) => setReadingSpeedWpm(Number(e.target.value))}
-                    className="w-full accent-[#1E1B18] cursor-pointer"
+                    className="w-full accent-[#9A3412] cursor-pointer"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex justify-between text-xs font-bold text-[#1E1B18]">
-                    <span>Daily Reading Time: {dailyReadingMins} Minutes</span>
-                    <span>{(dailyReadingMins / 60).toFixed(1)} Hours/Day</span>
+                  <div className="flex justify-between text-xs font-bold text-[#1C1917] font-sans">
+                    <span>Daily Reading Time: {dailyReadingMins} Minutes/Day</span>
                   </div>
                   <input
                     type="range"
                     min="15"
                     max="120"
-                    step="5"
+                    step="15"
                     value={dailyReadingMins}
                     onChange={(e) => setDailyReadingMins(Number(e.target.value))}
-                    className="w-full accent-[#1E1B18] cursor-pointer"
+                    className="w-full accent-[#9A3412] cursor-pointer"
                   />
                 </div>
               </div>
 
-              {/* Output Stats */}
-              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-[#F5EFE6]">
-                <div className="p-4 rounded-2xl bg-[#F5EFE6] space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-[#9A3412] block">Total Reading Time</span>
-                  <span className="text-2xl font-serif font-black text-[#1E1B18]">{totalHours} Hours</span>
-                  <p className="text-[10px] text-[#6B5E52]">({totalMins} minutes total)</p>
+              {/* Output Result Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-[#E7DFD5] text-center">
+                <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#E7DFD5] space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-[#78350F] block font-sans">Completion Time</span>
+                  <span className="text-3xl font-black text-[#1C1917]">{calculatedDays} Days</span>
+                  <p className="text-[10px] text-[#8C7A6B] font-sans">to finish the 412-page volume</p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#F5EFE6] space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-[#9A3412] block">Estimated Finish In</span>
-                  <span className="text-2xl font-serif font-black text-[#1E1B18]">{daysToFinish} Days</span>
-                  <p className="text-[10px] text-[#6B5E52]">at {dailyReadingMins} mins / evening</p>
+                <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#E7DFD5] space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-[#78350F] block font-sans">Pages Per Day</span>
+                  <span className="text-3xl font-black text-[#1C1917]">{Math.round((dailyReadingMins * readingSpeedWpm) / 250)}</span>
+                  <p className="text-[10px] text-[#8C7A6B] font-sans">average daily chapter load</p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#F5EFE6] space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-[#9A3412] block">Volume Metric</span>
-                  <span className="text-2xl font-serif font-black text-[#1E1B18]">{calcBook.pages} Pages</span>
-                  <p className="text-[10px] text-[#6B5E52]">{words.toLocaleString()} Words</p>
+                <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#E7DFD5] space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-[#78350F] block font-sans">Annual Reading Goal</span>
+                  <span className="text-3xl font-black text-[#9A3412]">{Math.round(365 / calculatedDays)} Books</span>
+                  <p className="text-[10px] text-[#8C7A6B] font-sans">finished at this daily cadence</p>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* ================= PRODUCT DETAIL ================= */}
-        {activePage === "product-detail" && selectedProduct && (
-          <ProductDetailsPage
-            product={selectedProduct}
-            onBack={() => {
-              setActivePage("home");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
+        {/* ================= VIEW 4: THE BOOK CLUB MEMBERSHIP ================= */}
+        {activePage === "book-club" && (
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 text-left">
+            <div className="text-center max-w-2xl mx-auto space-y-2">
+              <span className="text-xs uppercase tracking-[0.2em] text-[#9A3412] font-bold">
+                The Literary Society
+              </span>
+              <h1 className="text-3xl sm:text-4xl font-black text-[#1C1917]">
+                Monthly Curated Book Club
+              </h1>
+              <p className="text-xs sm:text-sm text-[#574B40] font-sans">
+                Receive one Smyth-sewn first edition novel every month with private author salon invitations and discussion marginalia.
+              </p>
+            </div>
+
+            <div className="p-8 rounded-3xl bg-white border border-[#E7DFD5] space-y-6 shadow-md">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#E7DFD5] pb-6">
+                <div>
+                  <span className="text-xs font-bold text-[#9A3412] uppercase font-sans">Monthly Selection Box</span>
+                  <h3 className="text-2xl font-bold text-[#1C1917]">Chapter & Verse Society Box</h3>
+                  <p className="text-xs text-[#574B40] font-sans">Delivered automatically on the 1st of every month.</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-3xl font-bold text-[#1C1917]">₹28.00</span>
+                  <span className="text-xs text-[#78350F] block font-sans">/ month • Cancel anytime</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-sans text-[#574B40]">
+                <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#E7DFD5] space-y-1">
+                  <span className="font-bold text-[#1C1917] block font-serif">1x Clothbound Novel</span>
+                  <p>Specially bound first printing with archival dust jacket.</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#E7DFD5] space-y-1">
+                  <span className="font-bold text-[#1C1917] block font-serif">Curator Letterpress Note</span>
+                  <p>Editorial essay and reading notes from our senior staff.</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#E7DFD5] space-y-1">
+                  <span className="font-bold text-[#1C1917] block font-serif">Private Live Author Salon</span>
+                  <p>Quarterly live video discussions with visiting novelists.</p>
+                </div>
+              </div>
+
+              <div className="pt-4 text-center">
+                <button
+                  onClick={() => {
+                    handleAddToCart({
+                      _id: "book-club-sub",
+                      name: "Chapter & Verse Monthly Book Club Subscription",
+                      price: 28.0,
+                      image: bookItems[0].image,
+                      format: "Monthly Subscription",
+                    });
+                  }}
+                  className="px-8 py-3.5 bg-[#1C1917] hover:bg-[#292524] text-[#FAF7F2] rounded-2xl text-xs font-bold uppercase tracking-widest transition cursor-pointer shadow-lg"
+                >
+                  Join the Book Club Society
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================= VIEW 5: RARE & SIGNED FIRSTS VAULT ================= */}
+        {activePage === "rare-vault" && (
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 text-left">
+            <div className="text-center max-w-2xl mx-auto space-y-2">
+              <span className="text-xs uppercase tracking-[0.2em] text-[#9A3412] font-bold">
+                The Collector's Archive
+              </span>
+              <h1 className="text-3xl sm:text-4xl font-black text-[#1C1917]">
+                Author-Signed First Editions Vault
+              </h1>
+              <p className="text-xs sm:text-sm text-[#574B40] font-sans">
+                Numbered collector copies hand-signed on archival title pages. Certified authentic by Chapter & Verse Press.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {bookItems.map((b) => (
+                <div
+                  key={b._id}
+                  onClick={() => handleSelectProduct(b)}
+                  className="p-5 rounded-3xl bg-white border border-[#E7DFD5] hover:border-[#78350F] transition cursor-pointer space-y-4 shadow-sm group"
+                >
+                  <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-[#FAF7F2] border border-[#EFE9DF]">
+                    <img src={getProductImage(b, b.image)} alt={b.name} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-[#9A3412] block">Certified First Edition</span>
+                    <h4 className="font-bold text-base text-[#1C1917] line-clamp-1">{b.name}</h4>
+                    <p className="text-xs text-[#78350F] italic">Signed by {b.author}</p>
+                  </div>
+                  <div className="pt-2 flex justify-between items-center border-t border-[#EFE9DF]">
+                    <span className="font-bold text-sm text-[#1C1917]">₹{b.price + 25}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddToCart({ ...b, name: `${b.name} (Signed Edition)`, price: b.price + 25 });
+                      }}
+                      className="px-3 py-1.5 bg-[#1C1917] hover:bg-[#292524] text-[#FAF7F2] rounded-lg text-xs font-bold transition"
+                    >
+                      Acquire Copy
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ================= VIEW 6: OFFERS & BUNDLES ================= */}
+        {activePage === "offers" && (
+          <Offer
+            products={bookItems}
+            onSelectProduct={handleSelectProduct}
             onAddToCart={handleAddToCart}
-            themeColors={{
-              primary: "#1E1B18",
-              secondary: "#3D352E",
-              text: "#1E1B18",
-              background: "#FDFBF7",
-              cardBg: "#FFFFFF",
-            }}
-            business={business}
-            relatedProducts={bookList}
-            onSelectProduct={(p) => {
-              setSelectedProduct(p);
+            onOpenStacks={() => {
+              setActivePage("stacks");
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           />
         )}
+
+        {/* ================= VIEW 7: PRODUCT DETAIL VIEW ================= */}
+        {activePage === "product-detail" && selectedProduct && (
+          <ProductDetails
+            product={selectedProduct}
+            onBack={() => {
+              setActivePage("stacks");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onAddToCart={handleAddToCart}
+            onLookInside={(b) => setReadingExcerptBook(b)}
+            relatedProducts={bookItems}
+            onSelectProduct={handleSelectProduct}
+          />
+        )}
       </main>
 
-      {/* ================= 3. "LOOK INSIDE" READING EXCERPT DRAWER ================= */}
+      {/* ================= 3. "LOOK INSIDE" FIRST CHAPTER DRAWER MODAL ================= */}
       {readingExcerptBook && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
           <div
-            className={`rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border max-h-[85vh] overflow-y-auto text-left relative transition ${
+            className={`w-full max-w-2xl max-h-[85vh] rounded-3xl shadow-2xl flex flex-col justify-between overflow-hidden border transition-colors ${
               readerTheme === "parchment"
-                ? "bg-[#FFFDF9] text-[#1E1B18] border-[#E0D5C5]"
+                ? "bg-[#FAF7F2] text-[#1C1917] border-[#E7DFD5]"
                 : readerTheme === "sepia"
-                ? "bg-[#F4ECD8] text-[#3D2C1E] border-[#D5C2A5]"
-                : "bg-[#18181B] text-[#F4F4F5] border-zinc-800"
+                ? "bg-[#F4ECD8] text-[#423629] border-[#D8C7A5]"
+                : "bg-[#18181B] text-[#E4E4E7] border-zinc-800"
             }`}
           >
-            <button
-              onClick={() => setReadingExcerptBook(null)}
-              className="absolute top-5 right-5 p-2 rounded-full hover:bg-black/10 transition cursor-pointer"
-            >
-              <X size={20} />
-            </button>
+            {/* Header */}
+            <div className="p-5 border-b border-black/10 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] uppercase font-sans font-bold text-[#9A3412] tracking-wider block">
+                  First Chapter Sample
+                </span>
+                <h3 className="text-lg font-black">{readingExcerptBook.name}</h3>
+                <span className="text-xs italic opacity-80">By {readingExcerptBook.author}</span>
+              </div>
 
-            <div className="space-y-2 border-b border-black/10 pb-4">
-              <span className="text-[10px] uppercase font-bold tracking-widest text-[#9A3412]">
-                Reading Excerpt • Chapter One
-              </span>
-              <h3 className="text-2xl font-serif font-bold">{readingExcerptBook.name}</h3>
-              <p className="text-xs opacity-75">by {readingExcerptBook.author}</p>
-
-              {/* Reader Controls */}
-              <div className="flex items-center gap-4 pt-2 text-xs">
-                <span className="font-bold opacity-75">Theme:</span>
-                <div className="flex gap-2">
-                  {[
-                    { id: "parchment", label: "Parchment" },
-                    { id: "sepia", label: "Sepia" },
-                    { id: "night", label: "Night" },
-                  ].map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => setReaderTheme(t.id)}
-                      className={`px-3 py-1 rounded-lg text-[11px] font-bold border ${
-                        readerTheme === t.id ? "border-black font-black" : "opacity-60"
-                      }`}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
+              <div className="flex items-center gap-2">
+                {/* Theme toggles */}
+                <div className="flex items-center bg-black/5 rounded-xl p-1 text-xs">
+                  <button
+                    onClick={() => setReaderTheme("parchment")}
+                    className={`px-2 py-1 rounded-lg ${readerTheme === "parchment" ? "bg-white font-bold shadow-xs" : "opacity-70"}`}
+                  >
+                    Parchment
+                  </button>
+                  <button
+                    onClick={() => setReaderTheme("sepia")}
+                    className={`px-2 py-1 rounded-lg ${readerTheme === "sepia" ? "bg-[#E6D7BA] font-bold shadow-xs" : "opacity-70"}`}
+                  >
+                    Sepia
+                  </button>
+                  <button
+                    onClick={() => setReaderTheme("night")}
+                    className={`px-2 py-1 rounded-lg ${readerTheme === "night" ? "bg-zinc-700 text-white font-bold" : "opacity-70"}`}
+                  >
+                    Night
+                  </button>
                 </div>
+
+                <button
+                  onClick={() => setReadingExcerptBook(null)}
+                  className="p-2 rounded-xl hover:bg-black/10 transition cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
               </div>
             </div>
 
-            {/* Excerpt Paragraphs */}
-            <div className={`space-y-4 font-serif leading-relaxed ${readerFontSize}`}>
-              <p className="first-letter:text-4xl first-letter:font-black first-letter:float-left first-letter:mr-2">
-                {readingExcerptBook.excerpt}
+            {/* Reading Excerpt Body */}
+            <div className="p-6 sm:p-8 overflow-y-auto space-y-4 font-serif leading-relaxed text-sm sm:text-base">
+              <span className="text-xs uppercase font-sans font-bold tracking-widest text-[#9A3412] block">
+                Chapter I
+              </span>
+              <p className="first-letter:text-5xl first-letter:font-bold first-letter:float-left first-letter:mr-3 first-letter:text-[#9A3412]">
+                {readingExcerptBook.excerpt || readingExcerptBook.description}
               </p>
               <p className="opacity-90">
-                The wind rose from the east, carrying the faint, metallic scent of ozone and crushed birch leaves. Somewhere down in the valley, an iron bell tolled six times, its vibrations dissipating through the timberline before reaching the high stone parapets.
+                The library lamp flickered against the mahogany paneling, casting long shadows across forty rows of bound parchment. Outside, the cathedral bells began their midnight cadence, twelve solemn tolls that seemed to hang suspended in the cool autumn air.
               </p>
               <p className="opacity-90">
-                To continue reading, order this edition in your preferred format. Dispatched with our signature letterpress bookmark and archival ribbon.
+                He had traveled twelve hundred leagues through storm and mountain pass for this single manuscript. The ink was faded, but the marginalia in the author's own hand remained untouched—a quiet testament across three hundred unhurried years.
               </p>
             </div>
 
-            <div className="pt-4 border-t border-black/10 flex justify-between items-center">
-              <span className="text-xl font-serif font-black">₹{Number(readingExcerptBook.price).toFixed(2)}</span>
+            {/* Footer actions */}
+            <div className="p-5 border-t border-black/10 flex items-center justify-between">
+              <span className="text-xs opacity-75 font-sans">
+                Enjoyed the excerpt? Order the clothbound hardcover edition today.
+              </span>
               <button
                 onClick={() => {
                   handleAddToCart(readingExcerptBook);
                   setReadingExcerptBook(null);
                 }}
-                className="px-6 py-2.5 bg-[#1E1B18] text-white rounded-xl text-xs font-bold hover:bg-[#3D352E]"
+                className="px-4 py-2 bg-[#1C1917] hover:bg-[#292524] text-white rounded-xl text-xs font-bold transition shadow cursor-pointer font-serif"
               >
-                Add Edition to Bag
+                Acquire Volume • ₹{readingExcerptBook.price}
               </button>
             </div>
           </div>
@@ -834,52 +793,20 @@ export default function BookStoreTemplate({
       )}
 
       {/* ================= 4. FOOTER ================= */}
-      <footer className="bg-[#1E1B18] text-[#FDFBF7] pt-16 pb-12 text-left text-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2.5">
-                {brandLogo ? (
-                  <img src={brandLogo} alt={brandName} className="h-8 w-auto max-w-[130px] object-contain rounded brightness-0 invert" />
-                ) : (
-                  <BookOpen size={22} className="text-amber-300" />
-                )}
-                <span className="text-base font-serif font-black tracking-tight text-white uppercase">{brandName}</span>
-              </div>
-              <p className="text-amber-200/70 leading-relaxed text-[11px] max-w-xs">
-                Independent press and antiquarian book sanctuary. Specializing in translated literature, architectural monographs, and clothbound editions.
-              </p>
-            </div>
+      <Footer
+        brandName={brandName}
+        brandLogo={brandLogo}
+        brandPhone={brandPhone}
+        brandEmail={brandEmail}
+        brandAddress={brandAddress}
+        onNavigate={(page, genre = null) => {
+          if (genre) setSelectedGenre(genre);
+          setActivePage(page);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
 
-            <div className="space-y-2">
-              <h5 className="font-bold text-white uppercase text-[10px] tracking-wider">The Stacks</h5>
-              <p onClick={() => { setSelectedGenre("Literary Fiction"); setActivePage("stacks"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-white cursor-pointer transition text-[11px]">Translated Literary Fiction</p>
-              <p onClick={() => { setSelectedGenre("Philosophy"); setActivePage("stacks"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-white cursor-pointer transition text-[11px]">Philosophy & Solitude</p>
-              <p onClick={() => { setSelectedGenre("Art & Design"); setActivePage("stacks"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-white cursor-pointer transition text-[11px]">Modernist Typography Press</p>
-            </div>
-
-            <div className="space-y-2">
-              <h5 className="font-bold text-white uppercase text-[10px] tracking-wider">Societies & Tools</h5>
-              <p onClick={() => { setActivePage("book-club"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-white cursor-pointer transition text-[11px]">The Bibliophile Society</p>
-              <p onClick={() => { setActivePage("calculator"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-white cursor-pointer transition text-[11px]">Reading Speed Calculator</p>
-            </div>
-
-            <div className="space-y-2">
-              <h5 className="font-bold text-white uppercase text-[10px] tracking-wider">Bookshop Concierge</h5>
-              <p className="text-white font-bold">{brandPhone}</p>
-              <p className="text-amber-300 text-[11px]">{brandEmail}</p>
-              {brandAddress && <p className="text-amber-200/70 text-[11px] pt-1">📍 {brandAddress}</p>}
-            </div>
-          </div>
-
-          <div className="pt-8 border-t border-stone-800 flex flex-col sm:flex-row justify-between items-center text-[10px] text-amber-200/60 gap-2">
-            <p>© {new Date().getFullYear()} {brandName}. Hand-assembled with acid-free archival standards.</p>
-            <p>Member of Independent Online Booksellers Association</p>
-          </div>
-        </div>
-      </footer>
-
-      {/* Cart Drawer */}
+      {/* ================= 5. BOOK BAG DRAWER ================= */}
       <CartDrawer
         isOpen={cartOpen}
         onClose={() => setCartOpen(false)}
@@ -887,7 +814,7 @@ export default function BookStoreTemplate({
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
         onCheckout={handleCheckout}
-        themeColors={{ primary: "#1E1B18" }}
+        themeColors={{ primary: "#1C1917" }}
       />
     </div>
   );

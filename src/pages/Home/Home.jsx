@@ -14,6 +14,9 @@ import AppNewsletterSocial from "./sections/AppNewsletterSocial";
 import { getProducts } from "../../api/productService";
 import { fetchCategories } from "../../api/categoryService";
 import FeaturedProductCategory from "./sections/FeaturedProductCategory";
+import TopRated from "./sections/TopRated";
+import PromotionalShowcase from "./sections/PromotionalShowcase";
+import WhyChooseUs from "./sections/WhyChooseUs";
 
 import GiftingProductsSection from "./sections/GiftingProductsSection";
 import NewArrivalsSection from "./sections/NewArrivalsSection";
@@ -67,30 +70,31 @@ function Home() {
 
       {/* Best Selling Products Section */}
       <BestSellingProducts />
-
-      {/* New Arrivals Section */}
-      <NewArrivalsSection />
-
       <MegaSaleBanner
         title="Craving Something Delicious?"
         description="Order your favorite meals and get up to 50% off on selected restaurants."
         imageUrl="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80"
         linkUrl="/shop"
       />
+      {/* New Arrivals Section */}
+      <NewArrivalsSection />
+
       {/* Popular Local Shops */}
       <TopBrands />
-
-      {/* Recommended For You */}
-      <RecommendedForYou />
-
-      {/* Featured Categories */}
-      <FeaturedProductCategory />
       <MegaSaleBanner
         title="Find Your Next Favorite 🛒"
         description="Shop trending products, fresh arrivals and everyday essentials — all curated in one place."
         imageUrl="https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&w=400&q=80"
         linkUrl="/shop"
       />
+      {/* Recommended For You */}
+      <RecommendedForYou />
+
+      {/* Featured Categories */}
+      <FeaturedProductCategory />
+
+      {/* Interactive Promotional Showcase with Countdown & Vouchers */}
+      <PromotionalShowcase />
       {/* Store Coupons & Rewards Grid */}
       <CouponsOffers />
 
@@ -100,6 +104,10 @@ function Home() {
       {/* Our Occasion & Our Collection */}
       <OccasionsAndCollections />
 
+      {/* Trust & Guarantee Perks */}
+      <WhyChooseUs />
+      {/* Top Rated Picks Section */}
+      <TopRated />
       {/* Bottom Offer Banner & Footer */}
       <AppNewsletterSocial />
     </div>

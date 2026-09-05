@@ -18,8 +18,11 @@ import ProductModal from "./components/ProductModal";
 import ResidentCard from "./components/ResidentCard";
 import ResidentModal from "./components/ResidentModal";
 import CartDrawer from "./components/CartDrawer";
+import { useStore } from "../Store/StoreContext";
 
 function ThanksYou() {
+  const { business, storeHomePath: contextHomePath } = useStore();
+
   return (
     <section className="reveal relative overflow-hidden bg-cream px-5 py-20 lg:px-8">
       <Botanical className="absolute left-0 top-8 h-48 w-48 text-blue-muted opacity-20" />
@@ -31,9 +34,9 @@ function ThanksYou() {
           aria-label="Starling Tales logo"
         >
           <img
-            src="https://starlingtales.vercel.app/logo.png"
+            src={business.logo}
             alt="Starling Tales logo"
-            className="max-w-[80%] max-h-[80%] object-contain"
+            className="max-w-full max-h-full object-contain rounded-full"
           />
         </div>
 

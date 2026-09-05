@@ -66,45 +66,28 @@ function RecommendedForYou() {
   }
 
   return (
-    <section className="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-4">
+    <section className="py-3 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-4">
       {/* Professional Section Header */}
       <div className="flex items-end justify-between gap-4 border-b border-slate-200/80 pb-3">
         <div>
           <div className="flex items-center gap-2">
-            <Sparkles size={20} className="text-[#2563eb] fill-[#2563eb]" />
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               Recommended For You
             </h2>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            Handpicked festival picks, trending crafts, and top selections tailored for your taste.
+            Handpicked festival picks, trending crafts, and top selections
+            tailored for your taste.
           </p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <div className="hidden sm:flex items-center gap-1.5 mr-2">
-            <button
-              onClick={() => handleScroll("left")}
-              className="w-8 h-8 rounded-full border border-slate-200 bg-white text-slate-700 flex items-center justify-center hover:bg-[#2563eb] hover:text-white hover:border-[#2563eb] transition-all shadow-2xs cursor-pointer"
-              title="Scroll Left"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              onClick={() => handleScroll("right")}
-              className="w-8 h-8 rounded-full border border-slate-200 bg-white text-slate-700 flex items-center justify-center hover:bg-[#2563eb] hover:text-white hover:border-[#2563eb] transition-all shadow-2xs cursor-pointer"
-              title="Scroll Right"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-
           <Link
             to="/shop"
-            className="text-xs font-bold text-[#2563eb] hover:text-[#1d4ed8] transition-colors flex items-center gap-1 shrink-0"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0"
           >
-            <span>See all</span>
-            <ArrowRight size={14} />
+            <span>See All</span>
+            <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-0.5" />
           </Link>
         </div>
       </div>
@@ -131,5 +114,3 @@ function RecommendedForYou() {
 }
 
 export default RecommendedForYou;
-
-

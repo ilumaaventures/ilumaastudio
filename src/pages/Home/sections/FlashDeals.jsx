@@ -183,10 +183,10 @@ function FlashDeals() {
 
             <Link
               to="/flash-deals"
-              className="hidden sm:inline-flex items-center gap-1 text-xs font-extrabold text-rose-300 hover:text-white transition-colors ml-1 shrink-0"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-white bg-white/15 hover:bg-white/25 border border-white/25 transition-all duration-200 shadow-2xs group shrink-0 ml-1"
             >
               <span>See All</span>
-              <ArrowRight size={14} />
+              <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
           </div>
         </div>

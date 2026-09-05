@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronLeft, ChevronRight, MapPin, Store } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, Store, ArrowRight } from "lucide-react";
 import { getShops } from "../../../api/publicService";
 import { StoreGridSkeleton } from "../../../Components/Skeletons";
 
@@ -51,77 +51,27 @@ function TopBrands() {
   };
 
   return (
-    <section className="w-full py-10 sm:py-12">
+    <section className="w-full py-3 sm:py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-end justify-between gap-4 mb-5">
           <div>
-            <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#1e6091]">
-              Explore Local Businesses
-            </span>
-
-            <h2 className="mt-2 text-2xl sm:text-3xl font-black text-slate-900">
-              Popular Shops
-            </h2>
-
-            <p className="mt-1 text-sm text-slate-500">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Popular Shops
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 font-medium mt-1">
               Discover trusted businesses and stores .
             </p>
           </div>
-
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => scrollShops("left")}
-              className="
-                w-9 h-9 sm:w-10 sm:h-10
-                rounded-full
-                border border-slate-200
-                bg-white
-                flex items-center justify-center
-                text-slate-600
-                hover:bg-slate-900
-                hover:text-white
-                hover:border-slate-900
-                transition-all
-                shadow-sm
-              "
-              aria-label="Previous shops"
-            >
-              <ChevronLeft size={18} />
-            </button>
-
-            <button
-              onClick={() => scrollShops("right")}
-              className="
-                w-9 h-9 sm:w-10 sm:h-10
-                rounded-full
-                border border-slate-200
-                bg-white
-                flex items-center justify-center
-                text-slate-600
-                hover:bg-slate-900
-                hover:text-white
-                hover:border-slate-900
-                transition-all
-                shadow-sm
-              "
-              aria-label="Next shops"
-            >
-              <ChevronRight size={18} />
-            </button>
-
             <Link
               to="/store"
-              className="
-                hidden sm:block
-                ml-2
-                text-sm
-                font-bold
-                text-[#1e6091]
-                hover:underline
-              "
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0"
             >
-              See all
+              <span>See All</span>
+              <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
           </div>
         </div>

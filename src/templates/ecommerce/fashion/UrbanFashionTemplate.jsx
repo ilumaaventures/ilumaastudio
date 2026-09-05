@@ -23,6 +23,11 @@ import { isOutOfStock, getProductStock } from "../../../utils/stockUtils";
 import CartDrawer from "../../common/CartDrawer";
 import ProductDetailsPage from "../../common/ProductDetailsPage";
 import { getProductImage } from "../../../utils/productImage";
+import Navbar from "./Navbar";
+import Footer from "./Footer";
+import ProductCard from "./ProductCard";
+import Produts from "./Produts";
+import Offers from "./Offers";
 
 export default function UrbanFashionTemplate({
   business = {},
@@ -32,7 +37,7 @@ export default function UrbanFashionTemplate({
   reviews = [],
   customization = {},
 }) {
-  const [activePage, setActivePage] = useState("home"); // "home" | "lookbook" | "collections" | "size-guide" | "atelier" | "product-detail"
+  const [activePage, setActivePage] = useState("home"); // "home" | "lookbook" | "collections" | "offers" | "size-guide" | "atelier" | "product-detail"
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [currency, setCurrency] = useState("INR");
@@ -154,89 +159,16 @@ export default function UrbanFashionTemplate({
       style={{ backgroundColor: themeColors.background, color: themeColors.text }}
     >
       {/* ================= BESPOKE LUXURY FASHION NAVBAR ================= */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-zinc-200">
-        <div className="bg-zinc-950 text-white text-[10px] uppercase font-black tracking-widest py-1.5 px-4 text-center">
-          <span>Complimentary Insured Express Worldwide Delivery on all luxury orders</span>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-          <div
-            onClick={() => setActivePage("home")}
-            className="flex items-center gap-3 cursor-pointer group"
-          >
-            {brandLogo ? (
-              <img
-                src={brandLogo}
-                alt={brandName}
-                className="h-10 sm:h-12 w-auto max-w-[150px] object-contain"
-              />
-            ) : null}
-            <div className="space-y-0.5">
-              <span className="text-xl sm:text-2xl font-black uppercase tracking-[0.2em] text-zinc-950 font-serif block">
-                {brandName}
-              </span>
-              <span className="text-[9px] uppercase tracking-widest text-zinc-400 block font-sans">
-                {business?.tagline || business?.category || "Haute Couture & Streetwear"}
-              </span>
-            </div>
-          </div>
-
-          <nav className="hidden lg:flex items-center gap-8 text-xs font-bold uppercase tracking-wider text-zinc-600">
-            {[
-              { id: "home", label: "Home" },
-              { id: "lookbook", label: "Editorial Lookbook" },
-              { id: "collections", label: "Collections" },
-              { id: "size-guide", label: "Size & Fit" },
-              { id: "atelier", label: "The Atelier" },
-            ].map((tab) => {
-              const isActive = activePage === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    setActivePage(tab.id);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className={`transition cursor-pointer relative py-1 ${
-                    isActive ? "text-zinc-950 font-black" : "hover:text-zinc-950"
-                  }`}
-                >
-                  <span>{tab.label}</span>
-                  {isActive && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-zinc-950 rounded-full" />
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className="text-xs font-bold uppercase tracking-wider bg-transparent border-none text-zinc-800 focus:outline-hidden cursor-pointer"
-            >
-              <option value="INR">INR (₹)</option>
-              <option value="USD">USD ($)</option>
-              <option value="EUR">EUR (€)</option>
-              <option value="GBP">GBP (£)</option>
-            </select>
-
-            <button
-              onClick={() => setCartOpen(true)}
-              className="p-2.5 rounded-full bg-zinc-100 hover:bg-zinc-200 transition cursor-pointer relative"
-              title="Shopping Bag"
-            >
-              <ShoppingBag size={18} />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-zinc-900 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-      </header>
+      <Navbar
+        brandName={brandName}
+        brandLogo={brandLogo}
+        activePage={activePage}
+        setActivePage={setActivePage}
+        cartCount={cartCount}
+        onOpenCart={() => setCartOpen(true)}
+        currency={currency}
+        setCurrency={setCurrency}
+      />
 
       {/* ================= MAIN CONTENT ================= */}
       <main className="flex-1">
@@ -290,47 +222,45 @@ export default function UrbanFashionTemplate({
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {products.slice(0, 3).map((item) => {
-                  const outOfStock = isOutOfStock(item);
-                  return (
-                    <div
-                      key={item._id}
-                      onClick={() => {
-                        setSelectedProduct(item);
-                        setActivePage("product-detail");
-                      }}
-                      className="space-y-4 group cursor-pointer"
-                    >
-                      <div className="aspect-3/4 bg-zinc-100 overflow-hidden relative">
-                        <img
-                          src={getProductImage(item, item.image)}
-                          alt={item.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition duration-700"
-                        />
-                        {outOfStock ? (
-                          <div className="absolute bottom-4 left-4 right-4 py-2 bg-rose-50 text-rose-600 text-center text-xs font-bold border border-rose-200">
-                            Out of Stock
-                          </div>
-                        ) : (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAddToCart(item, "M");
-                            }}
-                            className="absolute bottom-4 left-4 right-4 py-3 bg-zinc-950 text-white text-xs font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition duration-300 cursor-pointer"
-                          >
-                            + Add To Bag
-                          </button>
-                        )}
-                      </div>
-                      <div className="flex justify-between items-baseline">
-                        <h4 className="text-sm font-bold text-zinc-900 group-hover:text-zinc-600 transition">{item.name}</h4>
-                        <span className="text-sm font-mono text-zinc-600">₹{Number(item.price).toFixed(2)}</span>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                {products.slice(0, 4).map((item) => (
+                  <ProductCard
+                    key={item._id || item.id}
+                    product={item}
+                    currency={currency}
+                    onSelect={(p) => {
+                      setSelectedProduct(p);
+                      setActivePage("product-detail");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    onAddToCart={(p, sz, qty) => handleAddToCart(p, sz, qty)}
+                  />
+                ))}
+              </div>
+
+              {/* Private Client Archive Privileges Promo Banner */}
+              <div className="relative rounded-2xl overflow-hidden bg-zinc-950 text-white p-8 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-6 border border-zinc-800">
+                <div className="space-y-2 text-left">
+                  <span className="text-[9px] uppercase font-mono tracking-widest text-amber-400 font-bold block">
+                    Limited Seasonal Access
+                  </span>
+                  <h3 className="text-2xl font-serif font-bold text-white">
+                    Private Client Archive Sale: Up to 25% Off
+                  </h3>
+                  <p className="text-xs text-zinc-400 font-sans max-w-lg leading-relaxed">
+                    Exclusive vouchers for registered patrons. Enjoy preferred privileges on structured coats, virgin wool tailoring, and cashmere knitwear.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setActivePage("offers");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="px-6 py-3.5 bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs uppercase tracking-widest rounded-xl transition cursor-pointer shrink-0 flex items-center gap-2"
+                >
+                  <span>Explore Privileges</span>
+                  <ArrowRight size={14} />
+                </button>
               </div>
             </section>
           </>
@@ -381,69 +311,33 @@ export default function UrbanFashionTemplate({
 
         {/* PAGE 3: COLLECTIONS */}
         {activePage === "collections" && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-10">
-            <div className="flex flex-col sm:flex-row justify-between items-baseline gap-4 border-b border-zinc-200 pb-4">
-              <div>
-                <span className="text-xs uppercase font-mono tracking-widest text-zinc-400">Atelier Archives</span>
-                <h1 className="text-3xl font-serif text-zinc-950">Complete Designer Collections</h1>
-              </div>
+          <Produts
+            products={products}
+            categories={categories}
+            initialCategory={selectedCategory}
+            currency={currency}
+            onSelectProduct={(item) => {
+              setSelectedProduct(item);
+              setActivePage("product-detail");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onAddToCart={(p, sz, qty) => handleAddToCart(p, sz, qty)}
+          />
+        )}
 
-              {/* Size Selector */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Size:</span>
-                {["all", "XS", "S", "M", "L", "XL"].map((sz) => (
-                  <button
-                    key={sz}
-                    onClick={() => setSelectedSize(sz)}
-                    className={`w-8 h-8 rounded-full text-xs font-bold font-mono transition cursor-pointer ${
-                      selectedSize === sz ? "bg-zinc-950 text-white" : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
-                    }`}
-                  >
-                    {sz}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-              {products.map((item) => {
-                const outOfStock = isOutOfStock(item);
-                return (
-                  <div
-                    key={item._id}
-                    onClick={() => {
-                      setSelectedProduct(item);
-                      setActivePage("product-detail");
-                    }}
-                    className="space-y-3 group cursor-pointer"
-                  >
-                    <div className="aspect-3/4 bg-zinc-100 overflow-hidden relative">
-                      <img src={getProductImage(item, item.image)} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
-                      {outOfStock ? (
-                        <div className="absolute bottom-3 left-3 right-3 py-1.5 bg-rose-50 text-rose-600 text-center text-[10px] font-bold border border-rose-200">
-                          Out of Stock
-                        </div>
-                      ) : (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddToCart(item, selectedSize === "all" ? "M" : selectedSize);
-                          }}
-                          className="absolute bottom-3 left-3 right-3 py-2.5 bg-zinc-950 text-white text-xs font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition cursor-pointer"
-                        >
-                          + Quick Add
-                        </button>
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-zinc-900 group-hover:text-zinc-600 transition">{item.name}</h4>
-                      <span className="text-xs font-mono text-zinc-600">₹{Number(item.price).toFixed(2)}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        {/* PAGE: RUNWAY OFFERS & ARCHIVE */}
+        {activePage === "offers" && (
+          <Offers
+            offers={offers}
+            products={products}
+            currency={currency}
+            onSelectProduct={(item) => {
+              setSelectedProduct(item);
+              setActivePage("product-detail");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onAddToCart={(p, sz, qty) => handleAddToCart(p, sz, qty)}
+          />
         )}
 
         {/* PAGE 4: SIZE & FIT GUIDE */}
@@ -528,50 +422,16 @@ export default function UrbanFashionTemplate({
       </main>
 
       {/* ================= BESPOKE LUXURY FASHION FOOTER ================= */}
-      <footer className="bg-zinc-950 text-zinc-400 py-16 border-t border-zinc-900 text-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-10">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2.5">
-              {brandLogo && (
-                <img
-                  src={brandLogo}
-                  alt={brandName}
-                  className="h-8 w-auto max-w-[130px] object-contain brightness-0 invert"
-                />
-              )}
-              <span className="text-base font-serif font-black tracking-widest text-white uppercase">
-                {brandName}
-              </span>
-            </div>
-            <p className="text-zinc-500 leading-relaxed text-[11px]">
-              {business?.description || "Slow couture, architectural silhouettes, and heritage wool tailoring."}
-            </p>
-            {brandAddress && (
-              <p className="text-zinc-400 text-[10px]">📍 {brandAddress}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <h5 className="font-bold text-white uppercase text-[10px] tracking-widest">Collections</h5>
-            <p onClick={() => setActivePage("lookbook")} className="hover:text-white cursor-pointer">Editorial Lookbook</p>
-            <p onClick={() => setActivePage("collections")} className="hover:text-white cursor-pointer">Runway Pieces</p>
-            <p onClick={() => setActivePage("size-guide")} className="hover:text-white cursor-pointer">Tailoring & Sizing</p>
-          </div>
-
-          <div className="space-y-2">
-            <h5 className="font-bold text-white uppercase text-[10px] tracking-widest">Philosophy</h5>
-            <p onClick={() => setActivePage("atelier")} className="hover:text-white cursor-pointer">Italian & Japanese Mills</p>
-            <p onClick={() => setActivePage("atelier")} className="hover:text-white cursor-pointer">Slow Fashion Commitment</p>
-          </div>
-
-          <div className="space-y-2">
-            <h5 className="font-bold text-white uppercase text-[10px] tracking-widest">VIP Concierge</h5>
-            {brandPhone && <p className="text-white font-mono">{brandPhone}</p>}
-            <p className="text-white font-mono">{brandEmail}</p>
-            <p className="text-zinc-500 text-[11px]">Private trunk shows and fittings by appointment.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer
+        brandName={brandName}
+        brandEmail={brandEmail}
+        brandPhone={brandPhone}
+        brandAddress={brandAddress}
+        onNavigate={(page) => {
+          setActivePage(page);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
 
       {/* Cart Drawer */}
       <CartDrawer

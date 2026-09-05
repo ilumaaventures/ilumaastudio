@@ -231,10 +231,10 @@ function CouponsOffers() {
           <div className="flex items-center gap-3 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
             <Link
               to="/offers"
-              className="text-xs font-bold text-[#004ac6] hover:underline transition-colors flex items-center gap-1 shrink-0 bg-blue-50/80 px-3 py-1.5 rounded-xl border border-blue-100"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0"
             >
-              <span>Explore All ({deals.length})</span>
-              <ChevronRight size={15} />
+              <span>See All</span>
+              <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
           </div>
         </div>

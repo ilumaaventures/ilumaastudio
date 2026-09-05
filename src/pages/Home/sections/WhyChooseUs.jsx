@@ -15,7 +15,7 @@ const TRUST_FEATURES = [
   {
     icon: <RotateCcw size={24} className="text-[#2563eb]" />,
     title: "Easy Returns",
-    desc: "14-days easy returns",
+    desc: "Easy returns based on policy",
   },
   {
     icon: <ShieldCheck size={24} className="text-[#2563eb]" />,

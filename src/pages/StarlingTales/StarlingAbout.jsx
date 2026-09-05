@@ -1,6 +1,6 @@
 import React from "react";
 import HeartDivider from "./components/HeartDivider";
-
+import Philosophy from "../../assests/Pholosphy.jpeg";
 export default function StarlingAbout() {
   return (
     <>
@@ -16,7 +16,7 @@ export default function StarlingAbout() {
             <div className="mt-6">
               <HeartDivider centered={false} />
             </div>
-            <p className="mt-8 text-[15px] font-light leading-[1.85] text-text-body">
+            <p className="mt-8 text-[12px] font-light leading-[1.85] text-text-body">
               We believe in the quiet magic of simple pleasures — because it is
               often the little things that mean the most. At Starling Tales, we
               find inspiration in those precious, uncomplicated moments of
@@ -25,7 +25,7 @@ export default function StarlingAbout() {
               collections designed to be lived in, loved, and to become an
               intimate part of your everyday life.
             </p>
-            <p className="mt-5 text-[15px] font-light leading-[1.85] text-text-body">
+            <p className="mt-5 text-[12px] font-light leading-[1.85] text-text-body">
               We believe childhood should feel gentle, comforting, and
               beautifully unhurried. Our world is one of serene wonder — where
               beautiful, stylish design meets mindful materials that feel like a
@@ -33,7 +33,7 @@ export default function StarlingAbout() {
               Timeless Style, Uncompromising Quality, and Exceptional Attention
               to Detail.
             </p>
-            <p className="mt-5 text-[15px] font-light leading-[1.85] text-text-body">
+            <p className="mt-5 text-[12px] font-light leading-[1.85] text-text-body">
               Every Starling Tales piece is thoughtfully created using
               chemical-free fibres, soothing tones, and understated accents.
               Wonderfully durable, easy to care for, and made to last, every
@@ -42,7 +42,7 @@ export default function StarlingAbout() {
               the expression that speaks a thousand words, the comfort of
               holding one close — it is pure magic.
             </p>
-            <p className="mt-5 mb-8 text-[15px] font-light leading-[1.85] text-text-body">
+            <p className="mt-5 mb-8 text-[12px] font-light leading-[1.85] text-text-body">
               We don’t just make toys and nursery textiles. We create companions
               that celebrate childhood milestones and become cherished
               heirlooms, bringing a gentle and enduring sense of comfort,
@@ -53,8 +53,8 @@ export default function StarlingAbout() {
         </div>
         <div className="order-2 px-4  md:px-8 flex items-center justify-center">
           <img
-            className="w-full max-h-[800px] rounded-2xl shadow-md object-cover self-center"
-            src="https://starlingtales.vercel.app/23.png"
+            className="w-full max-h-full rounded-2xl shadow-md object-cover self-center"
+            src={Philosophy}
             alt="Handcrafted toys and soft textiles reflecting Starling Tales philosophy"
             loading="lazy"
             decoding="async"

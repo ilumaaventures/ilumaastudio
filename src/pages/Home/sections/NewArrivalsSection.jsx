@@ -49,15 +49,15 @@ export default function NewArrivalsSection() {
                   p.inventory?.stockQuantity !== undefined
                     ? Number(p.inventory.stockQuantity)
                     : p.stockQuantity !== undefined
-                    ? Number(p.stockQuantity)
-                    : p.stock !== undefined
-                    ? Number(p.stock)
-                    : p.countInStock !== undefined
-                    ? Number(p.countInStock)
-                    : 1;
+                      ? Number(p.stockQuantity)
+                      : p.stock !== undefined
+                        ? Number(p.stock)
+                        : p.countInStock !== undefined
+                          ? Number(p.countInStock)
+                          : 1;
                 return s > 0;
               })(),
-            }))
+            })),
           );
         } else {
           setNewArrivals([]);
@@ -78,7 +78,7 @@ export default function NewArrivalsSection() {
     e.stopPropagation();
     const prodId = prod._id || prod.id;
     const isWished = wishlistItems.some(
-      (i) => (i._id || i.id || i) === prodId || String(i) === String(prodId)
+      (i) => (i._id || i.id || i) === prodId || String(i) === String(prodId),
     );
     dispatch(toggleWishlist({ ...prod, _id: prodId }));
     if (isWished) {
@@ -104,7 +104,7 @@ export default function NewArrivalsSection() {
           image: prod.image,
         },
         quantity: 1,
-      })
+      }),
     );
     toast.success(`${prod.name} added to cart!`);
   };
@@ -114,12 +114,11 @@ export default function NewArrivalsSection() {
   }
 
   return (
-    <section className="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-4">
+    <section className="py-3 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-4">
       {/* Section Header */}
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <Sparkles className="text-emerald-500 fill-emerald-500" size={20} />
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               New Arrivals
             </h2>
@@ -131,10 +130,10 @@ export default function NewArrivalsSection() {
 
         <Link
           to="/shop?sort=Newest"
-          className="text-xs sm:text-sm font-extrabold text-[#2563eb] hover:underline transition-colors flex items-center gap-1"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0"
         >
-          <span>View All New</span>
-          <ArrowRight size={14} />
+          <span>See All</span>
+          <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-0.5" />
         </Link>
       </div>
 

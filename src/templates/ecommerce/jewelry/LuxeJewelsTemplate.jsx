@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Sparkles,
   ShieldCheck,
@@ -10,15 +10,34 @@ import {
   ArrowRight,
   Eye,
   Award,
+  Gem,
+  Plus,
+  Minus,
+  ChevronRight,
+  Clock,
+  Phone,
+  Mail,
+  MapPin,
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { addToCart, updateCartQuantity, removeFromCart } from "../../../redux/reducers/cartReducer";
+import {
+  addToCart,
+  updateCartQuantity,
+  removeFromCart,
+} from "../../../redux/reducers/cartReducer";
 import toast from "react-hot-toast";
-import { isOutOfStock, getProductStock } from "../../../utils/stockUtils";
+import { isOutOfStock } from "../../../utils/stockUtils";
 import CartDrawer from "../../common/CartDrawer";
-import ProductDetailsPage from "../../common/ProductDetailsPage";
 import { getProductImage } from "../../../utils/productImage";
+
+// Import modular sub-components
+import Navbar from "./Navbar";
+import Footer from "./Footer";
+import ProductCard from "./ProductCard";
+import Product from "./Product";
+import ProductDetails from "./ProductDetails";
+import Offer from "./Offer";
 
 export default function LuxeJewelsTemplate({
   business = {},
@@ -28,23 +47,129 @@ export default function LuxeJewelsTemplate({
   reviews = [],
   customization = {},
 }) {
-  const [activePage, setActivePage] = useState("home"); // "home" | "diamonds" | "bespoke" | "certification" | "appointment" | "product-detail"
+  // Navigation: "home" | "catalog" | "diamonds" | "bespoke" | "appointment" | "offers" | "product-detail"
+  const [activePage, setActivePage] = useState("home");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
+
+  // Search & Filters
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Appointment State
+  const [appointmentName, setAppointmentName] = useState("");
+  const [appointmentDate, setAppointmentDate] = useState("");
+  const [appointmentSalon, setAppointmentSalon] = useState("Geneva");
   const [appointmentBooked, setAppointmentBooked] = useState(false);
+
+  // GIA Diamond Explorer State
+  const [demoCarat, setDemoCarat] = useState(2.0);
+  const [demoCut, setDemoCut] = useState("Round Brilliant");
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const cartItems = useSelector((state) => state.cart?.cartItems || []);
 
-  const themeColors = customization.colors || {
-    primary: "#D4AF37",
-    secondary: "#AA771C",
-    accent: "#FBBF24",
-    background: "#09090B",
-    cardBg: "#18181B",
-    text: "#FAFAFA",
-  };
+  const defaultCreations = [
+    {
+      _id: "jewel-1",
+      name: "The Reine de Genève 2.0ct Solitaire Ring",
+      price: 1850.0,
+      compareAtPrice: 2200.0,
+      category: "Solitaire Rings",
+      carat: 2.0,
+      cut: "Triple Excellent Round",
+      metal: "18k Yellow Gold",
+      rating: 5.0,
+      reviewCount: 42,
+      badge: "GIA Certified",
+      image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80",
+      description: "Center 2.00-carat D-color flawless brilliant-cut diamond in four-prong platinum basket with pavé 18k yellow gold band.",
+      inStock: true,
+    },
+    {
+      _id: "jewel-2",
+      name: "The Celestial Oval Pavé Halo Ring",
+      price: 1620.0,
+      compareAtPrice: 1950.0,
+      category: "Solitaire Rings",
+      carat: 1.75,
+      cut: "Oval Cut",
+      metal: "Platinum 950",
+      rating: 4.9,
+      reviewCount: 36,
+      badge: "Geneva Halo",
+      image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&auto=format&fit=crop&q=80",
+      description: "Elongated 1.75ct oval-cut diamond surrounded by a micro-pavé cathedral halo and hidden diamond gallery.",
+      inStock: true,
+    },
+    {
+      _id: "jewel-3",
+      name: "The Royal Muzo Emerald & Diamond Pendant",
+      price: 2150.0,
+      compareAtPrice: 2600.0,
+      category: "Diamond Necklaces",
+      carat: 3.2,
+      cut: "Emerald Cut",
+      metal: "18k Yellow Gold",
+      rating: 5.0,
+      reviewCount: 29,
+      badge: "Unheated Colombian",
+      image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&auto=format&fit=crop&q=80",
+      description: "Vivid green certified Colombian emerald suspended from an 18-karat gold wheat chain framed with calibrated trapezoid diamonds.",
+      inStock: true,
+    },
+    {
+      _id: "jewel-4",
+      name: "The Lumière 5.0ct Rivière Diamond Tennis Necklace",
+      price: 3800.0,
+      compareAtPrice: 4500.0,
+      category: "Diamond Necklaces",
+      carat: 5.0,
+      cut: "Graduated Round",
+      metal: "18k White Gold",
+      rating: 5.0,
+      reviewCount: 51,
+      badge: "5.00 Total Carat",
+      image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&auto=format&fit=crop&q=80",
+      description: "Continuous graduated stream of 84 hand-matched D-F color diamonds in four-prong low-profile articulated settings.",
+      inStock: true,
+    },
+    {
+      _id: "jewel-5",
+      name: "The Aurora South Sea Pearl & Diamond Drop Earrings",
+      price: 980.0,
+      compareAtPrice: 1200.0,
+      category: "Fine Earrings",
+      carat: 1.2,
+      cut: "Brilliant Drops",
+      metal: "18k White Gold",
+      rating: 4.9,
+      reviewCount: 38,
+      badge: "Lustrous Pearl",
+      image: "https://images.unsplash.com/photo-1535632787350-4e68ef0ac584?w=800&auto=format&fit=crop&q=80",
+      description: "Flawless 12mm Australian South Sea cultured pearls suspended beneath brilliant-cut diamond floral clusters.",
+      inStock: true,
+    },
+    {
+      _id: "jewel-6",
+      name: "The Infinity Diamond Baffle Tennis Bracelet",
+      price: 1450.0,
+      compareAtPrice: 1750.0,
+      category: "Bracelets & Baffles",
+      carat: 3.5,
+      cut: "Round Brilliant",
+      metal: "Platinum 950",
+      rating: 4.8,
+      reviewCount: 33,
+      badge: "Safety Lock",
+      image: "https://images.unsplash.com/photo-1611591475837-14283b7f6311?w=800&auto=format&fit=crop&q=80",
+      description: "Seamless articulated platinum links with dual concealed safety clasps and 3.50 carats of VS1 diamonds.",
+      inStock: true,
+    },
+  ];
+
+  const jewelItems = products.length > 0 ? products : defaultCreations;
 
   const brandName =
     business?.businessName ||
@@ -52,17 +177,12 @@ export default function LuxeJewelsTemplate({
     customization?.heroHeadline ||
     "LUXE JEWELS";
 
-  const brandLogo =
-    customization?.logo ||
-    business?.logo ||
-    null;
-
+  const brandLogo = customization?.logo || business?.logo || null;
   const brandPhone =
     business?.phone ||
     business?.businessPhone ||
     business?.contactPhone ||
     "+41 22 819 9000";
-
   const brandEmail =
     business?.email ||
     business?.businessEmail ||
@@ -77,15 +197,15 @@ export default function LuxeJewelsTemplate({
       ? [rawAddr.street, rawAddr.addressLine2, rawAddr.city, rawAddr.state, rawAddr.postalCode, rawAddr.country]
           .filter(Boolean)
           .join(", ")
-      : null;
+      : "Rue du Rhône 42, 1204 Genève, Switzerland";
 
   const handleAddToCart = (product, qty = 1) => {
     if (isOutOfStock(product)) {
-      toast.error(`Sorry, ${product.name || "piece"} is out of stock!`);
+      toast.error(`Sorry, ${product.name} is currently acquired!`);
       return;
     }
     dispatch(addToCart({ product, quantity: qty }));
-    toast.success(`${product.name || "Piece"} added to cart!`);
+    toast.success(`${product.name} acquired for your Jewel Box! 💎`);
     setCartOpen(true);
   };
 
@@ -104,326 +224,466 @@ export default function LuxeJewelsTemplate({
 
   const cartCount = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
-  const diamondCuts = [
-    { name: "Round Brilliant", facets: "57 Facets", fire: "Maximum Optical Dispersion", desc: "The ultimate classic with mathematically calibrated proportions for supreme light refraction." },
-    { name: "Emerald Step Cut", facets: "58 Facets", fire: "Hall of Mirrors Clarity", desc: "Long rectangular parallel step facets displaying unparalleled crystalline purity." },
-    { name: "Oval Silhouette Cut", facets: "56 Facets", fire: "Elongated Modern Fire", desc: "Soft-curved elliptical shape creating an elongated, elegant finger profile." },
-    { name: "Cushion Cut", facets: "64 Facets", fire: "Vintage Romantic Sparkle", desc: "Pillow-shaped rounded corners that blend modern brilliance with antique allure." },
-  ];
+  const handleSelectProduct = (p) => {
+    setSelectedProduct(p);
+    setActivePage("product-detail");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleBookAppointment = (e) => {
+    e.preventDefault();
+    if (!appointmentName.trim() || !appointmentDate) {
+      toast.error("Please provide your name and preferred date.");
+      return;
+    }
+    setAppointmentBooked(true);
+    toast.success("Private salon viewing confirmed! Our senior concierge will contact you within 2 hours. ✨");
+  };
 
   return (
-    <div
-      className="min-h-screen flex flex-col font-sans bg-[#09090B] text-zinc-100 selection:bg-amber-400 selection:text-black"
-    >
-      {/* ================= BESPOKE FINE JEWELRY NAVBAR ================= */}
-      <header className="sticky top-0 z-40 bg-[#09090B]/95 backdrop-blur-md border-b border-zinc-800 text-zinc-100">
-        <div className="bg-black text-[#D4AF37] text-[10px] uppercase font-mono tracking-[0.2em] py-1.5 px-4 text-center border-b border-zinc-800/80">
-          <span>GIA Certified Solitaires • Insured Armored Courier Transit • Kimberley Process Certified</span>
-        </div>
+    <div className="min-h-screen flex flex-col font-serif bg-[#08080A] text-[#FAFAFA] antialiased selection:bg-[#D4AF37]/30 selection:text-[#FBBF24]">
+      {/* ================= 1. HAUTE JOAILLERIE NAVBAR ================= */}
+      <Navbar
+        brandName={brandName}
+        brandLogo={brandLogo}
+        brandPhone={brandPhone}
+        activePage={activePage}
+        setActivePage={setActivePage}
+        cartCount={cartCount}
+        onOpenCart={() => setCartOpen(true)}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        onOpenAppointment={() => {
+          setActivePage("appointment");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-          <div
-            onClick={() => setActivePage("home")}
-            className="flex items-center gap-3 cursor-pointer group"
-          >
-            {brandLogo ? (
-              <img
-                src={brandLogo}
-                alt={brandName}
-                className="h-10 sm:h-12 w-auto max-w-[150px] object-contain rounded-lg"
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#AA771C] text-black flex items-center justify-center font-black text-lg shadow-lg shadow-amber-500/10">
-                <Sparkles size={20} />
-              </div>
-            )}
-            <div>
-              <span className="text-xl font-serif font-black tracking-[0.2em] text-white block leading-tight">
-                {brandName}
-              </span>
-              <span className="text-[9px] font-mono uppercase tracking-widest text-[#D4AF37] block">
-                {business?.tagline || business?.category || "Haute Joaillerie • Genève"}
-              </span>
-            </div>
-          </div>
-
-          <nav className="hidden lg:flex items-center gap-7 text-xs font-serif uppercase tracking-wider text-zinc-400">
-            {[
-              { id: "home", label: "Home" },
-              { id: "diamonds", label: "Diamond Cuts" },
-              { id: "bespoke", label: "Bespoke Concierge" },
-              { id: "certification", label: "GIA Certification" },
-              { id: "appointment", label: "Private Vault" },
-            ].map((tab) => {
-              const isActive = activePage === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    setActivePage(tab.id);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className={`transition cursor-pointer relative py-1 ${
-                    isActive ? "text-[#D4AF37] font-black" : "hover:text-white"
-                  }`}
-                >
-                  <span>{tab.label}</span>
-                  {isActive && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#D4AF37] rounded-full" />
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setCartOpen(true)}
-              className="p-2.5 rounded-2xl bg-zinc-900 text-[#D4AF37] hover:bg-zinc-800 transition cursor-pointer flex items-center gap-2 font-bold text-xs border border-zinc-800"
-            >
-              <ShoppingBag size={18} />
-              <span className="hidden sm:inline">Vault</span>
-              {cartCount > 0 && (
-                <span className="bg-[#D4AF37] text-black text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* ================= MAIN CONTENT ================= */}
+      {/* ================= 2. MAIN ACTIVE VIEW ================= */}
       <main className="flex-1">
-        {/* PAGE 1: HOME */}
+        {/* ================= VIEW 1: HOME ================= */}
         {activePage === "home" && (
           <>
-            {/* Opulent Hero */}
-            <section className="py-20 md:py-28 relative overflow-hidden border-b border-zinc-800">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-                <div className="lg:col-span-7 space-y-6">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-[#D4AF37] text-xs font-mono font-bold border border-amber-500/30">
-                    <Sparkles size={14} />
-                    <span>D-Color • VVS1 Clarity Guaranteed</span>
+            {/* HERO SECTION */}
+            <section className="relative overflow-hidden bg-gradient-to-b from-[#0B0B0E] via-[#09090C] to-[#08080A] pt-12 pb-20 md:pt-20 md:pb-28 border-b border-[#D4AF37]/25">
+              {/* Radial golden candlelight ambient glow */}
+              <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-[#D4AF37]/10 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                  <div className="lg:col-span-7 space-y-6 text-left">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#181613] border border-[#D4AF37]/40 text-[#FBBF24] text-xs font-sans font-bold">
+                      <Sparkles size={14} className="text-[#FBBF24] animate-pulse" />
+                      <span>Haute Joaillerie Genève • Certified Conflict-Free Diamonds</span>
+                    </div>
+
+                    <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-[#FAFAFA] leading-[1.08]">
+                      Eternal Brilliance Hand-Set in the Heart of Geneva.
+                    </h1>
+
+                    <p className="text-sm sm:text-base text-[#A89F91] leading-relaxed max-w-xl font-sans">
+                      Individually certified by the Gemological Institute of America (GIA). Master jewelers forging 18k recycled gold and platinum 950 into timeless solitaire masterpieces.
+                    </p>
+
+                    <div className="flex flex-wrap gap-4 pt-2 font-sans">
+                      <button
+                        onClick={() => {
+                          setActivePage("catalog");
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="px-8 py-4 bg-gradient-to-r from-[#D4AF37] via-[#B8922C] to-[#8C6D1F] hover:from-[#E5C158] hover:to-[#A37B24] text-[#0A0A0C] font-black rounded-2xl text-xs uppercase tracking-widest transition shadow-[0_0_25px_rgba(212,175,55,0.3)] flex items-center gap-2 cursor-pointer transform hover:-translate-y-0.5 active:scale-95"
+                      >
+                        <Gem size={17} />
+                        <span>Explore Precious Vault</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setActivePage("appointment");
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="px-7 py-4 bg-[#141418] border border-[#D4AF37]/40 hover:border-[#D4AF37] text-[#FAFAFA] rounded-2xl text-xs font-bold uppercase tracking-widest transition flex items-center gap-2 cursor-pointer shadow-sm"
+                      >
+                        <Calendar size={16} className="text-[#FBBF24]" />
+                        <span>Private Salon Viewing</span>
+                      </button>
+                    </div>
+
+                    {/* Certified Quality Strip */}
+                    <div className="grid grid-cols-3 gap-4 pt-6 border-t border-[#D4AF37]/25 text-left font-sans">
+                      <div>
+                        <span className="text-xl sm:text-2xl font-bold text-[#FBBF24]">Triple Ex</span>
+                        <p className="text-[11px] text-[#A89F91] mt-0.5">GIA Cut, Polish, Symmetry</p>
+                      </div>
+                      <div>
+                        <span className="text-xl sm:text-2xl font-bold text-[#FAFAFA]">Platinum 950</span>
+                        <p className="text-[11px] text-[#A89F91] mt-0.5">& 18k Recycled Gold</p>
+                      </div>
+                      <div>
+                        <span className="text-xl sm:text-2xl font-bold text-[#D4AF37]">100% Insured</span>
+                        <p className="text-[11px] text-[#A89F91] mt-0.5">Armored Diplomatic Transit</p>
+                      </div>
+                    </div>
                   </div>
 
-                  <h1 className="text-4xl sm:text-6xl font-serif font-black tracking-tight text-white leading-tight">
-                    Timeless Diamonds. Handcrafted in 18K Solid Gold.
-                  </h1>
+                  {/* Hero Visual Jewel Box */}
+                  <div className="lg:col-span-5 relative">
+                    <div className="aspect-[4/3] rounded-[36px] overflow-hidden shadow-2xl border-2 border-[#D4AF37]/40 bg-[#070709] relative group">
+                      <img
+                        src="https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80"
+                        alt="Reine de Genève Solitaire"
+                        className="w-full h-full object-cover transform group-hover:scale-105 transition duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#08080A]/85 via-transparent to-transparent" />
 
-                  <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-xl font-normal">
-                    Individually certified by the Gemological Institute of America (GIA). Master Swiss and Antwerp lapidaries cut each facet to unleash maximum scintillation.
-                  </p>
-
-                  <div className="flex flex-wrap gap-4 pt-2">
-                    <button
-                      onClick={() => setActivePage("diamonds")}
-                      className="px-8 py-4 bg-gradient-to-r from-[#D4AF37] to-[#AA771C] text-black rounded-2xl text-xs font-black uppercase tracking-wider transition shadow-lg shadow-amber-500/20 cursor-pointer"
-                    >
-                      Explore Diamond Cuts
-                    </button>
-                    <button
-                      onClick={() => setActivePage("bespoke")}
-                      className="px-6 py-4 bg-zinc-900 border border-zinc-800 text-[#D4AF37] rounded-2xl text-xs font-bold transition hover:bg-zinc-850 cursor-pointer"
-                    >
-                      Bespoke Engagement Concierge
-                    </button>
-                  </div>
-                </div>
-
-                <div className="lg:col-span-5">
-                  <div className="aspect-square rounded-3xl overflow-hidden shadow-2xl border border-zinc-800 bg-zinc-900">
-                    <img
-                      src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=900&auto=format&fit=crop&q=80"
-                      alt="Solitaire Diamond Ring"
-                      className="w-full h-full object-cover"
-                    />
+                      <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between text-white">
+                        <div>
+                          <span className="text-xs font-sans font-bold uppercase tracking-widest text-[#FBBF24]">
+                            Master Solitaire Creation
+                          </span>
+                          <h4 className="text-lg font-bold">The Reine de Genève 2.0ct</h4>
+                        </div>
+                        <button
+                          onClick={() => handleSelectProduct(jewelItems[0])}
+                          className="p-3 bg-[#D4AF37] hover:bg-[#E5C158] text-[#0A0A0C] rounded-xl transition cursor-pointer font-black shadow-lg"
+                        >
+                          <ChevronRight size={18} />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* Curated Jewelry Showcase */}
-            <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-              <div className="flex justify-between items-end">
+            {/* FEATURED SOLITAIRE LINEUP */}
+            <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 text-left">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-[#D4AF37]/25 pb-6">
                 <div>
-                  <span className="text-xs font-mono uppercase tracking-wider text-[#D4AF37]">Haute Joaillerie</span>
-                  <h2 className="text-2xl sm:text-3xl font-serif font-black text-white">Signature Creations</h2>
+                  <span className="text-xs uppercase tracking-widest text-[#D4AF37] font-bold font-sans">
+                    Haute Joaillerie Atelier
+                  </span>
+                  <h2 className="text-3xl sm:text-4xl font-black text-[#FAFAFA] mt-1">
+                    Featured High Jewelry Creations
+                  </h2>
                 </div>
+
                 <button
-                  onClick={() => setActivePage("diamonds")}
-                  className="text-xs font-mono text-[#D4AF37] hover:underline cursor-pointer"
+                  onClick={() => {
+                    setActivePage("catalog");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs font-sans font-bold text-[#FBBF24] hover:underline cursor-pointer"
                 >
-                  View Diamond Vault →
+                  <span>View All Creations in the Vault ({jewelItems.length} treasures)</span>
+                  <ArrowRight size={14} />
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {products.slice(0, 3).map((item) => {
-                  const outOfStock = isOutOfStock(item);
-                  return (
-                    <div
-                      key={item._id}
-                      onClick={() => {
-                        setSelectedProduct(item);
-                        setActivePage("product-detail");
-                      }}
-                      className="bg-zinc-900 rounded-3xl border border-zinc-800 p-6 space-y-4 flex flex-col justify-between hover:border-amber-500/50 transition cursor-pointer group"
-                    >
-                      <div className="space-y-3">
-                        <div className="aspect-square rounded-2xl overflow-hidden bg-black">
-                          <img src={getProductImage(item, item.image)} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
-                        </div>
-                        <h4 className="text-base font-serif font-bold text-white group-hover:text-[#D4AF37] transition">{item.name}</h4>
-                        <p className="text-xs text-zinc-400 line-clamp-2">{item.description}</p>
-                      </div>
-                      <div className="pt-3 flex justify-between items-center border-t border-zinc-800">
-                        <span className="text-lg font-mono font-black text-[#D4AF37]">₹{Number(item.price).toFixed(2)}</span>
-                        {outOfStock ? (
-                          <span className="text-[10px] font-mono font-bold text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
-                            Out of Stock
-                          </span>
-                        ) : (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAddToCart(item);
-                            }}
-                            className="px-4 py-2 bg-gradient-to-r from-[#D4AF37] to-[#AA771C] text-black font-black rounded-xl text-xs uppercase cursor-pointer"
-                          >
-                            Acquire Piece
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+              {/* Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {jewelItems.slice(0, 4).map((item) => (
+                  <ProductCard
+                    key={item._id}
+                    product={item}
+                    onSelectProduct={handleSelectProduct}
+                    onAddToCart={handleAddToCart}
+                  />
+                ))}
+              </div>
+            </section>
+
+            {/* GENEVA SALON SERVICES SPOTLIGHT */}
+            <section className="py-16 bg-[#0E0E12] border-y border-[#D4AF37]/25">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center max-w-2xl mx-auto space-y-2 mb-10">
+                  <span className="text-xs uppercase tracking-widest text-[#D4AF37] font-bold font-sans">
+                    Swiss Gemological Distinction
+                  </span>
+                  <h2 className="text-3xl font-black text-[#FAFAFA]">
+                    The Geneva Haute Joaillerie Standards
+                  </h2>
+                  <p className="text-xs text-[#A89F91] font-sans">
+                    Every diamond is verified by GIA graduate gemologists, laser-inscribed on its girdle, and hand-forged in platinum.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left font-sans">
+                  <div
+                    onClick={() => {
+                      setActivePage("diamonds");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="p-6 rounded-3xl bg-[#141418] border border-[#D4AF37]/25 hover:border-[#D4AF37] transition cursor-pointer group shadow-sm"
+                  >
+                    <Award size={28} className="text-[#FBBF24] mb-4 group-hover:scale-110 transition duration-300" />
+                    <h3 className="font-serif text-lg font-bold text-[#FAFAFA] group-hover:text-[#FBBF24]">GIA Diamond Standards</h3>
+                    <p className="text-xs text-[#A89F91] mt-2 leading-relaxed">
+                      Understand cut proportions, table depth, and optical symmetry required to attain the Triple Excellent hallmark.
+                    </p>
+                    <span className="mt-4 inline-flex items-center gap-1 text-xs text-[#D4AF37] font-bold font-sans">
+                      Explore 4Cs Standards <ArrowRight size={13} />
+                    </span>
+                  </div>
+
+                  <div
+                    onClick={() => {
+                      setActivePage("bespoke");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="p-6 rounded-3xl bg-[#141418] border border-[#D4AF37]/25 hover:border-[#D4AF37] transition cursor-pointer group shadow-sm"
+                  >
+                    <Sparkles size={28} className="text-[#FBBF24] mb-4 group-hover:scale-110 transition duration-300" />
+                    <h3 className="font-serif text-lg font-bold text-[#FAFAFA] group-hover:text-[#FBBF24]">Bespoke Commission</h3>
+                    <p className="text-xs text-[#A89F91] mt-2 leading-relaxed">
+                      Collaborate directly with our master jeweler to source rare colored stones and sculpt unique heirloom settings.
+                    </p>
+                    <span className="mt-4 inline-flex items-center gap-1 text-xs text-[#D4AF37] font-bold font-sans">
+                      Begin Commission <ArrowRight size={13} />
+                    </span>
+                  </div>
+
+                  <div
+                    onClick={() => {
+                      setActivePage("appointment");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="p-6 rounded-3xl bg-[#141418] border border-[#D4AF37]/25 hover:border-[#D4AF37] transition cursor-pointer group shadow-sm"
+                  >
+                    <Calendar size={28} className="text-[#FBBF24] mb-4 group-hover:scale-110 transition duration-300" />
+                    <h3 className="font-serif text-lg font-bold text-[#FAFAFA] group-hover:text-[#FBBF24]">Private Salon Viewing</h3>
+                    <p className="text-xs text-[#A89F91] mt-2 leading-relaxed">
+                      Schedule a champagne viewing in our private salon on the Rue du Rhône, Geneva or via encrypted video.
+                    </p>
+                    <span className="mt-4 inline-flex items-center gap-1 text-xs text-[#D4AF37] font-bold font-sans">
+                      Book Private Salon <ArrowRight size={13} />
+                    </span>
+                  </div>
+                </div>
               </div>
             </section>
           </>
         )}
 
-        {/* PAGE 2: DIAMOND CUTS */}
+        {/* ================= VIEW 2: PRECIOUS VAULT CATALOG ================= */}
+        {activePage === "catalog" && (
+          <Product
+            products={jewelItems}
+            onSelectProduct={handleSelectProduct}
+            onAddToCart={handleAddToCart}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+          />
+        )}
+
+        {/* ================= VIEW 3: GIA DIAMOND STANDARDS LAB ================= */}
         {activePage === "diamonds" && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 text-left">
             <div className="text-center max-w-2xl mx-auto space-y-2">
-              <span className="text-xs font-mono uppercase tracking-wider text-[#D4AF37]">Optical Architecture</span>
-              <h1 className="text-3xl font-serif font-black text-white">The Anatomy of Diamond Cuts</h1>
+              <span className="text-xs uppercase tracking-[0.2em] text-[#D4AF37] font-bold font-sans">
+                Gemological Institute of America
+              </span>
+              <h1 className="text-3xl sm:text-4xl font-black text-[#FAFAFA]">
+                The GIA 4Cs Optical Standards
+              </h1>
+              <p className="text-xs sm:text-sm text-[#A89F91] font-sans">
+                Every Luxe Jewels solitaire is individually laser inscribed with its unique GIA certificate number on its outer girdle.
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {diamondCuts.map((cut) => (
-                <div key={cut.name} className="p-8 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-4">
-                  <div className="flex justify-between items-baseline">
-                    <h3 className="text-xl font-serif font-black text-[#D4AF37]">{cut.name}</h3>
-                    <span className="text-xs font-mono text-zinc-400">{cut.facets}</span>
+            <div className="p-8 rounded-3xl bg-[#0E0E12] border border-[#D4AF37]/30 space-y-8 shadow-2xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 font-sans">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs font-bold text-[#FAFAFA]">
+                    <span>Carat Weight: {demoCarat} ct</span>
+                    <span className="text-[#FBBF24]">Solitaire Center Stone</span>
                   </div>
-                  <span className="text-xs font-mono text-white block">✨ {cut.fire}</span>
-                  <p className="text-xs text-zinc-400 leading-relaxed">{cut.desc}</p>
+                  <input
+                    type="range"
+                    min="1.0"
+                    max="5.0"
+                    step="0.25"
+                    value={demoCarat}
+                    onChange={(e) => setDemoCarat(Number(e.target.value))}
+                    className="w-full accent-[#D4AF37] cursor-pointer"
+                  />
                 </div>
-              ))}
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-[#FAFAFA] uppercase">
+                    Select Gemstone Cut:
+                  </label>
+                  <select
+                    value={demoCut}
+                    onChange={(e) => setDemoCut(e.target.value)}
+                    className="w-full bg-[#141418] text-xs text-[#FAFAFA] p-3 rounded-xl border border-[#D4AF37]/40 focus:border-[#FBBF24] focus:outline-none cursor-pointer"
+                  >
+                    <option value="Round Brilliant">Round Brilliant (57 Facets • Maximum Fire)</option>
+                    <option value="Oval Cut">Oval Brilliant (Slender Finger Elongation)</option>
+                    <option value="Emerald Cut">Step-Cut Emerald (Hall of Mirrors Transparency)</option>
+                    <option value="Cushion Cut">Antique Cushion Cut (Vintage Soft Corners)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Gemological Output Box */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-4 border-t border-[#D4AF37]/20 text-center font-sans">
+                <div className="p-4 rounded-2xl bg-[#141418] border border-[#D4AF37]/20 space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-[#A89F91] block">Selected Carat</span>
+                  <span className="text-3xl font-bold text-[#FBBF24]">{demoCarat} ct</span>
+                  <p className="text-[10px] text-[#78716C]">Diameter approx {Math.round(demoCarat * 3.5 + 3)}mm</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-[#141418] border border-[#D4AF37]/20 space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-[#A89F91] block">Color Grade</span>
+                  <span className="text-3xl font-bold text-[#FAFAFA]">D-E</span>
+                  <p className="text-[10px] text-[#78716C]">Completely Colorless</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-[#141418] border border-[#D4AF37]/20 space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-[#A89F91] block">Clarity Metric</span>
+                  <span className="text-3xl font-bold text-[#FAFAFA]">VVS1</span>
+                  <p className="text-[10px] text-[#78716C]">Zero Eye Inclusions</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-[#141418] border border-[#D4AF37]/20 space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-[#A89F91] block">Cut Hallmark</span>
+                  <span className="text-3xl font-bold text-[#34D399]">3x Ex</span>
+                  <p className="text-[10px] text-[#78716C]">GIA Triple Excellent</p>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* PAGE 3: BESPOKE CONCIERGE */}
+        {/* ================= VIEW 4: BESPOKE ATELIER COMMISSION ================= */}
         {activePage === "bespoke" && (
-          <div className="max-w-2xl mx-auto px-4 py-16 space-y-8">
-            <div className="text-center space-y-2">
-              <span className="text-xs font-mono uppercase tracking-wider text-[#D4AF37]">Custom Commission</span>
-              <h1 className="text-3xl font-serif font-black text-white">Bespoke Ring & Solitaire Concierge</h1>
-              <p className="text-xs text-zinc-400">Co-create an heirloom engagement ring or custom necklace with our master diamond setter.</p>
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 text-left">
+            <div className="text-center max-w-2xl mx-auto space-y-2">
+              <span className="text-xs uppercase tracking-[0.2em] text-[#D4AF37] font-bold font-sans">
+                Haute Joaillerie Sur Mesure
+              </span>
+              <h1 className="text-3xl sm:text-4xl font-black text-[#FAFAFA]">
+                Bespoke Geneva Commissions
+              </h1>
+              <p className="text-xs sm:text-sm text-[#A89F91] font-sans">
+                From initial hand-painted gouache renderings to stone sourcing in Antwerp and final setting in Geneva, create an immortal family heirloom.
+              </p>
             </div>
 
-            <div className="p-8 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1">Precious Metal</label>
-                <select className="w-full px-3.5 py-2.5 rounded-xl bg-black border border-zinc-800 text-xs text-white">
-                  <option>18K Solid Yellow Gold</option>
-                  <option>18K Solid Rose Gold</option>
-                  <option>18K Solid White Gold</option>
-                  <option>950 Pure Platinum</option>
-                </select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center font-sans">
+              <div className="aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border border-[#D4AF37]/30">
+                <img
+                  src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=900&auto=format&fit=crop&q=80"
+                  alt="Bespoke jewelry atelier"
+                  className="w-full h-full object-cover"
+                />
               </div>
-              <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1">Diamond Shape</label>
-                <select className="w-full px-3.5 py-2.5 rounded-xl bg-black border border-zinc-800 text-xs text-white">
-                  <option>Round Brilliant (Ideal Cut)</option>
-                  <option>Emerald Step Cut</option>
-                  <option>Oval Cut</option>
-                  <option>Cushion Cut</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-zinc-300 mb-1">Approximate Carat Weight</label>
-                <input type="text" placeholder="e.g. 2.50 Carats" className="w-full px-3.5 py-2.5 rounded-xl bg-black border border-zinc-800 text-xs text-white focus:outline-hidden" />
-              </div>
-              <button className="w-full py-3.5 bg-gradient-to-r from-[#D4AF37] to-[#AA771C] text-black font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-amber-500/20">
-                Submit Custom Commission Inquiry
-              </button>
-            </div>
-          </div>
-        )}
 
-        {/* PAGE 4: GIA CERTIFICATION */}
-        {activePage === "certification" && (
-          <div className="max-w-4xl mx-auto px-4 py-16 space-y-10">
-            <div className="text-center space-y-2">
-              <span className="text-xs font-mono uppercase tracking-wider text-[#D4AF37]">Authenticity Assurance</span>
-              <h1 className="text-3xl font-serif font-black text-white">GIA & IGI International Certification</h1>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-3">
-                <Award size={28} className="text-[#D4AF37]" />
-                <h4 className="text-base font-bold text-white font-serif">Laser Inscribed GIA Report #</h4>
-                <p className="text-xs text-zinc-400 leading-relaxed">Each diamond girdle is micro-laser etched with its permanent GIA registry certificate number, invisible to the naked eye.</p>
-              </div>
-              <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-3">
-                <ShieldCheck size={28} className="text-[#D4AF37]" />
-                <h4 className="text-base font-bold text-white font-serif">100% Conflict-Free Kimberly Process</h4>
-                <p className="text-xs text-zinc-400 leading-relaxed">Ethically mined and documented from certified Canadian and Botswanan diamond sources with chain of custody tracking.</p>
-              </div>
-              <div className="p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-3">
-                <Lock size={28} className="text-[#D4AF37]" />
-                <h4 className="text-base font-bold text-white font-serif">Lifetime Insurance Appraisals</h4>
-                <p className="text-xs text-zinc-400 leading-relaxed">Complimentary annual appraisals and ultrasonic diamond claw re-tipping performed by our master goldsmiths.</p>
+              <div className="space-y-4 text-xs text-[#A89F91] leading-relaxed">
+                <h3 className="font-serif text-xl font-bold text-[#FAFAFA]">
+                  The 4-Stage Commission Process
+                </h3>
+                <div className="space-y-3">
+                  <div className="p-3 rounded-xl bg-[#141418] border border-[#D4AF37]/20">
+                    <strong className="text-[#FBBF24] block font-serif">1. Confidential Design Consultation</strong>
+                    <span>Discuss gemstone preferences, historic references, and budget allocations.</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-[#141418] border border-[#D4AF37]/20">
+                    <strong className="text-[#FBBF24] block font-serif">2. Hand-Painted Gouache Renderings</strong>
+                    <span>Master artisans produce scaled hand-painted watercolors from three perspectives.</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-[#141418] border border-[#D4AF37]/20">
+                    <strong className="text-[#FBBF24] block font-serif">3. Direct Diamond Sourcing</strong>
+                    <span>Select your stone from a curated tray of GIA certified conflict-free diamonds.</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* PAGE 5: PRIVATE VAULT APPOINTMENT */}
+        {/* ================= VIEW 5: PRIVATE SALON VIEWING ================= */}
         {activePage === "appointment" && (
-          <div className="max-w-xl mx-auto px-4 py-16 space-y-6">
-            <div className="text-center space-y-2">
-              <h1 className="text-3xl font-serif font-black text-white">Private VIP Boutique Viewing</h1>
-              <p className="text-xs text-zinc-400">Reserve a private salon appointment at our Geneva or New York viewing vaults with champagne service.</p>
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 text-left">
+            <div className="text-center max-w-2xl mx-auto space-y-2">
+              <span className="text-xs uppercase tracking-[0.2em] text-[#D4AF37] font-bold font-sans">
+                Confidential Viewing
+              </span>
+              <h1 className="text-3xl sm:text-4xl font-black text-[#FAFAFA]">
+                Schedule a Private Salon Appointment
+              </h1>
+              <p className="text-xs sm:text-sm text-[#A89F91] font-sans">
+                Reserve an exclusive consultation in our private salons on the Rue du Rhône, Geneva or Bahnhofstrasse, Zürich.
+              </p>
             </div>
 
-            <div className="p-8 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-4">
+            <div className="p-8 rounded-3xl bg-[#0E0E12] border border-[#D4AF37]/30 space-y-6 shadow-2xl font-sans">
               {appointmentBooked ? (
-                <div className="text-center py-6 space-y-3">
-                  <Check size={36} className="text-[#D4AF37] mx-auto" />
-                  <h3 className="text-lg font-bold text-white">Private Salon Reserved</h3>
-                  <p className="text-xs text-zinc-400">Our senior gemologist will contact you to confirm security clearance and portfolio preferences.</p>
+                <div className="text-center py-12 space-y-3">
+                  <div className="w-16 h-16 rounded-full bg-[#10B981]/20 border border-[#10B981] text-[#34D399] flex items-center justify-center mx-auto">
+                    <Check size={32} />
+                  </div>
+                  <h3 className="font-serif text-2xl font-bold text-[#FAFAFA]">
+                    Private Appointment Confirmed
+                  </h3>
+                  <p className="text-xs text-[#A89F91] max-w-md mx-auto">
+                    Thank you, {appointmentName}. Our senior concierge will arrange your private champagne viewing at our {appointmentSalon} salon for {appointmentDate}.
+                  </p>
+                  <button
+                    onClick={() => setActivePage("catalog")}
+                    className="mt-4 px-6 py-3 bg-[#D4AF37] text-[#0A0A0C] font-black rounded-xl text-xs"
+                  >
+                    Return to Vault
+                  </button>
                 </div>
               ) : (
-                <form onSubmit={(e) => { e.preventDefault(); setAppointmentBooked(true); }} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-300 mb-1">Full Client Name</label>
-                    <input type="text" required placeholder="Lord Julian Sterling" className="w-full px-3.5 py-2.5 rounded-xl bg-black border border-zinc-800 text-xs text-white focus:outline-hidden" />
+                <form onSubmit={handleBookAppointment} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-[#FAFAFA] uppercase">Full Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={appointmentName}
+                        onChange={(e) => setAppointmentName(e.target.value)}
+                        placeholder="Lord / Lady Vance"
+                        className="w-full bg-[#141418] text-xs text-[#FAFAFA] p-3 rounded-xl border border-[#D4AF37]/30 focus:border-[#FBBF24] focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-[#FAFAFA] uppercase">Salon Location</label>
+                      <select
+                        value={appointmentSalon}
+                        onChange={(e) => setAppointmentSalon(e.target.value)}
+                        className="w-full bg-[#141418] text-xs text-[#FAFAFA] p-3 rounded-xl border border-[#D4AF37]/30 focus:border-[#FBBF24] focus:outline-none cursor-pointer"
+                      >
+                        <option value="Geneva">Geneva Salon (Rue du Rhône 42)</option>
+                        <option value="Zurich">Zürich Salon (Bahnhofstrasse 18)</option>
+                        <option value="Virtual">Confidential Encrypted Video Salon</option>
+                      </select>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-300 mb-1">Preferred Location</label>
-                    <select className="w-full px-3.5 py-2.5 rounded-xl bg-black border border-zinc-800 text-xs text-white">
-                      <option>Geneva Salon (Rue du Rhône)</option>
-                      <option>New York Flagship (Fifth Avenue)</option>
-                      <option>London Vault (Bond Street)</option>
-                    </select>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-[#FAFAFA] uppercase">Preferred Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={appointmentDate}
+                      onChange={(e) => setAppointmentDate(e.target.value)}
+                      className="w-full bg-[#141418] text-xs text-[#FAFAFA] p-3 rounded-xl border border-[#D4AF37]/30 focus:border-[#FBBF24] focus:outline-none"
+                    />
                   </div>
-                  <button type="submit" className="w-full py-3.5 bg-gradient-to-r from-[#D4AF37] to-[#AA771C] text-black font-black text-xs uppercase tracking-wider rounded-xl shadow-lg">
-                    Confirm Private Vault Viewing
+
+                  <button
+                    type="submit"
+                    className="w-full py-4 bg-gradient-to-r from-[#D4AF37] to-[#AA771C] hover:from-[#E5C158] hover:to-[#B88622] text-[#0A0A0C] font-black rounded-2xl text-xs uppercase tracking-widest transition cursor-pointer shadow-lg mt-4"
+                  >
+                    Confirm Private Salon Booking
                   </button>
                 </form>
               )}
@@ -431,64 +691,53 @@ export default function LuxeJewelsTemplate({
           </div>
         )}
 
-        {/* PAGE: PRODUCT DETAIL */}
+        {/* ================= VIEW 6: OFFERS & SUITES ================= */}
+        {activePage === "offers" && (
+          <Offer
+            products={jewelItems}
+            onSelectProduct={handleSelectProduct}
+            onAddToCart={handleAddToCart}
+            onOpenVault={() => {
+              setActivePage("catalog");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
+        )}
+
+        {/* ================= VIEW 7: PRODUCT DETAILS ================= */}
         {activePage === "product-detail" && selectedProduct && (
-          <div className="bg-[#09090B] min-h-screen py-6 text-zinc-100">
-            <ProductDetailsPage
-              product={selectedProduct}
-              onBack={() => setActivePage("home")}
-              onAddToCart={handleAddToCart}
-              themeColors={{ primary: "#D4AF37", secondary: "#AA771C", text: "#FAFAFA", background: "#09090B", cardBg: "#18181B" }}
-              business={business}
-              relatedProducts={products}
-              onSelectProduct={(p) => setSelectedProduct(p)}
-            />
-          </div>
+          <ProductDetails
+            product={selectedProduct}
+            onBack={() => {
+              setActivePage("catalog");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onAddToCart={handleAddToCart}
+            relatedProducts={jewelItems}
+            onSelectProduct={handleSelectProduct}
+            onOpenAppointment={() => {
+              setActivePage("appointment");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
         )}
       </main>
 
-      {/* ================= BESPOKE FINE JEWELRY FOOTER ================= */}
-      <footer className="bg-black text-zinc-500 py-16 border-t border-zinc-900 text-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2.5">
-              {brandLogo ? (
-                <img
-                  src={brandLogo}
-                  alt={brandName}
-                  className="h-8 w-auto max-w-[130px] object-contain rounded brightness-0 invert"
-                />
-              ) : (
-                <Sparkles size={18} className="text-[#D4AF37]" />
-              )}
-              <span className="text-base font-serif font-black tracking-[0.2em] text-white uppercase">{brandName}</span>
-            </div>
-            <p className="text-zinc-600 leading-relaxed text-[11px]">
-              {business?.description || "GIA certified solitaires, 18K solid gold, and Swiss fine jewelry craftsmanship."}
-            </p>
-            {brandAddress && (
-              <p className="text-zinc-600 text-[10px]">📍 {brandAddress}</p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <h5 className="font-bold text-[#D4AF37] uppercase text-[10px] tracking-wider">Diamond Lab</h5>
-            <p onClick={() => setActivePage("diamonds")} className="hover:text-white cursor-pointer">Anatomy of Cuts</p>
-            <p onClick={() => setActivePage("certification")} className="hover:text-white cursor-pointer">GIA Inscription Verification</p>
-          </div>
-          <div className="space-y-2">
-            <h5 className="font-bold text-[#D4AF37] uppercase text-[10px] tracking-wider">Atelier Concierge</h5>
-            <p onClick={() => setActivePage("bespoke")} className="hover:text-white cursor-pointer">Bespoke Commissions</p>
-            <p onClick={() => setActivePage("appointment")} className="hover:text-white cursor-pointer">Private Vault Reservation</p>
-          </div>
-          <div className="space-y-2">
-            <h5 className="font-bold text-[#D4AF37] uppercase text-[10px] tracking-wider">Geneva Vault</h5>
-            <p className="text-white font-mono">{brandPhone}</p>
-            <p className="text-zinc-600 text-[11px]">{brandEmail}</p>
-          </div>
-        </div>
-      </footer>
+      {/* ================= 3. FOOTER ================= */}
+      <Footer
+        brandName={brandName}
+        brandLogo={brandLogo}
+        brandPhone={brandPhone}
+        brandEmail={brandEmail}
+        brandAddress={brandAddress}
+        onNavigate={(page, cat = null) => {
+          if (cat) setSelectedCategory(cat);
+          setActivePage(page);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
 
-      {/* Cart Drawer */}
+      {/* ================= 4. JEWEL BOX CART DRAWER ================= */}
       <CartDrawer
         isOpen={cartOpen}
         onClose={() => setCartOpen(false)}
@@ -496,7 +745,7 @@ export default function LuxeJewelsTemplate({
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
         onCheckout={handleCheckout}
-        themeColors={themeColors}
+        themeColors={{ primary: "#D4AF37" }}
       />
     </div>
   );
