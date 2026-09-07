@@ -1,6 +1,11 @@
 import React, { useRef, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, ArrowUpRight, ArrowRight } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ArrowUpRight,
+  ArrowRight,
+} from "lucide-react";
 import { fetchCategories } from "../../../api/categoryService";
 
 function FeaturedProductCategory() {
@@ -84,7 +89,10 @@ function FeaturedProductCategory() {
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0"
           >
             <span>See All</span>
-            <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+            <ArrowRight
+              size={13}
+              className="transition-transform duration-200 group-hover:translate-x-0.5"
+            />
           </Link>
         </div>
       </div>
@@ -92,7 +100,7 @@ function FeaturedProductCategory() {
       {/* Category Slider */}
       {loading ? (
         <div className="flex gap-4 overflow-x-auto pb-2 pt-1 animate-pulse">
-          {Array.from({ length: 4 }).map((_, i) => (
+          {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
               className="shrink-0 w-[180px] sm:w-[210px] lg:w-[230px] aspect-[0.85] rounded-2xl bg-slate-200 dark:bg-slate-800"

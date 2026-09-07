@@ -66,10 +66,10 @@ export default function Services() {
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState(
-    searchParams.get("search") || ""
+    searchParams.get("search") || "",
   );
   const [selectedCategory, setSelectedCategory] = useState(
-    searchParams.get("category") || "All Categories"
+    searchParams.get("category") || "All Categories",
   );
   const [categorySearch, setCategorySearch] = useState("");
   const [priceMin, setPriceMin] = useState(0);
@@ -77,7 +77,7 @@ export default function Services() {
   const [minRating, setMinRating] = useState(0);
 
   // View Controls
-  const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'list'
+  const [viewMode, setViewMode] = useState("list"); // 'grid' | 'list'
   const [sortBy, setSortBy] = useState("rating-desc");
   const [itemsPerPage, setItemsPerPage] = useState(12);
   const [currentPage, setCurrentPage] = useState(1);
@@ -110,7 +110,9 @@ export default function Services() {
         ]);
 
         const list1 = Array.isArray(catRes) ? catRes : catRes?.data || [];
-        const list2 = Array.isArray(extraCatRes) ? extraCatRes : extraCatRes?.categories || extraCatRes?.data || [];
+        const list2 = Array.isArray(extraCatRes)
+          ? extraCatRes
+          : extraCatRes?.categories || extraCatRes?.data || [];
 
         // Combine unique categories by name
         const map = new Map();
@@ -139,7 +141,8 @@ export default function Services() {
     try {
       setServicesLoading(true);
       const res = await getServices({ limit: 100 });
-      const dataList = res.services || res.data || (Array.isArray(res) ? res : []);
+      const dataList =
+        res.services || res.data || (Array.isArray(res) ? res : []);
       setServices(dataList);
     } catch (err) {
       console.error("Error loading services:", err);
@@ -159,7 +162,9 @@ export default function Services() {
     const counts = {};
     services.forEach((s) => {
       const catName =
-        s.category?.name || s.category?.title || (typeof s.category === "string" ? s.category : "General");
+        s.category?.name ||
+        s.category?.title ||
+        (typeof s.category === "string" ? s.category : "General");
       counts[catName] = (counts[catName] || 0) + 1;
     });
     return counts;
@@ -172,16 +177,27 @@ export default function Services() {
         // Search Query Filter
         if (searchQuery.trim()) {
           const query = searchQuery.toLowerCase();
-          const nameMatch = s.serviceName?.toLowerCase().includes(query) || s.name?.toLowerCase().includes(query);
+          const nameMatch =
+            s.serviceName?.toLowerCase().includes(query) ||
+            s.name?.toLowerCase().includes(query);
           const descMatch = s.description?.toLowerCase().includes(query);
-          const catMatch = (s.category?.name || typeof s.category === "string" ? s.category : "").toLowerCase().includes(query);
-          const bizMatch = s.business?.businessName?.toLowerCase().includes(query);
+          const catMatch = (
+            s.category?.name || typeof s.category === "string" ? s.category : ""
+          )
+            .toLowerCase()
+            .includes(query);
+          const bizMatch = s.business?.businessName
+            ?.toLowerCase()
+            .includes(query);
           if (!nameMatch && !descMatch && !catMatch && !bizMatch) return false;
         }
 
         // Category Filter
         if (selectedCategory && selectedCategory !== "All Categories") {
-          const catName = s.category?.name || s.category?.title || (typeof s.category === "string" ? s.category : "");
+          const catName =
+            s.category?.name ||
+            s.category?.title ||
+            (typeof s.category === "string" ? s.category : "");
           const catId = s.category?._id || "";
           if (
             catName.toLowerCase() !== selectedCategory.toLowerCase() &&
@@ -212,7 +228,15 @@ export default function Services() {
         if (sortBy === "rating-desc") return ratingB - ratingA;
         return 0; // default
       });
-  }, [services, searchQuery, selectedCategory, priceMin, priceMax, minRating, sortBy]);
+  }, [
+    services,
+    searchQuery,
+    selectedCategory,
+    priceMin,
+    priceMax,
+    minRating,
+    sortBy,
+  ]);
 
   // Pagination calculation
   const totalPages = Math.ceil(filteredServices.length / itemsPerPage) || 1;
@@ -243,7 +267,7 @@ export default function Services() {
     let list = categories;
     if (categorySearch.trim()) {
       list = list.filter((c) =>
-        c.name.toLowerCase().includes(categorySearch.toLowerCase())
+        c.name.toLowerCase().includes(categorySearch.toLowerCase()),
       );
     }
     return showMoreCategories ? list : list.slice(0, 7);
@@ -251,17 +275,17 @@ export default function Services() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans antialiased text-slate-900 pb-16">
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-
           {/* Left Sidebar Filter Card (Desktop) */}
           <div className="hidden lg:block lg:col-span-1 space-y-6">
             <div className="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-xs sticky top-28 space-y-6">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
                   <SlidersHorizontal size={18} className="text-[#004ac6]" />
-                  <h3 className="font-black text-slate-900 text-base">Filter Services</h3>
+                  <h3 className="font-black text-slate-900 text-base">
+                    Filter Services
+                  </h3>
                 </div>
                 <button
                   onClick={handleClearFilters}
@@ -281,7 +305,10 @@ export default function Services() {
                 {/* Search category filter */}
                 {categories.length > 5 && (
                   <div className="relative mb-2">
-                    <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Search
+                      size={13}
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
                     <input
                       type="text"
                       placeholder="Search categories..."
@@ -295,29 +322,39 @@ export default function Services() {
                 <div className="space-y-1 max-h-60 overflow-y-auto pr-1">
                   <button
                     onClick={() => handleCategorySelect("All Categories")}
-                    className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${selectedCategory === "All Categories"
-                      ? "bg-blue-50 text-[#004ac6]"
-                      : "text-slate-700 hover:bg-slate-50"
-                      }`}
+                    className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      selectedCategory === "All Categories"
+                        ? "bg-blue-50 text-[#004ac6]"
+                        : "text-slate-700 hover:bg-slate-50"
+                    }`}
                   >
                     <span>All Categories</span>
-                    <span className="text-[10px] text-slate-400 font-bold">{services.length}</span>
+                    <span className="text-[10px] text-slate-400 font-bold">
+                      {services.length}
+                    </span>
                   </button>
 
                   {visibleCategories.map((cat) => {
-                    const isSelected = selectedCategory.toLowerCase() === cat.name.toLowerCase();
+                    const isSelected =
+                      selectedCategory.toLowerCase() === cat.name.toLowerCase();
                     const count = categoryCounts[cat.name] || 0;
                     return (
                       <button
                         key={cat._id}
                         onClick={() => handleCategorySelect(cat.name)}
-                        className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${isSelected
-                          ? "bg-blue-50 text-[#004ac6] font-bold"
-                          : "text-slate-700 hover:bg-slate-50"
-                          }`}
+                        className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-blue-50 text-[#004ac6] font-bold"
+                            : "text-slate-700 hover:bg-slate-50"
+                        }`}
                       >
                         <div className="flex items-center gap-2 truncate">
-                          {isSelected && <Check size={14} className="text-[#004ac6] shrink-0" />}
+                          {isSelected && (
+                            <Check
+                              size={14}
+                              className="text-[#004ac6] shrink-0"
+                            />
+                          )}
                           <span className="truncate">{cat.name}</span>
                         </div>
                         <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full shrink-0">
@@ -332,7 +369,9 @@ export default function Services() {
                       onClick={() => setShowMoreCategories(!showMoreCategories)}
                       className="text-xs font-bold text-[#004ac6] hover:underline pt-1 block"
                     >
-                      {showMoreCategories ? "- Show Less" : `+ Show ${categories.length - 7} More`}
+                      {showMoreCategories
+                        ? "- Show Less"
+                        : `+ Show ${categories.length - 7} More`}
                     </button>
                   )}
                 </div>
@@ -361,13 +400,21 @@ export default function Services() {
 
                 <div className="flex items-center gap-2 pt-1">
                   <div className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-xs">
-                    <span className="text-[10px] text-slate-400 block font-bold">Min Price</span>
-                    <span className="font-bold text-slate-800">₹{priceMin}</span>
+                    <span className="text-[10px] text-slate-400 block font-bold">
+                      Min Price
+                    </span>
+                    <span className="font-bold text-slate-800">
+                      ₹{priceMin}
+                    </span>
                   </div>
                   <span className="text-slate-400 text-xs font-bold">-</span>
                   <div className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-xs">
-                    <span className="text-[10px] text-slate-400 block font-bold">Max Price</span>
-                    <span className="font-bold text-slate-800">₹{priceMax.toLocaleString("en-IN")}</span>
+                    <span className="text-[10px] text-slate-400 block font-bold">
+                      Max Price
+                    </span>
+                    <span className="font-bold text-slate-800">
+                      ₹{priceMax.toLocaleString("en-IN")}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -383,16 +430,24 @@ export default function Services() {
                       key={star}
                       type="button"
                       onClick={() => setMinRating(star)}
-                      className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${minRating === star
-                        ? "bg-amber-50 text-amber-900 border border-amber-200 font-bold"
-                        : "bg-slate-50 text-slate-700 hover:bg-slate-100"
-                        }`}
+                      className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                        minRating === star
+                          ? "bg-amber-50 text-amber-900 border border-amber-200 font-bold"
+                          : "bg-slate-50 text-slate-700 hover:bg-slate-100"
+                      }`}
                     >
                       <div className="flex items-center gap-1.5">
-                        <Star size={13} className="text-amber-500 fill-amber-500" />
-                        <span>{star === 0 ? "Any Rating" : `${star} Stars & Above`}</span>
+                        <Star
+                          size={13}
+                          className="text-amber-500 fill-amber-500"
+                        />
+                        <span>
+                          {star === 0 ? "Any Rating" : `${star} Stars & Above`}
+                        </span>
                       </div>
-                      {minRating === star && <CheckCircle size={14} className="text-amber-600" />}
+                      {minRating === star && (
+                        <CheckCircle size={14} className="text-amber-600" />
+                      )}
                     </button>
                   ))}
                 </div>
@@ -401,9 +456,14 @@ export default function Services() {
               {/* Trust Guarantee Card */}
               <div className="pt-2">
                 <div className="bg-blue-50/70 border border-blue-100 p-3.5 rounded-2xl flex items-start gap-3">
-                  <ShieldCheck size={20} className="text-[#004ac6] shrink-0 mt-0.5" />
+                  <ShieldCheck
+                    size={20}
+                    className="text-[#004ac6] shrink-0 mt-0.5"
+                  />
                   <p className="text-[11px] text-slate-700 font-medium leading-relaxed">
-                    All service professionals on ILUMAA Studio are identity-verified and quality-audited for complete reliability.
+                    All service professionals on ILUMAA Studio are
+                    identity-verified and quality-audited for complete
+                    reliability.
                   </p>
                 </div>
               </div>
@@ -412,7 +472,6 @@ export default function Services() {
 
           {/* Right Main Listing Section */}
           <div className="lg:col-span-3 space-y-6">
-
             {/* Top Toolbar: Search summary, Sort, Grid/List view toggle */}
             <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2">
@@ -425,14 +484,20 @@ export default function Services() {
                 </button>
 
                 <p className="text-xs text-slate-600 font-medium">
-                  Showing <span className="font-black text-slate-900">{filteredServices.length}</span> services available
+                  Showing{" "}
+                  <span className="font-black text-slate-900">
+                    {filteredServices.length}
+                  </span>{" "}
+                  services available
                 </p>
               </div>
 
               <div className="flex items-center gap-3 self-end sm:self-auto">
                 {/* Sort selector */}
                 <div className="flex items-center gap-1.5 text-xs">
-                  <span className="text-slate-400 font-bold hidden sm:inline">Sort:</span>
+                  <span className="text-slate-400 font-bold hidden sm:inline">
+                    Sort:
+                  </span>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
@@ -447,20 +512,26 @@ export default function Services() {
                 {/* View Mode Toggle */}
                 <div className="flex items-center bg-slate-100 p-1 rounded-xl gap-1">
                   <button
-                    onClick={() => setViewMode("grid")}
-                    className={`p-1.5 rounded-lg transition-colors cursor-pointer ${viewMode === "grid" ? "bg-white text-[#004ac6] shadow-xs" : "text-slate-500 hover:text-slate-900"
-                      }`}
-                    title="Grid View"
-                  >
-                    <Grid size={15} />
-                  </button>
-                  <button
                     onClick={() => setViewMode("list")}
-                    className={`p-1.5 rounded-lg transition-colors cursor-pointer ${viewMode === "list" ? "bg-white text-[#004ac6] shadow-xs" : "text-slate-500 hover:text-slate-900"
-                      }`}
+                    className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                      viewMode === "list"
+                        ? "bg-white text-[#004ac6] shadow-xs"
+                        : "text-slate-500 hover:text-slate-900"
+                    }`}
                     title="List View"
                   >
                     <List size={15} />
+                  </button>
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                      viewMode === "grid"
+                        ? "bg-white text-[#004ac6] shadow-xs"
+                        : "text-slate-500 hover:text-slate-900"
+                    }`}
+                    title="Grid View"
+                  >
+                    <Grid size={15} />
                   </button>
                 </div>
               </div>
@@ -481,9 +552,13 @@ export default function Services() {
                 <div className="w-16 h-16 bg-blue-50 rounded-3xl flex items-center justify-center mx-auto text-[#004ac6]">
                   <Search size={30} />
                 </div>
-                <h3 className="text-lg font-black text-slate-900">No Matching Services Found</h3>
+                <h3 className="text-lg font-black text-slate-900">
+                  No Matching Services Found
+                </h3>
                 <p className="text-xs text-slate-500 max-w-md mx-auto font-medium">
-                  We couldn't find any services matching your selected category or filters. Try resetting filters or searching another category.
+                  We couldn't find any services matching your selected category
+                  or filters. Try resetting filters or searching another
+                  category.
                 </p>
                 <button
                   onClick={handleClearFilters}
@@ -509,8 +584,13 @@ export default function Services() {
                   const sCategoryName =
                     service.category?.name ||
                     service.category?.title ||
-                    (typeof service.category === "string" ? service.category : "Service");
-                  const sBizName = service.business?.businessName || service.business?.slug || "Verified Partner";
+                    (typeof service.category === "string"
+                      ? service.category
+                      : "Service");
+                  const sBizName =
+                    service.business?.businessName ||
+                    service.business?.slug ||
+                    "Verified Partner";
                   const imgUrl =
                     service.images?.[0] ||
                     service.thumbnail ||
@@ -555,8 +635,12 @@ export default function Services() {
 
                           <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                             <div>
-                              <span className="text-[10px] text-slate-400 font-bold block">Starting From</span>
-                              <span className="text-lg font-black text-slate-900">₹{sPrice.toLocaleString("en-IN")}</span>
+                              <span className="text-[10px] text-slate-400 font-bold block">
+                                Starting From
+                              </span>
+                              <span className="text-lg font-black text-slate-900">
+                                ₹{sPrice.toLocaleString("en-IN")}
+                              </span>
                             </div>
 
                             <div className="flex items-center gap-3">
@@ -621,8 +705,12 @@ export default function Services() {
                       <div className="p-4 pt-0 space-y-3">
                         <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
                           <div>
-                            <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider">Starting Price</span>
-                            <span className="text-base font-black text-slate-900">₹{sPrice.toLocaleString("en-IN")}</span>
+                            <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider">
+                              Starting Price
+                            </span>
+                            <span className="text-base font-black text-slate-900">
+                              ₹{sPrice.toLocaleString("en-IN")}
+                            </span>
                           </div>
                           <div className="flex items-center gap-1 text-xs text-slate-500 font-bold">
                             <Clock size={12} className="text-[#004ac6]" />
@@ -659,7 +747,9 @@ export default function Services() {
                 </span>
                 <button
                   disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
                   className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 disabled:opacity-40 hover:bg-white transition-all cursor-pointer shadow-2xs"
                 >
                   Next
@@ -698,8 +788,11 @@ export default function Services() {
                     handleCategorySelect("All Categories");
                     setMobileFilterOpen(false);
                   }}
-                  className={`w-full text-left p-2 rounded-xl text-xs font-bold ${selectedCategory === "All Categories" ? "bg-blue-50 text-[#004ac6]" : "text-slate-700"
-                    }`}
+                  className={`w-full text-left p-2 rounded-xl text-xs font-bold ${
+                    selectedCategory === "All Categories"
+                      ? "bg-blue-50 text-[#004ac6]"
+                      : "text-slate-700"
+                  }`}
                 >
                   All Services ({services.length})
                 </button>
@@ -710,8 +803,11 @@ export default function Services() {
                       handleCategorySelect(cat.name);
                       setMobileFilterOpen(false);
                     }}
-                    className={`w-full text-left p-2 rounded-xl text-xs font-semibold ${selectedCategory.toLowerCase() === cat.name.toLowerCase() ? "bg-blue-50 text-[#004ac6] font-bold" : "text-slate-700"
-                      }`}
+                    className={`w-full text-left p-2 rounded-xl text-xs font-semibold ${
+                      selectedCategory.toLowerCase() === cat.name.toLowerCase()
+                        ? "bg-blue-50 text-[#004ac6] font-bold"
+                        : "text-slate-700"
+                    }`}
                   >
                     {cat.name}
                   </button>

@@ -21,6 +21,8 @@ import About from "./pages/About/About";
 import Product from "./pages/Product/Product";
 import Shop from "./pages/Shop/Shop";
 import Category from "./pages/Category/Category";
+import ComparePage from "./pages/Compare/ComparePage";
+import CompareFloatingBar from "./Components/comparison/CompareFloatingBar";
 
 // Auth Pages
 import Login from "./pages/Auth/Login";
@@ -135,6 +137,7 @@ function App() {
         <GlobalNotificationContainer />
         <Navbar />
         <Outlet />
+        <CompareFloatingBar />
         <Footer />
       </>
     );
@@ -150,6 +153,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/products" element={<Product />} />
           <Route path="/products/:id" element={<ProductDetails />} />
+          <Route path="/compare" element={<ComparePage />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/services" element={<Services />} />
           <Route path="/services/:id" element={<ServiceDetails />} />

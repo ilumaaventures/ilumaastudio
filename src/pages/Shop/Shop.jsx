@@ -20,10 +20,12 @@ import {
   X,
   SlidersHorizontal,
   Package,
+  Scale,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../redux/reducers/cartReducer";
 import { toggleWishlist } from "../../redux/reducers/wishlistReducer";
+import { toggleCompare } from "../../redux/reducers/compareReducer";
 import { getallProducts } from "../../api/productService";
 import { fetchCategories } from "../../api/categoryService";
 import ProductCard from "../../Components/ProductCard";
@@ -60,6 +62,10 @@ export default function ShopPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const wishlistItems = useSelector((s) => s.wishlist?.items || []);
+  const compareItems = useSelector((s) => s.compare?.items || []);
+  const cartItems = useSelector(
+    (s) => s.cart?.cartItems || s.cart?.items || [],
+  );
 
   // API Backend Data States
   const [apiProducts, setApiProducts] = useState([]);
@@ -98,13 +104,45 @@ export default function ShopPage() {
     if (search) setSearchQuery(search);
   }, [searchParams]);
 
-  // Fetch strictly from backend API
+  // Fetch strictly from backend API with dynamic filter integration
   useEffect(() => {
     const loadBackendData = async () => {
       try {
         setLoading(true);
+        const queryParams = {
+          productType: "E-Commerce",
+          limit: 100, // Fetch a larger set to allow frontend filtering
+        };
+
+        if (searchQuery.trim()) {
+          queryParams.search = searchQuery.trim();
+          queryParams.keyword = searchQuery.trim();
+        }
+        if (
+          selectedCategory &&
+          selectedCategory !== "All Categories" &&
+          selectedCategory !== "All"
+        ) {
+          queryParams.category = selectedCategory;
+        }
+        if (priceMin > 0) {
+          queryParams.minPrice = priceMin;
+        }
+        if (priceMax < 500000) {
+          queryParams.maxPrice = priceMax;
+        }
+        if (selectedBrands.length > 0) {
+          queryParams.brand = selectedBrands.join(",");
+        }
+        if (selectedRating > 0) {
+          queryParams.rating = selectedRating;
+        }
+        if (sortBy) {
+          queryParams.sort = sortBy;
+        }
+
         const [prodRes, catRes] = await Promise.all([
-          getallProducts({ productType: "E-Commerce", limit: 100 }),
+          getallProducts(queryParams),
           fetchCategories({ businessType: "E-Commerce" }),
         ]);
 
@@ -120,13 +158,21 @@ export default function ShopPage() {
         setApiProducts(pList);
         setApiCategories(cList);
       } catch (err) {
-        console.error("Error fetching backend shop data:", err);
+        console.error("Error fetching backend shop data with filters:", err);
       } finally {
         setLoading(false);
       }
     };
     loadBackendData();
-  }, []);
+  }, [
+    selectedCategory,
+    searchQuery,
+    priceMin,
+    priceMax,
+    selectedBrands.join(","),
+    selectedRating,
+    sortBy,
+  ]);
 
   // Format backend products into uniform list
   const backendProductsFormatted = useMemo(() => {
@@ -327,14 +373,32 @@ export default function ShopPage() {
   };
 
   const handleAddToCart = (product, e) => {
-    e.preventDefault();
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    const prodId = product._id || product.id;
+    const isInCart = cartItems.some(
+      (item) =>
+        String(item._id || item.id || item.product?._id || item.product) ===
+        String(prodId),
+    );
+
+    if (isInCart) {
+      toast.success(`${product.name} is already in your cart!`, { icon: "🛒" });
+      return;
+    }
+
     dispatch(
       addToCart({
         product: {
-          _id: product._id,
+          _id: prodId,
+          id: prodId,
           name: product.name,
           price: product.price,
+          originalPrice: product.originalPrice,
           image: product.image,
+          category: product.category,
         },
         quantity: 1,
       }),
@@ -383,10 +447,11 @@ export default function ShopPage() {
                   handleCategorySelect(cat.name);
                   if (mobileFilterOpen) setMobileFilterOpen(false);
                 }}
-                className={`w-full flex items-center justify-between text-left transition-colors cursor-pointer py-1 px-1.5 rounded-lg ${isSelected
-                  ? "bg-blue-50 dark:bg-slate-800 text-[#2563eb] font-bold"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
-                  }`}
+                className={`w-full flex items-center justify-between text-left transition-colors cursor-pointer py-1 px-1.5 rounded-lg ${
+                  isSelected
+                    ? "bg-blue-50 dark:bg-slate-800 text-[#2563eb] font-bold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
+                }`}
               >
                 <span>{cat.name}</span>
                 <span className="text-[10px] text-slate-400 font-semibold">
@@ -510,10 +575,11 @@ export default function ShopPage() {
                 );
                 setCurrentPage(1);
               }}
-              className={`w-full flex items-center justify-between text-left py-1.5 px-2 rounded-md transition-colors cursor-pointer ${selectedRating === item.rating
-                ? "bg-blue-50 dark:bg-slate-800 text-[#2563eb] font-bold"
-                : "hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400"
-                }`}
+              className={`w-full flex items-center justify-between text-left py-1.5 px-2 rounded-md transition-colors cursor-pointer ${
+                selectedRating === item.rating
+                  ? "bg-blue-50 dark:bg-slate-800 text-[#2563eb] font-bold"
+                  : "hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400"
+              }`}
             >
               <div className="flex items-center gap-1">
                 <div className="flex items-center text-amber-400">
@@ -552,49 +618,6 @@ export default function ShopPage() {
             <span className="text-slate-900 dark:text-white font-bold">
               {selectedCategory}
             </span>
-          </div>
-        </div>
-
-        {/* Mobile / Tablet Horizontal Category Pills ScrollBar */}
-        <div className="lg:hidden bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 shadow-2xs space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-black text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">
-              Categories
-            </span>
-            {selectedCategory !== "All Categories" && (
-              <button
-                onClick={() => setSelectedCategory("All Categories")}
-                className="text-[11px] font-bold text-[#2563eb] hover:underline cursor-pointer"
-              >
-                Reset Category
-              </button>
-            )}
-          </div>
-          <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-0.5">
-            {categoryListCombined.map((cat) => {
-              const isSelected =
-                selectedCategory.toLowerCase() === cat.name.toLowerCase();
-              return (
-                <button
-                  key={`mobile_cat_pill_${cat.name}`}
-                  onClick={() => handleCategorySelect(cat.name)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${isSelected
-                    ? "bg-[#2563eb] text-white shadow-xs"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-                    }`}
-                >
-                  <span>{cat.name}</span>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${isSelected
-                      ? "bg-white/20 text-white"
-                      : "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
-                      }`}
-                  >
-                    {cat.count}
-                  </span>
-                </button>
-              );
-            })}
           </div>
         </div>
 
@@ -654,20 +677,22 @@ export default function ShopPage() {
             <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-800">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`p-1.5 transition-colors cursor-pointer ${viewMode === "grid"
-                  ? "bg-[#2563eb] text-white"
-                  : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                  }`}
+                className={`p-1.5 transition-colors cursor-pointer ${
+                  viewMode === "grid"
+                    ? "bg-[#2563eb] text-white"
+                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                }`}
                 title="Grid View"
               >
                 <Grid size={16} />
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={`p-1.5 transition-colors cursor-pointer ${viewMode === "list"
-                  ? "bg-[#2563eb] text-white"
-                  : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                  }`}
+                className={`p-1.5 transition-colors cursor-pointer ${
+                  viewMode === "list"
+                    ? "bg-[#2563eb] text-white"
+                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                }`}
                 title="List View"
               >
                 <List size={16} />
@@ -760,6 +785,9 @@ export default function ShopPage() {
                   const isWished = wishlistItems.some(
                     (i) => i._id === prod._id,
                   );
+                  const isCompared = compareItems.some(
+                    (i) => String(i.id || i._id) === String(prod._id),
+                  );
                   return (
                     <div
                       key={prod._id}
@@ -815,6 +843,48 @@ export default function ShopPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              dispatch(
+                                toggleCompare({
+                                  _id: prod._id,
+                                  id: prod._id,
+                                  name: prod.name,
+                                  price: prod.price,
+                                  originalPrice: prod.originalPrice,
+                                  image: prod.image,
+                                  category: prod.category,
+                                  brand: prod.brand,
+                                  rating: prod.rating,
+                                  reviewsCount: prod.reviewsCount,
+                                  inStock: prod.inStock,
+                                }),
+                              );
+                            }}
+                            title={
+                              isCompared
+                                ? "Remove from comparison"
+                                : "Add to comparison"
+                            }
+                            aria-label={
+                              isCompared
+                                ? "Remove from comparison"
+                                : "Add to comparison"
+                            }
+                            className={`p-2 border rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                              isCompared
+                                ? "bg-blue-50 border-[#2563eb] text-[#2563eb]"
+                                : "border-slate-200 dark:border-slate-700 text-slate-500 hover:border-blue-300 hover:text-[#2563eb]"
+                            }`}
+                          >
+                            <Scale size={14} />
+                            <span className="hidden sm:inline">
+                              {isCompared ? "✓ Added" : "+ Compare"}
+                            </span>
+                          </button>
+                          <button
                             onClick={(e) => handleToggleWishlist(prod, e)}
                             className="p-2 text-slate-400 hover:text-red-500 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer"
                           >
@@ -826,13 +896,31 @@ export default function ShopPage() {
                             />
                           </button>
                           {prod.inStock ? (
-                            <button
-                              onClick={(e) => handleAddToCart(prod, e)}
-                              className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-                            >
-                              <ShoppingCart size={14} />
-                              <span>Add to Cart</span>
-                            </button>
+                            cartItems.some(
+                              (item) =>
+                                String(
+                                  item._id ||
+                                    item.id ||
+                                    item.product?._id ||
+                                    item.product,
+                                ) === String(prod._id),
+                            ) ? (
+                              <button
+                                onClick={(e) => handleAddToCart(prod, e)}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                              >
+                                <Check size={14} strokeWidth={2.5} />
+                                <span>Added</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={(e) => handleAddToCart(prod, e)}
+                                className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                              >
+                                <ShoppingCart size={14} />
+                                <span>Add to Cart</span>
+                              </button>
+                            )
                           ) : (
                             <button
                               disabled
@@ -866,10 +954,11 @@ export default function ShopPage() {
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer ${page === currentPage
-                          ? "bg-[#2563eb] text-white shadow-sm"
-                          : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50"
-                          }`}
+                        className={`w-8 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          page === currentPage
+                            ? "bg-[#2563eb] text-white shadow-sm"
+                            : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50"
+                        }`}
                       >
                         {page}
                       </button>

@@ -1,6 +1,15 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Sparkles, Mail, Phone, MapPin, Heart, Store, MessageCircle } from "lucide-react";
+import {
+  Sparkles,
+  Mail,
+  Phone,
+  MapPin,
+  Heart,
+  Store,
+  MessageCircle,
+} from "lucide-react";
+import { FaInstagram } from "react-icons/fa";
 import { useStore } from "../../Store/StoreContext";
 import StarlingWhatsAppButton from "./StarlingWhatsAppButton";
 
@@ -28,7 +37,10 @@ export default function StarlingFooter() {
         const headerElement = document.querySelector("header");
         const navOffset = headerElement ? headerElement.offsetHeight : 80;
         const y = el.getBoundingClientRect().top + window.scrollY - navOffset;
-        window.scrollTo({ top: Math.max(0, Math.round(y)), behavior: "smooth" });
+        window.scrollTo({
+          top: Math.max(0, Math.round(y)),
+          behavior: "smooth",
+        });
       }
     }
   };
@@ -45,7 +57,11 @@ export default function StarlingFooter() {
         .join(", ")
     : "The Old Mill Villa, Gurgaon, India";
 
-  const cleanPhone = (business?.whatsapp || business?.businessPhone || "919876543210").replace(/\D/g, "");
+  const cleanPhone = (
+    business?.whatsapp ||
+    business?.businessPhone ||
+    "919876543210"
+  ).replace(/\D/g, "");
 
   return (
     <footer className="bg-[#2C3E35] text-[#FAF6F0] border-t border-[#C5A880]/30 font-sans relative">
@@ -169,11 +185,13 @@ export default function StarlingFooter() {
             <ul className="space-y-3.5 text-xs text-[#FAF6F0]/80">
               <li className="flex items-center gap-2">
                 <Mail size={14} className="text-[#C5A880] shrink-0" />
-                <span>{business?.businessEmail || "support@starlingtales.com"}</span>
+                <span>
+                  {business?.businessEmail || "support@starlingtales.com"}
+                </span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone size={14} className="text-[#C5A880] shrink-0" />
-                <span>{business?.businessPhone || "+91 98765 43210"}</span>
+                <span>{business?.businessPhone || "+91 9536699999"}</span>
               </li>
               <li className="flex items-center gap-2">
                 <a
@@ -182,13 +200,23 @@ export default function StarlingFooter() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 hover:text-[#25D366] transition-colors"
                 >
-                  <MessageCircle size={14} className="text-[#25D366] shrink-0" />
+                  <MessageCircle
+                    size={14}
+                    className="text-[#25D366] shrink-0"
+                  />
                   <span>WhatsApp Support</span>
                 </a>
               </li>
               <li className="flex items-center gap-2">
-                <MapPin size={14} className="text-[#C5A880] shrink-0 mt-0.5" />
-                <span className="leading-snug">{fullAddress}</span>
+                <a
+                  href="https://www.instagram.com/starling_tales25/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 transition-colors hover:text-[#E4405F]"
+                >
+                  <FaInstagram size={14} className="shrink-0 text-[#E4405F]" />
+                  <span>Instagram</span>
+                </a>
               </li>
             </ul>
           </div>
@@ -196,7 +224,10 @@ export default function StarlingFooter() {
 
         {/* Bottom Bar */}
         <div className="border-t border-[#FAF6F0]/10 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] text-[#FAF6F0]/50 tracking-wider uppercase font-semibold">
-          <p>© {new Date().getFullYear()} {business?.businessName || "Starling Tales"}. All Rights Reserved.</p>
+          <p>
+            © {new Date().getFullYear()}{" "}
+            {business?.businessName || "Starling Tales"}. All Rights Reserved.
+          </p>
           <div className="flex items-center gap-1 font-serif text-[9px] lowercase italic">
             <span>crafted with</span>
             <Heart size={10} className="text-[#C85C5C] fill-[#C85C5C]" />
@@ -210,4 +241,3 @@ export default function StarlingFooter() {
     </footer>
   );
 }
-

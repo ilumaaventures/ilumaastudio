@@ -11,13 +11,13 @@ export default function StarlingWhatsAppButton() {
 
   // Extract phone number from store context or default to fallback
   const rawPhone =
-    business.whatsapp || business.businessPhone || "+91 98765 43210";
-  const cleanPhone = rawPhone.replace(/\D/g, "") || "919876543210";
+    business.whatsapp || business.businessPhone || "+91 9536699999";
+  const cleanPhone = rawPhone.replace(/\D/g, "") || "919536699999";
   const businessName = business.businessName || "Starling Tales";
 
   const defaultMessage = `Hello ${businessName}! I would like to connect regarding your products and services.`;
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-    defaultMessage
+    defaultMessage,
   )}`;
 
   return (
@@ -66,7 +66,8 @@ export default function StarlingWhatsAppButton() {
             <div className="bg-white p-3.5 rounded-2xl rounded-tl-none shadow-sm border border-[#C5A880]/15 max-w-[88%] text-xs text-[#2C3E35] leading-relaxed">
               <p className="font-medium">Hi there! 👋</p>
               <p className="mt-1 text-[#2C3E35]/80">
-                Welcome to {businessName}. How can we help you create your heirloom story today?
+                Welcome to {businessName}. How can we help you create your
+                heirloom story today?
               </p>
               <span className="block mt-2 text-[9px] text-gray-400 text-right">
                 Just now

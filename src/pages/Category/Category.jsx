@@ -5,14 +5,62 @@ import { fetchCategories } from "../../api/categoryService";
 import { CategoryGridSkeleton } from "../../Components/Skeletons";
 
 const FALLBACK_CATEGORIES = [
-  { _id: "c1", name: "Fashion", description: "Clothing, footwear and luxury apparel", image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=400&auto=format&fit=crop" },
-  { _id: "c2", name: "Electronics", description: "Smartphones, laptops, audio and gadgets", image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=400&auto=format&fit=crop" },
-  { _id: "c3", name: "Home & Living", description: "Furniture, cookware, decor and lamps", image: "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?q=80&w=400&auto=format&fit=crop" },
-  { _id: "c4", name: "Beauty & Personal Care", description: "Skincare, perfumes, makeup and wellness", image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=400&auto=format&fit=crop" },
-  { _id: "c5", name: "Sports & Outdoors", description: "Fitness equipment, footwear and activewear", image: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=400&auto=format&fit=crop" },
-  { _id: "c6", name: "Books & Stationery", description: "Best-selling novels, journals and art supplies", image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=400&auto=format&fit=crop" },
-  { _id: "c7", name: "Toys & Games", description: "Action figures, board games and puzzles", image: "https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?q=80&w=400&auto=format&fit=crop" },
-  { _id: "c8", name: "Automotive", description: "Car accessories, chargers and cleaning kits", image: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?q=80&w=400&auto=format&fit=crop" },
+  {
+    _id: "c1",
+    name: "Fashion",
+    description: "Clothing, footwear and luxury apparel",
+    image:
+      "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=400&auto=format&fit=crop",
+  },
+  {
+    _id: "c2",
+    name: "Electronics",
+    description: "Smartphones, laptops, audio and gadgets",
+    image:
+      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=400&auto=format&fit=crop",
+  },
+  {
+    _id: "c3",
+    name: "Home & Living",
+    description: "Furniture, cookware, decor and lamps",
+    image:
+      "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?q=80&w=400&auto=format&fit=crop",
+  },
+  {
+    _id: "c4",
+    name: "Beauty & Personal Care",
+    description: "Skincare, perfumes, makeup and wellness",
+    image:
+      "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=400&auto=format&fit=crop",
+  },
+  {
+    _id: "c5",
+    name: "Sports & Outdoors",
+    description: "Fitness equipment, footwear and activewear",
+    image:
+      "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=400&auto=format&fit=crop",
+  },
+  {
+    _id: "c6",
+    name: "Books & Stationery",
+    description: "Best-selling novels, journals and art supplies",
+    image:
+      "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=400&auto=format&fit=crop",
+  },
+  {
+    _id: "c7",
+    name: "Toys & Games",
+    description: "Action figures, board games and puzzles",
+    image:
+      "https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?q=80&w=400&auto=format&fit=crop",
+  },
+  {
+    _id: "c8",
+    name: "Automotive",
+    description: "Car accessories, chargers and cleaning kits",
+    image:
+      "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?q=80&w=400&auto=format&fit=crop",
+  },
 ];
 
 export default function CategoriesPage() {
@@ -25,7 +73,8 @@ export default function CategoriesPage() {
       try {
         setLoading(true);
         const res = await fetchCategories({ businessType: "E-Commerce" });
-        const list = res?.data || res?.categories || (Array.isArray(res) ? res : []);
+        const list =
+          res?.data || res?.categories || (Array.isArray(res) ? res : []);
         setCategories(list);
       } catch (err) {
         console.error("Failed to load categories:", err);
@@ -40,20 +89,51 @@ export default function CategoriesPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-200 transition-colors pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        
         {/* Header */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <Link to="/" className="hover:text-[#2563eb]">Home</Link>
-            <ChevronRight size={12} />
-            <span className="text-slate-900 dark:text-white font-bold">Categories</span>
+        <div className="space-y-1 flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <Link to="/" className="hover:text-[#2563eb]">
+                Home
+              </Link>
+              <ChevronRight size={12} />
+              <span className="text-slate-900 dark:text-white font-bold">
+                Categories
+              </span>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight pt-1">
+              Browse All Categories
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Explore products curated across our top categories
+            </p>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight pt-1">
-            Browse All Categories
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-            Explore products curated across our top categories
-          </p>
+          <div className="relative">
+            <select
+              defaultValue="all"
+              className="h-10 min-w-[180px] appearance-none rounded-xl border border-slate-200 bg-white px-4 pr-10 text-sm font-medium text-slate-700 shadow-sm outline-none transition-all hover:border-slate-300 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+            >
+              <option value="all">All Categories</option>
+              <option value="featured">Featured</option>
+              <option value="occasion">Occasion</option>
+              <option value="seasonal">Seasonal</option>
+              <option value="trending">Trending</option>
+              <option value="top-rated">Top Rated</option>
+            </select>
+
+            <svg
+              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
         </div>
 
         {/* Categories Grid */}
@@ -82,7 +162,10 @@ export default function CategoriesPage() {
                 {/* Category Image Banner */}
                 <div className="relative h-44 overflow-hidden bg-slate-100 dark:bg-slate-800">
                   <img
-                    src={cat.image || "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=400&auto=format&fit=crop"}
+                    src={
+                      cat.image ||
+                      "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=400&auto=format&fit=crop"
+                    }
                     alt={cat.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
@@ -95,19 +178,22 @@ export default function CategoriesPage() {
                     {cat.name}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 font-medium line-clamp-2">
-                    {cat.description || "Discover premium products in this collection."}
+                    {cat.description ||
+                      "Discover premium products in this collection."}
                   </p>
 
                   <div className="flex items-center gap-1 text-xs font-bold text-[#2563eb] pt-2">
                     <span>Explore Collection</span>
-                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight
+                      size={14}
+                      className="group-hover:translate-x-1 transition-transform"
+                    />
                   </div>
                 </div>
               </Link>
             ))}
           </div>
         )}
-
       </div>
     </div>
   );

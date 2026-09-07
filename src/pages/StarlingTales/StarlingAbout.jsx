@@ -1,6 +1,6 @@
 import React from "react";
 import HeartDivider from "./components/HeartDivider";
-import Philosophy from "../../assests/Pholosphy.jpeg";
+import Philosophy from "../../assests/Pholosphy.png";
 export default function StarlingAbout() {
   return (
     <>

@@ -18,6 +18,7 @@ import {
   Layers,
   Building2,
   ChevronDown,
+  Scale,
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "../redux/actions/authActions";
@@ -47,8 +48,10 @@ function Navbar() {
   const { user, isAuthenticated } = useSelector((s) => s.auth);
   const cartItems = useSelector((s) => s.cart?.cartItems || []);
   const wishlistItems = useSelector((s) => s.wishlist?.items || []);
+  const compareItems = useSelector((s) => s.compare?.items || []);
   const totalQty = cartItems.reduce((acc, i) => acc + (i.quantity || 0), 0);
   const wishlistQty = wishlistItems.length;
+  const compareQty = compareItems.length;
 
   const [categories, setCategories] = useState([]);
   const [businessCategories, setBusinessCategories] = useState([]);
@@ -288,6 +291,22 @@ function Navbar() {
             </Link>
 
             <Link
+              to="/compare"
+              className="relative flex items-center gap-1.5 text-slate-700 hover:text-[#2563eb] transition-colors font-semibold"
+              title="Compare Products"
+            >
+              <div className="relative">
+                <Scale size={18} />
+                {compareQty > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                    {compareQty}
+                  </span>
+                )}
+              </div>
+              <span>Compare</span>
+            </Link>
+
+            <Link
               to="/wishlist"
               className="relative flex items-center gap-1.5 text-slate-700 hover:text-[#2563eb] transition-colors font-semibold"
             >
@@ -308,9 +327,11 @@ function Navbar() {
             >
               <div className="relative">
                 <ShoppingCart size={18} />
-                <span className="absolute -top-2 -right-2 bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
-                  {totalQty}
-                </span>
+                {totalQty > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                    {totalQty}
+                  </span>
+                )}
               </div>
               <span>Cart</span>
             </Link>
@@ -336,6 +357,18 @@ function Navbar() {
 
           {/* Mobile Right Action Icons */}
           <div className="lg:hidden flex items-center gap-1 sm:gap-2">
+            <Link
+              to="/compare"
+              className="relative p-1.5 text-slate-700 hover:text-[#2563eb]"
+              title="Compare"
+            >
+              <Scale size={20} />
+              {compareQty > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-2xs">
+                  {compareQty}
+                </span>
+              )}
+            </Link>
             <Link
               to="/wishlist"
               className="relative p-1.5 text-slate-700 hover:text-[#2563eb]"

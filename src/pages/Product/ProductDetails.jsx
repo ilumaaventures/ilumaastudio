@@ -34,6 +34,7 @@ import {
   Clock,
   HelpCircle,
   ArrowRight,
+  Scale,
 } from "lucide-react";
 import {
   getProductById,
@@ -47,6 +48,7 @@ import {
 } from "../../api/reviewService";
 import { addToCart } from "../../redux/reducers/cartReducer";
 import { toggleWishlist } from "../../redux/reducers/wishlistReducer";
+import { toggleCompare } from "../../redux/reducers/compareReducer";
 import { DetailSkeleton } from "../../Components/Skeletons";
 import { getProductFlashDealStatus } from "../../api/flashDealService";
 import ProductCard from "../../Components/ProductCard";
@@ -98,6 +100,7 @@ function ProductDetails() {
 
   const { isAuthenticated, user } = useSelector((s) => s.auth);
   const wishlistItems = useSelector((s) => s.wishlist?.items || []);
+  const compareItems = useSelector((s) => s.compare?.items || []);
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -391,6 +394,9 @@ function ProductDetails() {
       (i._id || i.id || i) === displayProduct._id ||
       String(i) === String(displayProduct._id),
   );
+  const isCompared = compareItems.some(
+    (i) => String(i.id || i._id) === String(displayProduct._id),
+  );
 
   const inStock = (() => {
     if (displayProduct.hasVariants && activeVariant) {
@@ -456,6 +462,35 @@ function ProductDetails() {
     } else {
       toast.success("Added to Wishlist!");
     }
+  };
+
+  const handleToggleCompare = () => {
+    if (!displayProduct) return;
+    dispatch(
+      toggleCompare({
+        _id: displayProduct._id,
+        id: displayProduct._id,
+        name: displayProduct.name,
+        price: effectivePrice,
+        originalPrice: effectiveCompareAtPrice,
+        image: selectedImage || displayProduct.images?.[0]?.url,
+        category:
+          typeof displayProduct.category === "object"
+            ? displayProduct.category?.name
+            : displayProduct.category,
+        brand:
+          displayProduct.brand ||
+          displayProduct.business?.businessName ||
+          displayProduct.vendor?.storeName ||
+          "ILumaa",
+        rating: displayProduct.rating || 4.5,
+        reviewsCount: liveReviews.length || displayProduct.numReviews || 0,
+        inStock,
+        badge:
+          displayProduct.badge ||
+          (displayProduct.isFlashDeal ? "Flash Deal" : null),
+      })
+    );
   };
 
   const handlePincodeCheck = async (e) => {
@@ -755,6 +790,29 @@ function ProductDetails() {
                 <span>Buy Now</span>
               </button>
             </div>
+
+            {/* Compare Action Button */}
+            <button
+              type="button"
+              onClick={handleToggleCompare}
+              className={`w-full py-3 px-6 rounded-2xl font-bold text-xs transition-all flex items-center justify-center gap-2 border cursor-pointer ${
+                isCompared
+                  ? "bg-blue-50 border-[#2563eb] text-[#2563eb] shadow-2xs"
+                  : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700"
+              }`}
+            >
+              {isCompared ? (
+                <>
+                  <Check size={16} className="text-[#2563eb]" strokeWidth={2.5} />
+                  <span>✓ Added to Compare</span>
+                </>
+              ) : (
+                <>
+                  <Scale size={16} className="text-slate-500" />
+                  <span>+ Add to Compare</span>
+                </>
+              )}
+            </button>
 
             {/* Business Policy Summary Highlights Bar */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">

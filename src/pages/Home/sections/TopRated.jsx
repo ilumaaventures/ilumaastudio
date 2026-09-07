@@ -242,7 +242,7 @@ export default function TopRated() {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                Top Rated Picks
+                Top Rated Products
               </h2>
             </div>
             <p className="text-xs text-slate-500 font-medium mt-1">

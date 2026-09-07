@@ -88,14 +88,17 @@ export default function BestSellingProducts() {
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0"
           >
             <span>See All</span>
-            <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+            <ArrowRight
+              size={13}
+              className="transition-transform duration-200 group-hover:translate-x-0.5"
+            />
           </Link>
         </div>
       </div>
 
       {/* Horizontal Carousel */}
       {loading ? (
-        <ProductGridSkeleton count={4} />
+        <ProductGridSkeleton count={6} />
       ) : (
         <div
           ref={scrollRef}
