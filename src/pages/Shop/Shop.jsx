@@ -639,7 +639,7 @@ export default function ShopPage() {
               )}
             </button>
 
-            <div className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+            <div className="text-xs font-semibold text-slate-600 dark:text-slate-300 hidden sm:flex items-center gap-1">
               Showing{" "}
               <span className="font-black text-slate-900 dark:text-white">
                 {totalItems > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}–
@@ -657,7 +657,7 @@ export default function ShopPage() {
           <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
             {/* Sort By Selector */}
             <div className="flex items-center gap-2">
-              <span className="text-slate-500 dark:text-slate-400 shrink-0">
+              <span className="text-slate-500 dark:text-slate-400 shrink-0 hidden md:flex">
                 Sort By:
               </span>
               <select

@@ -1,21 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
-  Zap,
   ShoppingBag,
-  Flame,
-  ShieldCheck,
-  Check,
-  Clock,
   ArrowRight,
-  Activity,
-  Layers,
-  Sparkles,
-  Sliders,
-  ChevronRight,
-  Radio,
-  Eye,
+  ShieldCheck,
   Star,
-  Award,
+  Check,
+  ChevronRight,
+  Eye,
+  Heart,
+  X,
+  CreditCard,
+  Truck,
+  Headphones,
+  Tag,
+  Sliders,
+  Sparkles,
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -45,248 +44,344 @@ export default function ShoesStoreTemplate({
   reviews = [],
   customization = {},
 }) {
-  // Navigation: "home" | "sneaker-vault" | "drops-calendar" | "sole-tech" | "authenticity-guarantee" | "offers" | "product-detail"
+  // Navigation: "home" | "catalog" | "product-detail" | "offers"
   const [activePage, setActivePage] = useState("home");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sizeStandard, setSizeStandard] = useState("US"); // "US" | "UK" | "EU"
+  const [sizeStandard, setSizeStandard] = useState("EU"); // "EU" | "US" | "UK"
 
-  // Hero Interactive Colorway State
-  const [heroColorway, setHeroColorway] = useState("volt"); // "volt" | "infrared" | "stealth" | "cyan"
+  // Best Sellers active tab
+  const [bestSellerTab, setBestSellerTab] = useState("Men"); // "Women" | "Men" | "Children" | "Sales"
 
-  // Live Drop Countdown State (Hours, Minutes, Seconds, Milliseconds)
-  const [dropTime, setDropTime] = useState({
-    hours: 3,
-    minutes: 41,
-    seconds: 22,
-    ms: 80,
-  });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setDropTime((prev) => {
-        let ms = prev.ms - 7;
-        let sec = prev.seconds;
-        let min = prev.minutes;
-        let hr = prev.hours;
-
-        if (ms < 0) {
-          ms = 99;
-          sec -= 1;
-        }
-        if (sec < 0) {
-          sec = 59;
-          min -= 1;
-        }
-        if (min < 0) {
-          min = 59;
-          hr -= 1;
-        }
-        if (hr < 0) {
-          hr = 12;
-        }
-        return { hours: hr, minutes: min, seconds: sec, ms };
-      });
-    }, 70);
-    return () => clearInterval(timer);
-  }, []);
+  // Quick View Modal state
+  const [quickViewProduct, setQuickViewProduct] = useState(null);
+  const [quickViewSize, setQuickViewSize] = useState("41");
+  const [quickViewColor, setQuickViewColor] = useState(null);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const cartItems = useSelector((state) => state.cart?.cartItems || []);
 
-  const defaultKicks = [
+  // Curated footwear catalog matching the reference images
+  const defaultSneakers = [
     {
-      _id: "shoe-1",
-      name: "AeroPulse Carbon Propulsion Marathon Racer",
-      category: "Running",
-      price: 18999,
-      compareAtPrice: 22999,
-      image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&auto=format&fit=crop&q=80",
-      description: "Full-length spooned carbon-fiber propulsion plate with supercritical nitrogen-infused gas foam. Engineered for sub-3-hour marathons.",
-      propulsionTag: "Curved Carbon Spoon",
-      heelDrop: "38mm / 8mm Drop",
-      weight: "184g",
-      energyReturn: "89% Return",
+      _id: "sh-1",
+      name: "Air Jordan 1 True Blue",
+      category: "Men's Shoes",
+      subCategory: "Nike Dunk",
+      price: 120.0,
+      compareAtPrice: 144.0,
       rating: 5.0,
+      reviewCount: 94,
+      badge: "SALE! 17%",
+      isFeatured: true,
+      isBestSeller: true,
+      sizes: ["38", "40", "41", "42", "42.5", "43"],
+      colors: [
+        { name: "True Blue / White", hex: "#2563EB" },
+        { name: "Wolf Grey", hex: "#94A3B8" },
+        { name: "Black Cement", hex: "#0F172A" },
+      ],
+      image: "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=600&auto=format&fit=crop&q=80",
+      description: "Iconic court-inspired silhouette featuring premium leather uppers, encapsulated Air sole cushioning, and classic Wings branding.",
+      inStock: true,
+    },
+    {
+      _id: "sh-2",
+      name: "Nike Pegasus Turbo",
+      category: "Men's Shoes",
+      subCategory: "Free Metcon",
+      price: 110.0,
+      compareAtPrice: 130.0,
+      priceRange: "$110.00 – $130.00",
+      rating: 4.9,
       reviewCount: 142,
-      sizes: ["8", "8.5", "9", "9.5", "10", "10.5", "11", "12"],
-      inStock: true,
-      dropTag: "HYBRID SPEED",
-    },
-    {
-      _id: "shoe-2",
-      name: "Retro High-Top Court Edition '85",
-      category: "Basketball",
-      price: 15499,
-      compareAtPrice: 17999,
-      image: "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=800&auto=format&fit=crop&q=80",
-      description: "Premium full-grain tumbled leather upper, padded ankle collar, encapsulated air heel cushioning, and vintage aged rubber outsole.",
-      propulsionTag: "Encapsulated Air Unit",
-      heelDrop: "32mm / 10mm Drop",
-      weight: "390g",
-      energyReturn: "76% Return",
-      rating: 4.9,
-      reviewCount: 98,
-      sizes: ["7.5", "8", "9", "10", "11", "12"],
-      inStock: true,
-      dropTag: "LIMITED 500",
-    },
-    {
-      _id: "shoe-3",
-      name: "Minimalist Artisan Calfskin Low Sneaker",
-      category: "Luxury Casual",
-      price: 21999,
-      compareAtPrice: 25000,
-      image: "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=800&auto=format&fit=crop&q=80",
-      description: "Italian buttero calf leather, Margom rubber cupsole, and waxed cotton laces hand-stitched in Civitanova Marche, Italy.",
-      propulsionTag: "Margom Italian Cupsole",
-      heelDrop: "28mm / 6mm Drop",
-      weight: "310g",
-      energyReturn: "72% Return",
-      rating: 4.8,
-      reviewCount: 64,
-      sizes: ["8", "9", "10", "11", "12"],
+      badge: "WINTER",
+      isFeatured: true,
+      sizes: ["40", "41", "42", "43"],
+      colors: [
+        { name: "Pure Platinum / Crimson", hex: "#EF4444" },
+        { name: "Obsidian Blue", hex: "#1E3A8A" },
+      ],
+      image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80",
+      description: "Featherlight daily runner equipped with ZoomX foam technology delivering 85% energy propulsion on asphalt.",
       inStock: true,
     },
     {
-      _id: "shoe-4",
-      name: "TerraGrip All-Weather Vibram Trail Boot",
-      category: "Outdoor Trail",
-      price: 19499,
-      compareAtPrice: 22500,
-      image: "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=800&auto=format&fit=crop&q=80",
-      description: "Waterproof ripstop membrane, TPU protective mudguard, and deep 4.5mm multi-directional Vibram Megagrip traction outsole.",
-      propulsionTag: "Vibram Megagrip Lug",
-      heelDrop: "34mm / 8mm Drop",
-      weight: "345g",
-      energyReturn: "81% Return",
-      rating: 4.9,
-      reviewCount: 81,
-      sizes: ["8", "8.5", "9", "9.5", "10", "11", "12"],
-      inStock: true,
-      dropTag: "ALPINE TESTED",
-    },
-    {
-      _id: "shoe-5",
-      name: "HyperGhost Nitro Supercritical Speedster",
-      category: "Running",
-      price: 24999,
-      compareAtPrice: 28999,
-      image: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=800&auto=format&fit=crop&q=80",
-      description: "Ultra-featherweight mono-mesh upper with dual-density nitrogen foam and high-tensile carbon-weave spine for explosive forward launch.",
-      propulsionTag: "Dual Nitro Matrix",
-      heelDrop: "40mm / 8mm Drop",
-      weight: "172g",
-      energyReturn: "92% Return",
+      _id: "sh-3",
+      name: "Air Jordan 1 Low Celtics",
+      category: "Men's Shoes",
+      subCategory: "Nike Dunk",
+      price: 115.0,
+      compareAtPrice: 140.0,
       rating: 5.0,
-      reviewCount: 52,
-      sizes: ["8", "9", "10", "10.5", "11", "12"],
+      reviewCount: 88,
+      badge: "SALE! 20%",
+      isFeatured: true,
+      sizes: ["38", "40", "41", "42", "43"],
+      colors: [
+        { name: "Lucky Green / White", hex: "#10B981" },
+        { name: "Black Toe", hex: "#0F172A" },
+      ],
+      image: "https://images.unsplash.com/photo-1607522370275-f14206abe5d3?w=600&auto=format&fit=crop&q=80",
+      description: "Timeless low-top retro dressed in clean clover emerald panels and vulcanized traction rubber outsole.",
       inStock: true,
-      dropTag: "DEADSTOCK RAFFLE",
     },
     {
-      _id: "shoe-6",
-      name: "Horizon Cyber Chunky Streetwear Sneaker",
-      category: "Streetwear",
-      price: 16999,
-      compareAtPrice: 19500,
-      image: "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=800&auto=format&fit=crop&q=80",
-      description: "Architectural chunky midsole geometry with reflective 3M overlays, ballistic Cordura nylon panels, and quick-cinch speed lacing.",
-      propulsionTag: "Architectural Geometry",
-      heelDrop: "42mm / 12mm Drop",
-      weight: "420g",
-      energyReturn: "78% Return",
+      _id: "sh-4",
+      name: "Jordan 1 Mid Triple White",
+      category: "Men's Shoes",
+      subCategory: "Nike City",
+      price: 39.0,
+      compareAtPrice: 50.0,
+      rating: 4.8,
+      reviewCount: 65,
+      badge: "SALE! 24%",
+      isFeatured: true,
+      sizes: ["38", "40", "41", "42"],
+      colors: [
+        { name: "Triple White", hex: "#E2E8F0" },
+        { name: "Pure Sand", hex: "#CBD5E1" },
+      ],
+      image: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=600&auto=format&fit=crop&q=80",
+      description: "Clean monochromatic high-top with perforated toe box and padded mid-cut collar for all-day comfort.",
+      inStock: true,
+    },
+    {
+      _id: "sh-5",
+      name: "Nike Zoom Mercurial Superfly",
+      category: "Men's Shoes",
+      subCategory: "Free Metcon",
+      price: 85.0,
+      compareAtPrice: 110.0,
+      rating: 4.9,
+      reviewCount: 77,
+      badge: "MEN'S",
+      isFeatured: true,
+      sizes: ["40", "41", "42", "42.5", "43"],
+      colors: [
+        { name: "Volt Yellow / Crimson", hex: "#FACC15" },
+        { name: "Black / Volt", hex: "#0F172A" },
+      ],
+      image: "https://images.unsplash.com/photo-1511556532299-8f662fc26c06?w=600&auto=format&fit=crop&q=80",
+      description: "Pitch-ready soccer cleat featuring dynamic fit collar and Vaporposite+ grippy mesh upper.",
+      inStock: true,
+    },
+    {
+      _id: "sh-6",
+      name: "Air Jordan 1 High Chicago Reimagined",
+      category: "Men's Shoes",
+      subCategory: "Nike Dunk",
+      price: 175.0,
+      compareAtPrice: 210.0,
+      rating: 5.0,
+      reviewCount: 320,
+      badge: "WINTER",
+      isBestSeller: true,
+      sizes: ["40", "41", "42", "42.5", "43"],
+      colors: [
+        { name: "Varsity Red / Black", hex: "#EF4444" },
+        { name: "Sail White", hex: "#F8FAFC" },
+      ],
+      image: "https://images.unsplash.com/photo-1556906781-9a412961c28c?w=600&auto=format&fit=crop&q=80",
+      description: "The grail colorway built with cracked vintage leather collar and aged sail midsole.",
+      inStock: true,
+    },
+    {
+      _id: "sh-7",
+      name: "Nike Air Max 270",
+      category: "Women's Shoes",
+      subCategory: "Nike City",
+      price: 144.0,
+      compareAtPrice: 160.0,
+      rating: 4.9,
+      reviewCount: 210,
+      badge: "BESTSELLER",
+      isBestSeller: true,
+      sizes: ["38", "40", "41"],
+      colors: [
+        { name: "Black / Punch Pink", hex: "#F43F5E" },
+        { name: "Triple Black", hex: "#0F172A" },
+      ],
+      image: "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=600&auto=format&fit=crop&q=80",
+      description: "Dramatic 270-degree visible Air heel unit paired with flexible bootie construction.",
+      inStock: true,
+    },
+    {
+      _id: "sh-8",
+      name: "Nike Air Max Plus Drift",
+      category: "Men's Shoes",
+      subCategory: "Nike Dunk",
+      price: 180.0,
+      compareAtPrice: 200.0,
+      priceRange: "$65.00 – $200.00",
+      rating: 4.8,
+      reviewCount: 115,
+      badge: "BEST RATED",
+      isBestSeller: true,
+      sizes: ["40", "41", "42", "43"],
+      colors: [
+        { name: "Black / Hyper Blue", hex: "#0284C7" },
+        { name: "Gradient Red", hex: "#DC2626" },
+      ],
+      image: "https://images.unsplash.com/photo-1575537302964-96cd47c06b1b?w=600&auto=format&fit=crop&q=80",
+      description: "Defiant flame cage ribbing with Tuned Air dual-pressure chambers for maximum stability.",
+      inStock: true,
+    },
+    {
+      _id: "sh-9",
+      name: "Nike Air Zoom Pegasus 39 Lilac",
+      category: "Women's Shoes",
+      subCategory: "Free Metcon",
+      price: 22.0,
+      compareAtPrice: 35.0,
+      rating: 4.8,
+      reviewCount: 54,
+      badge: "SALE! 35%",
+      sizes: ["38", "40", "41"],
+      colors: [
+        { name: "Lilac Violet / Silver", hex: "#A855F7" },
+        { name: "White Mint", hex: "#6EE7B7" },
+      ],
+      image: "https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?w=600&auto=format&fit=crop&q=80",
+      description: "Dual Zoom Air units at forefoot and heel designed specifically for cushioned transition phases.",
+      inStock: true,
+    },
+    {
+      _id: "sh-10",
+      name: "Nike Flex Runner 2 Slip-On",
+      category: "Children",
+      subCategory: "Nike City",
+      price: 18.0,
+      compareAtPrice: 25.0,
+      rating: 4.9,
+      reviewCount: 68,
+      badge: "SALE! 28%",
+      sizes: ["38", "40"],
+      colors: [
+        { name: "Lime Glow / Black", hex: "#84CC16" },
+        { name: "Royal Blue", hex: "#1D4ED8" },
+      ],
+      image: "https://images.unsplash.com/photo-1595341888016-a392ef81b7de?w=600&auto=format&fit=crop&q=80",
+      description: "Stretchy lace-free slip-on runner engineered with reinforced leather sides and flex grooves.",
+      inStock: true,
+    },
+    {
+      _id: "sh-11",
+      name: "Nike Omni Multi-Court Indoor",
+      category: "Women's Shoes",
+      subCategory: "Free Metcon",
+      price: 32.0,
+      compareAtPrice: 40.0,
+      priceRange: "$30.00 – $40.00",
       rating: 4.7,
-      reviewCount: 110,
-      sizes: ["7", "8", "9", "10", "11"],
+      reviewCount: 42,
+      badge: "SALE! 20%",
+      sizes: ["38", "40", "41"],
+      colors: [
+        { name: "Soft Pink / White", hex: "#F472B6" },
+        { name: "Arctic Ice", hex: "#E0F2FE" },
+      ],
+      image: "https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=600&auto=format&fit=crop&q=80",
+      description: "Non-marking indoor gym shoe providing lateral support for volleyball, badminton, and gym training.",
+      inStock: true,
+    },
+    {
+      _id: "sh-12",
+      name: "Air Jordan 1 Mid Shadow",
+      category: "Men's Shoes",
+      subCategory: "Nike Dunk",
+      price: 125.0,
+      compareAtPrice: 150.0,
+      rating: 4.9,
+      reviewCount: 180,
+      badge: "BEST RATED",
+      isBestSeller: true,
+      sizes: ["40", "41", "42", "43"],
+      colors: [
+        { name: "Medium Grey / Black", hex: "#475569" },
+        { name: "Triple Black", hex: "#0F172A" },
+      ],
+      image: "https://images.unsplash.com/photo-1512374382149-233c42b6a83b?w=600&auto=format&fit=crop&q=80",
+      description: "The moody Shadow mid silhouette crafted with supple tumbled leather and tonal rubber cupsole.",
       inStock: true,
     },
   ];
 
-  const shoes = products.length > 0 ? products : defaultKicks;
+  const shoesCatalog = products && products.length > 0 ? products : defaultSneakers;
 
-  const brandName =
-    business?.businessName ||
-    business?.name ||
-    customization?.heroHeadline ||
-    "SOLECRAFT";
+  // Cart operations
+  const handleAddToCart = (productToAdd, customVariant) => {
+    const size = customVariant?.selectedSize || productToAdd.selectedSize || `${sizeStandard} 41`;
+    const color = customVariant?.selectedColor || productToAdd.selectedColor || "Standard";
 
-  const brandLogo =
-    customization?.logo ||
-    business?.logo ||
-    null;
+    dispatch(
+      addToCart({
+        id: `${productToAdd._id || productToAdd.id}-${size}-${color}`,
+        name: `${productToAdd.name} (${size}, ${color})`,
+        price: Number(productToAdd.price) || 0,
+        image: getProductImage(productToAdd, productToAdd.image),
+        quantity: 1,
+        selectedSize: size,
+        selectedColor: color,
+      })
+    );
+    toast.success(`Added ${productToAdd.name} [${size}] to bag! 👟`);
+  };
 
-  const handleAddToCart = (item, size = "US 10") => {
-    if (isOutOfStock(item)) {
-      toast.error(`Sorry, ${item.name || "silhouette"} is sold out.`);
-      return;
+  const handleUpdateQuantity = (itemId, qty) => {
+    if (qty <= 0) {
+      dispatch(removeFromCart(itemId));
+    } else {
+      dispatch(updateCartQuantity({ id: itemId, quantity: qty }));
     }
-    const cartProduct = {
-      ...item,
-      selectedSize: size,
-    };
-    dispatch(addToCart({ product: cartProduct, quantity: 1 }));
-    toast.success(`${item.name} (${size}) added to Shoebox!`);
-    setCartOpen(true);
   };
 
-  const handleUpdateQuantity = (id, newQty) => {
-    dispatch(updateCartQuantity({ productId: id, quantity: newQty }));
-  };
-
-  const handleRemoveItem = (id) => {
-    dispatch(removeFromCart(id));
+  const handleRemoveItem = (itemId) => {
+    dispatch(removeFromCart(itemId));
+    toast.success("Removed from bag");
   };
 
   const handleCheckout = () => {
+    if (cartItems.length === 0) {
+      toast.error("Your sneaker bag is empty!");
+      return;
+    }
     setCartOpen(false);
-    navigate("/cart");
+    navigate("/checkout");
   };
 
-  const cartCount = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
-
-  // Dynamic Hero Image based on Colorway
-  const heroColorways = {
-    volt: {
-      name: "Volt Lime Carbon",
-      accent: "#84CC16",
-      image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=900&auto=format&fit=crop&q=80",
-      tagline: "Propulsion 89% Energy Return • 38mm Stack",
-    },
-    infrared: {
-      name: "Infrared Circuit",
-      accent: "#F97316",
-      image: "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=900&auto=format&fit=crop&q=80",
-      tagline: "Court '85 Vintage Tumbled Leather Edition",
-    },
-    stealth: {
-      name: "Stealth Carbon",
-      accent: "#E4E4E7",
-      image: "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=900&auto=format&fit=crop&q=80",
-      tagline: "Alpine All-Weather Vibram Megagrip Traction",
-    },
-    cyan: {
-      name: "Hyper-Cyan Nitro",
-      accent: "#06B6D4",
-      image: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=900&auto=format&fit=crop&q=80",
-      tagline: "Supercritical Gas Nitrogen Mono-Mesh 172g",
-    },
+  // Quick View Handler
+  const handleOpenQuickView = (product, size, color) => {
+    setQuickViewProduct(product);
+    setQuickViewSize(size || "41");
+    setQuickViewColor(color || product.colors?.[0] || { name: "Standard", hex: "#000" });
   };
 
-  const currentHero = heroColorways[heroColorway] || heroColorways.volt;
+  // Best sellers filtered by tab
+  const bestSellersFiltered = useMemo(() => {
+    if (bestSellerTab === "Sales") {
+      return shoesCatalog.filter((p) => p.compareAtPrice && p.compareAtPrice > p.price);
+    }
+    if (bestSellerTab === "Women") {
+      return shoesCatalog.filter((p) => (p.category || "").toLowerCase().includes("women"));
+    }
+    if (bestSellerTab === "Children") {
+      return shoesCatalog.filter((p) => (p.category || "").toLowerCase().includes("children") || (p.category || "").toLowerCase().includes("kid"));
+    }
+    // Men default
+    return shoesCatalog.filter((p) => (p.category || "").toLowerCase().includes("men"));
+  }, [shoesCatalog, bestSellerTab]);
 
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-[#09090B] text-zinc-100 selection:bg-lime-400 selection:text-black">
-      {/* High-Velocity Navbar */}
+    <div className="min-h-screen bg-white text-slate-900 font-sans flex flex-col justify-between selection:bg-blue-600 selection:text-white">
+      {/* ================= 1. NAVBAR ================= */}
       <Navbar
-        brandName={brandName}
-        brandLogo={brandLogo}
-        business={business}
+        brandName={business?.name || "KICKS VAULT"}
         activePage={activePage}
         setActivePage={setActivePage}
-        cartCount={cartCount}
+        cartCount={cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0)}
         onOpenCart={() => setCartOpen(true)}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -294,541 +389,431 @@ export default function ShoesStoreTemplate({
         setSizeStandard={setSizeStandard}
       />
 
-      {/* Main Content Area */}
-      <main className="flex-1">
-        {/* ================= PAGE 1: DROP HOME ================= */}
+      <main className="flex-1 pb-16">
+        {/* ================= VIEW 1: HOMEPAGE (Reference Image 1) ================= */}
         {activePage === "home" && (
-          <div className="space-y-20 pb-20">
-            {/* ================= DISTINCT SNEAKER HERO SECTION ================= */}
-            <section className="relative overflow-hidden border-b border-zinc-800/80 bg-gradient-to-b from-[#131317] via-[#0D0D10] to-[#09090B] py-16 sm:py-24">
-              {/* Background Kinetic Grid Pattern */}
-              <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f293712_1px,transparent_1px),linear-gradient(to_bottom,#1f293712_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+          <div className="space-y-12 sm:space-y-16">
+            {/* ================= HERO SNEAKER BANNER ================= */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+              <div className="relative rounded-3xl bg-gradient-to-r from-zinc-950 via-slate-900 to-black text-white p-8 sm:p-14 overflow-hidden shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8">
+                {/* Background Sport Graphic Watermark */}
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 font-black text-7xl sm:text-9xl text-white/5 tracking-tighter select-none pointer-events-none italic">
+                  SPORT SHOES
+                </div>
 
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-                {/* Left Column: Kinetic Headlines & Drop Ticker (7 Cols) */}
-                <div className="lg:col-span-7 space-y-6">
-                  {/* Live Drop Telemetry Pill */}
-                  <div className="inline-flex flex-wrap items-center gap-3 px-3.5 py-1.5 rounded-2xl bg-zinc-900/90 border border-zinc-700/80 backdrop-blur-md font-mono text-xs shadow-lg">
-                    <div className="flex items-center gap-1.5 text-lime-400 font-bold">
-                      <span className="w-2 h-2 rounded-full bg-lime-400 animate-ping" />
-                      <Flame size={14} className="fill-lime-400" />
-                      <span>NEXT DEADSTOCK DROP IN:</span>
-                    </div>
+                {/* Left Hero Copy */}
+                <div className="space-y-5 z-10 max-w-lg text-left">
+                  <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-600/20 text-red-400 border border-red-500/30 text-xs font-black uppercase tracking-wider">
+                    <Sparkles size={13} /> Limited Drop Release
+                  </span>
 
-                    {/* Live Ticker Clock */}
-                    <div className="flex items-center gap-1 text-white font-black bg-black px-2.5 py-1 rounded-lg border border-zinc-800 tracking-wider">
-                      <span>{String(dropTime.hours).padStart(2, "0")}h</span>
-                      <span className="text-lime-400">:</span>
-                      <span>{String(dropTime.minutes).padStart(2, "0")}m</span>
-                      <span className="text-lime-400">:</span>
-                      <span>{String(dropTime.seconds).padStart(2, "0")}s</span>
-                      <span className="text-lime-400">:</span>
-                      <span className="text-lime-400 w-5 text-left">{String(dropTime.ms).padStart(2, "0")}</span>
-                    </div>
-                  </div>
-
-                  {/* Velocity Headline */}
-                  <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black uppercase tracking-tight text-white font-mono leading-[0.95]">
-                    Engineered <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-lime-400 via-emerald-300 to-lime-500">
-                      For Velocity.
-                    </span>
-                    <br />
-                    <span className="text-zinc-500 text-3xl sm:text-5xl lg:text-6xl">
-                      Born in the Vault.
+                  <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-none uppercase">
+                    Air Jordan 1 <br />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-rose-400 to-amber-300">
+                      Chicago Retro
                     </span>
                   </h1>
 
-                  <p className="text-xs sm:text-sm text-zinc-400 max-w-xl leading-relaxed font-sans font-normal">
-                    {customization?.heroSubheadline ||
-                      "Proprietary supercritical nitrogen-infused foam coupled with full-length curved carbon spring plates. Tuned in our Brooklyn laboratory for elite marathoners and street collectors."}
+                  <p className="text-xs sm:text-sm text-slate-300 max-w-sm leading-relaxed">
+                    Crafted with cracked vintage leather collar, encapsulated Air sole propulsion, and museum-grade collector certification.
                   </p>
 
-                  {/* Telemetry Metrics Bar */}
-                  <div className="grid grid-cols-3 gap-3 max-w-lg font-mono text-xs pt-2">
-                    <div className="p-3 rounded-2xl bg-zinc-900/60 border border-zinc-800">
-                      <span className="text-[10px] text-zinc-500 uppercase block">Energy Return</span>
-                      <span className="text-base font-black text-lime-400">89.4%</span>
+                  <div className="flex items-center gap-4 pt-2">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-black tracking-wider block">
+                        SPECIAL PRICE
+                      </span>
+                      <span className="text-2xl sm:text-3xl font-black text-white">
+                        $299.99
+                      </span>
                     </div>
-                    <div className="p-3 rounded-2xl bg-zinc-900/60 border border-zinc-800">
-                      <span className="text-[10px] text-zinc-500 uppercase block">Plate Tech</span>
-                      <span className="text-base font-black text-white">Full Carbon</span>
-                    </div>
-                    <div className="p-3 rounded-2xl bg-zinc-900/60 border border-zinc-800">
-                      <span className="text-[10px] text-zinc-500 uppercase block">Chassis Weight</span>
-                      <span className="text-base font-black text-white">184g</span>
-                    </div>
-                  </div>
-
-                  {/* CTA Buttons */}
-                  <div className="flex flex-wrap gap-4 pt-3 font-mono text-xs">
-                    <button
-                      onClick={() => setActivePage("sneaker-vault")}
-                      className="px-8 py-4 bg-gradient-to-r from-lime-400 to-lime-500 hover:from-lime-300 hover:to-lime-400 text-black font-black uppercase tracking-wider rounded-2xl transition-all shadow-xl shadow-lime-500/20 hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-2.5"
-                    >
-                      <Zap size={18} className="fill-black" />
-                      <span>Enter Sneaker Vault</span>
-                    </button>
 
                     <button
-                      onClick={() => setActivePage("sole-tech")}
-                      className="px-6 py-4 bg-zinc-900/80 hover:bg-zinc-800 text-white font-bold uppercase tracking-wider rounded-2xl border border-zinc-700 transition cursor-pointer flex items-center gap-2"
+                      type="button"
+                      onClick={() => {
+                        handleAddToCart(shoesCatalog[5] || shoesCatalog[0]);
+                      }}
+                      className="px-8 py-3.5 bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-wider rounded-xl transition cursor-pointer shadow-lg shadow-red-600/40 active:scale-98"
                     >
-                      <Activity size={16} className="text-lime-400" />
-                      <span>Propulsion Lab Specs</span>
+                      ORDER NOW
                     </button>
                   </div>
                 </div>
 
-                {/* Right Column: Interactive 3D Sneaker Showcase with Colorway Selector (5 Cols) */}
-                <div className="lg:col-span-5 space-y-4">
-                  <div className="relative aspect-square rounded-3xl bg-gradient-to-b from-[#18181F] to-[#0E0E12] border border-zinc-700/80 p-8 flex flex-col justify-between overflow-hidden shadow-2xl group">
-                    {/* Glowing Motion Blur Halo */}
-                    <div className="absolute inset-0 bg-radial-gradient from-lime-500/15 via-transparent to-transparent pointer-events-none" />
-
-                    {/* Top Pill: Colorway Name */}
-                    <div className="flex items-center justify-between z-10 font-mono text-[11px]">
-                      <span className="bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-zinc-800 text-white font-bold">
-                        COLORWAY: <span className="text-lime-400">{currentHero.name}</span>
-                      </span>
-                      <span className="bg-lime-500/20 text-lime-400 px-2 py-0.5 rounded text-[10px] font-black border border-lime-500/30">
-                        IN VAULT
-                      </span>
-                    </div>
-
-                    {/* Floating High-Res Sneaker Image with Float Animation */}
-                    <div className="relative z-10 w-full aspect-[4/3] flex items-center justify-center py-4">
-                      <img
-                        src={currentHero.image}
-                        alt={currentHero.name}
-                        className="w-full h-full object-contain filter drop-shadow-[0_20px_30px_rgba(0,0,0,0.85)] transform group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-700 ease-out"
-                      />
-                    </div>
-
-                    {/* Colorway Switcher Buttons directly on Hero */}
-                    <div className="z-10 pt-4 border-t border-zinc-800 flex items-center justify-between font-mono">
-                      <span className="text-[10px] text-zinc-400 uppercase">CHASSIS FINISH:</span>
-                      <div className="flex items-center gap-2">
-                        {Object.entries(heroColorways).map(([key, val]) => (
-                          <button
-                            key={key}
-                            onClick={() => setHeroColorway(key)}
-                            className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer ${
-                              heroColorway === key
-                                ? "border-white scale-125 shadow-lg shadow-lime-500/30 ring-2 ring-lime-400/50"
-                                : "border-zinc-700 opacity-60 hover:opacity-100"
-                            }`}
-                            style={{ backgroundColor: val.accent }}
-                            title={val.name}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Footnote under Hero Stage */}
-                  <div className="flex items-center justify-between text-[11px] font-mono text-zinc-500 px-2">
-                    <span>⚡ ISO-9001 Deadstock Authenticated</span>
-                    <span>Ships in RFID Numbered Box</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Kinetic Marquee Ticker Strip */}
-              <div className="mt-16 border-t border-zinc-800/80 bg-black/80 py-3.5 overflow-hidden">
-                <div className="flex items-center gap-8 whitespace-nowrap font-mono font-black text-xs uppercase tracking-widest text-zinc-400 animate-marquee">
-                  <span>⚡ NITROGEN SUPERCRITICAL FOAM</span>
-                  <span className="text-lime-400">•</span>
-                  <span>FULL-LENGTH CURVED CARBON LEVER</span>
-                  <span className="text-lime-400">•</span>
-                  <span>100% RFID DEADSTOCK NFC VERIFICATION</span>
-                  <span className="text-lime-400">•</span>
-                  <span>30-DAY STREET RUN ROAD TRIAL</span>
-                  <span className="text-lime-400">•</span>
-                  <span>VIBRAM MEGAGRIP ALPINE TRACTION</span>
-                  <span className="text-lime-400">•</span>
-                  <span>FREE CARBON-NEUTRAL EXPRESS RUNNER DISPATCH</span>
+                {/* Right Angled Sneaker Visual */}
+                <div className="relative z-10 w-full md:w-96 h-56 sm:h-72 flex items-center justify-center">
+                  <img
+                    src="https://images.unsplash.com/photo-1556906781-9a412961c28c?w=900&auto=format&fit=crop&q=80"
+                    alt="Hero Jordan Chicago"
+                    className="max-h-full w-auto object-contain filter drop-shadow-[0_25px_30px_rgba(0,0,0,0.8)] -rotate-12 hover:rotate-0 transition-transform duration-700 ease-out"
+                  />
                 </div>
               </div>
             </section>
 
-            {/* ================= BESTSELLER SILHOUETTES GRID ================= */}
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-zinc-800 pb-4">
-                <div>
-                  <div className="flex items-center gap-2 text-xs font-mono font-bold text-lime-400 uppercase tracking-widest">
-                    <Flame size={14} />
-                    <span>Trending on the Asphalt</span>
-                  </div>
-                  <h2 className="text-2xl sm:text-4xl font-black text-white font-mono uppercase tracking-tight mt-1">
-                    Hype Silhouettes
-                  </h2>
-                </div>
-
-                <button
-                  onClick={() => setActivePage("sneaker-vault")}
-                  className="text-xs font-mono text-lime-400 hover:text-lime-300 font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
-                >
-                  <span>Explore Complete Vault (6 Silhouettes)</span>
-                  <ArrowRight size={14} />
-                </button>
+            {/* ================= SECTION 1: WINTER COLLECTIONS ================= */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+              <div className="text-center space-y-1">
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                  Winter Collections
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Cardigan helvetica erresha, portland celiao truffaut
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {shoes.slice(0, 4).map((kicks) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 pt-4">
+                {shoesCatalog.slice(0, 5).map((shoe) => (
                   <ProductCard
-                    key={kicks._id}
-                    product={kicks}
+                    key={`winter-${shoe._id || shoe.id}`}
+                    product={shoe}
                     onSelectProduct={(p) => {
                       setSelectedProduct(p);
                       setActivePage("product-detail");
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
-                    onAddToCart={(p, sz) => handleAddToCart(p, sz)}
+                    onAddToCart={handleAddToCart}
+                    onQuickView={handleOpenQuickView}
                     sizeStandard={sizeStandard}
                   />
                 ))}
               </div>
             </section>
 
-            {/* ================= INTERACTIVE SOLE LAB & GAIT ANALYZER ================= */}
+            {/* ================= DUAL PROMO VOUCHER STRIP (Reference Image 1) ================= */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="bg-gradient-to-r from-[#121216] via-[#16161D] to-[#121216] rounded-3xl border border-zinc-800 p-8 sm:p-12 space-y-10 relative overflow-hidden shadow-2xl">
-                <div className="max-w-2xl space-y-3">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-lime-500/10 text-lime-400 text-xs font-mono font-bold border border-lime-500/30">
-                    <Activity size={14} />
-                    <span>BIOMECHANICAL LABORATORY</span>
-                  </div>
-                  <h3 className="text-2xl sm:text-4xl font-black text-white font-mono uppercase">
-                    Anatomy of Explosive Push-Off
-                  </h3>
-                  <p className="text-xs sm:text-sm text-zinc-400 font-sans leading-relaxed">
-                    Compare how our three proprietary sole technologies perform across energy return, impact dampening, and wet pavement grip.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono">
-                  {/* Tech 1 */}
-                  <div className="p-6 rounded-2xl bg-zinc-950/80 border border-zinc-800 space-y-4 hover:border-lime-400/50 transition">
-                    <div className="w-12 h-12 rounded-xl bg-lime-500/10 text-lime-400 flex items-center justify-center font-bold">
-                      <Zap size={24} />
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-lime-400 font-bold uppercase">Layer 01 // Springboard</span>
-                      <h4 className="text-base font-bold text-white uppercase">Curved Carbon Spoon Plate</h4>
-                    </div>
-                    <p className="text-xs text-zinc-400 font-sans leading-relaxed">
-                      Custom-molded aerospace carbon fiber running the entire length of the shoe. When your foot flexes, it stores mechanical energy and springs forward, reducing calf exertion by up to 14%.
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Left Card: First Purchase Voucher */}
+                <div className="p-4 sm:p-5 rounded-2xl border-2 border-dashed border-red-300 bg-red-50/40 flex items-center justify-between gap-4 text-left">
+                  <div className="space-y-1">
+                    <h4 className="text-xs sm:text-sm font-bold text-red-900">
+                      Super discount for your first purchase
+                    </h4>
+                    <p className="text-[11px] text-slate-500">
+                      Use discount code in checkout page.
                     </p>
-                    <div className="pt-2 border-t border-zinc-900 flex justify-between text-[11px] text-zinc-300">
-                      <span>Efficiency Boost:</span>
-                      <span className="text-lime-400 font-black">+4.2% Pace</span>
-                    </div>
                   </div>
-
-                  {/* Tech 2 */}
-                  <div className="p-6 rounded-2xl bg-zinc-950/80 border border-zinc-800 space-y-4 hover:border-lime-400/50 transition">
-                    <div className="w-12 h-12 rounded-xl bg-lime-500/10 text-lime-400 flex items-center justify-center font-bold">
-                      <Sparkles size={24} />
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-lime-400 font-bold uppercase">Layer 02 // Cushioning</span>
-                      <h4 className="text-base font-bold text-white uppercase">Supercritical Nitrogen Foam</h4>
-                    </div>
-                    <p className="text-xs text-zinc-400 font-sans leading-relaxed">
-                      Liquid nitrogen is injected at supercritical pressure into molten elastomer beads, creating millions of micro gas pockets. Delivers supreme cloud cushion with zero packing out.
-                    </p>
-                    <div className="pt-2 border-t border-zinc-900 flex justify-between text-[11px] text-zinc-300">
-                      <span>Energy Return:</span>
-                      <span className="text-lime-400 font-black">89.4% Elastic</span>
-                    </div>
-                  </div>
-
-                  {/* Tech 3 */}
-                  <div className="p-6 rounded-2xl bg-zinc-950/80 border border-zinc-800 space-y-4 hover:border-lime-400/50 transition">
-                    <div className="w-12 h-12 rounded-xl bg-lime-500/10 text-lime-400 flex items-center justify-center font-bold">
-                      <ShieldCheck size={24} />
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-lime-400 font-bold uppercase">Layer 03 // Traction</span>
-                      <h4 className="text-base font-bold text-white uppercase">Vibram Megagrip Rubber</h4>
-                    </div>
-                    <p className="text-xs text-zinc-400 font-sans leading-relaxed">
-                      Formulated in Italy with alpine rock compound. 4.5mm chevron lugs cut through standing rainwater on city streets and provide supreme braking grip on downhill trails.
-                    </p>
-                    <div className="pt-2 border-t border-zinc-900 flex justify-between text-[11px] text-zinc-300">
-                      <span>Wet Friction Index:</span>
-                      <span className="text-lime-400 font-black">0.82 µ (Lab Max)</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-zinc-800 text-xs font-mono">
-                  <span className="text-zinc-400">
-                    Want an exact biomechanical match for your marathon distance or court game?
-                  </span>
                   <button
-                    onClick={() => setActivePage("sole-tech")}
-                    className="px-6 py-2.5 rounded-xl bg-lime-400 text-black font-black uppercase tracking-wider hover:bg-lime-300 transition cursor-pointer"
+                    onClick={() => {
+                      navigator.clipboard.writeText("FIRST 250");
+                      toast.success("Coupon 'FIRST 250' copied!");
+                    }}
+                    className="px-3.5 py-1.5 bg-red-500 hover:bg-red-600 text-white font-black text-xs uppercase tracking-wider rounded-lg shadow-sm cursor-pointer shrink-0"
                   >
-                    View Complete Lab Telemetry
+                    FIRST 250
+                  </button>
+                </div>
+
+                {/* Right Card: 2nd Shopping Surprise */}
+                <div className="p-4 sm:p-5 rounded-2xl border-2 border-dashed border-blue-300 bg-blue-50/40 flex items-center justify-between gap-4 text-left">
+                  <div className="space-y-1">
+                    <h4 className="text-xs sm:text-sm font-bold text-blue-950">
+                      2nd shopping surprise campaign!
+                    </h4>
+                    <p className="text-[11px] text-slate-500">
+                      Exclusive rewards on seasonal member drops.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setActivePage("catalog");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="px-3.5 py-1.5 bg-[#1E3A8A] hover:bg-blue-800 text-white font-black text-xs uppercase tracking-wider rounded-lg shadow-sm cursor-pointer shrink-0"
+                  >
+                    Check Products ›
                   </button>
                 </div>
               </div>
             </section>
 
-            {/* ================= RFID AUTHENTICITY PROTOCOL BANNER ================= */}
+            {/* ================= SECTION 2: FEATURED PRODUCTS ================= */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+              <div className="flex items-end justify-between border-b border-slate-100 pb-3">
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                  Featured Products
+                </h3>
+                <button
+                  onClick={() => {
+                    setActivePage("catalog");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="text-xs font-bold text-slate-500 hover:text-blue-600 transition flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Click for all products in the category</span>
+                  <ChevronRight size={13} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+                {shoesCatalog.slice(1, 7).map((shoe) => (
+                  <ProductCard
+                    key={`feat-${shoe._id || shoe.id}`}
+                    product={shoe}
+                    onSelectProduct={(p) => {
+                      setSelectedProduct(p);
+                      setActivePage("product-detail");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    onAddToCart={handleAddToCart}
+                    onQuickView={handleOpenQuickView}
+                    sizeStandard={sizeStandard}
+                  />
+                ))}
+              </div>
+            </section>
+
+            {/* ================= SECTION 3: 3 DYNAMIC TREND BANNERS (Reference Image 1) ================= */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="bg-zinc-950 rounded-3xl border border-zinc-800 p-8 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-8">
-                <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-lime-500/10 text-lime-400 flex items-center justify-center shrink-0 border border-lime-500/20">
-                    <ShieldCheck size={28} />
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-mono text-lime-400 font-bold uppercase tracking-widest">
-                      Zero Counterfeit Tolerance
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-5 text-left">
+                {/* Large Left Banner (7 cols): 2023 New Styles */}
+                <div className="md:col-span-7 rounded-3xl bg-slate-100 p-6 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xs relative overflow-hidden group">
+                  <div className="space-y-2 z-10 max-w-xs">
+                    <span className="px-2 py-0.5 rounded bg-black text-white text-[9px] font-black uppercase tracking-wider">
+                      NIKE DUNK
                     </span>
-                    <h4 className="text-xl sm:text-2xl font-black text-white font-mono uppercase">
-                      The SoleCraft Tamper-Proof NFC Tag
-                    </h4>
-                    <p className="text-xs text-zinc-400 max-w-xl font-sans leading-relaxed">
-                      Tap your smartphone against the green eyelet tag on delivery. Instantly verify the individual serial number, production batch, and laboratory inspector sign-off on the public ledger.
+                    <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                      2023 New Styles
+                    </h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      Join the trend of poster colors.
                     </p>
+                    <button
+                      onClick={() => {
+                        setActivePage("catalog");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className="text-xs font-black text-slate-900 hover:text-blue-600 underline pt-2 block cursor-pointer"
+                    >
+                      See More Products
+                    </button>
+                  </div>
+
+                  <div className="w-52 h-44 shrink-0 flex items-center justify-center">
+                    <img
+                      src="https://images.unsplash.com/photo-1575537302964-96cd47c06b1b?w=600&auto=format&fit=crop&q=80"
+                      alt="New Styles"
+                      className="max-h-full w-auto object-contain group-hover:scale-110 transition duration-500"
+                    />
                   </div>
                 </div>
 
-                <button
-                  onClick={() => setActivePage("authenticity-guarantee")}
-                  className="px-6 py-3.5 rounded-xl bg-zinc-900 border border-zinc-700 text-white hover:text-lime-400 hover:border-lime-400 transition font-mono font-bold text-xs uppercase tracking-wider cursor-pointer whitespace-nowrap"
-                >
-                  Verify Tag Protocol →
-                </button>
+                {/* Right Stack (5 cols): Blue Sport & Pink Teen */}
+                <div className="md:col-span-5 flex flex-col gap-4">
+                  {/* Top: Blue Sport Trends */}
+                  <div className="flex-1 rounded-2xl bg-slate-100 p-5 sm:p-6 flex items-center justify-between gap-4 group">
+                    <div className="space-y-1.5 z-10">
+                      <span className="text-[9px] font-black uppercase text-slate-400">
+                        FREE METCON
+                      </span>
+                      <h4 className="text-base sm:text-lg font-black text-slate-900">
+                        Blue Sport Trends
+                      </h4>
+                      <button
+                        onClick={() => {
+                          setActivePage("catalog");
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="text-xs font-bold text-slate-800 underline block cursor-pointer"
+                      >
+                        See More Products
+                      </button>
+                    </div>
+                    <div className="w-28 h-20 shrink-0">
+                      <img
+                        src="https://images.unsplash.com/photo-1552346154-21d32810aba3?w=400&auto=format&fit=crop&q=80"
+                        alt="Blue Sport"
+                        className="w-full h-full object-contain group-hover:scale-105 transition"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Bottom: Pink Teen Shoes */}
+                  <div className="flex-1 rounded-2xl bg-slate-100 p-5 sm:p-6 flex items-center justify-between gap-4 group">
+                    <div className="space-y-1.5 z-10">
+                      <span className="text-[9px] font-black uppercase text-slate-400">
+                        NIKE CITY
+                      </span>
+                      <h4 className="text-base sm:text-lg font-black text-slate-900">
+                        Pink Teen Shoes
+                      </h4>
+                      <button
+                        onClick={() => {
+                          setActivePage("catalog");
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="text-xs font-bold text-slate-800 underline block cursor-pointer"
+                      >
+                        See More Products
+                      </button>
+                    </div>
+                    <div className="w-28 h-20 shrink-0">
+                      <img
+                        src="https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=400&auto=format&fit=crop&q=80"
+                        alt="Pink Teen"
+                        className="w-full h-full object-contain group-hover:scale-105 transition"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* ================= SECTION 4: 4 TRUST PILLARS (Reference Image 1) ================= */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-y border-slate-100 py-8">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <div className="space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 mx-auto flex items-center justify-center text-slate-800">
+                    <Tag size={18} />
+                  </div>
+                  <h4 className="text-xs font-black text-slate-900 uppercase">
+                    Amazing Value Every Day
+                  </h4>
+                  <p className="text-[11px] text-slate-400 max-w-[180px] mx-auto">
+                    Items prices that fit your budget, true prices for everyone
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 mx-auto flex items-center justify-center text-slate-800">
+                    <ShieldCheck size={18} />
+                  </div>
+                  <h4 className="text-xs font-black text-slate-900 uppercase">
+                    Successful Customer Service
+                  </h4>
+                  <p className="text-[11px] text-slate-400 max-w-[180px] mx-auto">
+                    We work with a focus on 100% customer satisfaction
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 mx-auto flex items-center justify-center text-slate-800">
+                    <CreditCard size={18} />
+                  </div>
+                  <h4 className="text-xs font-black text-slate-900 uppercase">
+                    All Payment Methods
+                  </h4>
+                  <p className="text-[11px] text-slate-400 max-w-[180px] mx-auto">
+                    Don't bother with payment details, verified secure gate
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 mx-auto flex items-center justify-center text-slate-800">
+                    <Truck size={18} />
+                  </div>
+                  <h4 className="text-xs font-black text-slate-900 uppercase">
+                    Completely Free Shipping
+                  </h4>
+                  <p className="text-[11px] text-slate-400 max-w-[180px] mx-auto">
+                    We'll handle the shipping, don't think about details
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* ================= SECTION 5: THIS MONTH'S BEST SELLERS (Reference Image 1) ================= */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+              <div className="text-center space-y-2">
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                  This Month's Best Sellers
+                </h3>
+
+                {/* Category Tabs: Women | Men | Children | Sales */}
+                <div className="flex items-center justify-center gap-4 text-xs font-bold pt-1">
+                  {["Women", "Men", "Children", "Sales"].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setBestSellerTab(tab)}
+                      className={`pb-1 transition cursor-pointer border-b-2 ${
+                        bestSellerTab === tab
+                          ? "border-slate-900 text-slate-900 font-black"
+                          : "border-transparent text-slate-400 hover:text-slate-700"
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 pt-4">
+                {bestSellersFiltered.slice(0, 5).map((shoe) => (
+                  <ProductCard
+                    key={`bestseller-${shoe._id || shoe.id}`}
+                    product={shoe}
+                    onSelectProduct={(p) => {
+                      setSelectedProduct(p);
+                      setActivePage("product-detail");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    onAddToCart={handleAddToCart}
+                    onQuickView={handleOpenQuickView}
+                    sizeStandard={sizeStandard}
+                  />
+                ))}
               </div>
             </section>
           </div>
         )}
 
-        {/* ================= PAGE 2: SNEAKER VAULT CATALOG ================= */}
-        {activePage === "sneaker-vault" && (
+        {/* ================= VIEW 2: CATALOG & FILTER PAGE (Reference Image 2) ================= */}
+        {activePage === "catalog" && (
           <Product
-            products={shoes}
+            products={shoesCatalog}
             onSelectProduct={(p) => {
               setSelectedProduct(p);
               setActivePage("product-detail");
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
-            onAddToCart={(p, sz) => handleAddToCart(p, sz)}
+            onAddToCart={handleAddToCart}
+            onQuickView={handleOpenQuickView}
             sizeStandard={sizeStandard}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
           />
         )}
 
-        {/* ================= PAGE 3: DROPS CALENDAR ================= */}
-        {activePage === "drops-calendar" && (
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 font-sans">
-            <div className="text-center space-y-3 max-w-2xl mx-auto">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-lime-500/10 text-lime-400 text-xs font-mono font-bold border border-lime-500/30">
-                <Clock size={14} />
-                <span>RELEASE TIMELINE</span>
-              </div>
-              <h1 className="text-3xl sm:text-5xl font-black text-white font-mono uppercase tracking-tight">
-                Upcoming Sneaker Drops
-              </h1>
-              <p className="text-xs sm:text-sm text-zinc-400">
-                Deadstock releases are strictly limited. Set SMS & push drop reminders or enter the verified member raffle below.
-              </p>
-            </div>
-
-            <div className="space-y-4 font-mono text-xs">
-              {[
-                {
-                  id: "drop-1",
-                  title: "AeroPulse Carbon 'Neon Ghost Edition'",
-                  category: "Carbon Marathon Series",
-                  dropDate: "September 12, 10:00 AM EST",
-                  price: "₹19,999",
-                  edition: "Limited 500 Numbered Pairs",
-                  status: "Raffle Open",
-                  image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&auto=format&fit=crop&q=80",
-                },
-                {
-                  id: "drop-2",
-                  title: "Civitanova Low 'Pecan Tumbled Suede'",
-                  category: "Italian Artisan Atelier",
-                  dropDate: "September 18, 12:00 PM EST",
-                  price: "₹23,499",
-                  edition: "Handcrafted in Civitanova Marche",
-                  status: "Notify Me",
-                  image: "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=400&auto=format&fit=crop&q=80",
-                },
-                {
-                  id: "drop-3",
-                  title: "Retro High 85 'Shadow Obsidian'",
-                  category: "Court Heritage Box Set",
-                  dropDate: "October 01, 10:00 AM EST",
-                  price: "₹16,499",
-                  edition: "Deluxe Collector Wooden Shoebox",
-                  status: "Coming Soon",
-                  image: "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=400&auto=format&fit=crop&q=80",
-                },
-              ].map((drop) => (
-                <div
-                  key={drop.id}
-                  className="p-6 rounded-3xl bg-zinc-900/80 border border-zinc-800 hover:border-lime-500/50 transition flex flex-col sm:flex-row items-center justify-between gap-6"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-zinc-950 overflow-hidden border border-zinc-800 shrink-0">
-                      <img src={drop.image} alt={drop.title} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="space-y-1 text-center sm:text-left">
-                      <span className="text-[10px] text-lime-400 font-bold block">RELEASE: {drop.dropDate}</span>
-                      <h3 className="text-base font-bold text-white uppercase">{drop.title}</h3>
-                      <p className="text-zinc-500 text-[11px]">{drop.edition} • {drop.category}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <span className="text-lg font-black text-white">{drop.price}</span>
-                    <button
-                      onClick={() => toast.success(`Drop alert set for ${drop.title}!`)}
-                      className="px-5 py-2.5 bg-lime-400 hover:bg-lime-300 text-black font-black uppercase text-xs rounded-xl transition cursor-pointer"
-                    >
-                      {drop.status}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ================= PAGE 4: SOLE TECH LABORATORY ================= */}
-        {activePage === "sole-tech" && (
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 font-sans">
-            <div className="text-center space-y-3 max-w-2xl mx-auto">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-lime-500/10 text-lime-400 text-xs font-mono font-bold border border-lime-500/30">
-                <Activity size={14} />
-                <span>BIOMECHANICAL LAB</span>
-              </div>
-              <h1 className="text-3xl sm:text-5xl font-black text-white font-mono uppercase tracking-tight">
-                Propulsion & Materials
-              </h1>
-              <p className="text-xs sm:text-sm text-zinc-400">
-                Independent kinetic force plate testing records up to 89.4% energy rebound compared to standard EVA foam.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-mono text-xs">
-              <div className="p-8 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-4">
-                <Zap size={32} className="text-lime-400" />
-                <h3 className="text-xl font-black text-white uppercase">The Spoon-Shaped Carbon Lever</h3>
-                <p className="text-zinc-400 font-sans text-xs leading-relaxed">
-                  Unlike flat carbon plates that increase ankle stiffness, our spooned geometry arches downward in the midfoot and swoops upward at the metatarsal heads. This creates a catapult effect that guides your foot effortlessly into the next stride cycle.
-                </p>
-                <div className="p-4 rounded-xl bg-black border border-zinc-800 space-y-2">
-                  <span className="text-[10px] text-lime-400 font-bold block uppercase">Biomechanic Metric:</span>
-                  <span className="text-white text-xs block">Torque reduction on Achilles tendon: -18%</span>
-                </div>
-              </div>
-
-              <div className="p-8 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-4">
-                <Sparkles size={32} className="text-lime-400" />
-                <h3 className="text-xl font-black text-white uppercase">Supercritical Gas Microcellular Foam</h3>
-                <p className="text-zinc-400 font-sans text-xs leading-relaxed">
-                  Rather than chemical blowing agents that leave irregular voids, supercritical nitrogen infuses uniform microscopic spherical bubbles. The foam retains 96% of its resilience even after 600 miles of asphalt pounding.
-                </p>
-                <div className="p-4 rounded-xl bg-black border border-zinc-800 space-y-2">
-                  <span className="text-[10px] text-lime-400 font-bold block uppercase">Fatigue Resistance:</span>
-                  <span className="text-white text-xs block">600+ Miles without packing out</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ================= PAGE 5: AUTHENTICITY GUARANTEE ================= */}
-        {activePage === "authenticity-guarantee" && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-10 font-sans">
-            <div className="text-center space-y-3 max-w-xl mx-auto">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-lime-500/10 text-lime-400 text-xs font-mono font-bold border border-lime-500/30">
-                <ShieldCheck size={14} />
-                <span>100% DEADSTOCK PROTOCOL</span>
-              </div>
-              <h1 className="text-3xl sm:text-4xl font-black text-white font-mono uppercase">
-                The SoleCraft NFC Guarantee
-              </h1>
-              <p className="text-xs text-zinc-400 font-sans">
-                Every sneaker is physically audited under blacklight and equipped with our encrypted NFC tamper-seal.
-              </p>
-            </div>
-
-            <div className="p-8 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-6 font-mono text-xs">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-2xl bg-black border border-zinc-800 space-y-2">
-                  <span className="text-lime-400 font-bold uppercase block text-[11px]">01 // UV Blacklight</span>
-                  <p className="text-zinc-400 text-[11px] font-sans">Factory glue line inspection, watermark verification, and invisible barcode audit.</p>
-                </div>
-                <div className="p-4 rounded-2xl bg-black border border-zinc-800 space-y-2">
-                  <span className="text-lime-400 font-bold uppercase block text-[11px]">02 // Stitch Gauge</span>
-                  <p className="text-zinc-400 text-[11px] font-sans">Precision 12-stitch-per-inch tension matching against authentic master archives.</p>
-                </div>
-                <div className="p-4 rounded-2xl bg-black border border-zinc-800 space-y-2">
-                  <span className="text-lime-400 font-bold uppercase block text-[11px]">03 // NFC Tamper Tag</span>
-                  <p className="text-zinc-400 text-[11px] font-sans">Encrypted RFID eyelet tag that breaks if removed. Scan with any phone for instant pedigree.</p>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-lime-500/10 border border-lime-500/30 flex items-center justify-between text-zinc-200">
-                <div>
-                  <span className="font-bold text-lime-400 block text-xs">200% Counterfeit Money-Back Pledge</span>
-                  <span className="text-[11px] text-zinc-400">If any sneaker fails authentication, we refund 200% of the purchase price instantly.</span>
-                </div>
-                <Award size={28} className="text-lime-400 shrink-0" />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ================= PAGE 6: OFFERS ================= */}
-        {activePage === "offers" && (
-          <Offer
-            offers={offers}
-            onShopVault={() => {
-              setActivePage("sneaker-vault");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-          />
-        )}
-
-        {/* ================= PAGE 7: PRODUCT DETAIL ================= */}
+        {/* ================= VIEW 3: PRODUCT DETAILS PAGE ================= */}
         {activePage === "product-detail" && selectedProduct && (
           <ProductDetails
             product={selectedProduct}
             onBack={() => {
-              setActivePage("sneaker-vault");
+              setActivePage("catalog");
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
-            onAddToCart={(p, q) => handleAddToCart(p, p.selectedSize || "US 10")}
-            relatedProducts={shoes}
+            onAddToCart={handleAddToCart}
+            relatedProducts={shoesCatalog}
             onSelectProduct={(p) => {
               setSelectedProduct(p);
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
             sizeStandard={sizeStandard}
+            setSizeStandard={setSizeStandard}
+          />
+        )}
+
+        {/* ================= VIEW 4: PROMO OFFERS & DEALS ================= */}
+        {activePage === "offers" && (
+          <Offer
+            products={shoesCatalog}
+            onSelectProduct={(p) => {
+              setSelectedProduct(p);
+              setActivePage("product-detail");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onAddToCart={handleAddToCart}
           />
         )}
       </main>
 
-      {/* Bespoke Footwear Lab Footer */}
+      {/* ================= 2. FOOTER ================= */}
       <Footer
-        brandName={brandName}
-        brandLogo={brandLogo}
-        business={business}
+        brandName={business?.name || "KICKS VAULT"}
         setActivePage={setActivePage}
       />
 
-      {/* Cart Drawer */}
+      {/* ================= 3. REDUX CART DRAWER ================= */}
       <CartDrawer
         isOpen={cartOpen}
         onClose={() => setCartOpen(false)}
@@ -836,8 +821,122 @@ export default function ShoesStoreTemplate({
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
         onCheckout={handleCheckout}
-        themeColors={{ primary: "#84CC16" }}
+        themeColors={{ primary: "#1E3A8A" }}
       />
+
+      {/* ================= 4. QUICK VIEW MODAL ================= */}
+      {quickViewProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 text-left">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative border border-slate-200 space-y-6">
+            <button
+              type="button"
+              onClick={() => setQuickViewProduct(null)}
+              className="absolute right-4 top-4 p-2 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 transition cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
+              {/* Product Visual */}
+              <div className="bg-slate-50 rounded-2xl p-6 flex items-center justify-center min-h-[220px]">
+                <img
+                  src={getProductImage(quickViewProduct, quickViewProduct.image)}
+                  alt={quickViewProduct.name}
+                  className="max-h-48 object-contain filter drop-shadow-lg"
+                />
+              </div>
+
+              {/* Product Details & Selection */}
+              <div className="space-y-4">
+                <div>
+                  <span className="text-[10px] font-black uppercase text-blue-700 tracking-wider">
+                    {quickViewProduct.category}
+                  </span>
+                  <h3 className="text-lg sm:text-xl font-black text-slate-900">
+                    {quickViewProduct.name}
+                  </h3>
+                  <div className="flex items-center gap-1 text-amber-400 text-xs pt-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} size={12} className="fill-amber-400" />
+                    ))}
+                    <span className="text-slate-500 ml-1 font-bold">
+                      {quickViewProduct.rating || "5.0"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-2xl font-black text-slate-900">
+                  ${Number(quickViewProduct.price).toFixed(2)}
+                </div>
+
+                {/* Sizes */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">
+                    Select Size ({sizeStandard}):
+                  </label>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {(quickViewProduct.sizes || ["38", "40", "41", "42", "43"]).map((sz) => (
+                      <button
+                        key={sz}
+                        type="button"
+                        onClick={() => setQuickViewSize(sz)}
+                        className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition cursor-pointer ${
+                          quickViewSize === sz
+                            ? "bg-slate-900 text-white border-slate-900"
+                            : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                        }`}
+                      >
+                        {sizeStandard} {sz}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Colors */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">
+                    Color: {quickViewColor?.name || "Standard"}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    {(quickViewProduct.colors || [
+                      { name: "Navy Blue", hex: "#1E3A8A" },
+                      { name: "White / Red", hex: "#EF4444" },
+                      { name: "Black", hex: "#0F172A" },
+                    ]).map((col, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setQuickViewColor(col)}
+                        className={`w-6 h-6 rounded-full border transition cursor-pointer ${
+                          quickViewColor?.name === col.name
+                            ? "ring-2 ring-blue-600 ring-offset-2 scale-110"
+                            : "border-slate-300"
+                        }`}
+                        style={{ backgroundColor: col.hex }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Add to Bag Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleAddToCart(quickViewProduct, {
+                      selectedSize: `${sizeStandard} ${quickViewSize}`,
+                      selectedColor: quickViewColor?.name || "Standard",
+                    });
+                    setQuickViewProduct(null);
+                  }}
+                  className="w-full py-3 bg-[#1E3A8A] hover:bg-blue-800 text-white font-black text-xs uppercase tracking-wider rounded-xl transition cursor-pointer shadow-lg"
+                >
+                  Add to Bag • ${Number(quickViewProduct.price).toFixed(2)}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -17,7 +17,11 @@ import {
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { addToCart, updateCartQuantity, removeFromCart } from "../../../redux/reducers/cartReducer";
+import {
+  addToCart,
+  updateCartQuantity,
+  removeFromCart,
+} from "../../../redux/reducers/cartReducer";
 import toast from "react-hot-toast";
 import { isOutOfStock, getProductStock } from "../../../utils/stockUtils";
 import CartDrawer from "../../common/CartDrawer";
@@ -63,10 +67,7 @@ export default function UrbanFashionTemplate({
     customization?.heroHeadline ||
     "ATELIER URBAN";
 
-  const brandLogo =
-    customization?.logo ||
-    business?.logo ||
-    null;
+  const brandLogo = customization?.logo || business?.logo || null;
 
   const brandPhone =
     business?.phone ||
@@ -85,10 +86,17 @@ export default function UrbanFashionTemplate({
     typeof rawAddr === "string"
       ? rawAddr
       : rawAddr && typeof rawAddr === "object"
-      ? [rawAddr.street, rawAddr.addressLine2, rawAddr.city, rawAddr.state, rawAddr.postalCode, rawAddr.country]
-          .filter(Boolean)
-          .join(", ")
-      : null;
+        ? [
+            rawAddr.street,
+            rawAddr.addressLine2,
+            rawAddr.city,
+            rawAddr.state,
+            rawAddr.postalCode,
+            rawAddr.country,
+          ]
+            .filter(Boolean)
+            .join(", ")
+        : null;
 
   const handleAddToCart = (product, size = "M", qty = 1) => {
     if (isOutOfStock(product)) {
@@ -114,7 +122,10 @@ export default function UrbanFashionTemplate({
     navigate("/cart");
   };
 
-  const cartCount = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
+  const cartCount = cartItems.reduce(
+    (sum, item) => sum + (item.quantity || 1),
+    0,
+  );
 
   const lookbookItems = [
     {
@@ -122,8 +133,10 @@ export default function UrbanFashionTemplate({
       season: "Fall / Winter Editorial",
       title: "The Sculptural Cashmere Overcoat",
       photographer: "Photographed in Milan, Italy",
-      image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=900&auto=format&fit=crop&q=80",
-      description: "Double-faced Mongolian cashmere tailored with an architectural silhouette and horn buttons.",
+      image:
+        "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=900&auto=format&fit=crop&q=80",
+      description:
+        "Double-faced Mongolian cashmere tailored with an architectural silhouette and horn buttons.",
       price: "₹38,500.00",
     },
     {
@@ -131,8 +144,10 @@ export default function UrbanFashionTemplate({
       season: "Evening Silhouette",
       title: "Asymmetric Silk Charmeuse Gown",
       photographer: "Photographed in Paris, France",
-      image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&auto=format&fit=crop&q=80",
-      description: "Fluid mulberry silk bias cut that drapes effortlessly across the shoulders with a low scoop back.",
+      image:
+        "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&auto=format&fit=crop&q=80",
+      description:
+        "Fluid mulberry silk bias cut that drapes effortlessly across the shoulders with a low scoop back.",
       price: "₹29,900.00",
     },
     {
@@ -140,8 +155,10 @@ export default function UrbanFashionTemplate({
       season: "Modern Tailoring",
       title: "Relaxed Virgin Wool Blazer",
       photographer: "Photographed in Tokyo, Japan",
-      image: "https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?w=900&auto=format&fit=crop&q=80",
-      description: "Unstructured bespoke Japanese wool blend with soft dropped shoulders and clean welt pockets.",
+      image:
+        "https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?w=900&auto=format&fit=crop&q=80",
+      description:
+        "Unstructured bespoke Japanese wool blend with soft dropped shoulders and clean welt pockets.",
       price: "₹24,900.00",
     },
   ];
@@ -156,7 +173,10 @@ export default function UrbanFashionTemplate({
   return (
     <div
       className="min-h-screen flex flex-col font-sans"
-      style={{ backgroundColor: themeColors.background, color: themeColors.text }}
+      style={{
+        backgroundColor: themeColors.background,
+        color: themeColors.text,
+      }}
     >
       {/* ================= BESPOKE LUXURY FASHION NAVBAR ================= */}
       <Navbar
@@ -248,7 +268,9 @@ export default function UrbanFashionTemplate({
                     Private Client Archive Sale: Up to 25% Off
                   </h3>
                   <p className="text-xs text-zinc-400 font-sans max-w-lg leading-relaxed">
-                    Exclusive vouchers for registered patrons. Enjoy preferred privileges on structured coats, virgin wool tailoring, and cashmere knitwear.
+                    Exclusive vouchers for registered patrons. Enjoy preferred
+                    privileges on structured coats, virgin wool tailoring, and
+                    cashmere knitwear.
                   </p>
                 </div>
                 <button
@@ -270,10 +292,16 @@ export default function UrbanFashionTemplate({
         {activePage === "lookbook" && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
             <div className="text-center max-w-2xl mx-auto space-y-3">
-              <span className="text-xs uppercase font-mono tracking-widest text-zinc-400">Campaign Spreads</span>
-              <h1 className="text-4xl font-serif text-zinc-950">Autumn / Winter Editorial Lookbook</h1>
+              <span className="text-xs uppercase font-mono tracking-widest text-zinc-400">
+                Campaign Spreads
+              </span>
+              <h1 className="text-4xl font-serif text-zinc-950">
+                Autumn / Winter Editorial Lookbook
+              </h1>
               <p className="text-xs text-zinc-500 font-normal">
-                Curated looks photographed on location in Milan and Paris. Designed for effortless transitions between evening salons and gallery openings.
+                Curated looks photographed on location in Milan and Paris.
+                Designed for effortless transitions between evening salons and
+                gallery openings.
               </p>
             </div>
 
@@ -286,17 +314,38 @@ export default function UrbanFashionTemplate({
                   }`}
                 >
                   <div className="lg:col-span-7 aspect-16/10 rounded-2xl overflow-hidden shadow-xl bg-zinc-100">
-                    <img src={look.image} alt={look.title} className="w-full h-full object-cover" />
+                    <img
+                      src={look.image}
+                      alt={look.title}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div className="lg:col-span-5 space-y-4">
-                    <span className="text-[10px] uppercase font-mono tracking-widest text-zinc-400">{look.season}</span>
-                    <h3 className="text-2xl sm:text-3xl font-serif text-zinc-950">{look.title}</h3>
-                    <p className="text-xs text-zinc-600 leading-relaxed">{look.description}</p>
-                    <p className="text-xs font-mono text-zinc-400">{look.photographer}</p>
+                    <span className="text-[10px] uppercase font-mono tracking-widest text-zinc-400">
+                      {look.season}
+                    </span>
+                    <h3 className="text-2xl sm:text-3xl font-serif text-zinc-950">
+                      {look.title}
+                    </h3>
+                    <p className="text-xs text-zinc-600 leading-relaxed">
+                      {look.description}
+                    </p>
+                    <p className="text-xs font-mono text-zinc-400">
+                      {look.photographer}
+                    </p>
                     <div className="pt-2 flex items-center gap-4">
-                      <span className="text-lg font-mono font-bold text-zinc-900">{look.price}</span>
+                      <span className="text-lg font-mono font-bold text-zinc-900">
+                        {look.price}
+                      </span>
                       <button
-                        onClick={() => handleAddToCart({ _id: look.id, name: look.title, price: 420, image: look.image })}
+                        onClick={() =>
+                          handleAddToCart({
+                            _id: look.id,
+                            name: look.title,
+                            price: 420,
+                            image: look.image,
+                          })
+                        }
                         className="px-6 py-3 bg-zinc-950 text-white text-xs font-black uppercase tracking-widest hover:bg-zinc-800 transition cursor-pointer"
                       >
                         Shop This Silhouette
@@ -338,73 +387,6 @@ export default function UrbanFashionTemplate({
             }}
             onAddToCart={(p, sz, qty) => handleAddToCart(p, sz, qty)}
           />
-        )}
-
-        {/* PAGE 4: SIZE & FIT GUIDE */}
-        {activePage === "size-guide" && (
-          <div className="max-w-4xl mx-auto px-4 py-16 space-y-10">
-            <div className="text-center space-y-2">
-              <h1 className="text-3xl font-serif text-zinc-950">International Tailoring & Size Guide</h1>
-              <p className="text-xs text-zinc-500">Compare standard US, UK, Italian, and French conversions.</p>
-            </div>
-
-            <div className="overflow-x-auto bg-white rounded-2xl border border-zinc-200 p-6">
-              <table className="w-full text-xs text-left">
-                <thead>
-                  <tr className="border-b border-zinc-200 font-bold uppercase tracking-wider text-zinc-400">
-                    <th className="pb-3">Size</th>
-                    <th className="pb-3">Bust / Chest</th>
-                    <th className="pb-3">Waist</th>
-                    <th className="pb-3">Hips</th>
-                    <th className="pb-3">EU</th>
-                    <th className="pb-3">IT</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100 font-mono text-zinc-700">
-                  <tr><td className="py-3 font-bold text-zinc-950">XS</td><td>32 - 34"</td><td>24 - 26"</td><td>34 - 36"</td><td>34</td><td>38</td></tr>
-                  <tr><td className="py-3 font-bold text-zinc-950">S</td><td>34 - 36"</td><td>26 - 28"</td><td>36 - 38"</td><td>36</td><td>40</td></tr>
-                  <tr><td className="py-3 font-bold text-zinc-950">M</td><td>36 - 38"</td><td>28 - 30"</td><td>38 - 40"</td><td>38</td><td>42</td></tr>
-                  <tr><td className="py-3 font-bold text-zinc-950">L</td><td>38 - 40"</td><td>30 - 32"</td><td>40 - 42"</td><td>40</td><td>44</td></tr>
-                  <tr><td className="py-3 font-bold text-zinc-950">XL</td><td>40 - 42"</td><td>32 - 34"</td><td>42 - 44"</td><td>42</td><td>46</td></tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-zinc-100 space-y-2 text-xs">
-              <h4 className="font-bold text-zinc-900">Custom Bespoke Tailoring Inquiries</h4>
-              <p className="text-zinc-600">
-                Need alterations or custom measurements? Our in-house master tailors provide complimentary hem adjustments and custom sleeve tapering on all outerwear pieces.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* PAGE 5: THE ATELIER */}
-        {activePage === "atelier" && (
-          <div className="max-w-4xl mx-auto px-4 py-16 space-y-12">
-            <div className="space-y-4 text-center">
-              <span className="text-xs uppercase font-mono tracking-widest text-zinc-400">Craftsmanship & Mills</span>
-              <h1 className="text-4xl font-serif text-zinc-950">The Atelier & Fabric Philosophy</h1>
-            </div>
-
-            <div className="space-y-6 text-xs sm:text-sm text-zinc-700 leading-relaxed">
-              <p>
-                Founded on the belief that garments should outlast seasons, Atelier Urban partners with third-generation family-owned textile mills in Biella, Italy, and Okayama, Japan.
-              </p>
-              <p>
-                Each coat requires over 36 hours of hand-canvassing and pressing to achieve an effortless drape that molds naturally to the wearer’s silhouette.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="aspect-4/3 rounded-2xl overflow-hidden bg-zinc-200">
-                <img src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=800&auto=format&fit=crop&q=80" alt="Fabric" className="w-full h-full object-cover" />
-              </div>
-              <div className="aspect-4/3 rounded-2xl overflow-hidden bg-zinc-200">
-                <img src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=800&auto=format&fit=crop&q=80" alt="Tailoring" className="w-full h-full object-cover" />
-              </div>
-            </div>
-          </div>
         )}
 
         {/* PAGE: PRODUCT DETAIL */}

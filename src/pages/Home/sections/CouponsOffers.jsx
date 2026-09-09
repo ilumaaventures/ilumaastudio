@@ -14,7 +14,7 @@ import {
   Package,
   Clock,
   ArrowRight,
-  ShieldCheck,
+  Flame,
   Percent,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -31,82 +31,11 @@ const formatExpiryDate = (exp) => {
   });
 };
 
-// Curated platform fallback coupons ensuring lively carousel interaction
-const DEFAULT_PLATFORM_COUPONS = [
-  {
-    _id: "default-welcome",
-    type: "coupon",
-    title: "Welcome Privilege Grant",
-    code: "WELCOME500",
-    discountType: "fixed",
-    discountAmount: 500,
-    minOrderAmount: 1999,
-    targetScope: "global",
-    subtitle: "Save FLAT ₹500 on your first order above ₹1,999",
-  },
-  {
-    _id: "default-festive",
-    type: "coupon",
-    title: "Festive Hamper Bonanza",
-    code: "FESTIVE20",
-    discountType: "percentage",
-    discountAmount: 20,
-    minOrderAmount: 2499,
-    targetScope: "business",
-    subtitle: "Get 20% OFF on artisanal hampers & luxury gift sets",
-  },
-  {
-    _id: "default-freeship",
-    type: "coupon",
-    title: "Free Armored Express Delivery",
-    code: "FREESHIP",
-    discountType: "fixed",
-    discountAmount: 150,
-    minOrderAmount: 999,
-    targetScope: "global",
-    subtitle: "Zero shipping fee across all standard orders",
-  },
-  {
-    _id: "default-luxe",
-    type: "coupon",
-    title: "Luxury Audio & Decor Grant",
-    code: "LUXE15",
-    discountType: "percentage",
-    discountAmount: 15,
-    minOrderAmount: 3999,
-    targetScope: "business",
-    subtitle: "Flat 15% OFF on flagship audio & Italian decor",
-  },
-  {
-    _id: "default-bulk",
-    type: "coupon",
-    title: "Corporate & Wedding Gifting",
-    code: "BULKGIFT25",
-    discountType: "percentage",
-    discountAmount: 25,
-    minOrderAmount: 5000,
-    targetScope: "vendor",
-    subtitle: "25% OFF on bulk orders with customized wooden seals",
-  },
-  {
-    _id: "default-vip",
-    type: "coupon",
-    title: "VIP Weekend Special Deal",
-    code: "VIPWEEKEND",
-    discountType: "fixed",
-    discountAmount: 750,
-    minOrderAmount: 2999,
-    targetScope: "global",
-    subtitle: "Instant ₹750 checkout discount this weekend",
-  },
-];
-
 function CouponsOffers() {
   const navigate = useNavigate();
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copiedCode, setCopiedCode] = useState(null);
-  const [activeScopeFilter, setActiveScopeFilter] = useState("All");
 
   // Carousel ref and scroll indicator state
   const carouselRef = useRef(null);
@@ -120,6 +49,7 @@ function CouponsOffers() {
   const [draggedDistance, setDraggedDistance] = useState(0);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchHomeDeals = async () => {
       try {
         setLoading(true);
@@ -135,18 +65,18 @@ function CouponsOffers() {
           ? offersRes
           : offersRes?.offers || offersRes?.data || [];
 
-        // Format combined dataset from DB
+        // Format combined dataset purely from real backend API
         const combined = [
           ...couponList.map((c) => ({
             _id: c._id,
-            type: "coupon",
+            itemType: "coupon",
             title: c.title || `Save with ${c.code}`,
             code: c.code,
             discountType: c.discountType,
             discountAmount: c.discountAmount,
             maxDiscountAmount: c.maxDiscountAmount,
             minOrderAmount: c.minOrderAmount,
-            targetScope: c.targetScope || "business",
+            targetScope: c.targetScope || "global",
             business: c.business,
             vendor: c.vendor,
             targetProducts: c.targetProducts,
@@ -158,7 +88,7 @@ function CouponsOffers() {
           })),
           ...offerList.map((o) => ({
             _id: o._id,
-            type: "offer",
+            itemType: "offer",
             title: o.title || "Promotional Platform Offer",
             headline: o.headline || o.subtitle || "Exclusive Deal",
             code:
@@ -166,33 +96,33 @@ function CouponsOffers() {
             targetScope: o.targetScope || "global",
             business: o.business,
             vendor: o.vendor,
+            image: o.image || o.bannerImage,
             expiryDate: o.expiryDate || o.expiry,
             subtitle:
               o.desc || o.description || "Limited time promotional offer",
           })),
         ];
 
-        // Ensure rich carousel experience by appending default coupons if DB returns fewer
-        if (combined.length < 5) {
-          const existingCodes = new Set(
-            combined.map((d) => d.code).filter(Boolean),
-          );
-          const additions = DEFAULT_PLATFORM_COUPONS.filter(
-            (def) => !existingCodes.has(def.code),
-          );
-          setDeals([...combined, ...additions]);
-        } else {
+        if (isMounted) {
+          // Strictly map real backend data without mock injection
           setDeals(combined);
         }
       } catch (err) {
-        console.error("Failed to load home page deals:", err);
-        setDeals(DEFAULT_PLATFORM_COUPONS);
+        console.error("Failed to load real home page deals:", err);
+        if (isMounted) {
+          setDeals([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchHomeDeals();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Update left/right scrollable status
@@ -215,9 +145,8 @@ function CouponsOffers() {
         window.removeEventListener("resize", checkScroll);
       };
     }
-  }, [deals, activeScopeFilter]);
+  }, [deals]);
 
-  // Programmatic Left/Right Scroll Handlers
   const handleScroll = (direction) => {
     if (carouselRef.current) {
       const amount = direction === "left" ? -340 : 340;
@@ -278,10 +207,8 @@ function CouponsOffers() {
   };
 
   const handleCardClick = (deal) => {
-    // If user was dragging horizontally, avoid triggering accidental card navigation
     if (draggedDistance > 10) return;
 
-    // 1. If product coupon
     if (deal.targetProducts && deal.targetProducts.length > 0) {
       const prod = deal.targetProducts[0];
       const prodId = typeof prod === "object" ? prod._id : prod;
@@ -291,7 +218,6 @@ function CouponsOffers() {
       }
     }
 
-    // 2. If vendor deal
     if (deal.vendor) {
       const vObj = deal.vendor;
       const vSlug =
@@ -302,7 +228,6 @@ function CouponsOffers() {
       }
     }
 
-    // 3. If business deal
     if (deal.business) {
       const bObj = deal.business;
       const bSlug =
@@ -313,21 +238,14 @@ function CouponsOffers() {
       }
     }
 
-    // Default to Offers Hub
     navigate("/offers");
   };
-
-  // Filter deals based on active scope
-  const filteredDeals = deals.filter((d) => {
-    if (activeScopeFilter === "All") return true;
-    return d.targetScope?.toLowerCase() === activeScopeFilter.toLowerCase();
-  });
 
   const getScopeBadge = (scope, businessObj, vendorObj) => {
     switch (scope?.toLowerCase()) {
       case "global":
         return {
-          label: "Global",
+          label: "Global Platform",
           bg: "bg-blue-50 text-blue-700 border-blue-200",
           icon: Globe,
           owner: "Platform Wide",
@@ -336,39 +254,40 @@ function CouponsOffers() {
         const bizName =
           typeof businessObj === "object"
             ? businessObj?.businessName
-            : "Whole Business";
+            : "Storewide Deal";
         return {
-          label: "Business",
-          bg: "bg-indigo-50 text-indigo-700 border-indigo-200",
+          label: "Store Offer",
+          bg: "bg-purple-50 text-purple-700 border-purple-200",
           icon: Store,
-          owner: bizName || "Whole Store Catalog",
+          owner: bizName || "Storewide Discount",
         };
       case "vendor":
         const vName =
-          typeof vendorObj === "object" ? vendorObj?.storeName : "Vendor Store";
+          typeof vendorObj === "object" ? vendorObj?.storeName : "Vendor Special";
         return {
           label: "Vendor Deal",
-          bg: "bg-purple-50 text-purple-700 border-purple-200",
+          bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
           icon: ShoppingBag,
-          owner: vName || "Vendor Store",
+          owner: vName || "Vendor Promotion",
         };
       case "product":
         return {
           label: "Product Deal",
           bg: "bg-amber-50 text-amber-700 border-amber-200",
           icon: Package,
-          owner: "Selected Product Item",
+          owner: "Selected Product",
         };
       default:
         return {
           label: "Special Offer",
-          bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
+          bg: "bg-indigo-50 text-indigo-700 border-indigo-200",
           icon: Sparkles,
-          owner: "Promotional Sale",
+          owner: "Promotional Discount",
         };
     }
   };
 
+  // Only render if real deals are present in backend
   if (!loading && deals.length === 0) {
     return null;
   }
@@ -380,21 +299,49 @@ function CouponsOffers() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                Exclusive Coupons & Store Discounts
-              </h2>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-800 border border-rose-200 shadow-2xs">
+                <Flame size={12} className="fill-rose-600 text-rose-600" />
+                <span>Active Offers & Coupons</span>
+              </span>
             </div>
-            <p className="text-xs text-slate-500 font-medium mt-1">
-              Active promotional discount vouchers and targeted store codes —
-              swipe or move left to right
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-1">
+              Exclusive Discounts & Store Vouchers
+            </h2>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Live promotional discount vouchers and merchant codes directly mapped from our network.
             </p>
           </div>
 
           {/* Controls: Left/Right Buttons & View All Link */}
-          <div className="flex items-center gap-2.5 self-end sm:self-auto shrink-0">
+          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+            <button
+              onClick={() => handleScroll("left")}
+              disabled={!canScrollLeft}
+              aria-label="Scroll Left"
+              className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all ${
+                canScrollLeft
+                  ? "border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-2xs cursor-pointer active:scale-95"
+                  : "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
+              }`}
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              onClick={() => handleScroll("right")}
+              disabled={!canScrollRight}
+              aria-label="Scroll Right"
+              className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all ${
+                canScrollRight
+                  ? "border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-2xs cursor-pointer active:scale-95"
+                  : "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
+              }`}
+            >
+              <ChevronRight size={18} />
+            </button>
+
             <Link
               to="/offers"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0 ml-1"
             >
               <span>See All</span>
               <ArrowRight
@@ -405,36 +352,30 @@ function CouponsOffers() {
           </div>
         </div>
 
-        {/* Content Loading Skeleton */}
+        {/* Shimmer Skeleton or Real Deals Track */}
         {loading ? (
-          <div className="flex gap-5 overflow-hidden">
+          <div className="flex gap-4 overflow-hidden py-1">
             {Array.from({ length: 4 }).map((_, idx) => (
               <div
                 key={idx}
-                className="w-[280px] sm:w-[320px] md:w-[340px] shrink-0 bg-white border border-slate-200 rounded-3xl p-5 h-44 animate-pulse space-y-3 shadow-xs"
+                className="w-[280px] sm:w-[320px] md:w-[340px] shrink-0 bg-white border border-slate-200 rounded-3xl p-5 h-44 shadow-xs space-y-3"
               >
-                <div className="h-5 bg-slate-200 rounded-md w-1/2" />
-                <div className="h-4 bg-slate-200 rounded-md w-3/4" />
-                <div className="h-10 bg-slate-100 rounded-2xl w-full" />
+                <div className="h-4 bg-slate-200 rounded-md w-1/3 shimmer-placeholder" />
+                <div className="h-5 bg-slate-200 rounded-md w-3/4 shimmer-placeholder" />
+                <div className="h-3 bg-slate-100 rounded-md w-1/2 shimmer-placeholder" />
+                <div className="h-10 bg-slate-100 rounded-2xl w-full mt-auto shimmer-placeholder" />
               </div>
             ))}
           </div>
-        ) : filteredDeals.length > 0 ? (
-          /* =========================================================
-              MOVABLE LEFT-TO-RIGHT CAROUSEL TRACK
-          ========================================================== */
+        ) : (
           <div className="relative">
-            {/* Left Edge Shadow */}
             {canScrollLeft && (
               <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-12 bg-gradient-to-r from-slate-50 via-slate-50/80 to-transparent z-20 pointer-events-none transition-opacity duration-300" />
             )}
-
-            {/* Right Edge Shadow */}
             {canScrollRight && (
               <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-12 bg-gradient-to-l from-slate-50 via-slate-50/80 to-transparent z-20 pointer-events-none transition-opacity duration-300" />
             )}
 
-            {/* Horizontal Scrollable Carousel Container */}
             <div
               ref={carouselRef}
               onMouseDown={handleMouseDown}
@@ -445,11 +386,11 @@ function CouponsOffers() {
                 isDragging ? "cursor-grabbing" : "cursor-grab"
               }`}
             >
-              {filteredDeals.map((deal, idx) => {
+              {deals.map((deal, idx) => {
                 const scopeInfo = getScopeBadge(
                   deal.targetScope,
                   deal.business,
-                  deal.vendor,
+                  deal.vendor
                 );
                 const ScopeIcon = scopeInfo.icon;
                 const formattedExp = formatExpiryDate(deal.expiryDate);
@@ -459,13 +400,13 @@ function CouponsOffers() {
                   <div
                     key={deal._id || idx}
                     onClick={() => handleCardClick(deal)}
-                    className="group relative w-[280px] sm:w-[320px] md:w-[340px] shrink-0 snap-start bg-white border border-slate-200/90 hover:border-[#004ac6]/60 rounded-3xl p-5 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden"
+                    className="group relative w-[280px] sm:w-[320px] md:w-[340px] shrink-0 snap-start bg-white border border-slate-200/90 hover:border-[#004ac6]/60 rounded-3xl p-5 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden cursor-pointer"
                   >
-                    {/* Side Ticket Cutouts */}
+                    {/* Perforated Side Ticket Notches */}
                     <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-slate-50 border-r border-slate-200 rounded-r-full z-10 pointer-events-none" />
                     <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-slate-50 border-l border-slate-200 rounded-l-full z-10 pointer-events-none" />
 
-                    {/* Header Badges */}
+                    {/* Top Content */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between gap-2">
                         <span
@@ -475,7 +416,7 @@ function CouponsOffers() {
                           <span>{scopeInfo.label}</span>
                         </span>
 
-                        {deal.discountAmount !== undefined && (
+                        {deal.discountAmount !== undefined && deal.discountAmount > 0 && (
                           <span className="px-2.5 py-0.5 rounded-full bg-emerald-500 text-white font-black text-[11px] shadow-2xs">
                             {deal.discountType === "percentage"
                               ? `${deal.discountAmount}% OFF`
@@ -500,13 +441,13 @@ function CouponsOffers() {
                       </p>
                     </div>
 
-                    {/* Voucher Box & Actions */}
+                    {/* Voucher Code Box & Quick Action */}
                     <div className="pt-3 space-y-2 mt-2">
                       {deal.code ? (
                         <div className="bg-gradient-to-r from-blue-50/80 to-indigo-50/80 border border-dashed border-blue-300 rounded-2xl p-2.5 flex items-center justify-between gap-2">
                           <div className="min-w-0">
                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                              Code
+                              Voucher Code
                             </p>
                             <p className="text-xs font-mono font-black text-slate-900 tracking-wider truncate">
                               {deal.code}
@@ -552,16 +493,6 @@ function CouponsOffers() {
                 );
               })}
             </div>
-
-            {/* Mobile swipe hint */}
-            <div className="flex items-center justify-between pt-2 px-1 text-[11px] text-slate-400 font-medium sm:hidden">
-              <span>Swipe left or right ↔</span>
-              <span>{filteredDeals.length} coupons available</span>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 text-center text-xs text-slate-500 font-medium">
-            No active deals found for this scope category.
           </div>
         )}
       </div>

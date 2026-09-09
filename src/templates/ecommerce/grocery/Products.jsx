@@ -6,6 +6,7 @@ import {
   List as ListIcon,
   X,
   ChevronDown,
+  ChevronUp,
   ChevronLeft,
   ChevronRight,
   Star,
@@ -23,6 +24,11 @@ import {
   Egg,
   CupSoda,
   Package,
+  DollarSign,
+  TrendingDown,
+  Heart,
+  Layers,
+  ArrowUpDown,
 } from "lucide-react";
 import ProductCard from "./ProductCard";
 
@@ -39,13 +45,27 @@ export default function Products({
   // Filter & Search State
   // -------------------------------------------------------------
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(initialCategory || "all");
+  const [categorySearchQuery, setCategorySearchQuery] = useState("");
   const [selectedDietary, setSelectedDietary] = useState([]);
   const [pricePreset, setPricePreset] = useState("all");
+  const [customMinPrice, setCustomMinPrice] = useState("");
+  const [customMaxPrice, setCustomMaxPrice] = useState("");
+  const [appliedCustomPrice, setAppliedCustomPrice] = useState({ min: null, max: null });
   const [inStockOnly, setInStockOnly] = useState(false);
   const [onSaleOnly, setOnSaleOnly] = useState(false);
   const [minRating, setMinRating] = useState(0);
   const [sortBy, setSortBy] = useState("featured");
+
+  // Accordion open/collapse states for organized filter sections
+  const [openSections, setOpenSections] = useState({
+    categories: true,
+    price: true,
+    dietary: true,
+    deals: true,
+    ratings: true,
+  });
 
   // View Mode & Pagination State
   const [layout, setLayout] = useState("grid"); // "grid" | "list"
@@ -54,6 +74,14 @@ export default function Products({
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
   const productTopRef = useRef(null);
+
+  // Debounce search input for silky performance
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Sync initialCategory prop if changed externally
   useEffect(() => {
@@ -67,10 +95,11 @@ export default function Products({
   useEffect(() => {
     setCurrentPage(1);
   }, [
-    searchQuery,
+    debouncedSearch,
     selectedCategory,
     selectedDietary,
     pricePreset,
+    appliedCustomPrice,
     inStockOnly,
     onSaleOnly,
     minRating,
@@ -276,13 +305,14 @@ export default function Products({
   const groceryList = products && products.length > 0 ? products : defaultFallbackGroceries;
 
   // -------------------------------------------------------------
-  // Taxonomy & Filters Definitions
+  // Filter Options & Taxonomy
   // -------------------------------------------------------------
   const dietaryOptions = [
     { id: "organic", label: "100% Organic", icon: Leaf },
     { id: "vegan", label: "Plant-Based / Vegan", icon: Sparkles },
     { id: "gluten-free", label: "Gluten-Free", icon: Check },
     { id: "raw", label: "Raw & Cold-Pressed", icon: Flame },
+    { id: "artisan", label: "Artisanal / Bakery", icon: Croissant },
   ];
 
   const pricePresets = [
@@ -314,6 +344,13 @@ export default function Products({
     return fromProducts;
   }, [groceryList, categories]);
 
+  // Filtered categories based on search input inside sidebar
+  const visibleCategories = useMemo(() => {
+    if (!categorySearchQuery.trim()) return uniqueCategories;
+    const q = categorySearchQuery.toLowerCase();
+    return uniqueCategories.filter((cat) => cat.toLowerCase().includes(q));
+  }, [uniqueCategories, categorySearchQuery]);
+
   // Quick horizontal category pills
   const categoryPills = [
     { id: "all", name: "All Aisles", icon: Package },
@@ -332,8 +369,8 @@ export default function Products({
     return groceryList
       .filter((item) => {
         // 1. Search Query
-        if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase();
+        if (debouncedSearch.trim()) {
+          const q = debouncedSearch.toLowerCase();
           const nameMatch = (item.name || "").toLowerCase().includes(q);
           const descMatch = (item.description || "").toLowerCase().includes(q);
           const catMatch = (item.category || "").toLowerCase().includes(q);
@@ -348,7 +385,7 @@ export default function Products({
           if (!itemCat.includes(target) && target !== itemCat) return false;
         }
 
-        // 3. Dietary Filter (matches any selected)
+        // 3. Dietary Filter (must match all selected tags)
         if (selectedDietary.length > 0) {
           const itemText = `${item.name || ""} ${item.description || ""} ${item.badge || ""} ${(item.dietary || []).join(" ")}`.toLowerCase();
           const matchesDietary = selectedDietary.every((tag) =>
@@ -357,12 +394,18 @@ export default function Products({
           if (!matchesDietary) return false;
         }
 
-        // 4. Price Bracket Filter
-        if (pricePreset !== "all") {
+        // 4. Custom Price Range or Preset
+        const price = Number(item.price || 0);
+        if (appliedCustomPrice.min !== null && price < appliedCustomPrice.min) {
+          return false;
+        }
+        if (appliedCustomPrice.max !== null && price > appliedCustomPrice.max) {
+          return false;
+        }
+        if (pricePreset !== "all" && appliedCustomPrice.min === null && appliedCustomPrice.max === null) {
           const presetObj = pricePresets.find((p) => p.id === pricePreset);
           if (presetObj) {
-            const p = Number(item.price || 0);
-            if (p < presetObj.min || p > presetObj.max) return false;
+            if (price < presetObj.min || price > presetObj.max) return false;
           }
         }
 
@@ -373,7 +416,6 @@ export default function Products({
 
         // 6. On Sale Only
         if (onSaleOnly) {
-          const price = Number(item.price || 0);
           const compare = Number(item.compareAtPrice || 0);
           if (compare <= price) return false;
         }
@@ -407,10 +449,11 @@ export default function Products({
       });
   }, [
     groceryList,
-    searchQuery,
+    debouncedSearch,
     selectedCategory,
     selectedDietary,
     pricePreset,
+    appliedCustomPrice,
     inStockOnly,
     onSaleOnly,
     minRating,
@@ -444,11 +487,36 @@ export default function Products({
     );
   };
 
+  const toggleSection = (sectionKey) => {
+    setOpenSections((prev) => ({
+      ...prev,
+      [sectionKey]: !prev[sectionKey],
+    }));
+  };
+
+  const handleApplyCustomPrice = (e) => {
+    e.preventDefault();
+    const minVal = customMinPrice ? Math.max(0, parseFloat(customMinPrice)) : null;
+    const maxVal = customMaxPrice ? Math.max(0, parseFloat(customMaxPrice)) : null;
+    setAppliedCustomPrice({ min: minVal, max: maxVal });
+    setPricePreset("custom");
+  };
+
+  const clearCustomPrice = () => {
+    setCustomMinPrice("");
+    setCustomMaxPrice("");
+    setAppliedCustomPrice({ min: null, max: null });
+    setPricePreset("all");
+  };
+
   const resetAllFilters = () => {
     setSearchQuery("");
+    setDebouncedSearch("");
     setSelectedCategory("all");
+    setCategorySearchQuery("");
     setSelectedDietary([]);
     setPricePreset("all");
+    clearCustomPrice();
     setInStockOnly(false);
     setOnSaleOnly(false);
     setMinRating(0);
@@ -459,24 +527,31 @@ export default function Products({
   const activeFiltersCount =
     (selectedCategory !== "all" ? 1 : 0) +
     selectedDietary.length +
-    (pricePreset !== "all" ? 1 : 0) +
+    (pricePreset !== "all" || appliedCustomPrice.min !== null || appliedCustomPrice.max !== null ? 1 : 0) +
     (inStockOnly ? 1 : 0) +
     (onSaleOnly ? 1 : 0) +
     (minRating > 0 ? 1 : 0) +
-    (searchQuery.trim() ? 1 : 0);
+    (debouncedSearch.trim() ? 1 : 0);
+
+  // Group active indicators
+  const isCategoryActive = selectedCategory !== "all";
+  const isPriceActive = pricePreset !== "all" || appliedCustomPrice.min !== null || appliedCustomPrice.max !== null;
+  const isDietaryActive = selectedDietary.length > 0;
+  const isDealsActive = onSaleOnly || inStockOnly;
+  const isRatingActive = minRating > 0;
 
   // -------------------------------------------------------------
-  // Filter Sidebar Content (Shared between desktop & mobile)
+  // Filter Sidebar Content (Organized & Responsive Accordion)
   // -------------------------------------------------------------
   const FilterSidebarContent = (
-    <div className="space-y-6 text-left">
-      {/* Header with Clear Button */}
+    <div className="space-y-4 text-left">
+      {/* Header with Title & Reset Button */}
       <div className="flex items-center justify-between pb-3 border-b border-slate-200">
         <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
           <SlidersHorizontal size={16} className="text-[#15803D]" />
           <span>Filters</span>
           {activeFiltersCount > 0 && (
-            <span className="w-5 h-5 rounded-full bg-[#15803D] text-white text-[10px] font-black flex items-center justify-center">
+            <span className="px-2 py-0.5 rounded-full bg-[#15803D] text-white text-[10px] font-black">
               {activeFiltersCount}
             </span>
           )}
@@ -487,198 +562,391 @@ export default function Products({
             onClick={resetAllFilters}
             className="text-[11px] font-bold text-[#15803D] hover:text-emerald-800 transition flex items-center gap-1 cursor-pointer"
           >
-            <RotateCcw size={12} /> Reset
+            <RotateCcw size={12} /> Reset All
           </button>
         )}
       </div>
 
-      {/* 1. Category / Aisles Section */}
-      <div className="space-y-2.5">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-          Grocery Aisles
-        </h4>
-        <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
-          <button
-            type="button"
-            onClick={() => setSelectedCategory("all")}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
-              selectedCategory === "all"
-                ? "bg-emerald-50 text-[#15803D] font-bold border border-emerald-200"
-                : "text-slate-700 hover:bg-slate-100/70"
-            }`}
-          >
-            <span>All Aisles</span>
-            <span className="text-[10px] text-slate-400 font-normal">
-              {categoryCounts.all || 0}
+      {/* ================= GROUP 1: GROCERY AISLES ================= */}
+      <div className="border border-slate-200/80 rounded-2xl bg-white overflow-hidden shadow-2xs">
+        <button
+          type="button"
+          onClick={() => toggleSection("categories")}
+          className="w-full flex items-center justify-between p-3.5 bg-slate-50/70 hover:bg-slate-50 transition cursor-pointer text-left"
+        >
+          <div className="flex items-center gap-2">
+            <Package size={14} className="text-[#15803D]" />
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              Grocery Aisles
             </span>
-          </button>
+            {isCategoryActive && (
+              <span className="w-2 h-2 rounded-full bg-[#15803D]" />
+            )}
+          </div>
+          {openSections.categories ? (
+            <ChevronUp size={14} className="text-slate-400" />
+          ) : (
+            <ChevronDown size={14} className="text-slate-400" />
+          )}
+        </button>
 
-          {uniqueCategories.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setSelectedCategory(cat)}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
-                selectedCategory.toLowerCase() === cat.toLowerCase()
-                  ? "bg-emerald-50 text-[#15803D] font-bold border border-emerald-200"
-                  : "text-slate-700 hover:bg-slate-100/70"
-              }`}
-            >
-              <span className="truncate mr-2">{cat}</span>
-              <span className="text-[10px] text-slate-400 font-normal">
-                {categoryCounts[cat] || 0}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 2. Dietary & Lifestyle */}
-      <div className="space-y-2.5 pt-3 border-t border-slate-100">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-          Dietary & Lifestyle
-        </h4>
-        <div className="space-y-1.5">
-          {dietaryOptions.map((opt) => {
-            const Icon = opt.icon;
-            const checked = selectedDietary.includes(opt.id);
-            return (
-              <label
-                key={opt.id}
-                onClick={() => toggleDietary(opt.id)}
-                className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition cursor-pointer"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className={`w-4 h-4 rounded-md flex items-center justify-center border transition ${
-                      checked
-                        ? "bg-[#15803D] border-[#15803D] text-white"
-                        : "border-slate-300 bg-white"
-                    }`}
+        {openSections.categories && (
+          <div className="p-3 space-y-2.5">
+            {/* Category Search Filter if more than 5 */}
+            {uniqueCategories.length > 5 && (
+              <div className="relative">
+                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Filter aisles..."
+                  value={categorySearchQuery}
+                  onChange={(e) => setCategorySearchQuery(e.target.value)}
+                  className="w-full pl-7 pr-6 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500"
+                />
+                {categorySearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setCategorySearchQuery("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
-                    {checked && <Check size={12} />}
-                  </div>
-                  <span className="text-xs font-medium text-slate-700">
-                    {opt.label}
+                    <X size={10} />
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-1 max-h-52 overflow-y-auto pr-1">
+              <button
+                type="button"
+                onClick={() => setSelectedCategory("all")}
+                className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                  selectedCategory === "all"
+                    ? "bg-emerald-50 text-[#15803D] font-bold border border-emerald-200"
+                    : "text-slate-700 hover:bg-slate-100/70"
+                }`}
+              >
+                <span>All Aisles</span>
+                <span className="text-[10px] text-slate-400 font-normal">
+                  {categoryCounts.all || 0}
+                </span>
+              </button>
+
+              {visibleCategories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                    selectedCategory.toLowerCase() === cat.toLowerCase()
+                      ? "bg-emerald-50 text-[#15803D] font-bold border border-emerald-200"
+                      : "text-slate-700 hover:bg-slate-100/70"
+                  }`}
+                >
+                  <span className="truncate mr-2">{cat}</span>
+                  <span className="text-[10px] text-slate-400 font-normal">
+                    {categoryCounts[cat] || 0}
                   </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ================= GROUP 2: PRICE RANGE ================= */}
+      <div className="border border-slate-200/80 rounded-2xl bg-white overflow-hidden shadow-2xs">
+        <button
+          type="button"
+          onClick={() => toggleSection("price")}
+          className="w-full flex items-center justify-between p-3.5 bg-slate-50/70 hover:bg-slate-50 transition cursor-pointer text-left"
+        >
+          <div className="flex items-center gap-2">
+            <DollarSign size={14} className="text-[#15803D]" />
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              Price Range
+            </span>
+            {isPriceActive && (
+              <span className="w-2 h-2 rounded-full bg-[#15803D]" />
+            )}
+          </div>
+          {openSections.price ? (
+            <ChevronUp size={14} className="text-slate-400" />
+          ) : (
+            <ChevronDown size={14} className="text-slate-400" />
+          )}
+        </button>
+
+        {openSections.price && (
+          <div className="p-3 space-y-3">
+            {/* Quick Presets */}
+            <div className="grid grid-cols-2 gap-1.5">
+              {pricePresets.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => {
+                    setPricePreset(preset.id);
+                    setAppliedCustomPrice({ min: null, max: null });
+                    setCustomMinPrice("");
+                    setCustomMaxPrice("");
+                  }}
+                  className={`px-2.5 py-1.5 rounded-xl text-[11px] font-semibold transition cursor-pointer border text-center ${
+                    pricePreset === preset.id && appliedCustomPrice.min === null && appliedCustomPrice.max === null
+                      ? "bg-emerald-50 text-[#15803D] border-emerald-300 font-bold shadow-2xs"
+                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Custom Range Inputs */}
+            <form onSubmit={handleApplyCustomPrice} className="space-y-2 pt-1 border-t border-slate-100">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                Custom Range (₹)
+              </span>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={customMinPrice}
+                  onChange={(e) => setCustomMinPrice(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500"
+                />
+                <span className="text-slate-400 text-xs">–</span>
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={customMaxPrice}
+                  onChange={(e) => setCustomMaxPrice(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500"
+                />
+                <button
+                  type="submit"
+                  className="px-3 py-1.5 bg-[#15803D] hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition cursor-pointer shrink-0 shadow-2xs"
+                >
+                  Go
+                </button>
+              </div>
+
+              {(appliedCustomPrice.min !== null || appliedCustomPrice.max !== null) && (
+                <div className="flex items-center justify-between text-[11px] text-emerald-800 bg-emerald-50 px-2 py-1 rounded-lg">
+                  <span>
+                    Range: ₹{appliedCustomPrice.min || 0} – ₹{appliedCustomPrice.max || "Any"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearCustomPrice}
+                    className="text-rose-600 hover:underline cursor-pointer"
+                  >
+                    Clear
+                  </button>
                 </div>
-                <Icon size={13} className="text-emerald-600/70" />
-              </label>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 3. Price Bracket */}
-      <div className="space-y-2.5 pt-3 border-t border-slate-100">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-          Price Range
-        </h4>
-        <div className="space-y-1">
-          {pricePresets.map((preset) => (
-            <button
-              key={preset.id}
-              type="button"
-              onClick={() => setPricePreset(preset.id)}
-              className={`w-full text-left px-3 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer ${
-                pricePreset === preset.id
-                  ? "bg-emerald-50 text-[#15803D] font-bold"
-                  : "text-slate-600 hover:bg-slate-100/70"
-              }`}
-            >
-              {preset.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 4. Quick Toggles (Deals & In-Stock) */}
-      <div className="space-y-2 pt-3 border-t border-slate-100">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-          Availability & Deals
-        </h4>
-
-        {/* In-Stock Toggle */}
-        <label
-          onClick={() => setInStockOnly(!inStockOnly)}
-          className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition cursor-pointer"
-        >
-          <span className="text-xs font-medium text-slate-700">
-            In Stock Only
-          </span>
-          <div
-            className={`w-9 h-5 rounded-full transition-colors p-0.5 ${
-              inStockOnly ? "bg-[#15803D]" : "bg-slate-300"
-            }`}
-          >
-            <div
-              className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                inStockOnly ? "translate-x-4" : "translate-x-0"
-              }`}
-            />
+              )}
+            </form>
           </div>
-        </label>
-
-        {/* On-Sale Toggle */}
-        <label
-          onClick={() => setOnSaleOnly(!onSaleOnly)}
-          className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition cursor-pointer"
-        >
-          <span className="text-xs font-medium text-slate-700 flex items-center gap-1.5">
-            <Flame size={13} className="text-rose-500" /> On Sale / Flash Deals
-          </span>
-          <div
-            className={`w-9 h-5 rounded-full transition-colors p-0.5 ${
-              onSaleOnly ? "bg-rose-500" : "bg-slate-300"
-            }`}
-          >
-            <div
-              className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                onSaleOnly ? "translate-x-4" : "translate-x-0"
-              }`}
-            />
-          </div>
-        </label>
+        )}
       </div>
 
-      {/* 5. Minimum Rating */}
-      <div className="space-y-2 pt-3 border-t border-slate-100">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-          Customer Rating
-        </h4>
-        <div className="flex gap-2">
-          {[
-            { label: "All", val: 0 },
-            { label: "4★ & up", val: 4.0 },
-            { label: "4.5★+", val: 4.5 },
-          ].map((r) => (
-            <button
-              key={r.val}
-              type="button"
-              onClick={() => setMinRating(r.val)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer border ${
-                minRating === r.val
-                  ? "bg-[#15803D] text-white border-[#15803D]"
-                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-              }`}
+      {/* ================= GROUP 3: DIETARY & LIFESTYLE ================= */}
+      <div className="border border-slate-200/80 rounded-2xl bg-white overflow-hidden shadow-2xs">
+        <button
+          type="button"
+          onClick={() => toggleSection("dietary")}
+          className="w-full flex items-center justify-between p-3.5 bg-slate-50/70 hover:bg-slate-50 transition cursor-pointer text-left"
+        >
+          <div className="flex items-center gap-2">
+            <Leaf size={14} className="text-[#15803D]" />
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              Dietary & Lifestyle
+            </span>
+            {isDietaryActive && (
+              <span className="w-2 h-2 rounded-full bg-[#15803D]" />
+            )}
+          </div>
+          {openSections.dietary ? (
+            <ChevronUp size={14} className="text-slate-400" />
+          ) : (
+            <ChevronDown size={14} className="text-slate-400" />
+          )}
+        </button>
+
+        {openSections.dietary && (
+          <div className="p-3 space-y-1.5">
+            {dietaryOptions.map((opt) => {
+              const Icon = opt.icon;
+              const checked = selectedDietary.includes(opt.id);
+              return (
+                <label
+                  key={opt.id}
+                  onClick={() => toggleDietary(opt.id)}
+                  className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition cursor-pointer select-none"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className={`w-4 h-4 rounded-md flex items-center justify-center border transition ${
+                        checked
+                          ? "bg-[#15803D] border-[#15803D] text-white"
+                          : "border-slate-300 bg-white"
+                      }`}
+                    >
+                      {checked && <Check size={12} />}
+                    </div>
+                    <span className="text-xs font-medium text-slate-700">
+                      {opt.label}
+                    </span>
+                  </div>
+                  <Icon size={13} className="text-emerald-600/70" />
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ================= GROUP 4: AVAILABILITY & DEALS ================= */}
+      <div className="border border-slate-200/80 rounded-2xl bg-white overflow-hidden shadow-2xs">
+        <button
+          type="button"
+          onClick={() => toggleSection("deals")}
+          className="w-full flex items-center justify-between p-3.5 bg-slate-50/70 hover:bg-slate-50 transition cursor-pointer text-left"
+        >
+          <div className="flex items-center gap-2">
+            <Flame size={14} className="text-rose-500" />
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              Deals & Availability
+            </span>
+            {isDealsActive && (
+              <span className="w-2 h-2 rounded-full bg-rose-500" />
+            )}
+          </div>
+          {openSections.deals ? (
+            <ChevronUp size={14} className="text-slate-400" />
+          ) : (
+            <ChevronDown size={14} className="text-slate-400" />
+          )}
+        </button>
+
+        {openSections.deals && (
+          <div className="p-3 space-y-2">
+            {/* In-Stock Toggle */}
+            <label
+              onClick={() => setInStockOnly(!inStockOnly)}
+              className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition cursor-pointer select-none"
             >
-              {r.label}
-            </button>
-          ))}
-        </div>
+              <span className="text-xs font-medium text-slate-700">
+                In Stock Only
+              </span>
+              <div
+                className={`w-9 h-5 rounded-full transition-colors p-0.5 ${
+                  inStockOnly ? "bg-[#15803D]" : "bg-slate-300"
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                    inStockOnly ? "translate-x-4" : "translate-x-0"
+                  }`}
+                />
+              </div>
+            </label>
+
+            {/* On-Sale Toggle */}
+            <label
+              onClick={() => setOnSaleOnly(!onSaleOnly)}
+              className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition cursor-pointer select-none"
+            >
+              <span className="text-xs font-medium text-slate-700 flex items-center gap-1.5">
+                <Flame size={13} className="text-rose-500" /> Discounted / Flash Sale
+              </span>
+              <div
+                className={`w-9 h-5 rounded-full transition-colors p-0.5 ${
+                  onSaleOnly ? "bg-rose-500" : "bg-slate-300"
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                    onSaleOnly ? "translate-x-4" : "translate-x-0"
+                  }`}
+                />
+              </div>
+            </label>
+          </div>
+        )}
+      </div>
+
+      {/* ================= GROUP 5: CUSTOMER RATING ================= */}
+      <div className="border border-slate-200/80 rounded-2xl bg-white overflow-hidden shadow-2xs">
+        <button
+          type="button"
+          onClick={() => toggleSection("ratings")}
+          className="w-full flex items-center justify-between p-3.5 bg-slate-50/70 hover:bg-slate-50 transition cursor-pointer text-left"
+        >
+          <div className="flex items-center gap-2">
+            <Star size={14} className="text-amber-500 fill-amber-500" />
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              Customer Rating
+            </span>
+            {isRatingActive && (
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
+            )}
+          </div>
+          {openSections.ratings ? (
+            <ChevronUp size={14} className="text-slate-400" />
+          ) : (
+            <ChevronDown size={14} className="text-slate-400" />
+          )}
+        </button>
+
+        {openSections.ratings && (
+          <div className="p-3 space-y-1">
+            {[
+              { label: "All Ratings", val: 0 },
+              { label: "4.5★ & higher", val: 4.5 },
+              { label: "4.0★ & higher", val: 4.0 },
+              { label: "3.5★ & higher", val: 3.5 },
+            ].map((r) => (
+              <button
+                key={r.val}
+                type="button"
+                onClick={() => setMinRating(r.val)}
+                className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                  minRating === r.val
+                    ? "bg-amber-50 text-amber-900 font-bold border border-amber-300"
+                    : "text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <Star
+                    size={13}
+                    className={
+                      minRating === r.val
+                        ? "text-amber-500 fill-amber-500"
+                        : "text-slate-300"
+                    }
+                  />
+                  <span>{r.label}</span>
+                </div>
+                {r.val > 0 && (
+                  <span className="text-[10px] text-slate-400">Verified</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 
   return (
     <div ref={productTopRef} className="py-8 sm:py-12 bg-[#FAFBF9] min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         {/* ========================================================= */}
         {/* 1. Header Banner & Quick Category Pills */}
         {/* ========================================================= */}
-        <div className="space-y-6 text-left">
+        <div className="space-y-5 text-left">
           {/* Header Title & Subtitle */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-emerald-950/10 pb-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-emerald-950/10 pb-5">
             <div className="space-y-1.5">
               <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-100 text-[#15803D] text-[11px] font-bold uppercase tracking-wider">
                 <Leaf size={12} />
@@ -711,7 +979,7 @@ export default function Products({
           </div>
 
           {/* Horizontal Quick Category Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
             {categoryPills.map((pill) => {
               const Icon = pill.icon;
               const isSelected =
@@ -726,7 +994,7 @@ export default function Products({
                     setSelectedCategory(pill.id);
                     setCurrentPage(1);
                   }}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
                     isSelected
                       ? "bg-[#15803D] text-white shadow-md shadow-emerald-950/20 scale-102"
                       : "bg-white hover:bg-emerald-50/80 text-slate-700 border border-slate-200/80 hover:border-emerald-300"
@@ -744,110 +1012,211 @@ export default function Products({
         </div>
 
         {/* ========================================================= */}
-        {/* 2. Controls Toolbar: Search, Sort, View Toggle, Mobile Trigger */}
+        {/* 2. Controls Toolbar: Search, Sort, View, Quick Chips */}
         {/* ========================================================= */}
-        <div className="bg-white p-3.5 sm:p-4 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3 text-left">
-          {/* Search Box */}
-          <div className="relative w-full md:w-80">
-            <Search
-              size={16}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search organic apples, eggs, sourdough..."
-              className="w-full pl-10 pr-9 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white transition"
-            />
-            {searchQuery && (
+        <div className="bg-white p-3.5 sm:p-4 rounded-3xl border border-slate-200/80 shadow-xs space-y-3 text-left">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+            {/* Search Box */}
+            <div className="relative w-full md:w-80">
+              <Search
+                size={16}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search organic apples, eggs, sourdough..."
+                className="w-full pl-10 pr-9 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white transition"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setDebouncedSearch("");
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            {/* Right Toolbar Actions */}
+            <div className="flex items-center justify-between md:justify-end gap-2.5 w-full md:w-auto">
+              {/* Mobile Filter Drawer Button */}
               <button
                 type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                onClick={() => setMobileFilterOpen(true)}
+                className="lg:hidden flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
               >
-                <X size={14} />
+                <Filter size={14} className="text-[#15803D]" />
+                <span>Filters</span>
+                {activeFiltersCount > 0 && (
+                  <span className="w-4 h-4 rounded-full bg-[#15803D] text-white text-[9px] font-black flex items-center justify-center">
+                    {activeFiltersCount}
+                  </span>
+                )}
               </button>
-            )}
+
+              {/* Sort Dropdown */}
+              <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                <span className="hidden sm:inline font-semibold">Sort by:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-3 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                >
+                  <option value="featured">Featured & Best Value</option>
+                  <option value="price-asc">Price: Low to High</option>
+                  <option value="price-desc">Price: High to Low</option>
+                  <option value="rating">Highest Customer Rating</option>
+                  <option value="discount">Biggest Savings %</option>
+                  <option value="newest">Fresh Harvest Arrival</option>
+                </select>
+              </div>
+
+              {/* View Mode Switcher: Grid vs List */}
+              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200/80">
+                <button
+                  type="button"
+                  onClick={() => setLayout("grid")}
+                  aria-label="Grid View"
+                  className={`p-1.5 rounded-xl transition cursor-pointer ${
+                    layout === "grid"
+                      ? "bg-white text-[#15803D] shadow-xs"
+                      : "text-slate-400 hover:text-slate-600"
+                  }`}
+                >
+                  <Grid size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLayout("list")}
+                  aria-label="List View"
+                  className={`p-1.5 rounded-xl transition cursor-pointer ${
+                    layout === "list"
+                      ? "bg-white text-[#15803D] shadow-xs"
+                      : "text-slate-400 hover:text-slate-600"
+                  }`}
+                >
+                  <ListIcon size={16} />
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Right Toolbar Actions */}
-          <div className="flex items-center justify-between md:justify-end gap-2.5 w-full md:w-auto">
-            {/* Mobile Filter Drawer Button */}
+          {/* Quick Filter Horizontal Chips (Immediate 1-tap filtering on Mobile & Desktop) */}
+          <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1">
+              Quick:
+            </span>
+
             <button
               type="button"
-              onClick={() => setMobileFilterOpen(true)}
-              className="lg:hidden flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+              onClick={() => setOnSaleOnly(!onSaleOnly)}
+              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer border ${
+                onSaleOnly
+                  ? "bg-rose-500 text-white border-rose-500 shadow-2xs"
+                  : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+              }`}
             >
-              <Filter size={14} className="text-[#15803D]" />
-              <span>Filters</span>
-              {activeFiltersCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-[#15803D] text-white text-[9px] font-black flex items-center justify-center">
-                  {activeFiltersCount}
-                </span>
-              )}
+              <Flame size={12} className={onSaleOnly ? "text-white" : "text-rose-500"} />
+              <span>On Sale</span>
             </button>
 
-            {/* Sort Dropdown */}
-            <div className="flex items-center gap-1.5 text-xs text-slate-600">
-              <span className="hidden sm:inline font-semibold">Sort by:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-500 cursor-pointer"
-              >
-                <option value="featured">Featured & Best Value</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-                <option value="rating">Highest Customer Rating</option>
-                <option value="discount">Biggest Savings %</option>
-                <option value="newest">Fresh Harvest Arrival</option>
-              </select>
-            </div>
+            <button
+              type="button"
+              onClick={() => toggleDietary("organic")}
+              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer border ${
+                selectedDietary.includes("organic")
+                  ? "bg-[#15803D] text-white border-[#15803D] shadow-2xs"
+                  : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+              }`}
+            >
+              <Leaf size={12} className={selectedDietary.includes("organic") ? "text-white" : "text-[#15803D]"} />
+              <span>Organic</span>
+            </button>
 
-            {/* View Mode Switcher: Grid vs List */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200/80">
-              <button
-                type="button"
-                onClick={() => setLayout("grid")}
-                aria-label="Grid View"
-                className={`p-1.5 rounded-xl transition cursor-pointer ${
-                  layout === "grid"
-                    ? "bg-white text-[#15803D] shadow-xs"
-                    : "text-slate-400 hover:text-slate-600"
-                }`}
-              >
-                <Grid size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setLayout("list")}
-                aria-label="List View"
-                className={`p-1.5 rounded-xl transition cursor-pointer ${
-                  layout === "list"
-                    ? "bg-white text-[#15803D] shadow-xs"
-                    : "text-slate-400 hover:text-slate-600"
-                }`}
-              >
-                <ListIcon size={16} />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => toggleDietary("vegan")}
+              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer border ${
+                selectedDietary.includes("vegan")
+                  ? "bg-[#15803D] text-white border-[#15803D] shadow-2xs"
+                  : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+              }`}
+            >
+              <Sparkles size={12} className={selectedDietary.includes("vegan") ? "text-white" : "text-emerald-600"} />
+              <span>Vegan</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setInStockOnly(!inStockOnly)}
+              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer border ${
+                inStockOnly
+                  ? "bg-[#15803D] text-white border-[#15803D] shadow-2xs"
+                  : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+              }`}
+            >
+              <Check size={12} className={inStockOnly ? "text-white" : "text-[#15803D]"} />
+              <span>In Stock</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMinRating(minRating === 4.5 ? 0 : 4.5)}
+              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer border ${
+                minRating === 4.5
+                  ? "bg-amber-500 text-white border-amber-500 shadow-2xs"
+                  : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+              }`}
+            >
+              <Star size={12} className={minRating === 4.5 ? "text-white fill-white" : "text-amber-500 fill-amber-500"} />
+              <span>4.5★+</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (pricePreset === "under-5") {
+                  setPricePreset("all");
+                } else {
+                  setPricePreset("under-5");
+                  setAppliedCustomPrice({ min: null, max: null });
+                }
+              }}
+              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer border ${
+                pricePreset === "under-5"
+                  ? "bg-[#15803D] text-white border-[#15803D] shadow-2xs"
+                  : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+              }`}
+            >
+              <span>Under ₹5</span>
+            </button>
           </div>
         </div>
 
+        {/* ========================================================= */}
         {/* Active Filters Ribbon Chips */}
+        {/* ========================================================= */}
         {activeFiltersCount > 0 && (
           <div className="flex items-center gap-2 flex-wrap text-left pt-1">
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
               Active Filters:
             </span>
 
-            {searchQuery && (
+            {debouncedSearch && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-200 text-slate-800 text-xs font-medium">
-                "{searchQuery}"
+                "{debouncedSearch}"
                 <button
                   type="button"
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => {
+                    setSearchQuery("");
+                    setDebouncedSearch("");
+                  }}
                   className="hover:text-rose-600 cursor-pointer"
                 >
                   <X size={12} />
@@ -884,7 +1253,20 @@ export default function Products({
               </span>
             ))}
 
-            {pricePreset !== "all" && (
+            {(appliedCustomPrice.min !== null || appliedCustomPrice.max !== null) && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-200 text-slate-800 text-xs font-medium">
+                ₹{appliedCustomPrice.min || 0} – ₹{appliedCustomPrice.max || "Any"}
+                <button
+                  type="button"
+                  onClick={clearCustomPrice}
+                  className="hover:text-rose-600 cursor-pointer"
+                >
+                  <X size={12} />
+                </button>
+              </span>
+            )}
+
+            {pricePreset !== "all" && appliedCustomPrice.min === null && appliedCustomPrice.max === null && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-200 text-slate-800 text-xs font-medium">
                 {pricePresets.find((p) => p.id === pricePreset)?.label}
                 <button
@@ -899,7 +1281,7 @@ export default function Products({
 
             {inStockOnly && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-semibold">
-                In Stock Only
+                In Stock
                 <button
                   type="button"
                   onClick={() => setInStockOnly(false)}
@@ -947,7 +1329,7 @@ export default function Products({
         )}
 
         {/* ========================================================= */}
-        {/* 3. Main Grid Layout (Sidebar + Products) */}
+        {/* 3. Main Grid Layout (Organized Sidebar + Products) */}
         {/* ========================================================= */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Desktop Left Filter Sidebar */}
@@ -981,7 +1363,7 @@ export default function Products({
                     setItemsPerPage(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="px-2 py-1 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none"
+                  className="px-2 py-1 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
                 >
                   <option value={12}>12</option>
                   <option value={24}>24</option>
@@ -1030,7 +1412,7 @@ export default function Products({
                     No Fresh Groceries Found
                   </h3>
                   <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    We couldn't find any items matching your active filter criteria. Try adjusting your search query or clear your dietary filters.
+                    We couldn't find any items matching your active filter criteria. Try adjusting your search query, price range, or dietary preferences.
                   </p>
                 </div>
                 <div className="pt-2">
@@ -1065,7 +1447,6 @@ export default function Products({
                 <div className="flex items-center gap-1.5">
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
                     .filter((p) => {
-                      // Show first, last, and window around current page
                       return (
                         p === 1 ||
                         p === totalPages ||
@@ -1123,11 +1504,12 @@ export default function Products({
             />
 
             {/* Slide-out Menu */}
-            <div className="relative ml-auto w-full max-w-xs bg-white h-full shadow-2xl p-6 overflow-y-auto flex flex-col justify-between z-10">
-              <div className="space-y-6">
+            <div className="relative ml-auto w-full max-w-xs bg-white h-full shadow-2xl p-5 overflow-y-auto flex flex-col justify-between z-10">
+              <div className="space-y-5">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-                  <h3 className="text-base font-bold text-slate-900">
-                    Filter Aisles
+                  <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <Filter size={16} className="text-[#15803D]" />
+                    <span>Filter Groceries</span>
                   </h3>
                   <button
                     type="button"
@@ -1142,21 +1524,21 @@ export default function Products({
               </div>
 
               {/* Drawer Apply Footer */}
-              <div className="pt-6 border-t border-slate-200 mt-6 space-y-2">
+              <div className="pt-4 border-t border-slate-200 mt-6 space-y-2 sticky bottom-0 bg-white">
                 <button
                   type="button"
                   onClick={() => setMobileFilterOpen(false)}
-                  className="w-full py-3 bg-[#15803D] text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md cursor-pointer"
+                  className="w-full py-3 bg-[#15803D] text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md cursor-pointer hover:bg-emerald-800 transition"
                 >
-                  View {totalItems} Groceries
+                  View {totalItems} Results
                 </button>
                 {activeFiltersCount > 0 && (
                   <button
                     type="button"
                     onClick={resetAllFilters}
-                    className="w-full py-2 text-slate-500 hover:text-slate-700 text-xs font-semibold cursor-pointer"
+                    className="w-full py-1.5 text-slate-500 hover:text-slate-700 text-xs font-semibold cursor-pointer"
                   >
-                    Clear All
+                    Clear All Filters
                   </button>
                 )}
               </div>

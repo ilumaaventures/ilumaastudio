@@ -18,11 +18,12 @@ import {
   Ticket,
   Globe,
   Package,
-  CheckCircle2,
   ExternalLink,
   ChevronRight,
   Flame,
   Zap,
+  X,
+  SlidersHorizontal,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import baseApi from "../../api/baseApi";
@@ -49,8 +50,10 @@ function Offers() {
   const [copiedCode, setCopiedCode] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedScope, setSelectedScope] = useState("All");
+  const [sortBy, setSortBy] = useState("newest");
 
   useEffect(() => {
+    let isMounted = true;
     const fetchAllDealsAndBanners = async () => {
       try {
         setLoading(true);
@@ -70,16 +73,24 @@ function Offers() {
           ? bannersRes.data
           : bannersRes.data?.banners || [];
 
-        setCoupons(couponList);
-        setPlatformOffers(offerList);
-        setPromoBanners(bannerList);
+        if (isMounted) {
+          setCoupons(couponList);
+          setPlatformOffers(offerList);
+          setPromoBanners(bannerList);
+        }
       } catch (err) {
         console.error("Failed to load offers, coupons, and banners:", err);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
+
     fetchAllDealsAndBanners();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleCopyCode = (code, e) => {
@@ -89,10 +100,23 @@ function Offers() {
     }
     if (!code) return;
 
-    navigator.clipboard.writeText(code);
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(code);
+    } else {
+      const textArea = document.createElement("textarea");
+      textArea.value = code;
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+    }
+
     setCopiedCode(code);
-    toast.success(`Coupon Code '${code}' copied to clipboard!`);
-    setTimeout(() => setCopiedCode(null), 3000);
+    toast.success(`Coupon Code '${code}' copied to clipboard! 🛍️`);
+    setTimeout(() => setCopiedCode(null), 2500);
   };
 
   const handleNavigateToTarget = (deal) => {
@@ -134,7 +158,7 @@ function Offers() {
     navigate("/shop");
   };
 
-  // Combine and format all items
+  // Consolidate coupons and promotional offers
   const allDeals = [
     ...coupons.map((c) => ({
       _id: c._id,
@@ -142,9 +166,9 @@ function Offers() {
       title: c.title || `Save with code ${c.code}`,
       code: c.code,
       discountType: c.discountType,
-      discountAmount: c.discountAmount,
-      maxDiscountAmount: c.maxDiscountAmount,
-      minOrderAmount: c.minOrderAmount,
+      discountAmount: Number(c.discountAmount) || 0,
+      maxDiscountAmount: Number(c.maxDiscountAmount) || 0,
+      minOrderAmount: Number(c.minOrderAmount) || 0,
       targetScope: c.targetScope || "global",
       business: c.business,
       vendor: c.vendor,
@@ -153,53 +177,74 @@ function Offers() {
       targetProducts: c.targetProducts,
       expiryDate: c.expiryDate,
       startDate: c.startDate,
-      autoApply: c.autoApply,
+      createdAt: c.createdAt,
       description: `Get ${
         c.discountType === "percentage"
           ? `${c.discountAmount}% OFF`
           : `FLAT ₹${c.discountAmount} OFF`
-      } on eligible platform orders.${
+      } on eligible orders.${
         c.minOrderAmount > 0 ? ` Minimum spend: ₹${c.minOrderAmount}.` : ""
-      }${c.maxDiscountAmount > 0 ? ` Max cap: ₹${c.maxDiscountAmount}.` : ""}`,
+      }${c.maxDiscountAmount > 0 ? ` Maximum discount cap: ₹${c.maxDiscountAmount}.` : ""}`,
     })),
     ...platformOffers.map((o) => ({
       _id: o._id,
       itemType: "offer",
-      title: o.title || "Global Platform Mega Deal",
-      headline: o.headline || o.subtitle || "Exclusive Platform Discount",
+      title: o.title || "Promotional Platform Offer",
+      headline: o.headline || o.subtitle || "Exclusive Deal",
       code: o.code || (o.associatedCoupon ? o.associatedCoupon.code : null),
       associatedCoupon: o.associatedCoupon,
       image: o.image || o.bannerImage,
+      discountAmount: Number(o.associatedCoupon?.discountAmount || o.discountAmount || 0),
+      discountType: o.associatedCoupon?.discountType || o.discountType || "percentage",
+      minOrderAmount: Number(o.associatedCoupon?.minOrderAmount || o.minOrderAmount || 0),
+      maxDiscountAmount: Number(o.associatedCoupon?.maxDiscountAmount || o.maxDiscountAmount || 0),
       targetScope: o.targetScope || "global",
       platform: o.platform || "ILumaa Global",
       business: o.business,
       vendor: o.vendor,
       expiryDate: o.expiryDate || o.expiry,
+      startDate: o.startDate,
+      createdAt: o.createdAt,
       targetUrl: o.targetUrl,
-      description: o.desc || o.description || "Special promotional global offer created across ILumaa Network.",
+      description: o.desc || o.description || "Special promotional offer available across our partner network.",
     })),
   ];
 
-  // Filtering
-  const filteredDeals = allDeals.filter((deal) => {
-    const q = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !q ||
-      deal.title?.toLowerCase().includes(q) ||
-      deal.code?.toLowerCase().includes(q) ||
-      deal.description?.toLowerCase().includes(q) ||
-      deal.business?.businessName?.toLowerCase().includes(q) ||
-      deal.vendor?.storeName?.toLowerCase().includes(q);
+  // Filtering & Sorting
+  const filteredDeals = allDeals
+    .filter((deal) => {
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        deal.title?.toLowerCase().includes(q) ||
+        deal.code?.toLowerCase().includes(q) ||
+        deal.description?.toLowerCase().includes(q) ||
+        deal.business?.businessName?.toLowerCase().includes(q) ||
+        deal.vendor?.storeName?.toLowerCase().includes(q);
 
-    const matchesScope =
-      selectedScope === "All" ||
-      (selectedScope === "global" && (deal.targetScope === "global" || deal.targetScope === "platform")) ||
-      (selectedScope === "business" && deal.targetScope === "business") ||
-      (selectedScope === "vendor" && deal.targetScope === "vendor") ||
-      (selectedScope === "product" && deal.targetScope === "product");
+      const matchesScope =
+        selectedScope === "All" ||
+        (selectedScope === "global" && (deal.targetScope === "global" || deal.targetScope === "platform")) ||
+        (selectedScope === "business" && deal.targetScope === "business") ||
+        (selectedScope === "vendor" && deal.targetScope === "vendor") ||
+        (selectedScope === "product" && deal.targetScope === "product");
 
-    return matchesSearch && matchesScope;
-  });
+      return matchesSearch && matchesScope;
+    })
+    .sort((a, b) => {
+      if (sortBy === "discount") {
+        return (b.discountAmount || 0) - (a.discountAmount || 0);
+      }
+      if (sortBy === "expiring") {
+        const timeA = a.expiryDate ? new Date(a.expiryDate).getTime() : Infinity;
+        const timeB = b.expiryDate ? new Date(b.expiryDate).getTime() : Infinity;
+        return timeA - timeB;
+      }
+      // default: newest
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return timeB - timeA;
+    });
 
   const scopeCounts = {
     All: allDeals.length,
@@ -214,165 +259,229 @@ function Offers() {
       case "global":
       case "platform":
         return {
-          label: "Global Platform Deal",
-          subtitle: "Valid across all stores on ILumaa Network",
-          bg: "bg-[#004ac6] text-white border-[#004ac6]",
+          label: "Global Platform",
+          subtitle: "Valid across all stores on ILumaa",
+          bg: "bg-blue-50 text-blue-700 border-blue-200",
+          accentColor: "from-blue-600 to-indigo-700",
           icon: Globe,
         };
       case "business":
-        const bizName = typeof businessObj === "object" ? businessObj?.businessName : "Whole Business";
+        const bizName = typeof businessObj === "object" ? businessObj?.businessName : "Storewide";
         return {
-          label: "Business Storewide",
-          subtitle: bizName || "Applicable across store catalog",
+          label: "Storewide Deal",
+          subtitle: bizName || "Applicable to store catalog",
           bg: "bg-purple-50 text-purple-700 border-purple-200",
+          accentColor: "from-purple-600 to-indigo-700",
           icon: Store,
         };
       case "vendor":
-        const vName = typeof vendorObj === "object" ? vendorObj?.storeName : "Vendor Store";
+        const vName = typeof vendorObj === "object" ? vendorObj?.storeName : "Vendor Special";
         return {
-          label: "Vendor Special",
-          subtitle: vName,
+          label: "Vendor Deal",
+          subtitle: vName || "Partner merchant store",
           bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
+          accentColor: "from-emerald-600 to-teal-700",
           icon: ShoppingBag,
         };
       case "product":
-        const prodName = targetProds && targetProds.length > 0 ? targetProds[0]?.name || targetProds[0]?.title : "Specific Item";
+        const prodName = targetProds && targetProds.length > 0 ? targetProds[0]?.name || targetProds[0]?.title : "Selected Item";
         return {
-          label: "Product Deal",
-          subtitle: prodName || "Applicable to selected product",
-          bg: "bg-amber-50 text-amber-700 border-amber-200",
+          label: "Product Special",
+          subtitle: prodName || "Selected product item",
+          bg: "bg-amber-50 text-amber-800 border-amber-200",
+          accentColor: "from-amber-500 to-orange-600",
           icon: Package,
         };
       default:
         return {
-          label: "Global Platform Offer",
-          subtitle: "Featured platform deal",
-          bg: "bg-blue-50 text-blue-700 border-blue-200",
+          label: "Special Offer",
+          subtitle: "Featured promotional deal",
+          bg: "bg-indigo-50 text-indigo-700 border-indigo-200",
+          accentColor: "from-indigo-600 to-blue-700",
           icon: Sparkles,
         };
     }
   };
 
   return (
-    <div className="bg-[#F8FAFC] min-h-screen py-8 sm:py-12 font-sans text-slate-800">
+    <div className="bg-[#f8fafc] min-h-screen py-6 sm:py-10 font-sans text-slate-800 antialiased">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 text-left">
-        
-        {/* Top Hero Banner Section with Global Scope Accent */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0F172A] via-[#1E3A8A] to-[#004AC6] text-white p-8 sm:p-12 shadow-xl border border-blue-500/20">
+        {/* Breadcrumb Navigation */}
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+          <Link to="/" className="hover:text-blue-600 transition-colors">
+            Home
+          </Link>
+          <ChevronRight size={12} />
+          <span className="text-slate-900 font-bold">Offers & Coupons</span>
+        </div>
+
+        {/* Hero Section */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white p-6 sm:p-10 lg:p-12 shadow-xl border border-slate-800/80">
+          {/* Subtle Ambient Radial Lighting */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3" />
+          <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none translate-y-1/2" />
+
           <div className="relative z-10 max-w-3xl space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-black uppercase tracking-wider text-blue-200 border border-white/20">
-              <Zap size={14} className="text-amber-400 fill-amber-400" />
-              <span>Global Platform Offers & Flash Coupons</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[11px] font-black uppercase tracking-wider text-blue-200 border border-white/15">
+              <Zap size={13} className="text-amber-400 fill-amber-400 shrink-0" />
+              <span>Verified Deals & Discount Vouchers</span>
             </div>
 
-            <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight text-white">
-              Platform-Wide Flash Deals & Coupons
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight text-white">
+              Exclusive Offers & Store Coupons
             </h1>
 
-            <p className="text-sm sm:text-base text-slate-200 font-medium leading-relaxed">
-              Explore global discount vouchers, campaign deals, and storewide promotional offers with global platform scope. Redeem codes directly at checkout!
+            <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed max-w-2xl">
+              Discover real active promo codes, campaign vouchers, and storewide discounts across our network. Copy any code with 1-click and apply it during checkout to save instantly!
             </p>
 
-            {/* Live Stats Header Bar */}
-            <div className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="bg-white/10 backdrop-blur-md border border-white/15 p-3 rounded-2xl">
-                <p className="text-[10px] uppercase font-bold text-blue-200">Active Deals</p>
-                <p className="text-xl font-black text-white">{allDeals.length}</p>
+            {/* Quick Metrics Bar */}
+            <div className="pt-3 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-3 rounded-2xl">
+                <p className="text-[10px] uppercase font-bold text-slate-400">Total Active Deals</p>
+                <p className="text-lg sm:text-xl font-black text-white">{allDeals.length}</p>
               </div>
-              <div className="bg-white/10 backdrop-blur-md border border-white/15 p-3 rounded-2xl">
-                <p className="text-[10px] uppercase font-bold text-blue-200">Global Platform</p>
-                <p className="text-xl font-black text-white">{scopeCounts.global}</p>
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-3 rounded-2xl">
+                <p className="text-[10px] uppercase font-bold text-slate-400">Platform Wide</p>
+                <p className="text-lg sm:text-xl font-black text-blue-300">{scopeCounts.global}</p>
               </div>
-              <div className="bg-white/10 backdrop-blur-md border border-white/15 p-3 rounded-2xl">
-                <p className="text-[10px] uppercase font-bold text-blue-200">Business Deals</p>
-                <p className="text-xl font-black text-white">{scopeCounts.business}</p>
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-3 rounded-2xl">
+                <p className="text-[10px] uppercase font-bold text-slate-400">Storewide Deals</p>
+                <p className="text-lg sm:text-xl font-black text-purple-300">{scopeCounts.business}</p>
               </div>
-              <div className="bg-white/10 backdrop-blur-md border border-white/15 p-3 rounded-2xl">
-                <p className="text-[10px] uppercase font-bold text-blue-200">Vendor Deals</p>
-                <p className="text-xl font-black text-white">{scopeCounts.vendor}</p>
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-3 rounded-2xl">
+                <p className="text-[10px] uppercase font-bold text-slate-400">Vendor Specials</p>
+                <p className="text-lg sm:text-xl font-black text-emerald-300">{scopeCounts.vendor}</p>
               </div>
             </div>
           </div>
-
-          <div className="absolute -right-16 -bottom-16 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute right-32 top-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
         </div>
 
-        {/* Global Promotional Banners Carousel Strip (if banners exist) */}
-        {promoBanners.length > 0 && (
+        {/* Featured Platform Campaign Offers (Image Rich Offers from Backend) */}
+        {platformOffers.some((o) => o.image) && (
           <div className="space-y-4">
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
-              <Flame size={16} className="text-rose-600 fill-rose-600" />
-              Featured Global Platform Banners
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {promoBanners.map((banner, idx) => (
-                <div
-                  key={banner._id || idx}
-                  className="group relative rounded-3xl overflow-hidden border border-slate-200/90 bg-white p-6 shadow-xs hover:shadow-lg transition-all flex flex-col justify-between"
-                  style={{
-                    background: `linear-gradient(135deg, #0F172A 0%, #1E3A8A 100%)`,
-                  }}
-                >
-                  <div className="space-y-2 text-white z-10">
-                    <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/20 text-white border border-white/30">
-                      Global Platform Banner
-                    </span>
-                    <h4 className="text-xl font-black">{banner.title || "Platform Flash Sale"}</h4>
-                    <p className="text-xs text-white/80 font-medium leading-relaxed">
-                      {banner.subtitle || banner.description || "Limited time promotional banner offer available across all stores."}
-                    </p>
-                  </div>
+            <div className="flex items-center gap-2">
+              <span className="p-1 rounded-lg bg-rose-100 text-rose-600">
+                <Flame size={16} className="fill-rose-500" />
+              </span>
+              <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+                Featured Campaign Highlights
+              </h2>
+            </div>
 
-                  {banner.code && (
-                    <div className="pt-4 flex items-center justify-between z-10">
-                      <span className="font-mono font-black text-xs text-amber-300 bg-black/40 px-3 py-1 rounded-xl">
-                        CODE: {banner.code}
-                      </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {platformOffers
+                .filter((o) => o.image)
+                .slice(0, 2)
+                .map((offer) => (
+                  <div
+                    key={offer._id}
+                    className="group relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-5 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between min-h-[190px]"
+                    style={{
+                      background: "linear-gradient(135deg, #0F172A 0%, #1E3A8A 100%)",
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-4 z-10">
+                      <div className="space-y-2 text-white max-w-[65%]">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/20 text-white border border-white/30 backdrop-blur-xs">
+                          <Sparkles size={10} />
+                          <span>Featured Campaign</span>
+                        </span>
+                        <h3 className="text-xl font-black tracking-tight leading-snug">
+                          {offer.title}
+                        </h3>
+                        <p className="text-xs text-blue-100/90 font-medium line-clamp-2">
+                          {offer.desc || offer.description}
+                        </p>
+                      </div>
+
+                      {offer.image && (
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border border-white/20 shadow-md shrink-0 bg-slate-800">
+                          <img
+                            src={offer.image}
+                            alt={offer.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-4 flex items-center justify-between z-10 border-t border-white/10 mt-2">
+                      {offer.code ? (
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-black text-xs text-amber-300 bg-black/40 px-3 py-1 rounded-xl border border-white/10">
+                            {offer.code}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => handleCopyCode(offer.code, e)}
+                            className="px-3 py-1 text-xs font-black rounded-xl bg-white text-slate-900 hover:bg-blue-50 transition-colors shadow-2xs cursor-pointer"
+                          >
+                            {copiedCode === offer.code ? "Copied! ✓" : "Copy"}
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs font-bold text-blue-200">
+                          Automatic checkout discount
+                        </span>
+                      )}
+
                       <button
-                        onClick={(e) => handleCopyCode(banner.code, e)}
-                        className="px-3.5 py-1.5 rounded-xl text-xs font-black bg-white text-slate-900 shadow-xs cursor-pointer"
+                        type="button"
+                        onClick={() => handleNavigateToTarget(offer)}
+                        className="text-xs font-bold text-white hover:text-amber-300 flex items-center gap-1 transition-colors cursor-pointer"
                       >
-                        Copy Code
+                        <span>Explore Deals</span>
+                        <ArrowRight size={13} />
                       </button>
                     </div>
-                  )}
-                </div>
-              ))}
+                  </div>
+                ))}
             </div>
           </div>
         )}
 
-        {/* Filter Toolbar */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs space-y-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="relative w-full md:w-96">
+        {/* Filter and Search Bar */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+            {/* Search Input with Clear Button */}
+            <div className="relative flex-1 max-w-lg">
               <Search
-                size={18}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                size={17}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
               />
               <input
                 type="text"
-                placeholder="Search by code, offer title, business..."
+                placeholder="Search by coupon code, offer title, business name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:border-[#004ac6] focus:bg-white transition"
+                className="w-full pl-10 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition-all shadow-2xs"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
 
             {/* Scope Filter Tabs */}
-            <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
               {[
-                { key: "All", label: "All Deals", count: scopeCounts.All },
+                { key: "All", label: "All Offers", count: scopeCounts.All },
                 { key: "global", label: "🌐 Global Platform", count: scopeCounts.global },
-                { key: "business", label: "🏢 Business", count: scopeCounts.business },
+                { key: "business", label: "🏢 Storewide", count: scopeCounts.business },
                 { key: "vendor", label: "🏪 Vendors", count: scopeCounts.vendor },
                 { key: "product", label: "📦 Products", count: scopeCounts.product },
               ].map((scopeItem) => (
                 <button
                   key={scopeItem.key}
+                  type="button"
                   onClick={() => setSelectedScope(scopeItem.key)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3.5 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
                     selectedScope === scopeItem.key
                       ? "bg-[#004ac6] text-white shadow-xs"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
@@ -380,9 +489,9 @@ function Offers() {
                 >
                   <span>{scopeItem.label}</span>
                   <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                       selectedScope === scopeItem.key
-                        ? "bg-white/25 text-white font-black"
+                        ? "bg-white/20 text-white font-black"
                         : "bg-slate-200 text-slate-700"
                     }`}
                   >
@@ -391,26 +500,41 @@ function Offers() {
                 </button>
               ))}
             </div>
+
+            {/* Sort Dropdown */}
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs font-bold text-slate-400 hidden sm:inline">Sort:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl px-3 py-2.5 focus:outline-none focus:border-blue-600 cursor-pointer shadow-2xs"
+              >
+                <option value="newest">Newest Deals</option>
+                <option value="discount">Highest Discount</option>
+                <option value="expiring">Ending Soonest</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        {/* Content Grid */}
+        {/* Content Deals Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {Array.from({ length: 6 }).map((_, idx) => (
               <div
                 key={idx}
-                className="bg-white border border-slate-200 rounded-3xl p-6 h-80 animate-pulse space-y-4 shadow-xs"
+                className="bg-white border border-slate-200 rounded-3xl p-6 h-80 space-y-4 shadow-xs"
               >
-                <div className="h-6 bg-slate-200 rounded-md w-3/4" />
-                <div className="h-4 bg-slate-200 rounded-md w-1/2" />
-                <div className="h-14 bg-slate-100 rounded-2xl w-full" />
-                <div className="h-10 bg-slate-200 rounded-xl w-full mt-auto" />
+                <div className="h-5 bg-slate-200 rounded-md w-1/3 shimmer-placeholder" />
+                <div className="h-6 bg-slate-200 rounded-md w-3/4 shimmer-placeholder" />
+                <div className="h-12 bg-slate-100 rounded-2xl w-full shimmer-placeholder" />
+                <div className="h-12 bg-slate-100 rounded-2xl w-full shimmer-placeholder" />
+                <div className="h-10 bg-slate-200 rounded-xl w-full mt-auto shimmer-placeholder" />
               </div>
             ))}
           </div>
         ) : filteredDeals.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {filteredDeals.map((deal, index) => {
               const scopeInfo = getScopeBadge(
                 deal.targetScope,
@@ -426,13 +550,14 @@ function Offers() {
               return (
                 <div
                   key={deal._id || index}
-                  className="group relative bg-white border border-slate-200/90 hover:border-[#004ac6]/50 rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+                  className="group relative bg-white border border-slate-200/90 hover:border-blue-500/50 rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
                 >
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3.5 h-7 bg-[#F8FAFC] border-r border-slate-200/80 rounded-r-full z-20 pointer-events-none" />
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-7 bg-[#F8FAFC] border-l border-slate-200/80 rounded-l-full z-20 pointer-events-none" />
+                  {/* Visual Perforated Ticket Notches */}
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3.5 h-7 bg-[#f8fafc] border-r border-slate-200/80 rounded-r-full z-20 pointer-events-none" />
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-7 bg-[#f8fafc] border-l border-slate-200/80 rounded-l-full z-20 pointer-events-none" />
 
-                  {/* Header Banner Section */}
-                  <div className="p-6 pb-4 bg-gradient-to-br from-slate-50 via-white to-blue-50/40 border-b border-slate-100 relative">
+                  {/* Header Voucher Strip */}
+                  <div className="p-6 pb-4 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 border-b border-slate-100 relative">
                     <div className="flex items-center justify-between gap-2 mb-3">
                       <span
                         className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase border ${scopeInfo.bg}`}
@@ -441,7 +566,7 @@ function Offers() {
                         <span>{scopeInfo.label}</span>
                       </span>
 
-                      {deal.discountAmount !== undefined && (
+                      {deal.discountAmount > 0 && (
                         <span className="px-3 py-1 rounded-full bg-emerald-600 text-white font-black text-xs shadow-2xs">
                           {deal.discountType === "percentage"
                             ? `${deal.discountAmount}% OFF`
@@ -454,7 +579,7 @@ function Offers() {
                       {scopeInfo.subtitle}
                     </p>
 
-                    <h3 className="text-lg font-black text-slate-900 leading-snug group-hover:text-[#004ac6] transition-colors line-clamp-2">
+                    <h3 className="text-lg font-black text-slate-900 leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">
                       {deal.title}
                     </h3>
                   </div>
@@ -479,18 +604,19 @@ function Offers() {
                         )}
                         {formattedExpiry && (
                           <span className="bg-amber-50 text-amber-800 px-2.5 py-1 rounded-lg border border-amber-200 flex items-center gap-1 font-black">
-                            <Clock size={11} /> Valid Till: {formattedExpiry}
+                            <Clock size={11} /> Valid: {formattedExpiry}
                           </span>
                         )}
                       </div>
                     </div>
 
+                    {/* Voucher Code Box & Navigation */}
                     <div className="space-y-3 pt-2">
                       {code ? (
                         <div className="bg-gradient-to-r from-blue-50/70 to-indigo-50/70 border border-dashed border-blue-300 rounded-2xl p-3 flex items-center justify-between gap-3">
                           <div className="min-w-0">
                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">
-                              Promo Voucher Code
+                              Voucher Code
                             </p>
                             <p className="text-base font-mono font-black text-slate-900 tracking-wider truncate">
                               {code}
@@ -500,7 +626,7 @@ function Offers() {
                           <button
                             type="button"
                             onClick={(e) => handleCopyCode(code, e)}
-                            className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer ${
+                            className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-95 ${
                               isCopied
                                 ? "bg-emerald-600 text-white"
                                 : "bg-[#004ac6] text-white hover:bg-blue-700"
@@ -509,7 +635,7 @@ function Offers() {
                             {isCopied ? (
                               <>
                                 <Check size={14} />
-                                <span>Copied</span>
+                                <span>Copied!</span>
                               </>
                             ) : (
                               <>
@@ -524,11 +650,11 @@ function Offers() {
                       <button
                         type="button"
                         onClick={() => handleNavigateToTarget(deal)}
-                        className="w-full py-2.5 rounded-xl border border-slate-200 hover:border-[#004ac6] bg-white hover:bg-blue-50/50 text-slate-900 hover:text-[#004ac6] text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                        className="w-full py-2.5 rounded-xl border border-slate-200 hover:border-blue-600 bg-white hover:bg-blue-50/50 text-slate-900 hover:text-blue-600 text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
                       >
                         <span>
                           {deal.targetScope === "product"
-                            ? "Explore Product Deal"
+                            ? "Shop This Product"
                             : deal.targetScope === "vendor" || deal.targetScope === "business"
                               ? "Shop Store Catalog"
                               : "Explore Platform Deals"}
@@ -543,21 +669,22 @@ function Offers() {
           </div>
         ) : (
           <div className="bg-white border border-slate-200/90 rounded-3xl p-12 text-center max-w-md mx-auto space-y-4 shadow-xs">
-            <div className="w-16 h-16 rounded-2xl bg-blue-50 text-[#004ac6] flex items-center justify-center mx-auto">
+            <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
               <Gift size={32} />
             </div>
-            <h3 className="text-xl font-black text-slate-900">No Deals Found</h3>
+            <h3 className="text-xl font-black text-slate-900">No Offers Found</h3>
             <p className="text-xs text-slate-500 font-medium">
-              There are currently no active promotional coupons or offers matching your search criteria.
+              There are currently no active promotional coupons or offers matching your filter criteria.
             </p>
             <button
+              type="button"
               onClick={() => {
                 setSearchQuery("");
                 setSelectedScope("All");
               }}
               className="inline-flex items-center gap-2 bg-[#004ac6] text-white text-xs font-black px-5 py-2.5 rounded-xl hover:bg-blue-700 transition shadow-xs cursor-pointer"
             >
-              Reset Search Filters
+              Reset Filters
             </button>
           </div>
         )}

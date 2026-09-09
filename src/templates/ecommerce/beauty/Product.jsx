@@ -1,360 +1,298 @@
 import React, { useState, useMemo } from "react";
-import {
-  Search,
-  SlidersHorizontal,
-  Grid,
-  List,
-  Filter,
-  X,
-  Droplets,
-  Sparkles,
-  ShieldCheck,
-  Star,
-  Check,
-} from "lucide-react";
+import { SlidersHorizontal, Star, X, Check, Droplets } from "lucide-react";
 import ProductCard from "./ProductCard";
-import { getProductImage } from "../../../utils/productImage";
-import { isOutOfStock } from "../../../utils/stockUtils";
 
 export default function Product({
   products = [],
   onSelectProduct,
   onAddToCart,
+  onQuickView,
   searchQuery = "",
   setSearchQuery,
   selectedCategory = "all",
   setSelectedCategory,
 }) {
-  const [selectedStep, setSelectedStep] = useState("all");
-  const [selectedConcern, setSelectedConcern] = useState("all");
-  const [viewMode, setViewMode] = useState("grid"); // "grid" | "table"
+  const [maxPrice, setMaxPrice] = useState(100);
+  const [minRating, setMinRating] = useState(0);
   const [sortBy, setSortBy] = useState("featured");
-  const [veganOnly, setVeganOnly] = useState(false);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
-  const steps = [
-    { id: "all", label: "All Routine Steps" },
-    { id: "cleanse", label: "Step 1: Cleanse" },
-    { id: "tone", label: "Step 2: Tone & Mist" },
-    { id: "treat", label: "Step 3: Treatment Serums" },
-    { id: "moisturize", label: "Step 4: Moisturize" },
-    { id: "protect", label: "Step 5: Sun Shield" },
+  const categories = [
+    { id: "all", label: "All Products" },
+    { id: "Toners & Essences", label: "Toners & Essences" },
+    { id: "Serums & Elixirs", label: "Serums & Elixirs" },
+    { id: "Lipstick & Makeup", label: "Lipsticks & Makeup" },
+    { id: "Body Care", label: "Body Care" },
   ];
 
-  const concerns = [
-    "all",
-    "Deep Hydration",
-    "Skin Barrier Repair",
-    "Glow & Radiance",
-    "Fine Lines & Firming",
-  ];
+  const handleResetFilters = () => {
+    setSelectedCategory?.("all");
+    setMaxPrice(100);
+    setMinRating(0);
+    setSortBy("featured");
+    setSearchQuery?.("");
+  };
 
-  // Filtering
   const filteredProducts = useMemo(() => {
     return products
       .filter((item) => {
-        // Step filter
-        if (selectedStep !== "all") {
-          const s = (item.step || "").toLowerCase();
-          const n = (item.name || "").toLowerCase();
-          if (!s.includes(selectedStep) && !n.includes(selectedStep)) return false;
+        // Search
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          const nameM = (item.name || "").toLowerCase().includes(q);
+          const descM = (item.description || "").toLowerCase().includes(q);
+          const catM = (item.category || "").toLowerCase().includes(q);
+          if (!nameM && !descM && !catM) return false;
         }
 
-        // Concern filter
-        if (selectedConcern !== "all") {
-          const c = (item.concern || "").toLowerCase();
-          const d = (item.description || "").toLowerCase();
-          if (!c.includes(selectedConcern.toLowerCase()) && !d.includes(selectedConcern.toLowerCase())) {
-            return false;
-          }
+        // Category
+        if (selectedCategory !== "all") {
+          const cat = (item.category || "").toLowerCase();
+          const target = selectedCategory.toLowerCase();
+          if (!cat.includes(target) && target !== "all") return false;
         }
 
-        // Search Query
-        if (searchQuery && searchQuery.trim()) {
-          const q = searchQuery.toLowerCase().trim();
-          const matchName = (item.name || "").toLowerCase().includes(q);
-          const matchDesc = (item.description || "").toLowerCase().includes(q);
-          const matchIng = (item.activeIngredient || "").toLowerCase().includes(q);
-          if (!matchName && !matchDesc && !matchIng) return false;
-        }
+        // Price
+        if (Number(item.price) > maxPrice) return false;
+
+        // Rating
+        if (minRating > 0 && (item.rating || 0) < minRating) return false;
 
         return true;
       })
       .sort((a, b) => {
-        if (sortBy === "price-asc") return (Number(a.price) || 0) - (Number(b.price) || 0);
-        if (sortBy === "price-desc") return (Number(b.price) || 0) - (Number(a.price) || 0);
-        if (sortBy === "rating") return (b.rating || 5) - (a.rating || 5);
+        if (sortBy === "price-asc") return Number(a.price) - Number(b.price);
+        if (sortBy === "price-desc") return Number(b.price) - Number(a.price);
+        if (sortBy === "rating") return (b.rating || 0) - (a.rating || 0);
         return 0;
       });
-  }, [products, selectedStep, selectedConcern, searchQuery, sortBy]);
+  }, [products, searchQuery, selectedCategory, maxPrice, minRating, sortBy]);
 
-  const activeFilterCount =
-    (selectedStep !== "all" ? 1 : 0) +
-    (selectedConcern !== "all" ? 1 : 0) +
-    (veganOnly ? 1 : 0) +
-    (searchQuery ? 1 : 0);
-
-  const resetFilters = () => {
-    setSelectedStep("all");
-    setSelectedConcern("all");
-    setVeganOnly(false);
-    if (setSearchQuery) setSearchQuery("");
-    setSortBy("featured");
-  };
-
-  return (
-    <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 text-left">
-      {/* Header */}
-      <div className="space-y-4 border-b border-rose-100 pb-6">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold mb-2">
-              <Sparkles size={13} className="text-rose-500" />
-              <span>Bio-Compatible Skincare Formulations</span>
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-serif font-black text-rose-950 tracking-tight">
-              Clinical Botanical Formulations
-            </h1>
-            <p className="text-sm text-rose-800/80 mt-1 max-w-2xl font-sans">
-              Formulated with high-potency phyto-actives, multi-weight hyaluronic acid, and barrier-replenishing ceramides for luminous, calm skin.
-            </p>
-          </div>
-
-          {/* View Mode & Count */}
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-rose-600 font-sans">
-              Showing <strong className="text-rose-950">{filteredProducts.length}</strong> clean formulas
-            </span>
-
-            <div className="flex items-center bg-white rounded-xl p-1 border border-rose-200">
-              <button
-                type="button"
-                onClick={() => setViewMode("grid")}
-                title="Grid View"
-                className={`p-2 rounded-lg text-xs transition cursor-pointer ${
-                  viewMode === "grid"
-                    ? "bg-rose-500 text-white shadow-xs"
-                    : "text-rose-400 hover:text-rose-700"
-                }`}
-              >
-                <Grid size={15} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("table")}
-                title="Ingredient Table View"
-                className={`p-2 rounded-lg text-xs transition cursor-pointer ${
-                  viewMode === "table"
-                    ? "bg-rose-500 text-white shadow-xs"
-                    : "text-rose-400 hover:text-rose-700"
-                }`}
-              >
-                <List size={15} />
-              </button>
-            </div>
-          </div>
+  const renderSidebar = () => (
+    <div className="space-y-6 text-left">
+      <div className="flex items-center justify-between pb-3 border-b border-stone-200">
+        <div className="flex items-center gap-2">
+          <SlidersHorizontal size={16} className="text-[#8F9E68]" />
+          <h3 className="text-sm font-bold uppercase tracking-wider text-stone-900 font-serif">
+            Filter Beauty
+          </h3>
         </div>
+        <button
+          type="button"
+          onClick={handleResetFilters}
+          className="text-xs text-[#8F9E68] hover:underline font-semibold cursor-pointer"
+        >
+          Reset All
+        </button>
+      </div>
 
-        {/* Filter Controls Bar */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 pt-4">
-          {/* Live Search */}
-          <div className="md:col-span-4 relative">
-            <input
-              type="text"
-              placeholder="Search by ingredient, concern, formula..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
-              className="w-full bg-white text-xs text-rose-950 placeholder-rose-400 pl-9 pr-8 py-2.5 rounded-xl border border-rose-200 focus:border-rose-400 focus:outline-none transition shadow-inner font-sans"
-            />
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-rose-400" />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery && setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-rose-400 hover:text-rose-700"
+      {/* 1. Category */}
+      <div className="space-y-2.5">
+        <span className="text-xs font-bold uppercase tracking-wider text-stone-700 block">
+          Category
+        </span>
+        <div className="space-y-1.5 text-xs text-stone-600">
+          {categories.map((cat) => {
+            const isSelected = selectedCategory.toLowerCase() === cat.id.toLowerCase();
+            return (
+              <label
+                key={cat.id}
+                onClick={() => setSelectedCategory?.(cat.id)}
+                className="flex items-center gap-2.5 cursor-pointer group hover:text-stone-900 transition"
               >
-                <X size={13} />
-              </button>
-            )}
-          </div>
-
-          {/* Routine Step Pills */}
-          <div className="md:col-span-5 flex flex-wrap gap-1.5 items-center">
-            {steps.map((s) => {
-              const isSelected = selectedStep === s.id;
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => setSelectedStep(s.id)}
-                  className={`px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer border ${
-                    isSelected
-                      ? "bg-rose-500 text-white border-rose-500 shadow-xs"
-                      : "bg-white text-rose-800 hover:bg-rose-50 border-rose-200"
-                  }`}
-                >
-                  {s.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Sort selector */}
-          <div className="md:col-span-3">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="w-full bg-white text-xs text-rose-950 px-3 py-2.5 rounded-xl border border-rose-200 focus:border-rose-400 focus:outline-none cursor-pointer font-sans"
-            >
-              <option value="featured">Sort: Featured Formulations</option>
-              <option value="price-asc">Sort: Price (Low to High)</option>
-              <option value="price-desc">Sort: Price (High to Low)</option>
-              <option value="rating">Sort: Clinical Rating</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Sub-Filters: Concerns */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-bold text-rose-500 uppercase tracking-wider">
-              Skin Concern:
-            </span>
-            {concerns.map((c) => (
-              <button
-                key={c}
-                onClick={() => setSelectedConcern(c)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer border ${
-                  selectedConcern === c
-                    ? "bg-rose-100 text-rose-950 border-rose-300 font-bold"
-                    : "bg-white text-rose-700 border-rose-200 hover:bg-rose-50"
-                }`}
-              >
-                {c === "all" ? "All Concerns" : c}
-              </button>
-            ))}
-          </div>
-
-          {activeFilterCount > 0 && (
-            <button
-              onClick={resetFilters}
-              className="text-xs text-rose-600 hover:underline font-semibold flex items-center gap-1 cursor-pointer"
-            >
-              <X size={13} />
-              <span>Reset Clean Filters ({activeFilterCount})</span>
-            </button>
-          )}
+                <input
+                  type="radio"
+                  name="cat_filter"
+                  checked={isSelected}
+                  onChange={() => {}}
+                  className="w-3.5 h-3.5 text-[#8F9E68] border-stone-300 focus:ring-[#8F9E68] accent-[#8F9E68] cursor-pointer"
+                />
+                <span className={isSelected ? "font-semibold text-stone-900" : ""}>
+                  {cat.label}
+                </span>
+              </label>
+            );
+          })}
         </div>
       </div>
 
-      {/* Content */}
-      {filteredProducts.length === 0 ? (
-        <div className="py-20 text-center space-y-4 bg-white rounded-3xl border border-rose-100">
-          <Droplets size={40} className="mx-auto text-rose-300" />
-          <h3 className="text-lg font-serif font-bold text-rose-950">
-            No formulas match your current routine criteria
-          </h3>
-          <p className="text-xs text-rose-700 max-w-sm mx-auto font-sans">
-            Try choosing a different step in your routine or resetting skin concern filters.
-          </p>
-          <button
-            onClick={resetFilters}
-            className="px-4 py-2 rounded-xl bg-rose-500 text-white text-xs font-bold hover:bg-rose-600 transition cursor-pointer"
-          >
-            Show All Formulas
-          </button>
+      {/* 2. Price Range Slider */}
+      <div className="space-y-3 pt-3 border-t border-stone-100">
+        <span className="text-xs font-bold uppercase tracking-wider text-stone-700 block">
+          Maximum Price: ${maxPrice}
+        </span>
+        <input
+          type="range"
+          min="10"
+          max="100"
+          step="5"
+          value={maxPrice}
+          onChange={(e) => setMaxPrice(Number(e.target.value))}
+          className="w-full accent-[#8F9E68] h-1 bg-stone-200 rounded-lg cursor-pointer"
+        />
+        <div className="flex justify-between text-[11px] text-stone-500">
+          <span>$10</span>
+          <span>$100</span>
         </div>
-      ) : viewMode === "grid" ? (
-        /* GRID VIEW */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map((item) => (
-            <ProductCard
-              key={item._id}
-              product={item}
-              onSelectProduct={onSelectProduct}
-              onAddToCart={onAddToCart}
-            />
+      </div>
+
+      {/* 3. Minimum Rating */}
+      <div className="space-y-2 pt-3 border-t border-stone-100">
+        <span className="text-xs font-bold uppercase tracking-wider text-stone-700 block">
+          Minimum Rating
+        </span>
+        <div className="space-y-1.5">
+          {[5, 4, 3].map((r) => (
+            <label
+              key={r}
+              onClick={() => setMinRating(minRating === r ? 0 : r)}
+              className="flex items-center gap-2 cursor-pointer text-xs"
+            >
+              <input
+                type="radio"
+                name="rating_filter"
+                checked={minRating === r}
+                onChange={() => {}}
+                className="w-3.5 h-3.5 accent-[#8F9E68]"
+              />
+              <div className="flex text-amber-500">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    size={12}
+                    className={i < r ? "fill-amber-400 text-amber-400" : "text-stone-300"}
+                  />
+                ))}
+              </div>
+              <span className="text-stone-500">& Up</span>
+            </label>
           ))}
         </div>
-      ) : (
-        /* INGREDIENT TABLE VIEW */
-        <div className="bg-white rounded-3xl border border-rose-100 overflow-x-auto shadow-sm">
-          <table className="w-full text-xs text-left font-sans">
-            <thead>
-              <tr className="border-b border-rose-100 text-rose-600 bg-rose-50/60">
-                <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10px]">Formula Name</th>
-                <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10px]">Key Active Actives</th>
-                <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10px]">Routine Step</th>
-                <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10px]">Target Concern</th>
-                <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10px]">Price</th>
-                <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10px] text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-rose-50">
-              {filteredProducts.map((item) => {
-                const outOfStock = isOutOfStock(item);
-                return (
-                  <tr
-                    key={item._id}
-                    onClick={() => onSelectProduct && onSelectProduct(item)}
-                    className="hover:bg-rose-50/50 transition cursor-pointer group"
-                  >
-                    <td className="py-3 px-4 flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-rose-50 flex-shrink-0 border border-rose-100">
-                        <img
-                          src={getProductImage(item, item.image)}
-                          alt={item.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
-                        />
-                      </div>
-                      <div>
-                        <span className="font-bold text-rose-950 group-hover:text-rose-600 block">
-                          {item.name}
-                        </span>
-                        <span className="text-[10px] text-rose-500">
-                          {item.category || "Active Botanical"}
-                        </span>
-                      </div>
-                    </td>
+      </div>
+    </div>
+  );
 
-                    <td className="py-3 px-4 text-rose-900 font-medium">
-                      {item.activeIngredient || "Multi-Molecular Hyaluronic 2%"}
-                    </td>
-
-                    <td className="py-3 px-4 text-rose-800">
-                      {item.step || "Step 3: Treatment"}
-                    </td>
-
-                    <td className="py-3 px-4 text-rose-900">
-                      {item.concern || "Hydration & Barrier Defense"}
-                    </td>
-
-                    <td className="py-3 px-4 font-bold text-sm text-rose-950">
-                      ₹{Number(item.price).toFixed(2)}
-                    </td>
-
-                    <td className="py-3 px-4 text-right">
-                      {outOfStock ? (
-                        <span className="text-[10px] font-bold text-rose-500 bg-rose-50 px-2.5 py-1 rounded-md">
-                          Waitlist
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onAddToCart(item);
-                          }}
-                          className="px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow-xs"
-                        >
-                          + Add
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+  return (
+    <div className="bg-[#FAF9F7] min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Mobile Filter Button */}
+        <div className="lg:hidden flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setMobileFilterOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-white rounded-md border border-stone-200 text-xs font-semibold shadow-xs"
+          >
+            <SlidersHorizontal size={14} className="text-[#8F9E68]" />
+            <span>Filters</span>
+          </button>
+          <span className="text-xs text-stone-500">
+            {filteredProducts.length} Products
+          </span>
         </div>
-      )}
-    </section>
+
+        {/* Main Grid Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Desktop Left Sidebar */}
+          <aside className="hidden lg:block lg:col-span-3 bg-white p-6 rounded-xl border border-stone-200/80 shadow-xs">
+            {renderSidebar()}
+          </aside>
+
+          {/* Mobile Filter Drawer */}
+          {mobileFilterOpen && (
+            <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex justify-end">
+              <div className="bg-white w-80 h-full p-6 overflow-y-auto shadow-2xl flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between pb-3 mb-4 border-b border-stone-200">
+                    <h3 className="font-bold text-stone-900 font-serif">Filters</h3>
+                    <button
+                      type="button"
+                      onClick={() => setMobileFilterOpen(false)}
+                      className="p-1 rounded-lg text-stone-500 hover:bg-stone-100"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                  {renderSidebar()}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMobileFilterOpen(false)}
+                  className="w-full mt-6 py-2.5 bg-[#8F9E68] text-white font-semibold text-xs rounded shadow-md"
+                >
+                  Show Results ({filteredProducts.length})
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Right Product Grid */}
+          <main className="lg:col-span-9 space-y-6">
+            {/* Top Toolbar */}
+            <div className="bg-white p-4 rounded-xl border border-stone-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-left">
+              <div>
+                <span className="text-[10px] font-bold tracking-widest text-[#8F9E68] uppercase block">
+                  Botanical Formulations
+                </span>
+                <h1 className="text-xl font-bold font-serif text-stone-900 mt-0.5">
+                  {selectedCategory === "all" ? "All Beauty Products" : selectedCategory}
+                </h1>
+                <p className="text-xs text-stone-500 mt-0.5">
+                  Showing {filteredProducts.length} clean beauty essentials
+                </p>
+              </div>
+
+              {/* Sort Selector */}
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-stone-500">Sort by:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="bg-[#FAF9F7] border border-stone-200 rounded px-3 py-1.5 text-stone-800 font-medium focus:outline-none focus:border-[#8F9E68] cursor-pointer"
+                >
+                  <option value="featured">Featured Essentials</option>
+                  <option value="price-asc">Price: Low to High</option>
+                  <option value="price-desc">Price: High to Low</option>
+                  <option value="rating">Top Rated</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Product Grid (4 columns) */}
+            {filteredProducts.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredProducts.map((product) => (
+                  <ProductCard
+                    key={product._id}
+                    product={product}
+                    onSelectProduct={onSelectProduct}
+                    onAddToCart={onAddToCart}
+                    onQuickView={onQuickView}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white p-12 rounded-xl border border-stone-200 text-center space-y-4">
+                <div className="w-12 h-12 bg-stone-100 text-[#8F9E68] rounded-full flex items-center justify-center mx-auto">
+                  <Droplets size={20} />
+                </div>
+                <h3 className="text-base font-bold text-stone-900 font-serif">
+                  No products matching your selection
+                </h3>
+                <p className="text-xs text-stone-500 max-w-sm mx-auto">
+                  Try adjusting your price range or clearing category filters.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="px-4 py-2 bg-[#8F9E68] text-white text-xs font-semibold rounded transition cursor-pointer"
+                >
+                  Reset All Filters
+                </button>
+              </div>
+            )}
+          </main>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,31 +1,21 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  Layers,
-  Compass,
-  Truck,
-  ShieldCheck,
+  ArrowRight,
+  ArrowUpRight,
+  Sparkles,
   ShoppingBag,
   Star,
-  Check,
-  ArrowRight,
   Eye,
-  MapPin,
-  Calendar,
+  Heart,
   X,
-  Search,
-  Sparkles,
-  Sliders,
+  Truck,
+  ShieldCheck,
+  RotateCcw,
+  Check,
   Maximize2,
   Box,
-  Palette,
-  Phone,
-  Mail,
-  CheckCircle2,
-  Info,
+  Layers,
   ChevronRight,
-  Heart,
-  Plus,
-  Minus,
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -35,10 +25,15 @@ import {
   removeFromCart,
 } from "../../../redux/reducers/cartReducer";
 import toast from "react-hot-toast";
-import { isOutOfStock, getProductStock } from "../../../utils/stockUtils";
+import { isOutOfStock } from "../../../utils/stockUtils";
 import CartDrawer from "../../common/CartDrawer";
-import ProductDetailsPage from "../../common/ProductDetailsPage";
 import { getProductImage } from "../../../utils/productImage";
+
+import Navbar from "./Navbar";
+import Footer from "./Footer";
+import ProductCard from "./ProductCard";
+import ProductListing from "./ProductListing";
+import ProductDetails from "./ProductDetails";
 
 export default function CasaLivingTemplate({
   business = {},
@@ -48,37 +43,39 @@ export default function CasaLivingTemplate({
   reviews = [],
   customization = {},
 }) {
-  // Navigation: "home" | "rooms" | "swatches" | "fit-calculator" | "delivery" | "product-detail"
+  // Navigation: "home" | "catalog" | "product-detail"
   const [activePage, setActivePage] = useState("home");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
-
-  // Filters & Catalog
-  const [selectedRoom, setSelectedRoom] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("featured");
 
-  // Interactive Swatch Box Studio
-  const [selectedSwatches, setSelectedSwatches] = useState(["boucle-cream", "oak-natural"]);
-  const [swatchName, setSwatchName] = useState("");
-  const [swatchEmail, setSwatchEmail] = useState("");
-  const [swatchAddress, setSwatchAddress] = useState("");
-  const [swatchOrdered, setSwatchOrdered] = useState(false);
+  // Countdown timer state (matching reference image: 254 Days, 19 Hours, 36 Mins, 14 Secs)
+  const [timeLeft, setTimeLeft] = useState({
+    days: 254,
+    hours: 19,
+    minutes: 36,
+    seconds: 14,
+  });
 
-  // Interactive Room Fit Calculator State
-  const [roomLengthFt, setRoomLengthFt] = useState(16);
-  const [roomWidthFt, setRoomWidthFt] = useState(14);
-  const [selectedFurnitureType, setSelectedFurnitureType] = useState("sectional");
-
-  // Quick View Configurator State
-  const [selectedWoodFinish, setSelectedWoodFinish] = useState("oak");
-  const [selectedUpholstery, setSelectedUpholstery] = useState("boucle");
-  const [includeAssembly, setIncludeAssembly] = useState(true);
-
-  // White Glove Delivery Checker
-  const [pincode, setPincode] = useState("");
-  const [deliveryResult, setDeliveryResult] = useState(null);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev.seconds > 0) {
+          return { ...prev, seconds: prev.seconds - 1 };
+        } else if (prev.minutes > 0) {
+          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
+        } else if (prev.hours > 0) {
+          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
+        } else if (prev.days > 0) {
+          return { ...prev, days: prev.days - 1, hours: 23, minutes: 59, seconds: 59 };
+        }
+        return prev;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -86,202 +83,184 @@ export default function CasaLivingTemplate({
 
   const fallbackFurniture = [
     {
-      _id: "cl-1",
-      name: "Nordic Modular Linen Sectional Sofa",
-      room: "Living Room",
-      category: "Sofas & Seating",
-      price: 1850.0,
-      compareAtPrice: 2200.0,
-      rating: 4.9,
-      reviewCount: 92,
-      badge: "Architectural Icon",
-      image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900&auto=format&fit=crop&q=80",
-      images: [
-        "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=900&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=900&auto=format&fit=crop&q=80",
-      ],
-      materials: "Belgian washed linen, Kiln-dried FSC beech wood, Feather blend",
-      dimensions: "110\" W × 68\" D × 31\" H",
-      leadTime: "In Stock • Ships in 3-5 days",
-      description: "Generously proportioned modular sofa offering cloud-like comfort with a refined European architectural silhouette.",
-      inStock: true,
-    },
-    {
-      _id: "cl-2",
-      name: "Solid White Oak Minimalist Dining Table",
-      room: "Dining Suite",
-      category: "Dining Tables",
-      price: 1120.0,
-      compareAtPrice: 1350.0,
+      _id: "cl_p1",
+      name: "Contemporary Leather Sofa",
+      brand: "Casa Craft",
+      category: "Living Room",
+      price: 89.0,
+      compareAtPrice: 99.0,
       rating: 5.0,
-      reviewCount: 64,
-      badge: "Hand-Joined",
-      image: "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=900&auto=format&fit=crop&q=80",
-      images: [
-        "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=900&auto=format&fit=crop&q=80",
-        "https://images.unsplash.com/photo-1530018607912-eff2daa1bac4?w=900&auto=format&fit=crop&q=80",
-      ],
-      materials: "100% Solid American White Oak, Non-toxic matte wax oil",
-      dimensions: "84\" L × 38\" W × 30\" H (Seats 8)",
-      leadTime: "Ready for White-Glove Dispatch",
-      description: "Seamless plank joinery celebrating natural wood grain, pillowed soft edges, and sturdy mortise-and-tenon legs.",
+      reviewCount: 1,
+      badge: "Sale!",
+      image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&auto=format&fit=crop&q=80",
+      description: "Cognac semi-aniline top-grain leather sofa with clean lines and sturdy black metal stiletto legs.",
+      dimensions: '82" W × 36" D × 32" H',
+      materials: "Top-grain Italian leather, Kiln-dried hardwood frame",
       inStock: true,
     },
     {
-      _id: "cl-3",
-      name: "Kyoto Sculptural Bouclé Accent Lounge Chair",
-      room: "Living Room",
-      category: "Chairs & Benches",
-      price: 680.0,
-      compareAtPrice: 820.0,
-      rating: 4.8,
-      reviewCount: 48,
-      badge: "Curator's Choice",
-      image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=900&auto=format&fit=crop&q=80",
-      images: [
-        "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=900&auto=format&fit=crop&q=80",
-      ],
-      materials: "High-texture Italian wool bouclé, Ebonized solid ash legs",
-      dimensions: "34\" W × 33\" D × 29\" H",
-      leadTime: "In Stock • Express Delivery",
-      description: "A sensual curved cocoon seat designed for contemplative reading corners, master suites, and gallery spaces.",
+      _id: "cl_p2",
+      name: "Display Cabinet",
+      brand: "Nordic Haven",
+      category: "Home Storage",
+      price: 49.0,
+      compareAtPrice: null,
+      rating: 4.0,
+      reviewCount: 1,
+      badge: null,
+      image: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=800&auto=format&fit=crop&q=80",
+      description: "Elegant vanity display cabinet with slender tapered legs, gold-tone accents, and curved storage compartment.",
+      dimensions: '42" W × 18" D × 48" H',
+      materials: "Engineered solid wood, Matte lacquer, Brass capped hardware",
       inStock: true,
     },
     {
-      _id: "cl-4",
-      name: "Copenhagen Fluted Oak Low Credenza",
-      room: "Dining Suite",
-      category: "Storage & Credenzas",
-      price: 1450.0,
-      compareAtPrice: 1750.0,
-      rating: 4.9,
-      reviewCount: 31,
-      badge: "Acoustic Slats",
-      image: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=900&auto=format&fit=crop&q=80",
-      images: [
-        "https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=900&auto=format&fit=crop&q=80",
-      ],
-      materials: "Solid oak fluted tambour doors, Brass soft-close hardware",
-      dimensions: "72\" W × 19\" D × 27\" H",
-      leadTime: "Ships in 1-2 Weeks",
-      description: "Continuous tambour wood slats conceal media devices and soundbars while allowing infrared remotes to pass seamlessly.",
-      inStock: true,
-    },
-    {
-      _id: "cl-5",
-      name: "Sorrento Upholstered Platform Bed Sanctuary",
-      room: "Master Bedroom",
-      category: "Beds & Nightstands",
-      price: 1680.0,
-      compareAtPrice: 1980.0,
+      _id: "cl_p3",
+      name: "Ergonomic Office Chair",
+      brand: "Herman Miller",
+      category: "Office Furniture",
+      price: 89.0,
+      priceRange: "$89.00 - $39.00",
+      compareAtPrice: 119.0,
       rating: 5.0,
-      reviewCount: 57,
-      badge: "Master Suite",
-      image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=900&auto=format&fit=crop&q=80",
-      images: [
-        "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=900&auto=format&fit=crop&q=80",
-      ],
-      materials: "Textured oatmeal weave, Solid pine slat suspension",
-      dimensions: "82\" W × 90\" L × 44\" H (King)",
-      leadTime: "White Glove In-Home Setup Included",
-      description: "Deep winged headboard with integrated acoustic baffling and a low-profile floating wooden perimeter frame.",
+      reviewCount: 1,
+      badge: null,
+      image: "https://images.unsplash.com/photo-1580481077195-c3a8a37f714c?w=800&auto=format&fit=crop&q=80",
+      description: "Executive mid-century swivel office chair crafted with bentwood shell, cream leatherette cushion, and smooth rolling casters.",
+      dimensions: '26" W × 26" D × 38" H',
+      materials: "Walnut veneer shell, Polyurethane leather, Chrome base",
       inStock: true,
     },
     {
-      _id: "cl-6",
-      name: "Tuscan Travertine Stone Cocktail Table",
-      room: "Living Room",
-      category: "Coffee Tables",
-      price: 890.0,
-      compareAtPrice: 1050.0,
-      rating: 4.9,
-      reviewCount: 39,
-      badge: "Natural Stone",
-      image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=900&auto=format&fit=crop&q=80",
-      images: [
-        "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=900&auto=format&fit=crop&q=80",
-      ],
-      materials: "Unfilled Italian Roman Travertine, Honed matte seal",
-      dimensions: "48\" L × 28\" W × 15\" H",
-      leadTime: "Heavy Freight Climate Courier",
-      description: "Each slab is quarried in Tivoli, Italy, featuring porous natural fissures and organic earthy veining that makes each piece unique.",
+      _id: "cl_p4",
+      name: "Handcrafted Lounge Chair",
+      brand: "Casa Craft",
+      category: "Living Room",
+      price: 50.0,
+      compareAtPrice: 60.0,
+      rating: 5.0,
+      reviewCount: 1,
+      badge: "Sale!",
+      image: "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=800&auto=format&fit=crop&q=80",
+      description: "Sphere spherical woven rattan egg pod lounge armchair with deep cushioned charcoal seating pillow.",
+      dimensions: '38" W × 36" D × 32" H',
+      materials: "Natural woven wicker, Weather-resistant canvas, High-density foam",
+      inStock: true,
+    },
+    {
+      _id: "cl_p5",
+      name: "Leather Recliner",
+      brand: "Ashley",
+      category: "Living Room",
+      price: 49.0,
+      compareAtPrice: 59.0,
+      rating: 5.0,
+      reviewCount: 1,
+      badge: "Sale!",
+      image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&auto=format&fit=crop&q=80",
+      description: "Deep-comfort saddle brown rolled arm recliner with turned wooden feet and plush lumbar support.",
+      dimensions: '36" W × 38" D × 40" H',
+      materials: "Full grain saddle leather, Solid hardwood frame",
+      inStock: true,
+    },
+    {
+      _id: "cl_p6",
+      name: "Lounge Chair",
+      brand: "West Elm",
+      category: "Outdoor",
+      price: 39.0,
+      compareAtPrice: 49.0,
+      rating: 4.0,
+      reviewCount: 1,
+      badge: "Sale!",
+      image: "https://images.unsplash.com/photo-1580481077195-c3a8a37f714c?w=800&auto=format&fit=crop&q=80",
+      description: "Bohemian hanging teardrop swing lounge chair with curved freestanding metal stand and cream tufted cushion.",
+      dimensions: '40" W × 40" D × 78" H',
+      materials: "All-weather resin wicker, Powder-coated steel, Olefin fabric",
+      inStock: true,
+    },
+    {
+      _id: "cl_p7",
+      name: "Modern Wooden Table",
+      brand: "Casa Craft",
+      category: "Dining Room",
+      price: 69.0,
+      compareAtPrice: 79.0,
+      rating: 5.0,
+      reviewCount: 1,
+      badge: "-15%",
+      image: "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=800&auto=format&fit=crop&q=80",
+      description: "Round three-legged Scandinavian natural oak accent coffee table with beveled rounded edge.",
+      dimensions: '36" Dia × 29" H',
+      materials: "Solid American white oak, Natural matte protective oil",
+      inStock: true,
+    },
+    {
+      _id: "cl_p8",
+      name: "Scandinavian Wooden Table",
+      brand: "Nordic Haven",
+      category: "Living Room",
+      price: 69.0,
+      compareAtPrice: 79.0,
+      rating: 4.0,
+      reviewCount: 1,
+      badge: null,
+      image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&auto=format&fit=crop&q=80",
+      description: "Contemporary 2-seater neutral cream loveseat sofa with supportive dual back cushions and dark walnut legs.",
+      dimensions: '60" W × 34" D × 32" H',
+      materials: "Woven linen-blend upholstery, Solid pine frame",
+      inStock: true,
+    },
+    {
+      _id: "cl_p9",
+      name: "Luxury Tufted Velvet Sofa",
+      brand: "Casa Craft",
+      category: "Luxury Collection",
+      price: 49.0,
+      compareAtPrice: null,
+      rating: 4.5,
+      reviewCount: 2,
+      badge: null,
+      image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&auto=format&fit=crop&q=80",
+      description: "Classic Chesterfield style single-seater armchair with deep diamond button tufting and rich taupe velvet texture.",
+      dimensions: '34" W × 34" D × 35" H',
+      materials: "Plush velvet, Turned espresso legs, Brass nailhead trim",
+      inStock: true,
+    },
+    {
+      _id: "cl_p10",
+      name: "Wooden Dining Chair",
+      brand: "West Elm",
+      category: "Dining Room",
+      price: 59.0,
+      compareAtPrice: 69.0,
+      rating: 4.0,
+      reviewCount: 1,
+      badge: "-14%",
+      image: "https://images.unsplash.com/photo-1503602642458-232111445657?w=800&auto=format&fit=crop&q=80",
+      description: "Curved bentwood arm dining chair with dark charcoal leatherette seat and warm walnut grain finish.",
+      dimensions: '22" W × 21" D × 31" H',
+      materials: "Molded walnut plywood, High-density cushion, PU leather",
       inStock: true,
     },
   ];
 
-  const pieces = products.length > 0 ? products : fallbackFurniture;
-
-  const brandName =
-    business?.businessName ||
-    business?.name ||
-    customization?.heroHeadline ||
-    "CASA LIVING";
-
-  const brandLogo = customization?.logo || business?.logo || null;
-  const brandPhone =
-    business?.phone ||
-    business?.businessPhone ||
-    business?.contactPhone ||
-    "+1 (800) 888-CASA";
-  const brandEmail =
-    business?.email ||
-    business?.businessEmail ||
-    business?.contactEmail ||
-    "concierge@casaliving.design";
-
-  const rawAddr = business?.address || business?.registered_business_address;
-  const brandAddress =
-    typeof rawAddr === "string"
-      ? rawAddr
-      : rawAddr && typeof rawAddr === "object"
-      ? [rawAddr.street, rawAddr.addressLine2, rawAddr.city, rawAddr.state, rawAddr.postalCode, rawAddr.country]
-          .filter(Boolean)
-          .join(", ")
-      : "710 Design Row, Chicago, IL 60654";
-
-  // Filter and sort catalog
-  const filteredPieces = useMemo(() => {
-    return pieces
-      .filter((p) => {
-        if (selectedRoom !== "all") {
-          const room = (p.room || "").toLowerCase();
-          const cat = (p.category || "").toLowerCase();
-          const filter = selectedRoom.toLowerCase();
-          if (!room.includes(filter) && !cat.includes(filter)) return false;
-        }
-
-        if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase();
-          const nameM = (p.name || "").toLowerCase().includes(q);
-          const descM = (p.description || "").toLowerCase().includes(q);
-          const matM = (p.materials || "").toLowerCase().includes(q);
-          if (!nameM && !descM && !matM) return false;
-        }
-        return true;
-      })
-      .sort((a, b) => {
-        if (sortBy === "price-asc") return Number(a.price) - Number(b.price);
-        if (sortBy === "price-desc") return Number(b.price) - Number(a.price);
-        if (sortBy === "rating") return (b.rating || 5) - (a.rating || 5);
-        return 0;
-      });
-  }, [pieces, selectedRoom, searchQuery, sortBy]);
+  const pieceList = products.length > 0 ? products : fallbackFurniture;
 
   const handleAddToCart = (product, qty = 1, options = null) => {
     if (isOutOfStock(product)) {
-      toast.error(`Sorry, ${product.name || "piece"} is out of stock!`);
+      toast.error(`Sorry, ${product.name || "item"} is out of stock!`);
       return;
     }
 
     const itemToAdd = {
       ...product,
-      price: options?.totalPrice || product.price,
-      name: options ? `${product.name} (${options.finishTitle})` : product.name,
+      price: product.price,
       customOptions: options,
     };
 
     dispatch(addToCart({ product: itemToAdd, quantity: qty }));
-    toast.success(`${itemToAdd.name} added to your Furnishing Bag! 🛋️`);
+    toast.success(`${itemToAdd.name} added to cart! 🛋️`);
     setCartOpen(true);
   };
 
@@ -298,829 +277,819 @@ export default function CasaLivingTemplate({
     navigate("/cart");
   };
 
-  const cartCount = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
+  const cartCount = cartItems.reduce(
+    (sum, item) => sum + (item.quantity || 1),
+    0
+  );
 
-  // Swatch catalog
-  const swatchList = [
-    { id: "boucle-cream", name: "Heavy Bouclé (Warm Cream)", type: "Fabric", color: "#F5F2EB" },
-    { id: "boucle-charcoal", name: "Heavy Bouclé (Nocturne)", type: "Fabric", color: "#2B2D2F" },
-    { id: "linen-natural", name: "Belgian Washed Linen (Oatmeal)", type: "Fabric", color: "#DDD3C1" },
-    { id: "leather-cognac", name: "Italian Semi-Aniline Leather (Cognac)", type: "Leather", color: "#9E5B2E" },
-    { id: "oak-natural", name: "Solid American White Oak (Matte Oil)", type: "Wood", color: "#C8A97E" },
-    { id: "walnut-smoked", name: "Appalachian Black Walnut (Satin)", type: "Wood", color: "#5A3D28" },
-    { id: "travertine-tivoli", name: "Roman Travertine (Honed)", type: "Stone", color: "#E0D7C6" },
+  const circularCategories = [
+    {
+      id: "Outdoor",
+      name: "Outdoor",
+      image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&auto=format&fit=crop&q=80",
+    },
+    {
+      id: "Home Storage",
+      name: "Home Storage",
+      image: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=400&auto=format&fit=crop&q=80",
+    },
+    {
+      id: "Kitchen",
+      name: "Kitchen",
+      image: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=400&auto=format&fit=crop&q=80",
+    },
+    {
+      id: "Living Room",
+      name: "Living Room",
+      image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&auto=format&fit=crop&q=80",
+    },
+    {
+      id: "Bedroom",
+      name: "Bedroom",
+      image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=400&auto=format&fit=crop&q=80",
+    },
+    {
+      id: "Dining Room",
+      name: "Dining Room",
+      image: "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=400&auto=format&fit=crop&q=80",
+    },
   ];
 
-  const toggleSwatch = (swatchId) => {
-    if (selectedSwatches.includes(swatchId)) {
-      setSelectedSwatches(selectedSwatches.filter((id) => id !== swatchId));
-    } else {
-      if (selectedSwatches.length >= 4) {
-        toast.error("Maximum 4 swatches per complimentary designer kit.");
-        return;
-      }
-      setSelectedSwatches([...selectedSwatches, swatchId]);
-    }
-  };
-
-  const handleOrderSwatches = (e) => {
-    e.preventDefault();
-    if (selectedSwatches.length === 0) {
-      toast.error("Please select at least one material swatch.");
-      return;
-    }
-    setSwatchOrdered(true);
-    toast.success("Complimentary Swatch Kit dispatched to your address! 📦");
-  };
-
-  // Room Fit Clearance Calculations
-  const roomAreaSqFt = roomLengthFt * roomWidthFt;
-  const roomFitDetails = useMemo(() => {
-    if (selectedFurnitureType === "sectional") {
-      const sofaW = 9.2; // ft
-      const sofaD = 5.7; // ft
-      const remainingClearance = Math.min(roomLengthFt - sofaW, roomWidthFt - sofaD);
-      const isComfortable = remainingClearance >= 3.5;
-      return {
-        furnitureName: "Nordic Modular Sectional (110\" × 68\")",
-        footprintSqFt: (sofaW * sofaD).toFixed(1),
-        perimeterClearanceFt: remainingClearance.toFixed(1),
-        status: isComfortable ? "Comfortable Fit" : "Tight Fit (Consider 3-seater)",
-        isGood: isComfortable,
-        guidance: isComfortable
-          ? "Excellent proportions. Leaves ample 36\"+ perimeter walking space for side tables and circulation."
-          : "Borderline tight perimeter. We recommend at least 36 inches between coffee table and sectional edges.",
-      };
-    } else if (selectedFurnitureType === "dining") {
-      const tableL = 7.0; // ft
-      const tableW = 3.2; // ft
-      const chairClearance = 3.0; // ft for pulling chair back
-      const reqL = tableL + chairClearance * 2;
-      const reqW = tableW + chairClearance * 2;
-      const isComfortable = roomLengthFt >= reqL && roomWidthFt >= reqW;
-      return {
-        furnitureName: "8-Seater Oak Dining Table (84\" × 38\")",
-        footprintSqFt: (tableL * tableW).toFixed(1),
-        perimeterClearanceFt: (Math.min(roomLengthFt - reqL, roomWidthFt - reqW)).toFixed(1),
-        status: isComfortable ? "Spacious Dining Fit" : "Requires 14ft × 10ft Minimum Space",
-        isGood: isComfortable,
-        guidance: isComfortable
-          ? "Generous room allowance. Diners can pull chairs fully out without striking surrounding walls."
-          : "Chair pull-out clearance is constrained. Consider our 6-seater 72\" table option.",
-      };
-    } else {
-      const bedL = 7.5;
-      const bedW = 6.8;
-      const sideClearance = Math.min((roomWidthFt - bedW) / 2, roomLengthFt - bedL);
-      const isComfortable = sideClearance >= 2.5;
-      return {
-        furnitureName: "King Sorrento Bed Sanctuary (82\" × 90\")",
-        footprintSqFt: (bedL * bedW).toFixed(1),
-        perimeterClearanceFt: sideClearance.toFixed(1),
-        status: isComfortable ? "Ideal Master Sanctuary" : "Tight Nightstand Space",
-        isGood: isComfortable,
-        guidance: isComfortable
-          ? "Leaves 30\"+ on each flank for wide architectural nightstands and dressing circulation."
-          : "Consider floating wall-mounted nightstands to maximize floor breathing room.",
-      };
-    }
-  }, [roomLengthFt, roomWidthFt, selectedFurnitureType]);
-
-  // Delivery check handler
-  const handleCheckDelivery = (e) => {
-    e.preventDefault();
-    if (!pincode.trim()) return;
-    setDeliveryResult({
-      status: "Available",
-      carrier: "CasaLiving Dedicated White-Glove Fleet",
-      appointment: "Within 4-6 Business Days",
-      includes: "In-Room Placement, Packaging Removal, Leveling & Assembly",
-    });
-    toast.success(`ZIP ${pincode} verified for White-Glove In-Home Service!`);
-  };
-
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-[#FAF8F5] text-[#2C1810] antialiased selection:bg-amber-200 selection:text-amber-900">
-      {/* ================= 1. ARCHITECTURAL TOP BAR ================= */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#2C1810]/10 shadow-2xs">
-        <div className="bg-[#451A03] text-amber-100 text-[11px] py-2 px-4">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2 font-medium tracking-wide">
-              <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-              <span>
-                ✨ <strong>Complimentary White-Glove In-Home Placement</strong> on Orders Above ₹25,000 • Packaging Removal & Assembly Included
-              </span>
-            </div>
-            <div className="hidden md:flex items-center gap-6 text-[11px] font-medium text-amber-200">
-              <span className="flex items-center gap-1.5">
-                <ShieldCheck size={14} className="text-amber-400" /> 10-Year Structural Hardwood Warranty
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Palette size={14} className="text-amber-400" /> Free Fabric & Wood Swatches
-              </span>
-              <a href={`tel:${brandPhone}`} className="hover:text-white transition flex items-center gap-1">
-                <Phone size={13} /> {brandPhone}
-              </a>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen flex flex-col font-sans bg-[#FAF8F5] text-stone-900 antialiased selection:bg-[#A07855]/20 selection:text-[#A07855]">
+      {/* ================= NAVBAR ================= */}
+      <Navbar
+        business={business}
+        cartCount={cartCount}
+        onOpenCart={() => setCartOpen(true)}
+        activePage={activePage}
+        onNavigate={(page) => {
+          setActivePage(page);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        searchQuery={searchQuery}
+        onSearchChange={(q) => {
+          setSearchQuery(q);
+          if (activePage !== "catalog") setActivePage("catalog");
+        }}
+        categories={categories}
+        onSelectCategory={(cat) => {
+          setSelectedCategory(cat);
+          setActivePage("catalog");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
 
-        {/* Main Navbar */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-22 flex items-center justify-between gap-4">
-          <div
-            onClick={() => {
-              setActivePage("home");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            className="flex items-center gap-3 cursor-pointer group"
-          >
-            {brandLogo ? (
-              <img src={brandLogo} alt={brandName} className="h-11 w-auto max-w-[150px] object-contain rounded-lg" />
-            ) : (
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#78350F] to-[#451A03] text-white flex items-center justify-center shadow-md shadow-amber-950/20 group-hover:scale-105 transition duration-300">
-                <Layers size={22} className="text-amber-300" />
-              </div>
-            )}
-            <div className="space-y-0.5 text-left">
-              <span className="text-xl sm:text-2xl font-serif font-black tracking-tight text-[#451A03] block leading-none">
-                {brandName}
-              </span>
-              <span className="text-[10px] uppercase tracking-[0.25em] text-[#92400E] font-bold block">
-                {business?.tagline || "Architectural Living & Furniture Atelier"}
-              </span>
-            </div>
-          </div>
-
-          {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-8 text-[12px] font-bold uppercase tracking-wider text-[#78350F]">
-            {[
-              { id: "home", label: "Sanctuary" },
-              { id: "rooms", label: "Room-by-Room 🛋️" },
-              { id: "swatches", label: "Free Swatch Box" },
-              { id: "fit-calculator", label: "Room Fit Calculator" },
-              { id: "delivery", label: "White Glove Service" },
-            ].map((tab) => {
-              const isActive = activePage === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    setActivePage(tab.id);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className={`transition cursor-pointer relative py-2 ${
-                    isActive ? "text-[#451A03] font-black" : "hover:text-[#92400E] text-[#8C5A3E]"
-                  }`}
-                >
-                  <span>{tab.label}</span>
-                  {isActive && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#D97706] rounded-full" />}
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* Actions */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                setActivePage("swatches");
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-amber-50 text-[#78350F] hover:bg-amber-100 font-bold text-xs border border-amber-200/80 transition cursor-pointer"
-            >
-              <Palette size={14} className="text-[#D97706]" />
-              <span>Order Swatches (Free)</span>
-            </button>
-
-            <button
-              onClick={() => setCartOpen(true)}
-              className="px-4 py-2.5 rounded-2xl bg-[#451A03] text-white hover:bg-[#78350F] transition cursor-pointer flex items-center gap-2 font-bold text-xs shadow-md shadow-amber-950/20"
-            >
-              <ShoppingBag size={17} className="text-amber-300" />
-              <span className="hidden sm:inline">Furnishing Bag</span>
-              <span className="bg-[#D97706] text-white text-[11px] font-black min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center">
-                {cartCount}
-              </span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* ================= 2. MAIN CONTENT ================= */}
+      {/* ================= MAIN ROUTE RENDERER ================= */}
       <main className="flex-1">
-        {/* ================= PAGE 1: HOME ================= */}
+        {/* ================= VIEW 1: HOMEPAGE ================= */}
         {activePage === "home" && (
-          <>
-            {/* HERO SECTION */}
-            <section className="relative overflow-hidden bg-gradient-to-b from-[#F7F3EE] via-[#FAF8F5] to-[#FAF8F5] pt-12 pb-20 md:pt-20 md:pb-28 border-b border-[#2C1810]/5">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-                  <div className="lg:col-span-7 space-y-7 text-left">
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-amber-200 text-[#78350F] text-xs font-semibold shadow-2xs">
-                      <Sparkles size={14} className="text-[#D97706]" />
-                      <span>FSC Certified European Hardwoods & Italian Linens</span>
-                    </div>
-
-                    <h1 className="text-4xl sm:text-6xl lg:text-[66px] font-serif font-black tracking-tight text-[#451A03] leading-[1.08]">
-                      Architectural Living Spaces Designed to Endure.
-                    </h1>
-
-                    <p className="text-sm sm:text-base text-[#7C5A48] leading-relaxed max-w-xl">
-                      Heirloom joinery, pillowed Belgian linens, and sculptural natural stones. Every piece is delivered via certified white-glove technicians who position and assemble each element in your room of choice.
-                    </p>
-
-                    <div className="flex flex-wrap gap-4 pt-2">
-                      <button
-                        onClick={() => {
-                          setActivePage("rooms");
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                        }}
-                        className="px-8 py-4 bg-[#451A03] hover:bg-[#78350F] text-white rounded-2xl text-xs font-bold uppercase tracking-wider transition shadow-xl shadow-amber-950/20 flex items-center gap-2.5 cursor-pointer transform hover:-translate-y-0.5"
-                      >
-                        <Compass size={17} className="text-amber-300" />
-                        <span>Explore Room Environments</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setActivePage("swatches");
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                        }}
-                        className="px-7 py-4 bg-white border border-amber-300 hover:border-amber-500 text-[#451A03] rounded-2xl text-xs font-bold uppercase tracking-wider transition hover:bg-amber-50/50 flex items-center gap-2 cursor-pointer"
-                      >
-                        <Palette size={16} className="text-[#D97706]" />
-                        <span>Order Free Swatch Box</span>
-                      </button>
-                    </div>
-
-                    {/* Postal delivery check mini bar */}
-                    <div className="pt-3 max-w-md">
-                      <form onSubmit={handleCheckDelivery} className="p-1.5 bg-white rounded-2xl border border-amber-200 shadow-2xs flex items-center gap-2">
-                        <MapPin size={16} className="text-[#D97706] ml-2.5 shrink-0" />
-                        <input
-                          type="text"
-                          value={pincode}
-                          onChange={(e) => setPincode(e.target.value)}
-                          placeholder="Enter your ZIP code for White-Glove transit time..."
-                          className="w-full text-xs font-medium text-[#451A03] focus:outline-none placeholder:text-gray-400"
-                        />
-                        <button type="submit" className="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-[#451A03] text-[11px] font-bold rounded-xl shrink-0 transition">
-                          Check Dispatch
-                        </button>
-                      </form>
-
-                      {deliveryResult && (
-                        <p className="text-[11px] font-semibold text-amber-900 flex items-center gap-1.5 mt-2 ml-1">
-                          <CheckCircle2 size={14} className="text-emerald-700" />
-                          <span>{deliveryResult.carrier} • In-home delivery in {deliveryResult.appointment}</span>
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Visual Showcase */}
-                  <div className="lg:col-span-5 relative">
-                    <div className="aspect-[4/5] rounded-[36px] overflow-hidden shadow-2xl border-8 border-white bg-amber-100">
-                      <img
-                        src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1000&auto=format&fit=crop&q=80"
-                        alt="CasaLiving Room Inspiration"
-                        className="w-full h-full object-cover transform hover:scale-105 transition duration-700"
-                      />
-                    </div>
-
-                    {/* Floating architectural hotspot badge */}
-                    <div className="absolute -bottom-6 -left-4 sm:-left-8 bg-white/95 backdrop-blur-md p-5 rounded-3xl border border-amber-100 shadow-2xl max-w-[260px] text-left space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-amber-500">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} size={13} fill="currentColor" />
-                        ))}
-                      </div>
-                      <p className="text-xs font-bold text-[#451A03]">"The joinery on the dining table is museum grade. White-glove team assembled it in 15 mins."</p>
-                      <span className="text-[10px] font-medium text-[#8C5A3E] block">— Soren L., Architectural Digest Collector</span>
-                    </div>
-                  </div>
-                </div>
+          <div className="space-y-16 sm:space-y-24">
+            {/* 1. HERO SECTION (Dark Slat Wood) */}
+            <section className="relative min-h-[520px] lg:min-h-[640px] flex items-center justify-center text-center overflow-hidden">
+              {/* Background with Dark Acoustic Wood Slats Image & Mood Light */}
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{
+                  backgroundImage: `url('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1600&auto=format&fit=crop&q=80')`,
+                }}
+              >
+                <div className="absolute inset-0 bg-stone-950/70 backdrop-blur-[1px]" />
               </div>
-            </section>
 
-            {/* CURATED FURNISHING PIECES */}
-            <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 text-left">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-[#2C1810]/10 pb-6">
-                <div>
-                  <span className="text-xs uppercase tracking-wider text-[#D97706] font-bold">Heirloom Catalog</span>
-                  <h2 className="text-3xl sm:text-4xl font-serif font-black text-[#451A03]">Signature Furnishing Pieces</h2>
-                  <p className="text-xs sm:text-sm text-[#7C5A48] mt-1">Directly crafted with solid white oak, Italian bouclé, and Roman travertine stone.</p>
+              {/* Hero Content */}
+              <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 py-20 space-y-6">
+                {/* Pill Badge */}
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-medium tracking-wide">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#A07855]" />
+                  <span>Modern Living Starts Here</span>
                 </div>
 
-                <button
-                  onClick={() => {
-                    setActivePage("rooms");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className="inline-flex items-center gap-2 text-xs font-bold text-[#451A03] hover:text-[#78350F] hover:underline cursor-pointer"
-                >
-                  <span>View All Environments ({pieces.length} Pieces)</span>
-                  <ArrowRight size={14} />
-                </button>
-              </div>
+                {/* Hero Title */}
+                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold font-serif text-white tracking-tight leading-[1.15] max-w-3xl mx-auto">
+                  Crafted Furniture For Every Beautiful Home
+                </h1>
 
-              {/* Grid of pieces */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {pieces.map((item) => {
-                  const outOfStock = isOutOfStock(item);
-                  return (
-                    <div
-                      key={item._id}
-                      onClick={() => {
-                        setSelectedProduct(item);
-                        setActivePage("product-detail");
-                      }}
-                      className="bg-white rounded-3xl border border-[#2C1810]/10 p-5 space-y-4 flex flex-col justify-between shadow-xs hover:shadow-2xl transition duration-300 cursor-pointer group relative"
-                    >
-                      <div className="space-y-3">
-                        <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-amber-50 relative">
-                          <img
-                            src={getProductImage(item, item.image)}
-                            alt={item.name}
-                            className="w-full h-full object-cover group-hover:scale-108 transition duration-500"
-                          />
-                          {item.badge && (
-                            <span className="absolute top-3 left-3 bg-[#451A03]/90 backdrop-blur-xs text-white text-[10px] uppercase font-bold tracking-wider px-3 py-1 rounded-full">
-                              {item.badge}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center justify-between text-[11px] font-bold">
-                          <span className="text-[#D97706] uppercase tracking-wider">{item.room || "Sanctuary"}</span>
-                          <span className="text-[#7C5A48] flex items-center gap-1">
-                            <Star size={12} className="text-amber-500 fill-amber-500" />
-                            {item.rating || 5.0} ({item.reviewCount || 20})
-                          </span>
-                        </div>
-
-                        <h4 className="text-lg font-serif font-bold text-[#451A03] line-clamp-1 group-hover:text-[#92400E] transition">
-                          {item.name}
-                        </h4>
-
-                        <p className="text-xs text-[#7C5A48] line-clamp-2 leading-relaxed">{item.description}</p>
-
-                        {item.dimensions && (
-                          <div className="text-[10px] text-amber-950 bg-amber-50/80 p-2.5 rounded-xl space-y-0.5">
-                            <span className="font-bold block text-amber-900">Dimensions: {item.dimensions}</span>
-                            <span className="text-[10px] text-[#7C5A48] block">{item.materials}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="pt-3 flex justify-between items-center border-t border-amber-100">
-                        <div>
-                          <span className="text-xl font-serif font-black text-[#451A03]">
-                            ₹{Number(item.price).toLocaleString()}
-                          </span>
-                          {item.compareAtPrice && (
-                            <span className="text-xs text-gray-400 line-through ml-1.5">
-                              ₹{Number(item.compareAtPrice).toLocaleString()}
-                            </span>
-                          )}
-                        </div>
-
-                        {outOfStock ? (
-                          <span className="text-[11px] font-bold text-rose-600 bg-rose-50 px-3 py-1 rounded-xl border border-rose-200">
-                            Sold Out
-                          </span>
-                        ) : (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAddToCart(item);
-                            }}
-                            className="px-4 py-2 bg-[#451A03] hover:bg-[#78350F] text-white rounded-xl text-xs font-bold cursor-pointer transition shadow-xs flex items-center gap-1.5"
-                          >
-                            <Plus size={14} />
-                            <span>Add to Bag</span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          </>
-        )}
-
-        {/* ================= PAGE 2: ROOM-BY-ROOM ENVIRONMENTS ================= */}
-        {activePage === "rooms" && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-10 text-left">
-            <div className="space-y-4 border-b border-[#2C1810]/10 pb-6">
-              <span className="text-xs uppercase tracking-wider text-[#D97706] font-bold">Curated Spaces</span>
-              <h1 className="text-3xl sm:text-4xl font-serif font-black text-[#451A03]">Room-by-Room Styling Studio</h1>
-              <p className="text-xs sm:text-sm text-[#7C5A48]">
-                Filter our catalog by architectural living quarters or search by specific finishes and dimensions.
-              </p>
-
-              {/* Room Filter Pills */}
-              <div className="flex flex-wrap gap-2.5 pt-2">
-                {[
-                  { id: "all", label: "All Spaces" },
-                  { id: "living room", label: "Living Room Sanctuary" },
-                  { id: "dining suite", label: "Dining Suites" },
-                  { id: "master bedroom", label: "Master Bedroom" },
-                ].map((r) => (
+                {/* CTA Button */}
+                <div className="pt-4">
                   <button
-                    key={r.id}
-                    onClick={() => setSelectedRoom(r.id)}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer border ${
-                      selectedRoom.toLowerCase() === r.id.toLowerCase()
-                        ? "bg-[#451A03] text-white border-[#451A03] shadow-xs"
-                        : "bg-white text-[#451A03] border-amber-200 hover:bg-amber-50"
-                    }`}
+                    type="button"
+                    onClick={() => {
+                      setActivePage("catalog");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="inline-flex items-center gap-3 px-7 py-3.5 bg-[#A07855] hover:bg-[#8d6645] text-white rounded-full text-xs font-bold tracking-wider transition-all duration-300 shadow-xl hover:shadow-[#A07855]/30 cursor-pointer group hover:scale-105"
                   >
-                    {r.label}
+                    <span>Shop Now</span>
+                    <span className="w-6 h-6 rounded-full bg-white text-[#A07855] flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
+                      <ArrowRight size={13} />
+                    </span>
                   </button>
+                </div>
+              </div>
+            </section>
+
+            {/* 2. EXPLORE FURNITURE CATEGORIES */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F7F5F2] border border-stone-200 text-stone-600 text-xs font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#A07855]" />
+                  <span>Shop By Category</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold font-serif text-stone-900 tracking-tight">
+                  Explore Furniture Categories
+                </h2>
+              </div>
+
+              {/* Circular Avatars */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 pt-2">
+                {circularCategories.map((cat) => (
+                  <div
+                    key={cat.id}
+                    onClick={() => {
+                      setSelectedCategory(cat.id);
+                      setActivePage("catalog");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="group flex flex-col items-center gap-3 cursor-pointer"
+                  >
+                    <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden border-2 border-stone-200/80 group-hover:border-[#A07855] transition-all duration-300 shadow-xs group-hover:shadow-md p-1 bg-white">
+                      <div className="w-full h-full rounded-full overflow-hidden">
+                        <img
+                          src={cat.image}
+                          alt={cat.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
+                        />
+                      </div>
+                    </div>
+                    <span className="text-xs sm:text-sm font-semibold text-stone-800 group-hover:text-[#A07855] transition">
+                      {cat.name}
+                    </span>
+                  </div>
                 ))}
               </div>
-            </div>
 
-            {/* Catalog Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredPieces.map((item) => (
-                <div
-                  key={item._id}
-                  onClick={() => {
-                    setSelectedProduct(item);
-                    setActivePage("product-detail");
-                  }}
-                  className="bg-white rounded-3xl border border-[#2C1810]/10 p-5 space-y-4 flex flex-col justify-between shadow-xs hover:shadow-xl transition cursor-pointer group"
-                >
-                  <div className="space-y-3">
-                    <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-amber-50 relative">
-                      <img src={getProductImage(item, item.image)} alt={item.name} className="w-full h-full object-cover group-hover:scale-108 transition duration-500" />
-                      {item.badge && (
-                        <span className="absolute top-3 left-3 bg-[#451A03]/90 text-white text-[10px] uppercase font-bold tracking-wider px-3 py-1 rounded-full">
-                          {item.badge}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-[10px] uppercase font-bold text-[#D97706] tracking-wider block">{item.room}</span>
-                    <h4 className="text-lg font-serif font-bold text-[#451A03]">{item.name}</h4>
-                    <p className="text-xs text-[#7C5A48] line-clamp-2 leading-relaxed">{item.description}</p>
-                    <div className="text-[10px] text-amber-950 bg-amber-50 p-2.5 rounded-xl space-y-0.5">
-                      <span className="font-bold block">Size: {item.dimensions}</span>
-                      <span className="text-[#7C5A48] block">{item.materials}</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-3 flex justify-between items-center border-t border-amber-100">
-                    <span className="text-xl font-serif font-black text-[#451A03]">₹{Number(item.price).toLocaleString()}</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddToCart(item);
-                      }}
-                      className="px-4 py-2 bg-[#451A03] hover:bg-[#78350F] text-white rounded-xl text-xs font-bold cursor-pointer transition shadow-xs flex items-center gap-1.5"
-                    >
-                      <Plus size={14} /> Add to Bag
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ================= PAGE 3: INTERACTIVE SWATCH BOX STUDIO ================= */}
-        {activePage === "swatches" && (
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 text-left">
-            <div className="text-center max-w-2xl mx-auto space-y-2">
-              <span className="text-xs uppercase tracking-[0.2em] text-[#D97706] font-bold">Tactile Materiality</span>
-              <h1 className="text-3xl sm:text-4xl font-serif font-black text-[#451A03]">Complimentary Designer Swatch Box</h1>
-              <p className="text-xs sm:text-sm text-[#7C5A48]">
-                Select up to 4 natural wood and textile swatches. Dispatched in an archival linen presentation box directly to your door at zero charge.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              {/* Swatch Picker */}
-              <div className="lg:col-span-7 bg-white p-6 sm:p-8 rounded-3xl border border-[#2C1810]/10 space-y-6 shadow-xs">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-serif font-bold text-[#451A03]">Select 4 Material Samples</h3>
-                  <span className="text-xs font-bold text-[#D97706]">{selectedSwatches.length} of 4 selected</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  {swatchList.map((swatch) => {
-                    const isSelected = selectedSwatches.includes(swatch.id);
-                    return (
-                      <div
-                        key={swatch.id}
-                        onClick={() => toggleSwatch(swatch.id)}
-                        className={`p-4 rounded-2xl border-2 transition cursor-pointer flex items-center gap-3.5 ${
-                          isSelected ? "border-[#451A03] bg-amber-50/50 shadow-xs" : "border-amber-100 hover:border-amber-300"
-                        }`}
-                      >
-                        <div
-                          className="w-10 h-10 rounded-xl border border-black/10 shadow-inner shrink-0"
-                          style={{ backgroundColor: swatch.color }}
-                        />
-                        <div className="space-y-0.5 text-left">
-                          <span className="text-[10px] uppercase font-bold text-[#D97706] tracking-wider block">{swatch.type}</span>
-                          <h4 className="text-xs font-bold text-[#451A03] line-clamp-1">{swatch.name}</h4>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Order Form */}
-              <div className="lg:col-span-5 bg-white p-6 sm:p-8 rounded-3xl border border-[#2C1810]/10 space-y-5 shadow-xs">
-                <h4 className="text-sm font-bold text-[#451A03] uppercase tracking-wider">Dispatch Destination</h4>
-
-                {swatchOrdered ? (
-                  <div className="p-6 rounded-2xl bg-amber-50/80 border border-amber-200 text-center space-y-3">
-                    <CheckCircle2 size={36} className="text-emerald-700 mx-auto" />
-                    <h5 className="text-base font-serif font-bold text-[#451A03]">Swatch Box Dispatched!</h5>
-                    <p className="text-xs text-[#7C5A48] leading-relaxed">
-                      Your complimentary 4-swatch presentation kit has been registered and scheduled for courier dispatch. Tracking will arrive via email.
-                    </p>
-                  </div>
-                ) : (
-                  <form onSubmit={handleOrderSwatches} className="space-y-3.5">
-                    <div>
-                      <label className="block text-[11px] font-bold text-[#451A03] mb-1">Full Name</label>
-                      <input
-                        type="text"
-                        required
-                        value={swatchName}
-                        onChange={(e) => setSwatchName(e.target.value)}
-                        placeholder="Elena Rostova"
-                        className="w-full px-3 py-2 rounded-xl bg-amber-50/40 border border-amber-200 text-xs text-[#451A03]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-[#451A03] mb-1">Email Address</label>
-                      <input
-                        type="email"
-                        required
-                        value={swatchEmail}
-                        onChange={(e) => setSwatchEmail(e.target.value)}
-                        placeholder="elena@designstudio.com"
-                        className="w-full px-3 py-2 rounded-xl bg-amber-50/40 border border-amber-200 text-xs text-[#451A03]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-[#451A03] mb-1">Delivery Shipping Address</label>
-                      <textarea
-                        rows={2}
-                        required
-                        value={swatchAddress}
-                        onChange={(e) => setSwatchAddress(e.target.value)}
-                        placeholder="Street, Suite, City, State, ZIP"
-                        className="w-full px-3 py-2 rounded-xl bg-amber-50/40 border border-amber-200 text-xs text-[#451A03]"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="w-full py-3.5 bg-[#451A03] hover:bg-[#78350F] text-white font-bold text-xs uppercase tracking-wider rounded-xl transition cursor-pointer shadow-md"
-                    >
-                      Request Free Swatch Box
-                    </button>
-                  </form>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ================= PAGE 4: ROOM FIT & CLEARANCE CALCULATOR ================= */}
-        {activePage === "fit-calculator" && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 text-left">
-            <div className="text-center max-w-2xl mx-auto space-y-2">
-              <span className="text-xs uppercase tracking-[0.2em] text-[#D97706] font-bold">Space Architecture</span>
-              <h1 className="text-3xl sm:text-4xl font-serif font-black text-[#451A03]">Room Fit & Clearance Calculator</h1>
-              <p className="text-xs sm:text-sm text-[#7C5A48]">
-                Verify whether our sectionals, dining tables, or king platform beds fit your floorplan with the architect-recommended 36-inch perimeter walking clearance.
-              </p>
-            </div>
-
-            <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#2C1810]/10 space-y-6 shadow-xs">
-              {/* Furniture Type Selector */}
-              <div className="space-y-2">
-                <label className="block text-xs font-bold text-[#451A03]">Select Furniture Category to Test</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { id: "sectional", label: "110\" Modular Sectional" },
-                    { id: "dining", label: "8-Seater Oak Dining Table" },
-                    { id: "bed", label: "King Platform Bed Suite" },
-                  ].map((f) => (
-                    <button
-                      key={f.id}
-                      onClick={() => setSelectedFurnitureType(f.id)}
-                      className={`p-3 rounded-xl text-xs font-bold border transition ${
-                        selectedFurnitureType === f.id
-                          ? "bg-[#451A03] text-white border-[#451A03]"
-                          : "bg-white text-[#451A03] border-amber-200 hover:bg-amber-50"
-                      }`}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Sliders for Room Dimensions */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs font-bold text-[#451A03]">
-                    <span>Room Length: {roomLengthFt} Feet</span>
-                    <span>{(roomLengthFt * 0.3048).toFixed(1)} Meters</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="10"
-                    max="30"
-                    value={roomLengthFt}
-                    onChange={(e) => setRoomLengthFt(Number(e.target.value))}
-                    className="w-full accent-[#451A03] cursor-pointer"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs font-bold text-[#451A03]">
-                    <span>Room Width: {roomWidthFt} Feet</span>
-                    <span>{(roomWidthFt * 0.3048).toFixed(1)} Meters</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="8"
-                    max="25"
-                    value={roomWidthFt}
-                    onChange={(e) => setRoomWidthFt(Number(e.target.value))}
-                    className="w-full accent-[#451A03] cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              {/* Output Result Card */}
-              <div className="p-6 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-[#D97706] tracking-wider block">Tested Model</span>
-                    <h4 className="text-base font-serif font-bold text-[#451A03]">{roomFitDetails.furnitureName}</h4>
-                  </div>
+              {/* Pagination Dots */}
+              <div className="flex items-center justify-center gap-2 pt-2">
+                {[...Array(6)].map((_, i) => (
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      roomFitDetails.isGood ? "bg-emerald-100 text-emerald-800" : "bg-amber-200 text-amber-900"
+                    key={i}
+                    className={`h-2 rounded-full transition-all ${
+                      i === 3 ? "w-6 bg-[#A07855]" : "w-2 bg-stone-300"
                     }`}
-                  >
-                    {roomFitDetails.status}
+                  />
+                ))}
+              </div>
+            </section>
+
+            {/* 3. DUAL PROMOTIONAL FLASH BANNERS */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Banner 1: Limited Time Flash Sale */}
+                <div className="relative h-80 sm:h-96 rounded-3xl overflow-hidden group shadow-lg">
+                  <img
+                    src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1000&auto=format&fit=crop&q=80"
+                    alt="Limited Time Flash Sale"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-8 sm:p-10 flex flex-col justify-end text-left space-y-3">
+                    <span className="text-xs uppercase font-bold tracking-widest text-[#A07855]">
+                      Save Up To 50%
+                    </span>
+                    <h3 className="text-2xl sm:text-3xl font-bold font-serif text-white max-w-xs">
+                      Limited Time Flash Sale
+                    </h3>
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActivePage("catalog");
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="inline-flex items-center gap-2 text-xs font-bold text-white group-hover:text-[#A07855] transition cursor-pointer"
+                      >
+                        <span>Shop Now</span>
+                        <span className="w-5 h-5 rounded-full bg-white text-stone-900 flex items-center justify-center text-xs group-hover:translate-x-1 transition-transform">
+                          <ArrowRight size={11} />
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Banner 2: Mega Furniture Sale Event */}
+                <div className="relative h-80 sm:h-96 rounded-3xl overflow-hidden group shadow-lg">
+                  <img
+                    src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1000&auto=format&fit=crop&q=80"
+                    alt="Mega Furniture Sale Event"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-8 sm:p-10 flex flex-col justify-end text-left space-y-3">
+                    <span className="text-xs uppercase font-bold tracking-widest text-[#A07855]">
+                      Extra 20% Off
+                    </span>
+                    <h3 className="text-2xl sm:text-3xl font-bold font-serif text-white max-w-xs">
+                      Mega Furniture Sale Event
+                    </h3>
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActivePage("catalog");
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="inline-flex items-center gap-2 text-xs font-bold text-white group-hover:text-[#A07855] transition cursor-pointer"
+                      >
+                        <span>Shop Now</span>
+                        <span className="w-5 h-5 rounded-full bg-white text-stone-900 flex items-center justify-center text-xs group-hover:translate-x-1 transition-transform">
+                          <ArrowRight size={11} />
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* 4. DISCOVER OUR NEWEST ARRIVALS GRID */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 text-left">
+              {/* Header with Subtext */}
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-stone-200 pb-6">
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F7F5F2] border border-stone-200 text-stone-600 text-xs font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#A07855]" />
+                    <span>Top Rated Product</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-bold font-serif text-stone-900">
+                    Discover Our Newest Arrivals
+                  </h2>
+                </div>
+                <p className="text-xs text-stone-500 max-w-md leading-relaxed">
+                  Find beautifully crafted furniture designed to transform ordinary spaces into warm, elegant, and inviting living experience.
+                </p>
+              </div>
+
+              {/* 4 Cards Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {pieceList.slice(6, 10).map((product) => (
+                  <ProductCard
+                    key={product._id}
+                    product={product}
+                    onAddToCart={handleAddToCart}
+                    onQuickView={(p) => setQuickViewProduct(p)}
+                    onSelectProduct={(p) => {
+                      setSelectedProduct(p);
+                      setActivePage("product-detail");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                  />
+                ))}
+              </div>
+
+              {/* Bottom "View All" Prompt */}
+              <div className="text-center pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActivePage("catalog");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="text-xs text-stone-500 hover:text-[#A07855] font-medium transition cursor-pointer"
+                >
+                  Let's make something great together.{" "}
+                  <span className="font-bold underline text-stone-800 hover:text-[#A07855]">
+                    View Our All Products.
                   </span>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4 pt-2 border-t border-amber-200/80 text-xs">
-                  <div>
-                    <span className="text-[#8C5A3E] block">Total Room Area</span>
-                    <span className="text-base font-bold text-[#451A03]">{roomAreaSqFt} sq ft</span>
-                  </div>
-                  <div>
-                    <span className="text-[#8C5A3E] block">Piece Footprint</span>
-                    <span className="text-base font-bold text-[#451A03]">{roomFitDetails.footprintSqFt} sq ft</span>
-                  </div>
-                  <div>
-                    <span className="text-[#8C5A3E] block">Walking Perimeter</span>
-                    <span className="text-base font-bold text-[#451A03]">{roomFitDetails.perimeterClearanceFt} ft clearance</span>
-                  </div>
-                </div>
-
-                <p className="text-xs text-[#7C5A48] leading-relaxed pt-2 border-t border-amber-200/80">
-                  💡 <strong>Architect Note:</strong> {roomFitDetails.guidance}
-                </p>
+                </button>
               </div>
-            </div>
+            </section>
+
+            {/* 5. MASONRY ASYMMETRICAL CATEGORY SHOWCASE GRID */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 text-left">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Big Card on Left: Upholstered Storage Beds */}
+                <div
+                  onClick={() => {
+                    setSelectedCategory("Bedroom");
+                    setActivePage("catalog");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="lg:col-span-5 relative rounded-3xl overflow-hidden group cursor-pointer shadow-md min-h-[420px] lg:min-h-[520px] flex flex-col justify-end p-8"
+                >
+                  <img
+                    src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=900&auto=format&fit=crop&q=80"
+                    alt="Upholstered Storage Beds"
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                  <div className="relative z-10 flex items-end justify-between">
+                    <div className="space-y-1 text-white">
+                      <h3 className="text-xl sm:text-2xl font-bold font-serif">
+                        Upholstered Storage Beds | 1500+ Designs
+                      </h3>
+                      <p className="text-xs text-stone-300">Starting from $899</p>
+                    </div>
+                    <span className="w-9 h-9 rounded-full bg-[#A07855] text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                      <ArrowUpRight size={18} />
+                    </span>
+                  </div>
+                </div>
+
+                {/* Right 4 Small Cards Grid */}
+                <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {/* Card 1: Cabinets */}
+                  <div
+                    onClick={() => {
+                      setSelectedCategory("Home Storage");
+                      setActivePage("catalog");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="relative rounded-3xl overflow-hidden group cursor-pointer shadow-md h-60 flex flex-col justify-end p-6"
+                  >
+                    <img
+                      src="https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=800&auto=format&fit=crop&q=80"
+                      alt="Cabinets"
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                    <div className="relative z-10 flex items-end justify-between">
+                      <div className="space-y-0.5 text-white">
+                        <h4 className="text-base font-bold font-serif">
+                          Cabinets | 600+ Items
+                        </h4>
+                        <p className="text-xs text-stone-300">Starting from $199</p>
+                      </div>
+                      <span className="w-8 h-8 rounded-full bg-[#A07855] text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                        <ArrowUpRight size={16} />
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Dining Sets */}
+                  <div
+                    onClick={() => {
+                      setSelectedCategory("Dining Room");
+                      setActivePage("catalog");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="relative rounded-3xl overflow-hidden group cursor-pointer shadow-md h-60 flex flex-col justify-end p-6"
+                  >
+                    <img
+                      src="https://images.unsplash.com/photo-1617806118233-18e1de247200?w=800&auto=format&fit=crop&q=80"
+                      alt="Dining Sets"
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                    <div className="relative z-10 flex items-end justify-between">
+                      <div className="space-y-0.5 text-white">
+                        <h4 className="text-base font-bold font-serif">
+                          Dining Sets | 750+ Designs
+                        </h4>
+                        <p className="text-xs text-stone-300">Starting from $1,299</p>
+                      </div>
+                      <span className="w-8 h-8 rounded-full bg-[#A07855] text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                        <ArrowUpRight size={16} />
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Card 3: Sofa Sets */}
+                  <div
+                    onClick={() => {
+                      setSelectedCategory("Living Room");
+                      setActivePage("catalog");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="relative rounded-3xl overflow-hidden group cursor-pointer shadow-md h-60 flex flex-col justify-end p-6"
+                  >
+                    <img
+                      src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&auto=format&fit=crop&q=80"
+                      alt="Sofa Sets"
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                    <div className="relative z-10 flex items-end justify-between">
+                      <div className="space-y-0.5 text-white">
+                        <h4 className="text-base font-bold font-serif">
+                          Sofa Sets | 1200+ Styles
+                        </h4>
+                        <p className="text-xs text-stone-300">Starting from $1,299</p>
+                      </div>
+                      <span className="w-8 h-8 rounded-full bg-[#A07855] text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                        <ArrowUpRight size={16} />
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Card 4: Coffee Tables */}
+                  <div
+                    onClick={() => {
+                      setSelectedCategory("Living Room");
+                      setActivePage("catalog");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="relative rounded-3xl overflow-hidden group cursor-pointer shadow-md h-60 flex flex-col justify-end p-6"
+                  >
+                    <img
+                      src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&auto=format&fit=crop&q=80"
+                      alt="Coffee Tables"
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                    <div className="relative z-10 flex items-end justify-between">
+                      <div className="space-y-0.5 text-white">
+                        <h4 className="text-base font-bold font-serif">
+                          Coffee Tables | 550+ Items
+                        </h4>
+                        <p className="text-xs text-stone-300">Starting from $189</p>
+                      </div>
+                      <span className="w-8 h-8 rounded-full bg-[#A07855] text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                        <ArrowUpRight size={16} />
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* 6. FEATURE SPOTLIGHT: LUXURY TV CABINETS */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="bg-[#F7F5F2] rounded-3xl p-8 sm:p-12 border border-stone-200/80 shadow-xs grid grid-cols-1 lg:grid-cols-12 gap-8 items-center text-left">
+                {/* Left Specs */}
+                <div className="lg:col-span-6 space-y-6">
+                  <h3 className="text-2xl sm:text-3xl font-bold font-serif text-stone-900">
+                    Luxury TV Cabinets Crafted With Elegance
+                  </h3>
+
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-white border border-stone-200 flex items-center justify-center text-[#A07855] shrink-0 shadow-2xs">
+                        <Box size={20} />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-stone-900">Modern Minimal Design</h4>
+                        <p className="text-[11px] text-stone-500">Floating clean lines</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-white border border-stone-200 flex items-center justify-center text-[#A07855] shrink-0 shadow-2xs">
+                        <Layers size={20} />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-stone-900">Smart Storage Spaces</h4>
+                        <p className="text-[11px] text-stone-500">Concealed cable docks</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-4 text-xs text-stone-600 pt-2 border-t border-stone-200">
+                    <span>• Premium Wood</span>
+                    <span>• Easy To Maintain</span>
+                    <span>• Durable Build Quality</span>
+                  </div>
+                </div>
+
+                {/* Right Image */}
+                <div className="lg:col-span-6 rounded-2xl overflow-hidden shadow-md">
+                  <img
+                    src="https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=1000&auto=format&fit=crop&q=80"
+                    alt="Luxury TV Cabinets"
+                    className="w-full h-full object-cover max-h-80"
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* 7. DARK COUNTDOWN FLASH DEAL SECTION */}
+            <section className="bg-[#18181B] text-white py-16 sm:py-24">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center text-left">
+                  {/* Left Deal Content */}
+                  <div className="lg:col-span-6 space-y-6">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#A07855]" />
+                      <span>Flat Discount</span>
+                    </div>
+
+                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-serif tracking-tight leading-tight">
+                      Discover Amazing Flat Furniture Discounts Today
+                    </h2>
+
+                    <p className="text-xs sm:text-sm text-stone-400 leading-relaxed max-w-lg">
+                      Shop premium furniture collections at exclusive flat discounts and transform your home with stylish, comfortable, and modern designs.
+                    </p>
+
+                    {/* Countdown Timer */}
+                    <div className="flex items-center gap-4 sm:gap-6 pt-2">
+                      <div className="text-center">
+                        <span className="text-2xl sm:text-4xl font-bold font-serif text-white block">
+                          {timeLeft.days}
+                        </span>
+                        <span className="text-[10px] sm:text-xs uppercase text-stone-400 font-semibold tracking-wider">
+                          Days
+                        </span>
+                      </div>
+                      <span className="text-2xl text-[#A07855] font-bold">:</span>
+                      <div className="text-center">
+                        <span className="text-2xl sm:text-4xl font-bold font-serif text-white block">
+                          {String(timeLeft.hours).padStart(2, "0")}
+                        </span>
+                        <span className="text-[10px] sm:text-xs uppercase text-stone-400 font-semibold tracking-wider">
+                          Hours
+                        </span>
+                      </div>
+                      <span className="text-2xl text-[#A07855] font-bold">:</span>
+                      <div className="text-center">
+                        <span className="text-2xl sm:text-4xl font-bold font-serif text-white block">
+                          {String(timeLeft.minutes).padStart(2, "0")}
+                        </span>
+                        <span className="text-[10px] sm:text-xs uppercase text-stone-400 font-semibold tracking-wider">
+                          Minutes
+                        </span>
+                      </div>
+                      <span className="text-2xl text-[#A07855] font-bold">:</span>
+                      <div className="text-center">
+                        <span className="text-2xl sm:text-4xl font-bold font-serif text-[#A07855] block">
+                          {String(timeLeft.seconds).padStart(2, "0")}
+                        </span>
+                        <span className="text-[10px] sm:text-xs uppercase text-stone-400 font-semibold tracking-wider">
+                          Seconds
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* CTA */}
+                    <div className="pt-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActivePage("catalog");
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="inline-flex items-center gap-3 px-8 py-3.5 bg-[#A07855] hover:bg-[#8d6645] text-white rounded-full text-xs font-bold tracking-wider transition-all duration-300 shadow-xl cursor-pointer group hover:scale-105"
+                      >
+                        <span>Buy Now</span>
+                        <span className="w-6 h-6 rounded-full bg-white text-[#A07855] flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
+                          <ArrowRight size={13} />
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Right Multi-Panel Architectural Split Collage */}
+                  <div className="lg:col-span-6 grid grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                      <div className="aspect-[4/5] rounded-3xl overflow-hidden shadow-lg">
+                        <img
+                          src="https://images.unsplash.com/photo-1617806118233-18e1de247200?w=600&auto=format&fit=crop&q=80"
+                          alt="Dining Arch"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="aspect-square rounded-3xl overflow-hidden shadow-lg">
+                        <img
+                          src="https://images.unsplash.com/photo-1503602642458-232111445657?w=600&auto=format&fit=crop&q=80"
+                          alt="Chair Close-Up"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-4 pt-6">
+                      <div className="aspect-square rounded-3xl overflow-hidden shadow-lg">
+                        <img
+                          src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&auto=format&fit=crop&q=80"
+                          alt="Pendant Light"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="aspect-[4/5] rounded-3xl overflow-hidden shadow-lg">
+                        <img
+                          src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&auto=format&fit=crop&q=80"
+                          alt="Lounge Harmony"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* 8. MODERN LIVING INSPIRATIONS LOOKBOOK */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 text-center pb-8">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F7F5F2] border border-stone-200 text-stone-600 text-xs font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#A07855]" />
+                  <span>Design Stories</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold font-serif text-stone-900">
+                  Modern Living Inspirations
+                </h2>
+              </div>
+
+              {/* 4 Vertical Room Photo Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                  {
+                    title: "Open Acoustic Lounge",
+                    img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&auto=format&fit=crop&q=80",
+                    tag: "Living Space",
+                  },
+                  {
+                    title: "Warm Timber Dining",
+                    img: "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=600&auto=format&fit=crop&q=80",
+                    tag: "Dining Suite",
+                  },
+                  {
+                    title: "Minimalist Master Suite",
+                    img: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=600&auto=format&fit=crop&q=80",
+                    tag: "Bedroom Sanctuary",
+                  },
+                  {
+                    title: "Scandinavian Kitchen Nook",
+                    img: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=600&auto=format&fit=crop&q=80",
+                    tag: "Kitchen & Bar",
+                  },
+                ].map((item, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      setActivePage("catalog");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="relative rounded-3xl overflow-hidden group cursor-pointer shadow-md h-96 flex flex-col justify-end p-6 text-left"
+                  >
+                    <img
+                      src={item.img}
+                      alt={item.title}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-108 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="relative z-10 space-y-1 text-white">
+                      <span className="text-[10px] uppercase font-bold tracking-widest text-[#A07855]">
+                        {item.tag}
+                      </span>
+                      <h4 className="text-base font-bold font-serif">{item.title}</h4>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
           </div>
         )}
 
-        {/* ================= PAGE 5: WHITE GLOVE DELIVERY ================= */}
-        {activePage === "delivery" && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 text-left">
-            <div className="text-center max-w-2xl mx-auto space-y-2">
-              <span className="text-xs uppercase tracking-[0.2em] text-[#D97706] font-bold">Flawless Arrival</span>
-              <h1 className="text-3xl sm:text-4xl font-serif font-black text-[#451A03]">White-Glove In-Home Service</h1>
-              <p className="text-xs sm:text-sm text-[#7C5A48]">
-                We treat your home with the care of an art gallery. Our two-person uniformed transit crews unpack, position, level, and remove all protective packaging.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-6 rounded-3xl bg-white border border-[#2C1810]/10 space-y-3 shadow-xs">
-                <Truck size={28} className="text-[#D97706]" />
-                <h4 className="text-base font-serif font-bold text-[#451A03]">Room of Choice Placement</h4>
-                <p className="text-xs text-[#7C5A48] leading-relaxed">
-                  No curb drops. Our technicians carry heavy stone tops and modular sectionals up stairs into your designated room.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-3xl bg-white border border-[#2C1810]/10 space-y-3 shadow-xs">
-                <ShieldCheck size={28} className="text-[#D97706]" />
-                <h4 className="text-base font-serif font-bold text-[#451A03]">Complete Assembly Included</h4>
-                <p className="text-xs text-[#7C5A48] leading-relaxed">
-                  Solid oak tables, bed platforms, and modular sofa connectors are hand-bolted and leveled to your floor surface.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-3xl bg-white border border-[#2C1810]/10 space-y-3 shadow-xs">
-                <Layers size={28} className="text-[#D97706]" />
-                <h4 className="text-base font-serif font-bold text-[#451A03]">Packaging Removal & Recycle</h4>
-                <p className="text-xs text-[#7C5A48] leading-relaxed">
-                  Every crate, padded blanket, and cardboard wrap is removed from your premises and responsibly recycled.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ================= PRODUCT DETAIL PAGE ================= */}
-        {activePage === "product-detail" && selectedProduct && (
-          <ProductDetailsPage
-            product={selectedProduct}
-            onBack={() => {
-              setActivePage("home");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
+        {/* ================= VIEW 2: PRODUCT LISTING / CATALOG ================= */}
+        {activePage === "catalog" && (
+          <ProductListing
+            products={pieceList}
+            selectedCategory={selectedCategory}
+            onSelectCategory={(cat) => setSelectedCategory(cat)}
             onAddToCart={handleAddToCart}
-            themeColors={{
-              primary: "#451A03",
-              secondary: "#78350F",
-              text: "#451A03",
-              background: "#FAF8F5",
-              cardBg: "#FFFFFF",
-            }}
-            business={business}
-            relatedProducts={pieces}
+            onQuickView={(p) => setQuickViewProduct(p)}
             onSelectProduct={(p) => {
               setSelectedProduct(p);
+              setActivePage("product-detail");
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           />
         )}
+
+        {/* ================= VIEW 3: PRODUCT DETAILS ================= */}
+        {activePage === "product-detail" && (
+          <ProductDetails
+            product={selectedProduct}
+            allProducts={pieceList}
+            onAddToCart={handleAddToCart}
+            onBack={() => {
+              setActivePage("catalog");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onSelectProduct={(p) => {
+              setSelectedProduct(p);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onQuickView={(p) => setQuickViewProduct(p)}
+          />
+        )}
       </main>
 
-      {/* ================= 3. ARCHITECTURAL FOOTER ================= */}
-      <footer className="bg-[#451A03] text-amber-100 pt-16 pb-12 border-t border-amber-900 text-left text-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2.5">
-                {brandLogo ? (
-                  <img src={brandLogo} alt={brandName} className="h-8 w-auto max-w-[130px] object-contain rounded brightness-0 invert" />
-                ) : (
-                  <Layers size={22} className="text-amber-300" />
-                )}
-                <span className="text-base font-serif font-black tracking-tight text-white uppercase">{brandName}</span>
+      {/* ================= FOOTER ================= */}
+      <Footer
+        business={business}
+        onNavigate={(page) => {
+          setActivePage(page);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        onSelectCategory={(cat) => {
+          setSelectedCategory(cat);
+          setActivePage("catalog");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
+
+      {/* ================= QUICK VIEW MODAL ================= */}
+      {quickViewProduct && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 relative shadow-2xl space-y-6 text-left animate-in fade-in zoom-in-95 duration-200">
+            <button
+              type="button"
+              onClick={() => setQuickViewProduct(null)}
+              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center transition cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
+              <div className="aspect-square rounded-2xl bg-[#F7F5F2] p-6 flex items-center justify-center">
+                <img
+                  src={getProductImage(quickViewProduct, quickViewProduct.image)}
+                  alt={quickViewProduct.name}
+                  className="w-full h-full object-contain max-h-56 drop-shadow-md"
+                />
               </div>
-              <p className="text-amber-200/80 leading-relaxed text-[11px] max-w-xs">
-                Architectural furniture, Scandinavian solid oak tables, linen upholstered sectionals, and curated lighting.
-              </p>
-              {brandAddress && (
-                <p className="text-amber-300/90 text-[11px] flex items-center gap-1.5 pt-1">
-                  <MapPin size={13} className="shrink-0 text-amber-400" />
-                  <span>{brandAddress}</span>
+
+              <div className="space-y-4">
+                <div>
+                  <span className="text-[11px] uppercase font-bold text-[#A07855] tracking-wider">
+                    {quickViewProduct.brand || "Casa Craft"}
+                  </span>
+                  <h3 className="text-lg font-bold font-serif text-stone-900 mt-0.5">
+                    {quickViewProduct.name}
+                  </h3>
+                  <div className="flex items-center gap-1.5 text-amber-500 pt-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        size={13}
+                        className={
+                          i < Math.floor(quickViewProduct.rating || 5)
+                            ? "fill-amber-500 text-amber-500"
+                            : "text-stone-300"
+                        }
+                      />
+                    ))}
+                    <span className="text-stone-500 text-xs">
+                      ({quickViewProduct.reviewCount || 1})
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xl font-bold text-stone-900">
+                    ${Number(quickViewProduct.price).toFixed(2)}
+                  </span>
+                  {quickViewProduct.compareAtPrice &&
+                    quickViewProduct.compareAtPrice > quickViewProduct.price && (
+                      <span className="text-sm text-stone-400 line-through">
+                        ${Number(quickViewProduct.compareAtPrice).toFixed(2)}
+                      </span>
+                    )}
+                </div>
+
+                <p className="text-xs text-stone-600 leading-relaxed line-clamp-3">
+                  {quickViewProduct.description}
                 </p>
-              )}
-            </div>
 
-            <div className="space-y-2">
-              <h5 className="font-bold text-white uppercase text-[10px] tracking-wider">Living Quarters</h5>
-              <p onClick={() => { setSelectedRoom("living room"); setActivePage("rooms"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-white cursor-pointer transition text-[11px]">Sectionals & Sofas</p>
-              <p onClick={() => { setSelectedRoom("dining suite"); setActivePage("rooms"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-white cursor-pointer transition text-[11px]">Solid Oak Dining Tables</p>
-              <p onClick={() => { setSelectedRoom("master bedroom"); setActivePage("rooms"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-white cursor-pointer transition text-[11px]">Platform Bed Sanctuaries</p>
-            </div>
+                {quickViewProduct.dimensions && (
+                  <p className="text-[11px] text-stone-500 font-medium">
+                    Dimensions: {quickViewProduct.dimensions}
+                  </p>
+                )}
 
-            <div className="space-y-2">
-              <h5 className="font-bold text-white uppercase text-[10px] tracking-wider">Design Atelier</h5>
-              <p onClick={() => { setActivePage("swatches"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-white cursor-pointer transition text-[11px]">Complimentary Swatch Box</p>
-              <p onClick={() => { setActivePage("fit-calculator"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-white cursor-pointer transition text-[11px]">Room Fit & Clearance Calculator</p>
-              <p onClick={() => { setActivePage("delivery"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="hover:text-white cursor-pointer transition text-[11px]">White Glove Delivery Protocol</p>
-            </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleAddToCart(quickViewProduct);
+                      setQuickViewProduct(null);
+                    }}
+                    className="flex-1 py-3 bg-[#A07855] hover:bg-[#8d6645] text-white text-xs font-semibold rounded-xl transition shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <ShoppingBag size={15} />
+                    <span>Add to Cart</span>
+                  </button>
 
-            <div className="space-y-2">
-              <h5 className="font-bold text-white uppercase text-[10px] tracking-wider">Concierge & Trade</h5>
-              <p className="text-white font-bold">{brandPhone}</p>
-              <p className="text-amber-300 text-[11px]">{brandEmail}</p>
-              <span className="text-[10px] text-amber-400 block pt-2">Trade Accounts: Trade Discounts of 20% for registered Interior Designers.</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedProduct(quickViewProduct);
+                      setQuickViewProduct(null);
+                      setActivePage("product-detail");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="px-4 py-3 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold rounded-xl transition cursor-pointer"
+                  >
+                    Full Details
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-
-          <div className="pt-8 border-t border-amber-900/60 flex flex-col sm:flex-row justify-between items-center text-[10px] text-amber-300/70 gap-2">
-            <p>© {new Date().getFullYear()} {brandName}. Sustainable Forestry Initiative Partner.</p>
-            <p>100% Solid European Hardwoods • Non-Toxic Finishes</p>
           </div>
         </div>
-      </footer>
+      )}
 
-      {/* Cart Drawer */}
+      {/* ================= REDUX CART DRAWER ================= */}
       <CartDrawer
         isOpen={cartOpen}
         onClose={() => setCartOpen(false)}
@@ -1128,7 +1097,6 @@ export default function CasaLivingTemplate({
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
         onCheckout={handleCheckout}
-        themeColors={{ primary: "#451A03" }}
       />
     </div>
   );

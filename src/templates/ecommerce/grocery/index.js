@@ -1,4 +1,12 @@
 export { default as FreshMartTemplate } from "./FreshMartTemplate";
-export { default as Products } from "./Products";
-export { default as FeaturedProducts } from "./FeaturedProducts";
+export { default as Navbar } from "./Navbar";
+export { default as Footer } from "./Footer";
 export { default as ProductCard } from "./ProductCard";
+export { default as FeaturedProducts } from "./FeaturedProducts";
+export { default as Products } from "./Products";
+export { default as ProductDetails } from "./ProductDetails";
+export { default as Offer } from "./Offer";
+export { default as MealKits } from "./MealKits";
+export { default as FreshnessLab } from "./FreshnessLab";
+export { default as HeroSection } from "./HeroSection";
+export { default } from "./FreshMartTemplate";

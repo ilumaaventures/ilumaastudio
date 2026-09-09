@@ -80,6 +80,9 @@ import { getUserLocation } from "./utils/location";
 import StoreTemplate from "./pages/StoreTemplate/StoreTemplate";
 import TemplatePreviewPage from "./pages/TemplatePreview/TemplatePreviewPage";
 import SlugStorefrontPage from "./pages/Store/SlugStorefrontPage";
+import { fetchCart } from "./redux/reducers/cartReducer";
+import { fetchWishlist } from "./redux/reducers/wishlistReducer";
+
 function App() {
   const dispatch = useDispatch();
   const {
@@ -94,6 +97,9 @@ function App() {
     if (token && token !== "undefined" && token !== "null") {
       dispatch(loadUser());
     }
+    // Sync cart and wishlist from backend on initial mount
+    dispatch(fetchCart());
+    dispatch(fetchWishlist());
   }, [dispatch]);
 
   if (loading && localStorage.getItem("token")) {

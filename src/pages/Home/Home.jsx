@@ -21,6 +21,7 @@ import WhyChooseUs from "./sections/WhyChooseUs";
 import GiftingProductsSection from "./sections/GiftingProductsSection";
 import NewArrivalsSection from "./sections/NewArrivalsSection";
 import BannerSection from "../../Components/BannerSection";
+import HomeShimmer from "./components/HomeShimmer";
 
 function Home() {
   const [products, setProducts] = useState([]);
@@ -55,8 +56,12 @@ function Home() {
     loadHomeData();
   }, []);
 
+  if (loading) {
+    return <HomeShimmer />;
+  }
+
   return (
-    <div className="min-h-screen bg-[#fafafa] font-sans antialiased text-slate-900 pb-12 space-y-6 sm:space-y-8">
+    <div className="min-h-screen bg-[#fafafa] font-sans antialiased text-slate-900 pb-12 space-y-6 sm:space-y-8 animate-fadeIn">
       {/* Hero Carousel Banner */}
       <HeroBanner />
       {/* Flash Deals */}

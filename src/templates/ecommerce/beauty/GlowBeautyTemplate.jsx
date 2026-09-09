@@ -1,23 +1,23 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import {
   Sparkles,
   Heart,
   ShoppingBag,
   Star,
   Check,
-  Calendar,
-  Clock,
   ShieldCheck,
-  HelpCircle,
   ArrowRight,
-  Smile,
   Droplets,
   ChevronRight,
-  Repeat,
+  ChevronLeft,
+  ChevronDown,
+  ChevronUp,
   Leaf,
   Sun,
-  Moon,
+  Eye,
+  X,
   Plus,
+  Minus,
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -47,22 +47,64 @@ export default function GlowBeautyTemplate({
   reviews = [],
   customization = {},
 }) {
-  // Navigation: "home" | "catalog" | "routines" | "shade-finder" | "ingredients" | "offers" | "product-detail"
+  // Navigation: "home" | "catalog" | "offers" | "product-detail"
   const [activePage, setActivePage] = useState("home");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
+  const [quickViewProduct, setQuickViewProduct] = useState(null);
+  const [quickViewQty, setQuickViewQty] = useState(1);
+  const [quickViewShade, setQuickViewShade] = useState(null);
 
   // Search & Filters
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Skin Quiz State
-  const [skinType, setSkinType] = useState("dry"); // "dry" | "oily" | "sensitive" | "combination"
-  const [primaryConcern, setPrimaryConcern] = useState("hydration"); // "hydration" | "aging" | "redness" | "glow"
+  // Trending section sub-tab: "latest" | "new-arrivals" | "best"
+  const [trendingTab, setTrendingTab] = useState("latest");
 
-  // Shade Finder State
-  const [selectedUndertone, setSelectedUndertone] = useState("Neutral");
-  const [shadeLevel, setShadeLevel] = useState(2); // 1 (Fair), 2 (Light), 3 (Medium), 4 (Tan), 5 (Deep)
+  // Before & After Interactive Slider state (0 to 100 percent)
+  const [sliderPosition, setSliderPosition] = useState(50);
+  const [isDraggingSlider, setIsDraggingSlider] = useState(false);
+  const sliderRef = useRef(null);
+
+  // Benefits Accordion state: "damage" | "sun" | "tone" | "rays"
+  const [activeAccordion, setActiveAccordion] = useState("damage");
+
+  // Testimonial Carousel state
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
+
+  const testimonials = [
+    {
+      id: 1,
+      quote:
+        "Consequat nec dui sed facilisis lorem curabitur egestas diam massa morbi id orci nunc et morbi vulputate.",
+      name: "Stephan Robot",
+      role: "Verified Collector",
+      avatar:
+        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
+      rating: 5,
+    },
+    {
+      id: 2,
+      quote:
+        "The barrier repair mist transformed my winter dry patches in under 3 days. Beautiful botanical texture with zero stickiness.",
+      name: "Camille Laurent",
+      role: "Skincare Aesthetician",
+      avatar:
+        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&auto=format&fit=crop&q=80",
+      rating: 5,
+    },
+    {
+      id: 3,
+      quote:
+        "Finally, clean makeup that feels like serum. The shade matching and cold-pressed seed oils give an effortless glass-skin finish.",
+      name: "Elena Vance",
+      role: "Clean Beauty Editor",
+      avatar:
+        "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80",
+      rating: 5,
+    },
+  ];
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -70,99 +112,103 @@ export default function GlowBeautyTemplate({
 
   const defaultProducts = [
     {
-      _id: "glow-1",
-      name: "Hydra-Dew Multi-Molecular Hyaluronic Serum",
-      price: 42.0,
-      compareAtPrice: 52.0,
-      category: "Serums & Elixirs",
-      step: "Step 3: Treatment",
-      activeIngredient: "2% Hyaluronic Acid + B5",
-      concern: "Deep Hydration & Plumpness",
-      badge: "Best-Seller",
-      rating: 4.9,
-      reviewCount: 142,
-      image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=800&auto=format&fit=crop&q=80",
-      description: "Five molecular weights of pure hyaluronic acid infused with Damask rosewater to quench dehydrated skin at cellular depths.",
-      inStock: true,
-    },
-    {
-      _id: "glow-2",
-      name: "Ceramide Barrier Restorative Silk Cream",
-      price: 48.0,
-      compareAtPrice: 58.0,
-      category: "Moisturizers",
-      step: "Step 4: Moisturize",
-      activeIngredient: "5 Ceramides + Plant Peptides",
-      concern: "Skin Barrier Repair",
-      badge: "Dermatologist Pick",
+      _id: "glow-ref-1",
+      name: "Smooth Essen",
+      price: 10.0,
+      compareAtPrice: 16.0,
+      category: "Essences & Toners",
+      activeIngredient: "Damask Rose Hydrosol & Hyaluron",
+      concern: "Radiance & Dewy Moisture",
+      badge: "Sale",
       rating: 5.0,
-      reviewCount: 98,
-      image: "https://images.unsplash.com/photo-1608248597359-2451515bb529?w=800&auto=format&fit=crop&q=80",
-      description: "Rich velvety lipid balm replenishing natural ceramides, soothing redness, and locking in 48-hour moisture without heaviness.",
+      reviewCount: 38,
+      image:
+        "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=800&auto=format&fit=crop&q=80",
+      description:
+        "Ultra-lightweight smoothing essence formulated to rebalance pH and deliver deep botanical hydration with a dewy glow.",
+      shades: [
+        { name: "Crimson Tint", hex: "#9E2A2B" },
+        { name: "Sunlight Gold", hex: "#E9B824" },
+        { name: "Royal Blue", hex: "#2B4C7E" },
+        { name: "Blush Pink", hex: "#E8A598" },
+        { name: "Sage Mint", hex: "#9CAF88" },
+      ],
+      extraShadesCount: 1,
       inStock: true,
     },
     {
-      _id: "glow-3",
-      name: "Bakuchiol Retinol-Alternative Night Elixir",
-      price: 54.0,
-      compareAtPrice: 65.0,
+      _id: "glow-ref-2",
+      name: "Urban Decay",
+      price: 10.0,
+      compareAtPrice: 15.0,
+      category: "Lip Care & Stains",
+      activeIngredient: "Cold-Pressed Jojoba & Vitamin E",
+      concern: "Long-Wear Velvet Finish",
+      badge: "Sale",
+      rating: 5.0,
+      reviewCount: 54,
+      image:
+        "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=800&auto=format&fit=crop&q=80",
+      description:
+        "Rich pigment velvet formula nourishing lips while maintaining all-day botanical color.",
+      shades: [
+        { name: "Ruby Red", hex: "#A81D24" },
+        { name: "Warm Amber", hex: "#D9822B" },
+        { name: "Deep Cobalt", hex: "#1F3A60" },
+        { name: "Petal Rose", hex: "#ECA3A3" },
+        { name: "Pistachio", hex: "#8EA87D" },
+      ],
+      extraShadesCount: 1,
+      inStock: true,
+    },
+    {
+      _id: "glow-ref-3",
+      name: "Smoothing Essence",
+      price: 10.0,
+      compareAtPrice: 18.0,
       category: "Serums & Elixirs",
-      step: "Step 3: Night Treatment",
-      activeIngredient: "1% Pure Ayurvedic Bakuchiol",
-      concern: "Fine Lines & Firming",
-      badge: "Retinol-Alternative",
-      rating: 4.8,
-      reviewCount: 76,
-      image: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&auto=format&fit=crop&q=80",
-      description: "Plant-derived gentle retinol alternative clinically proven to boost elasticity and smooth fine lines with zero irritation or peeling.",
+      activeIngredient: "5-Lipid Ceramide Complex",
+      concern: "Cellular Barrier Repair",
+      badge: "Sale",
+      rating: 5.0,
+      reviewCount: 42,
+      image:
+        "https://images.unsplash.com/photo-1608248597359-2451515bb529?w=800&auto=format&fit=crop&q=80",
+      description:
+        "Daily balancing smoothing essence designed to soothe redness and restore supple barrier comfort.",
+      shades: [
+        { name: "Berry Glow", hex: "#8A1C28" },
+        { name: "Ochre Gold", hex: "#D69F3D" },
+        { name: "Ocean Deep", hex: "#234163" },
+        { name: "Peach Nectar", hex: "#F3AFA0" },
+        { name: "Eucalyptus", hex: "#7E9D7B" },
+      ],
+      extraShadesCount: 1,
       inStock: true,
     },
     {
-      _id: "glow-4",
-      name: "Gentle Milky Oat & Rose Enzyme Cleanser",
-      price: 32.0,
-      compareAtPrice: 38.0,
-      category: "Cleansers",
-      step: "Step 1: Cleanse",
-      activeIngredient: "Colloidal Oat + Papaya Enzyme",
-      concern: "Gentle Clarifying",
-      badge: "pH 5.5 Balanced",
-      rating: 4.9,
-      reviewCount: 65,
-      image: "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=800&auto=format&fit=crop&q=80",
-      description: "Ultra-soothing milky cleanser dissolving makeup, sunscreen, and impurities while preserving delicate skin barrier lipids.",
-      inStock: true,
-    },
-    {
-      _id: "glow-5",
-      name: "Wild Rose Petal Hydrosol Conditioning Mist",
-      price: 28.0,
-      compareAtPrice: 34.0,
-      category: "Toners & Mists",
-      step: "Step 2: Tone & Mist",
-      activeIngredient: "100% Damask Rose Distillate",
-      concern: "Glow & Radiance",
-      badge: "Steam Distilled",
-      rating: 4.8,
-      reviewCount: 52,
-      image: "https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?w=800&auto=format&fit=crop&q=80",
-      description: "Fine ethereal facial mist balancing skin pH and priming skin for enhanced absorption of active serums and oils.",
-      inStock: true,
-    },
-    {
-      _id: "glow-6",
-      name: "Luminous Mineral Dew Drops SPF 50",
-      price: 38.0,
-      compareAtPrice: 45.0,
-      category: "Sun Protection",
-      step: "Step 5: Sun Shield",
-      activeIngredient: "Non-Nano Zinc 18% + Squalane",
-      concern: "UV Defense & Glow",
-      badge: "Zero White Cast",
-      rating: 4.9,
-      reviewCount: 114,
-      image: "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=800&auto=format&fit=crop&q=80",
-      description: "Featherweight 100% mineral daily broad-spectrum sunshield leaving a hydrated dewy finish without greasiness or white cast.",
+      _id: "glow-ref-4",
+      name: "Red Lipstick",
+      price: 10.0,
+      compareAtPrice: 14.0,
+      category: "Lip Care & Stains",
+      activeIngredient: "Organic Shea & Pomegranate Oil",
+      concern: "Hydrating Satin Color",
+      badge: "Sale",
+      rating: 5.0,
+      reviewCount: 67,
+      image:
+        "https://images.unsplash.com/photo-1599733589046-9b8308b5b50d?w=800&auto=format&fit=crop&q=80",
+      description:
+        "Iconic crimson shade infused with organic pomegranate seed butter for hydrated, feather-free finish.",
+      shades: [
+        { name: "Classic Crimson", hex: "#B81D24" },
+        { name: "Golden Honey", hex: "#DAA520" },
+        { name: "Midnight Navy", hex: "#192841" },
+        { name: "Blush Nude", hex: "#E8B4B8" },
+        { name: "Matcha Mist", hex: "#8FA382" },
+      ],
+      extraShadesCount: 1,
       inStock: true,
     },
   ];
@@ -192,19 +238,32 @@ export default function GlowBeautyTemplate({
     typeof rawAddr === "string"
       ? rawAddr
       : rawAddr && typeof rawAddr === "object"
-      ? [rawAddr.street, rawAddr.addressLine2, rawAddr.city, rawAddr.state, rawAddr.postalCode, rawAddr.country]
+        ? [
+          rawAddr.street,
+          rawAddr.addressLine2,
+          rawAddr.city,
+          rawAddr.state,
+          rawAddr.postalCode,
+          rawAddr.country,
+        ]
           .filter(Boolean)
           .join(", ")
-      : "450 Botanical Way, Malibu, CA 90265";
+        : "450 Botanical Way, Malibu, CA 90265";
 
-  const handleAddToCart = (product, qty = 1) => {
+  const handleAddToCart = (product, qty = 1, shade = null) => {
     if (isOutOfStock(product)) {
       toast.error(`Sorry, ${product.name} is currently out of stock!`);
       return;
     }
-    dispatch(addToCart({ product, quantity: qty }));
+    const itemToAdd = shade
+      ? { ...product, selectedShade: shade }
+      : product;
+    dispatch(addToCart({ product: itemToAdd, quantity: qty }));
     toast.success(`${product.name} added to Beauty Bag! 🌸`);
     setCartOpen(true);
+    if (quickViewProduct) {
+      setQuickViewProduct(null);
+    }
   };
 
   const handleUpdateQuantity = (id, newQty) => {
@@ -220,7 +279,10 @@ export default function GlowBeautyTemplate({
     navigate("/cart");
   };
 
-  const cartCount = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
+  const cartCount = cartItems.reduce(
+    (sum, item) => sum + (item.quantity || 1),
+    0,
+  );
 
   const handleSelectProduct = (p) => {
     setSelectedProduct(p);
@@ -228,17 +290,51 @@ export default function GlowBeautyTemplate({
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Recommended products based on quiz
-  const recommendedRoutine = useMemo(() => {
-    return [
-      beautyItems[3], // Cleanser
-      beautyItems[0], // Hyaluronic
-      beautyItems[1], // Ceramide Cream
-    ].filter(Boolean);
-  }, [beautyItems, skinType, primaryConcern]);
+  const handleQuickView = (p) => {
+    setQuickViewProduct(p);
+    setQuickViewQty(1);
+    setQuickViewShade(p.shades && p.shades.length > 0 ? p.shades[0] : null);
+  };
+
+  // Filter products for trending sub-tabs
+  const filteredTrendingProducts = useMemo(() => {
+    if (trendingTab === "new-arrivals") {
+      return [...beautyItems].reverse().slice(0, 4);
+    }
+    if (trendingTab === "best") {
+      return [...beautyItems].sort((a, b) => (b.rating || 5) - (a.rating || 5)).slice(0, 4);
+    }
+    return beautyItems.slice(0, 4);
+  }, [beautyItems, trendingTab]);
+
+  // Before & After Drag Handlers
+  const handleSliderMove = (clientX) => {
+    if (!sliderRef.current) return;
+    const rect = sliderRef.current.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const clampedPercent = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    setSliderPosition(clampedPercent);
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches && e.touches[0]) {
+      handleSliderMove(e.touches[0].clientX);
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDraggingSlider) {
+      handleSliderMove(e.clientX);
+    }
+  };
 
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-[#FFF8F8] text-rose-950 antialiased selection:bg-rose-200 selection:text-rose-900">
+    <div
+      className="min-h-screen flex flex-col font-sans bg-[#FAF8F5] text-stone-900 antialiased selection:bg-[#EBDDD5] selection:text-stone-900"
+      onMouseMove={handleMouseMove}
+      onMouseUp={() => setIsDraggingSlider(false)}
+      onTouchEnd={() => setIsDraggingSlider(false)}
+    >
       {/* ================= 1. CLEAN BEAUTY NAVBAR ================= */}
       <Navbar
         brandName={brandName}
@@ -251,7 +347,7 @@ export default function GlowBeautyTemplate({
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         onOpenSkinQuiz={() => {
-          setActivePage("routines");
+          setActivePage("catalog");
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
       />
@@ -261,22 +357,26 @@ export default function GlowBeautyTemplate({
         {/* ================= VIEW 1: HOME ================= */}
         {activePage === "home" && (
           <>
-            {/* HERO SECTION */}
-            <section className="relative overflow-hidden bg-gradient-to-b from-[#FFF8F8] via-[#FFF0F3] to-[#FFF8F8] pt-12 pb-20 md:pt-20 md:pb-28 border-b border-rose-100">
+            {/* ================= HERO SECTION (REFERENCE MATCH) ================= */}
+            <section className="relative overflow-hidden bg-[#F6F4F0] pt-12 pb-16 md:pt-20 md:pb-24 border-b border-[#E8E2D9]">
+              {/* Subtle background glow */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-[#F2ECE4] to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
+
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-                  <div className="lg:col-span-7 space-y-6 text-left">
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-100/80 border border-rose-200 text-rose-800 text-xs font-semibold shadow-xs">
-                      <Sparkles size={14} className="text-rose-600" />
-                      <span>Clean Botanical Bio-Actives • 100% Leaping Bunny Vegan</span>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+                  {/* Left Column: Typography */}
+                  <div className="lg:col-span-6 space-y-6 text-left">
+                    <div className="space-y-1">
+                      <span className="font-serif italic text-2xl sm:text-3xl text-stone-500 font-normal tracking-wide block">
+                        New Season
+                      </span>
+                      <h1 className="text-4xl sm:text-6xl font-serif font-black tracking-tight text-[#2B2824] leading-[1.1]">
+                        Pure Botanical Skincare.
+                      </h1>
                     </div>
 
-                    <h1 className="text-4xl sm:text-6xl font-serif font-black tracking-tight text-rose-950 leading-[1.08]">
-                      Luminous Skin Driven by Active Plant Science.
-                    </h1>
-
-                    <p className="text-sm sm:text-base text-rose-800/80 leading-relaxed max-w-xl">
-                      Formulated with multi-molecular hyaluronic acid, wild Damask rose hydrosol, and soothing plant ceramides. Zero synthetic fragrances, parabens, or harsh sulfates.
+                    <p className="text-sm sm:text-base text-stone-600 leading-relaxed max-w-lg">
+                      Cold-pressed plant lipids, restorative ceramides, and multi-depth hydration designed to strengthen your skin barrier naturally.
                     </p>
 
                     <div className="flex flex-wrap gap-4 pt-2">
@@ -285,64 +385,88 @@ export default function GlowBeautyTemplate({
                           setActivePage("catalog");
                           window.scrollTo({ top: 0, behavior: "smooth" });
                         }}
-                        className="px-8 py-4 bg-gradient-to-r from-rose-500 via-pink-600 to-rose-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-2xl text-xs font-bold uppercase tracking-wider transition shadow-lg shadow-rose-300/40 flex items-center gap-2 cursor-pointer transform hover:-translate-y-0.5 active:scale-95"
+                        className="px-8 py-3.5 bg-[#8F9E68] hover:bg-[#7D8C57] text-white rounded-full text-xs font-bold uppercase tracking-widest transition shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer transform hover:-translate-y-0.5 active:scale-95"
                       >
-                        <Droplets size={17} className="text-rose-100" />
-                        <span>Explore Clean Formulas</span>
+                        <span>Shop Now</span>
+                        <ArrowRight size={15} />
                       </button>
 
                       <button
                         onClick={() => {
-                          setActivePage("routines");
+                          setActivePage("catalog");
                           window.scrollTo({ top: 0, behavior: "smooth" });
                         }}
-                        className="px-7 py-4 bg-white border border-rose-200 hover:border-rose-400 text-rose-900 rounded-2xl text-xs font-bold uppercase tracking-wider transition flex items-center gap-2 cursor-pointer shadow-xs"
+                        className="px-7 py-3.5 bg-white border border-[#D9D2C7] hover:border-stone-400 text-stone-800 rounded-full text-xs font-bold uppercase tracking-widest transition flex items-center gap-2 cursor-pointer shadow-xs hover:bg-stone-50"
                       >
-                        <HelpCircle size={16} className="text-rose-500" />
-                        <span>Skin Routine Quiz</span>
+                        <span>Explore Ritual</span>
                       </button>
                     </div>
 
-                    {/* Clinical Proof Strip */}
-                    <div className="grid grid-cols-3 gap-4 pt-6 border-t border-rose-200/80 text-left">
+                    {/* Trust Highlights Strip */}
+                    <div className="grid grid-cols-3 gap-6 pt-6 border-t border-[#E5DDD2] text-left">
                       <div>
-                        <span className="text-xl sm:text-2xl font-serif font-black text-rose-950">98%</span>
-                        <p className="text-[11px] text-rose-700 mt-0.5">Hydration Within 24h</p>
+                        <span className="text-2xl font-serif font-black text-stone-900 block">
+                          98%
+                        </span>
+                        <p className="text-[11px] text-stone-500 mt-0.5 uppercase tracking-wider font-medium">
+                          Barrier Hydration
+                        </p>
                       </div>
                       <div>
-                        <span className="text-xl sm:text-2xl font-serif font-black text-rose-950">100%</span>
-                        <p className="text-[11px] text-rose-700 mt-0.5">Cruelty-Free Vegan</p>
+                        <span className="text-2xl font-serif font-black text-stone-900 block">
+                          100%
+                        </span>
+                        <p className="text-[11px] text-stone-500 mt-0.5 uppercase tracking-wider font-medium">
+                          Vegan & Clean
+                        </p>
                       </div>
                       <div>
-                        <span className="text-xl sm:text-2xl font-serif font-black text-rose-950">EWG</span>
-                        <p className="text-[11px] text-rose-700 mt-0.5">Verified Clean Actives</p>
+                        <span className="text-2xl font-serif font-black text-stone-900 block">
+                          EWG
+                        </span>
+                        <p className="text-[11px] text-stone-500 mt-0.5 uppercase tracking-wider font-medium">
+                          Verified Formulas
+                        </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Hero Visual Card */}
-                  <div className="lg:col-span-5 relative">
-                    <div className="aspect-[4/3] rounded-[36px] overflow-hidden shadow-2xl border-4 border-white bg-rose-50 relative group">
+                  {/* Right Column: Hero Pedestal Bottle Presentation */}
+                  <div className="lg:col-span-6 relative flex justify-center items-center">
+                    <div className="relative w-full max-w-[480px] aspect-square rounded-3xl bg-gradient-to-b from-[#F7F4F0] via-[#ECE5DC] to-[#DFD6CA] p-8 flex items-center justify-center shadow-lg border border-[#E0D8CC]">
+                      {/* Decorative Circular Halo */}
+                      <div className="absolute inset-8 rounded-full border border-dashed border-stone-300/70 pointer-events-none" />
+
+                      {/* Pedestal platform effect */}
+                      <div className="absolute bottom-10 w-3/4 h-12 bg-[#CDC3B6]/50 rounded-full blur-xl pointer-events-none" />
+
+                      {/* Featured Cosmetic Bottle Image */}
                       <img
                         src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=900&auto=format&fit=crop&q=80"
-                        alt="Hydra-Dew Serum"
-                        className="w-full h-full object-cover transform group-hover:scale-105 transition duration-700"
+                        alt="Smooth Essence Signature Cosmetic Bottle"
+                        className="relative z-10 max-h-[380px] w-auto object-contain drop-shadow-2xl transform hover:scale-105 transition duration-700 cursor-pointer"
+                        onClick={() => handleSelectProduct(beautyItems[0])}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-rose-950/60 via-transparent to-transparent" />
 
-                      <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between text-white">
-                        <div>
-                          <span className="text-xs font-bold uppercase tracking-widest text-rose-200">
-                            Signature Treatment
+                      {/* Floating Product Badge Overlay */}
+                      <div
+                        onClick={() => handleSelectProduct(beautyItems[0])}
+                        className="absolute bottom-6 left-6 right-6 z-20 bg-white/90 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/80 shadow-md flex items-center justify-between cursor-pointer hover:bg-white transition"
+                      >
+                        <div className="text-left">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#8F9E68]">
+                            Signature Launch
                           </span>
-                          <h4 className="text-lg font-serif font-bold">Hydra-Dew Multi-Hyaluronic Serum</h4>
+                          <h4 className="text-sm font-serif font-bold text-stone-900">
+                            Smooth Essen Multi-Hydrator
+                          </h4>
+                          <span className="text-xs font-bold text-stone-700">
+                            $10.00 <span className="line-through text-stone-400 font-normal">$16.00</span>
+                          </span>
                         </div>
-                        <button
-                          onClick={() => handleSelectProduct(beautyItems[0])}
-                          className="p-3 bg-white text-rose-900 rounded-xl transition cursor-pointer font-bold shadow-lg"
-                        >
-                          <ChevronRight size={18} />
-                        </button>
+                        <div className="w-8 h-8 rounded-full bg-[#8F9E68] text-white flex items-center justify-center shadow-sm">
+                          <ChevronRight size={16} />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -350,108 +474,550 @@ export default function GlowBeautyTemplate({
               </div>
             </section>
 
-            {/* FEATURED FORMULATIONS */}
-            <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 text-left">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-rose-100 pb-6">
-                <div>
-                  <span className="text-xs uppercase tracking-wider text-rose-500 font-bold">
-                    Bio-Compatible Actives
-                  </span>
-                  <h2 className="text-3xl sm:text-4xl font-serif font-black text-rose-950 mt-1">
-                    Signature Skincare Elixirs
-                  </h2>
-                </div>
+            {/* ================= TRENDING PRODUCTS SECTION (REFERENCE MATCH) ================= */}
+            <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 text-center">
+              <div className="space-y-4">
+                <h2 className="text-3xl sm:text-4xl font-serif font-black text-[#2B2824]">
+                  Trending Products
+                </h2>
 
-                <button
-                  onClick={() => {
-                    setActivePage("catalog");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 transition cursor-pointer"
-                >
-                  <span>View All Clean Formulas ({beautyItems.length} products)</span>
-                  <ArrowRight size={14} />
-                </button>
+                {/* Sub-tabs with dot indicator */}
+                <div className="flex flex-wrap items-center justify-center gap-6 text-xs sm:text-sm font-medium">
+                  <button
+                    onClick={() => setTrendingTab("latest")}
+                    className={`inline-flex items-center gap-2 pb-1.5 transition cursor-pointer font-semibold ${
+                      trendingTab === "latest"
+                        ? "text-[#8F9E68] border-b-2 border-[#8F9E68]"
+                        : "text-stone-500 hover:text-stone-800"
+                    }`}
+                  >
+                    <span>Latest Product</span>
+                    {trendingTab === "latest" && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#8F9E68]" />
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => setTrendingTab("new-arrivals")}
+                    className={`inline-flex items-center gap-2 pb-1.5 transition cursor-pointer font-semibold ${
+                      trendingTab === "new-arrivals"
+                        ? "text-[#8F9E68] border-b-2 border-[#8F9E68]"
+                        : "text-stone-500 hover:text-stone-800"
+                    }`}
+                  >
+                    <span>New Arrivals</span>
+                    {trendingTab === "new-arrivals" && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#8F9E68]" />
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => setTrendingTab("best")}
+                    className={`inline-flex items-center gap-2 pb-1.5 transition cursor-pointer font-semibold ${
+                      trendingTab === "best"
+                        ? "text-[#8F9E68] border-b-2 border-[#8F9E68]"
+                        : "text-stone-500 hover:text-stone-800"
+                    }`}
+                  >
+                    <span>Best Products</span>
+                    {trendingTab === "best" && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#8F9E68]" />
+                    )}
+                  </button>
+                </div>
               </div>
 
-              {/* Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {beautyItems.slice(0, 4).map((item) => (
+              {/* 4-Card Responsive Grid with Shade Swatches */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
+                {filteredTrendingProducts.map((item) => (
                   <ProductCard
                     key={item._id}
                     product={item}
                     onSelectProduct={handleSelectProduct}
                     onAddToCart={handleAddToCart}
+                    onQuickView={handleQuickView}
                   />
                 ))}
               </div>
+
+              {/* VIEW ALL CTA Button */}
+              <div className="pt-6">
+                <button
+                  onClick={() => {
+                    setActivePage("catalog");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="px-9 py-3.5 bg-white border border-[#D0C8BC] hover:border-stone-800 text-stone-800 rounded-full text-xs font-bold uppercase tracking-widest transition shadow-xs hover:shadow-md cursor-pointer inline-flex items-center gap-2 active:scale-95"
+                >
+                  <span>View All</span>
+                  <ArrowRight size={14} />
+                </button>
+              </div>
             </section>
 
-            {/* INTERACTIVE SKIN DIAGNOSTIC CALLOUT */}
-            <section className="py-16 bg-gradient-to-r from-rose-100/60 via-pink-50 to-rose-100/60 border-y border-rose-200">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center max-w-2xl mx-auto space-y-2 mb-10">
-                  <span className="text-xs uppercase tracking-widest text-rose-600 font-bold">
-                    Tailored Botanical Science
-                  </span>
-                  <h2 className="text-3xl font-serif font-black text-rose-950">
-                    Interactive Beauty Laboratories
-                  </h2>
-                  <p className="text-xs text-rose-800 font-sans">
-                    Find your exact daily AM/PM routine steps, discover skin undertones, and explore active clinical transparency.
+            {/* ================= DUAL EDITORIAL PROMO BANNERS (REFERENCE MATCH) ================= */}
+            <section className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Banner 1: LANEIGE / Make Up Is An Art */}
+                <div className="rounded-3xl bg-[#F7EBE8] border border-[#EED9D5] p-8 sm:p-10 relative overflow-hidden flex flex-col justify-between min-h-[340px] text-left group">
+                  {/* Subtle corner floral visual overlay */}
+                  <div className="absolute -right-6 -bottom-6 w-56 h-56 rounded-full bg-[#EAD4D0]/60 blur-xl pointer-events-none" />
+
+                  <div className="space-y-2 relative z-10 max-w-xs">
+                    <span className="font-serif italic text-2xl text-stone-500 font-normal tracking-wide block">
+                      New Season
+                    </span>
+                    <h3 className="text-3xl sm:text-4xl font-serif font-black text-[#2B2824] leading-tight">
+                      Make Up Is An Art.
+                    </h3>
+                  </div>
+
+                  {/* Banner 1 Image Presentation (Pink cosmetic bottle with baby's breath) */}
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 w-48 sm:w-56 h-48 sm:h-56 pointer-events-none">
+                    <img
+                      src="https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=600&auto=format&fit=crop&q=80"
+                      alt="LANEIGE and Baby's Breath Flowers"
+                      className="w-full h-full object-contain drop-shadow-xl transform group-hover:scale-105 transition duration-500"
+                    />
+                  </div>
+
+                  <div className="pt-6 relative z-10">
+                    <button
+                      onClick={() => {
+                        setActivePage("catalog");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className="px-7 py-3 bg-[#8F9E68] hover:bg-[#7D8C57] text-white rounded-full text-xs font-bold uppercase tracking-widest transition shadow-sm inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    >
+                      <span>Shop Now</span>
+                      <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Banner 2: Healthline / Dry Skin Solution */}
+                <div className="rounded-3xl bg-[#FBF3ED] border border-[#ECE0D6] p-8 sm:p-10 relative overflow-hidden flex flex-col justify-between min-h-[340px] text-left group">
+                  <div className="absolute -right-8 -bottom-8 w-60 h-60 rounded-full bg-[#EBD9CE]/60 blur-xl pointer-events-none" />
+
+                  <div className="space-y-2 relative z-10 max-w-xs">
+                    <span className="font-serif italic text-2xl text-stone-500 font-normal tracking-wide block">
+                      Healthline
+                    </span>
+                    <h3 className="text-3xl sm:text-4xl font-serif font-black text-[#2B2824] leading-tight">
+                      Dry Skin Solution.
+                    </h3>
+                    <p className="text-xs text-stone-500 leading-relaxed pt-1">
+                      Consequat nec dui sed facilisis lorem curabitur egestas diam massa morbi id orci.
+                    </p>
+                  </div>
+
+                  {/* Banner 2 Image Presentation (Dropper bottle on rose quartz crystal bed) */}
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 w-48 sm:w-56 h-48 sm:h-56 pointer-events-none">
+                    <img
+                      src="https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&auto=format&fit=crop&q=80"
+                      alt="Dropper bottle on pink rose quartz crystal chips"
+                      className="w-full h-full object-contain drop-shadow-xl transform group-hover:scale-105 transition duration-500"
+                    />
+                  </div>
+
+                  <div className="pt-6 relative z-10">
+                    <button
+                      onClick={() => {
+                        setActivePage("catalog");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className="px-7 py-3 bg-[#8F9E68] hover:bg-[#7D8C57] text-white rounded-full text-xs font-bold uppercase tracking-widest transition shadow-sm inline-flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    >
+                      <span>Shop Now</span>
+                      <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* ================= INTERACTIVE BEFORE & AFTER SKIN BENEFITS SECTION (REFERENCE MATCH) ================= */}
+            <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-left">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                {/* Left Column: Draggable Real-Time Before & After Comparison Slider */}
+                <div className="lg:col-span-6 space-y-4">
+                  <div
+                    ref={sliderRef}
+                    onMouseDown={(e) => {
+                      setIsDraggingSlider(true);
+                      handleSliderMove(e.clientX);
+                    }}
+                    onTouchStart={(e) => {
+                      setIsDraggingSlider(true);
+                      if (e.touches && e.touches[0]) handleSliderMove(e.touches[0].clientX);
+                    }}
+                    onTouchMove={handleTouchMove}
+                    className="relative w-full aspect-square max-w-[500px] mx-auto rounded-3xl overflow-hidden shadow-xl border-4 border-white select-none cursor-ew-resize group"
+                  >
+                    {/* Background: AFTER State (Luminous, hydrated, clean skin) */}
+                    <img
+                      src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=900&auto=format&fit=crop&q=80"
+                      alt="After Glow Treatment"
+                      className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                    />
+                    {/* AFTER Badge */}
+                    <div className="absolute top-4 right-4 z-10 px-3 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-bold tracking-widest text-[#8F9E68] uppercase shadow-sm">
+                      AFTER
+                    </div>
+
+                    {/* Foreground: BEFORE State (Sun damaged, dry, textured skin) clipped via sliderPosition */}
+                    <div
+                      className="absolute inset-0 overflow-hidden pointer-events-none"
+                      style={{ width: `${sliderPosition}%` }}
+                    >
+                      <img
+                        src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=900&auto=format&fit=crop&q=80"
+                        alt="Before Glow Treatment"
+                        className="absolute inset-0 w-full h-full object-cover max-w-none"
+                        style={{
+                          width: sliderRef.current
+                            ? `${sliderRef.current.clientWidth}px`
+                            : "100%",
+                          height: "100%",
+                          filter: "sepia(0.2) contrast(1.15) brightness(0.92)",
+                        }}
+                      />
+                      {/* BEFORE Badge */}
+                      <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-stone-900/80 backdrop-blur-md rounded-full text-[10px] font-bold tracking-widest text-white uppercase shadow-sm">
+                        BEFORE
+                      </div>
+                    </div>
+
+                    {/* Divider Bar & Grabber Circle Handle */}
+                    <div
+                      className="absolute top-0 bottom-0 z-20 w-0.5 bg-white shadow-2xl pointer-events-none"
+                      style={{ left: `${sliderPosition}%` }}
+                    >
+                      <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white text-stone-800 shadow-xl flex items-center justify-center border-2 border-stone-200">
+                        <div className="flex items-center text-[10px] font-bold text-stone-600 gap-0.5">
+                          <ChevronLeft size={14} />
+                          <ChevronRight size={14} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-center text-xs text-stone-500 font-medium">
+                    ← Drag slider left or right to compare real clinical results →
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-                  <div
-                    onClick={() => {
-                      setActivePage("routines");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    className="p-6 rounded-3xl bg-white border border-rose-200 hover:border-rose-400 transition cursor-pointer group shadow-sm"
-                  >
-                    <HelpCircle size={28} className="text-rose-500 mb-4 group-hover:scale-110 transition duration-300" />
-                    <h3 className="text-lg font-serif font-bold text-rose-950 group-hover:text-rose-600">Skin Routine Builder</h3>
-                    <p className="text-xs text-rose-800/80 mt-2 leading-relaxed">
-                      Select your skin type and priority concerns to receive a personalized 3-step botanical prescription.
-                    </p>
-                    <span className="mt-4 inline-flex items-center gap-1 text-xs text-rose-600 font-bold">
-                      Build Routine <ArrowRight size={13} />
+                {/* Right Column: Benefits Accordion */}
+                <div className="lg:col-span-6 space-y-6">
+                  <div>
+                    <span className="font-serif italic text-2xl text-stone-500 font-normal tracking-wide block">
+                      Skin Benefits
                     </span>
+                    <h2 className="text-3xl sm:text-4xl font-serif font-black text-[#2B2824] leading-tight mt-1">
+                      What are the Benefits of Glow?
+                    </h2>
                   </div>
 
-                  <div
-                    onClick={() => {
-                      setActivePage("shade-finder");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    className="p-6 rounded-3xl bg-white border border-rose-200 hover:border-rose-400 transition cursor-pointer group shadow-sm"
-                  >
-                    <Smile size={28} className="text-rose-500 mb-4 group-hover:scale-110 transition duration-300" />
-                    <h3 className="text-lg font-serif font-bold text-rose-950 group-hover:text-rose-600">Virtual Shade Finder</h3>
-                    <p className="text-xs text-rose-800/80 mt-2 leading-relaxed">
-                      Match your complexion with Cool, Warm, and Neutral undertones for dewy tinted SPF coverage.
-                    </p>
-                    <span className="mt-4 inline-flex items-center gap-1 text-xs text-rose-600 font-bold">
-                      Find My Shade <ArrowRight size={13} />
-                    </span>
+                  {/* Accordion Items matching reference */}
+                  <div className="space-y-3 pt-2">
+                    {/* Item 1: How do you get Skin damage? */}
+                    <div className="border border-[#E4DCD0] rounded-2xl bg-white overflow-hidden transition shadow-xs">
+                      <button
+                        onClick={() =>
+                          setActiveAccordion(
+                            activeAccordion === "damage" ? "" : "damage"
+                          )
+                        }
+                        className="w-full px-5 py-4 flex items-center justify-between text-left font-serif font-bold text-base text-stone-900 cursor-pointer hover:bg-stone-50 transition"
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <span className="w-6 h-6 rounded-full bg-[#8F9E68]/15 text-[#8F9E68] flex items-center justify-center text-xs">
+                            ✓
+                          </span>
+                          <span>How do you get Skin damage?</span>
+                        </span>
+                        {activeAccordion === "damage" ? (
+                          <ChevronUp size={18} className="text-stone-500" />
+                        ) : (
+                          <ChevronDown size={18} className="text-stone-500" />
+                        )}
+                      </button>
+
+                      {activeAccordion === "damage" && (
+                        <div className="px-5 pb-5 pt-1 text-xs text-stone-600 leading-relaxed border-t border-stone-100 bg-[#FAF8F5]/50">
+                          <p>
+                            UV light radiation, harsh environmental particulates, and stripping synthetic detergents weaken the stratum corneum lipid barrier. Glow replenishes cellular moisture using botanical ceramides and natural antioxidants.
+                          </p>
+                          <ul className="mt-2.5 space-y-1.5 list-disc list-inside text-stone-600">
+                            <li>Depleted skin barrier moisture and rough texture</li>
+                            <li>Premature collagen breakdown from UV exposure</li>
+                            <li>Instant barrier renewal with botanical seed lipids</li>
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Item 2: Sun-damaged Skin */}
+                    <div className="border border-[#E4DCD0] rounded-2xl bg-white overflow-hidden transition shadow-xs">
+                      <button
+                        onClick={() =>
+                          setActiveAccordion(
+                            activeAccordion === "sun" ? "" : "sun"
+                          )
+                        }
+                        className="w-full px-5 py-4 flex items-center justify-between text-left font-serif font-bold text-base text-stone-900 cursor-pointer hover:bg-stone-50 transition"
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <span className="w-6 h-6 rounded-full bg-[#8F9E68]/15 text-[#8F9E68] flex items-center justify-center text-xs">
+                            ✓
+                          </span>
+                          <span>Sun-damaged Skin</span>
+                        </span>
+                        {activeAccordion === "sun" ? (
+                          <ChevronUp size={18} className="text-stone-500" />
+                        ) : (
+                          <ChevronDown size={18} className="text-stone-500" />
+                        )}
+                      </button>
+
+                      {activeAccordion === "sun" && (
+                        <div className="px-5 pb-5 pt-1 text-xs text-stone-600 leading-relaxed border-t border-stone-100 bg-[#FAF8F5]/50">
+                          Repeated sun exposure leads to free radical oxidation and moisture depletion. Our cold-pressed botanical formulas deliver biocompatible vitamins C and E to calm erythema and promote even regeneration.
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Item 3: Uneven Skin Tone */}
+                    <div className="border border-[#E4DCD0] rounded-2xl bg-white overflow-hidden transition shadow-xs">
+                      <button
+                        onClick={() =>
+                          setActiveAccordion(
+                            activeAccordion === "tone" ? "" : "tone"
+                          )
+                        }
+                        className="w-full px-5 py-4 flex items-center justify-between text-left font-serif font-bold text-base text-stone-900 cursor-pointer hover:bg-stone-50 transition"
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <span className="w-6 h-6 rounded-full bg-[#8F9E68]/15 text-[#8F9E68] flex items-center justify-center text-xs">
+                            ✓
+                          </span>
+                          <span>Uneven Skin Tone</span>
+                        </span>
+                        {activeAccordion === "tone" ? (
+                          <ChevronUp size={18} className="text-stone-500" />
+                        ) : (
+                          <ChevronDown size={18} className="text-stone-500" />
+                        )}
+                      </button>
+
+                      {activeAccordion === "tone" && (
+                        <div className="px-5 pb-5 pt-1 text-xs text-stone-600 leading-relaxed border-t border-stone-100 bg-[#FAF8F5]/50">
+                          Target hyperpigmentation and post-blemish redness with natural arbutin, niacinamide, and licorice root extracts without photosensitivity.
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Item 4: The Risks of Catching Rays */}
+                    <div className="border border-[#E4DCD0] rounded-2xl bg-white overflow-hidden transition shadow-xs">
+                      <button
+                        onClick={() =>
+                          setActiveAccordion(
+                            activeAccordion === "rays" ? "" : "rays"
+                          )
+                        }
+                        className="w-full px-5 py-4 flex items-center justify-between text-left font-serif font-bold text-base text-stone-900 cursor-pointer hover:bg-stone-50 transition"
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <span className="w-6 h-6 rounded-full bg-[#8F9E68]/15 text-[#8F9E68] flex items-center justify-center text-xs">
+                            ✓
+                          </span>
+                          <span>The Risks of Catching Rays</span>
+                        </span>
+                        {activeAccordion === "rays" ? (
+                          <ChevronUp size={18} className="text-stone-500" />
+                        ) : (
+                          <ChevronDown size={18} className="text-stone-500" />
+                        )}
+                      </button>
+
+                      {activeAccordion === "rays" && (
+                        <div className="px-5 pb-5 pt-1 text-xs text-stone-600 leading-relaxed border-t border-stone-100 bg-[#FAF8F5]/50">
+                          Broad-spectrum mineral SPF prevents DNA degradation, photoaging, and deep collagen breakdown when used consistently every morning.
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div
-                    onClick={() => {
-                      setActivePage("ingredients");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    className="p-6 rounded-3xl bg-white border border-rose-200 hover:border-rose-400 transition cursor-pointer group shadow-sm"
-                  >
-                    <Leaf size={28} className="text-emerald-600 mb-4 group-hover:scale-110 transition duration-300" />
-                    <h3 className="text-lg font-serif font-bold text-rose-950 group-hover:text-emerald-700">Ingredient Transparency</h3>
-                    <p className="text-xs text-rose-800/80 mt-2 leading-relaxed">
-                      Learn the exact molecular weights, sourcing, and clinical percentages of every active in our bottles.
+                  {/* Shop Now CTA Button */}
+                  <div className="pt-2">
+                    <button
+                      onClick={() => {
+                        setActivePage("catalog");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className="px-8 py-3.5 bg-[#8F9E68] hover:bg-[#7D8C57] text-white rounded-full text-xs font-bold uppercase tracking-widest transition shadow-md inline-flex items-center gap-2 cursor-pointer active:scale-95"
+                    >
+                      <span>Shop Now</span>
+                      <ArrowRight size={15} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* ================= WINTER BODY CARE & BOTANICAL INGREDIENTS DIAGRAM (REFERENCE MATCH) ================= */}
+            <section className="py-20 bg-[#FAF0EE] border-t border-[#EBDCD8] relative overflow-hidden text-left">
+              {/* Decorative delicate botanical vector outlines in background */}
+              <div className="absolute left-8 top-10 w-48 h-48 opacity-15 pointer-events-none">
+                <Leaf size={140} className="text-[#8F9E68]" />
+              </div>
+              <div className="absolute right-12 bottom-8 w-60 h-60 opacity-10 pointer-events-none">
+                <Sparkles size={160} className="text-rose-400" />
+              </div>
+
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+                  {/* Left Column: Heading & CTA */}
+                  <div className="lg:col-span-4 space-y-4">
+                    <div className="inline-flex items-center px-3.5 py-1 rounded-full bg-white/80 border border-[#E8D4CE] text-[#8F9E68] text-[11px] font-bold uppercase tracking-wider shadow-xs">
+                      Our Winter Care
+                    </div>
+
+                    <h2 className="text-3xl sm:text-5xl font-serif font-black text-[#2B2824] leading-tight">
+                      Body Care Product.
+                    </h2>
+
+                    <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
+                      Dermatologically formulated barrier rescue mist infused with cold-pressed botanical extracts for immediate deep restoration.
                     </p>
-                    <span className="mt-4 inline-flex items-center gap-1 text-xs text-emerald-700 font-bold">
-                      Explore Actives <ArrowRight size={13} />
-                    </span>
+
+                    <div className="pt-2">
+                      <button
+                        onClick={() => {
+                          setActivePage("catalog");
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="px-8 py-3.5 bg-[#8F9E68] hover:bg-[#7D8C57] text-white rounded-full text-xs font-bold uppercase tracking-widest transition shadow-md inline-flex items-center gap-2 cursor-pointer active:scale-95"
+                      >
+                        <span>Shop Now</span>
+                        <ArrowRight size={15} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Center Column: Cosmetic Spray Bottle Diagram with 6 Ingredient Callouts */}
+                  <div className="lg:col-span-5 relative flex justify-center items-center py-6">
+                    {/* Spray Bottle Image */}
+                    <div className="relative z-10 w-44 sm:w-56 h-auto">
+                      <img
+                        src="https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?w=700&auto=format&fit=crop&q=80"
+                        alt="Cosmetic Spray GLOW Winter Body Mist"
+                        className="w-full h-auto object-contain drop-shadow-2xl"
+                      />
+                    </div>
+
+                    {/* 6 Botanical Callouts matching reference */}
+                    {/* Left Top: Skin deep Beauty */}
+                    <div className="absolute top-12 left-0 sm:left-2 z-20 hidden sm:flex items-center gap-2">
+                      <span className="px-3 py-1 bg-white/95 backdrop-blur-sm rounded-full text-[11px] font-semibold text-stone-800 shadow-sm border border-[#E8D9D4]">
+                        Skin deep Beauty
+                      </span>
+                      <div className="w-8 h-px bg-stone-400" />
+                    </div>
+
+                    {/* Left Mid: Water Resistant */}
+                    <div className="absolute top-1/2 -translate-y-1/2 left-0 sm:left-2 z-20 hidden sm:flex items-center gap-2">
+                      <span className="px-3 py-1 bg-white/95 backdrop-blur-sm rounded-full text-[11px] font-semibold text-stone-800 shadow-sm border border-[#E8D9D4]">
+                        Water Resistant
+                      </span>
+                      <div className="w-8 h-px bg-stone-400" />
+                    </div>
+
+                    {/* Left Bottom: Environmental Friendly */}
+                    <div className="absolute bottom-12 left-0 sm:left-2 z-20 hidden sm:flex items-center gap-2">
+                      <span className="px-3 py-1 bg-white/95 backdrop-blur-sm rounded-full text-[11px] font-semibold text-stone-800 shadow-sm border border-[#E8D9D4]">
+                        Environmental Friendly
+                      </span>
+                      <div className="w-8 h-px bg-stone-400" />
+                    </div>
+
+                    {/* Right Top: Provides deep cleansing */}
+                    <div className="absolute top-12 right-0 sm:right-2 z-20 hidden sm:flex items-center gap-2">
+                      <div className="w-8 h-px bg-stone-400" />
+                      <span className="px-3 py-1 bg-white/95 backdrop-blur-sm rounded-full text-[11px] font-semibold text-stone-800 shadow-sm border border-[#E8D9D4]">
+                        Provides deep cleansing
+                      </span>
+                    </div>
+
+                    {/* Right Mid: Natural hemp seed oil */}
+                    <div className="absolute top-1/2 -translate-y-1/2 right-0 sm:right-2 z-20 hidden sm:flex items-center gap-2">
+                      <div className="w-8 h-px bg-stone-400" />
+                      <span className="px-3 py-1 bg-white/95 backdrop-blur-sm rounded-full text-[11px] font-semibold text-stone-800 shadow-sm border border-[#E8D9D4]">
+                        Natural hemp seed oil
+                      </span>
+                    </div>
+
+                    {/* Right Bottom: Natural Ingredients */}
+                    <div className="absolute bottom-12 right-0 sm:right-2 z-20 hidden sm:flex items-center gap-2">
+                      <div className="w-8 h-px bg-stone-400" />
+                      <span className="px-3 py-1 bg-white/95 backdrop-blur-sm rounded-full text-[11px] font-semibold text-stone-800 shadow-sm border border-[#E8D9D4]">
+                        Natural Ingredients
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Customer Testimonial Card */}
+                  <div className="lg:col-span-3">
+                    <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#E8D9D4] shadow-sm space-y-4 relative">
+                      {/* Star Rating */}
+                      <div className="flex items-center gap-1 text-amber-500">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            size={14}
+                            className="fill-amber-400 text-amber-400"
+                          />
+                        ))}
+                      </div>
+
+                      {/* Quote */}
+                      <p className="text-xs text-stone-600 leading-relaxed italic">
+                        "{testimonials[activeTestimonial].quote}"
+                      </p>
+
+                      {/* Author */}
+                      <div className="flex items-center gap-3 pt-2 border-t border-stone-100">
+                        <img
+                          src={testimonials[activeTestimonial].avatar}
+                          alt={testimonials[activeTestimonial].name}
+                          className="w-10 h-10 rounded-full object-cover border border-stone-200"
+                        />
+                        <div>
+                          <h4 className="text-xs font-serif font-bold text-stone-900">
+                            {testimonials[activeTestimonial].name}
+                          </h4>
+                          <span className="text-[10px] text-stone-400">
+                            {testimonials[activeTestimonial].role}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Pagination Indicator Dots */}
+                      <div className="flex items-center justify-center gap-1.5 pt-2">
+                        {testimonials.map((t, idx) => (
+                          <button
+                            key={t.id}
+                            onClick={() => setActiveTestimonial(idx)}
+                            className={`w-2 h-2 rounded-full transition cursor-pointer ${
+                              activeTestimonial === idx
+                                ? "bg-[#8F9E68] w-5"
+                                : "bg-stone-300 hover:bg-stone-400"
+                            }`}
+                            aria-label={`Go to slide ${idx + 1}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -472,274 +1038,7 @@ export default function GlowBeautyTemplate({
           />
         )}
 
-        {/* ================= VIEW 3: SKIN QUIZ & ROUTINE BUILDER ================= */}
-        {activePage === "routines" && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 text-left">
-            <div className="text-center max-w-2xl mx-auto space-y-2">
-              <span className="text-xs uppercase tracking-[0.2em] text-rose-600 font-bold">
-                Clinical Diagnostic
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-serif font-black text-rose-950">
-                Personalized Skin Routine Builder
-              </h1>
-              <p className="text-xs sm:text-sm text-rose-800">
-                Answer two quick questions to calculate your optimal botanical routine and unlock a custom 3-step bundle discount.
-              </p>
-            </div>
-
-            <div className="p-8 rounded-3xl bg-white border border-rose-200 space-y-8 shadow-sm">
-              {/* Question 1: Skin Type */}
-              <div className="space-y-3">
-                <label className="block text-xs font-bold text-rose-950 uppercase tracking-wider">
-                  Step 1: What is your primary skin type?
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { id: "dry", label: "Dry & Tight" },
-                    { id: "oily", label: "Oily & Congested" },
-                    { id: "sensitive", label: "Reactive & Sensitive" },
-                    { id: "combination", label: "Combination T-Zone" },
-                  ].map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => setSkinType(t.id)}
-                      className={`p-3.5 rounded-2xl text-xs font-semibold transition cursor-pointer border ${
-                        skinType === t.id
-                          ? "bg-rose-500 text-white border-rose-500 shadow-sm"
-                          : "bg-rose-50/50 text-rose-800 border-rose-200 hover:bg-rose-100/60"
-                      }`}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Question 2: Priority Concern */}
-              <div className="space-y-3">
-                <label className="block text-xs font-bold text-rose-950 uppercase tracking-wider">
-                  Step 2: What is your main skin goal?
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[
-                    { id: "hydration", label: "Plump Hydration" },
-                    { id: "aging", label: "Fine Lines & Firming" },
-                    { id: "redness", label: "Calm Redness" },
-                    { id: "glow", label: "Glass Skin Radiance" },
-                  ].map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => setPrimaryConcern(c.id)}
-                      className={`p-3.5 rounded-2xl text-xs font-semibold transition cursor-pointer border ${
-                        primaryConcern === c.id
-                          ? "bg-rose-500 text-white border-rose-500 shadow-sm"
-                          : "bg-rose-50/50 text-rose-800 border-rose-200 hover:bg-rose-100/60"
-                      }`}
-                    >
-                      {c.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Recommended Routine Cards Result */}
-              <div className="pt-6 border-t border-rose-100 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-rose-500 block">
-                      Recommended Prescription
-                    </span>
-                    <h3 className="font-serif text-xl font-bold text-rose-950">
-                      Your Daily Synergistic Routine
-                    </h3>
-                  </div>
-                  <button
-                    onClick={() => {
-                      recommendedRoutine.forEach((item) => handleAddToCart(item));
-                      toast.success("Added your personalized 3-step routine to Beauty Bag! 🌸");
-                    }}
-                    className="px-4 py-2 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-xl text-xs font-bold shadow transition cursor-pointer"
-                  >
-                    Add All 3 to Bag
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {recommendedRoutine.map((item, idx) => (
-                    <div
-                      key={item._id}
-                      onClick={() => handleSelectProduct(item)}
-                      className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200/80 space-y-2 cursor-pointer hover:border-rose-400 transition"
-                    >
-                      <span className="text-[10px] font-bold text-rose-500 uppercase">
-                        Step {idx + 1}
-                      </span>
-                      <h4 className="font-serif font-bold text-sm text-rose-950 line-clamp-1">
-                        {item.name}
-                      </h4>
-                      <p className="text-[11px] text-rose-700 line-clamp-2">{item.description}</p>
-                      <div className="pt-1 flex items-center justify-between font-bold text-xs text-rose-950">
-                        <span>₹{item.price}</span>
-                        <span className="text-rose-600 font-normal text-[11px]">Inspect →</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ================= VIEW 4: VIRTUAL SHADE FINDER ================= */}
-        {activePage === "shade-finder" && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 text-left">
-            <div className="text-center max-w-2xl mx-auto space-y-2">
-              <span className="text-xs uppercase tracking-[0.2em] text-rose-600 font-bold">
-                Complexion Science
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-serif font-black text-rose-950">
-                Virtual Shade & Undertone Finder
-              </h1>
-              <p className="text-xs sm:text-sm text-rose-800">
-                Find your seamless botanical tint match for our Luminous Mineral Dew Drops SPF 50.
-              </p>
-            </div>
-
-            <div className="p-8 rounded-3xl bg-white border border-rose-200 space-y-8 shadow-sm">
-              {/* Undertone Buttons */}
-              <div className="space-y-3">
-                <label className="block text-xs font-bold text-rose-950 uppercase">
-                  Select Your Underlying Undertone:
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { id: "Cool", label: "Cool (Pink/Rosy tones)" },
-                    { id: "Neutral", label: "Neutral (Balanced peach)" },
-                    { id: "Warm", label: "Warm (Golden/Olive tones)" },
-                  ].map((u) => (
-                    <button
-                      key={u.id}
-                      type="button"
-                      onClick={() => setSelectedUndertone(u.id)}
-                      className={`p-3.5 rounded-2xl text-xs font-semibold transition cursor-pointer border ${
-                        selectedUndertone === u.id
-                          ? "bg-rose-500 text-white border-rose-500 shadow-sm"
-                          : "bg-rose-50/50 text-rose-800 border-rose-200"
-                      }`}
-                    >
-                      {u.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Shade Slider */}
-              <div className="space-y-3">
-                <div className="flex justify-between items-center text-xs font-bold text-rose-950">
-                  <span>Depth Level: {shadeLevel === 1 ? "Fair" : shadeLevel === 2 ? "Light" : shadeLevel === 3 ? "Medium" : shadeLevel === 4 ? "Tan" : "Deep"}</span>
-                  <span className="text-rose-500 font-sans">Formula: Dew Drops Shade {selectedUndertone.charAt(0)}{shadeLevel}</span>
-                </div>
-                <input
-                  type="range"
-                  min="1"
-                  max="5"
-                  value={shadeLevel}
-                  onChange={(e) => setShadeLevel(Number(e.target.value))}
-                  className="w-full accent-rose-500 cursor-pointer"
-                />
-              </div>
-
-              {/* Swatch Result Preview */}
-              <div className="p-6 rounded-2xl bg-rose-50/60 border border-rose-200 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div
-                    className="w-16 h-16 rounded-2xl shadow-md border-2 border-white"
-                    style={{
-                      backgroundColor:
-                        shadeLevel === 1
-                          ? "#FDE2D2"
-                          : shadeLevel === 2
-                          ? "#F3C5A8"
-                          : shadeLevel === 3
-                          ? "#DCA380"
-                          : shadeLevel === 4
-                          ? "#B87854"
-                          : "#73432B",
-                    }}
-                  />
-                  <div>
-                    <span className="text-xs uppercase font-bold text-rose-500 block">
-                      Perfect Match Result
-                    </span>
-                    <h4 className="font-serif font-bold text-base text-rose-950">
-                      Dew Drops SPF 50 in Shade {selectedUndertone.charAt(0)}{shadeLevel} ({selectedUndertone})
-                    </h4>
-                    <p className="text-[11px] text-rose-700">Non-nano mineral protection with buildable dewy radiance.</p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => {
-                    handleAddToCart({
-                      ...beautyItems[5],
-                      name: `Luminous Mineral Dew Drops SPF 50 [Shade ${selectedUndertone.charAt(0)}${shadeLevel}]`,
-                    });
-                  }}
-                  className="px-5 py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-bold transition shadow cursor-pointer whitespace-nowrap"
-                >
-                  Add Matched Shade
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ================= VIEW 5: INGREDIENT TRANSPARENCY ================= */}
-        {activePage === "ingredients" && (
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 text-left">
-            <div className="text-center max-w-2xl mx-auto space-y-2">
-              <span className="text-xs uppercase tracking-[0.2em] text-emerald-700 font-bold">
-                Clean Formulation Deck
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-serif font-black text-rose-950">
-                100% Ingredient Transparency
-              </h1>
-              <p className="text-xs sm:text-sm text-rose-800">
-                Every ingredient is chosen for proven bio-compatibility, zero endocrine disruption, and visible dermatological performance.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-6 rounded-3xl bg-white border border-rose-200 space-y-3 shadow-xs">
-                <Leaf size={24} className="text-emerald-600" />
-                <h4 className="font-serif text-lg font-bold text-rose-950">Damask Rose Floral Water</h4>
-                <p className="text-xs text-rose-800/80 leading-relaxed">
-                  Directly steam distilled from Bulgarian organic rose valleys, locking in natural flavonoids and cooling inflamed capillaries.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-3xl bg-white border border-rose-200 space-y-3 shadow-xs">
-                <Droplets size={24} className="text-rose-500" />
-                <h4 className="font-serif text-lg font-bold text-rose-950">5-Weight Hyaluronic Acid</h4>
-                <p className="text-xs text-rose-800/80 leading-relaxed">
-                  Combines high molecular weights to seal moisture with micro-molecular fractions that stimulate native collagen synthesis.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-3xl bg-white border border-rose-200 space-y-3 shadow-xs">
-                <ShieldCheck size={24} className="text-rose-500" />
-                <h4 className="font-serif text-lg font-bold text-rose-950">Plant Lipid Ceramides</h4>
-                <p className="text-xs text-rose-800/80 leading-relaxed">
-                  Bio-fermented wheat germ ceramides identical to human stratum corneum lipids to prevent trans-epidermal water loss.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ================= VIEW 6: OFFERS & BUNDLES ================= */}
+        {/* ================= VIEW 3: OFFERS & BUNDLES ================= */}
         {activePage === "offers" && (
           <Offer
             products={beautyItems}
@@ -752,7 +1051,7 @@ export default function GlowBeautyTemplate({
           />
         )}
 
-        {/* ================= VIEW 7: PRODUCT DETAILS ================= */}
+        {/* ================= VIEW 4: PRODUCT DETAILS ================= */}
         {activePage === "product-detail" && selectedProduct && (
           <ProductDetails
             product={selectedProduct}
@@ -789,8 +1088,114 @@ export default function GlowBeautyTemplate({
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
         onCheckout={handleCheckout}
-        themeColors={{ primary: "#DB2777" }}
+        themeColors={{ primary: "#8F9E68" }}
       />
+
+      {/* ================= 5. QUICK VIEW MODAL ================= */}
+      {quickViewProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-stone-200 relative overflow-hidden">
+            <button
+              onClick={() => setQuickViewProduct(null)}
+              className="absolute top-5 right-5 p-2 rounded-full hover:bg-stone-100 text-stone-500 hover:text-stone-900 transition cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center text-left">
+              {/* Image Preview */}
+              <div className="aspect-square rounded-2xl bg-[#F6F4F0] p-6 flex items-center justify-center border border-stone-200">
+                <img
+                  src={getProductImage(quickViewProduct.image, 0)}
+                  alt={quickViewProduct.name}
+                  className="max-h-full max-w-full object-contain drop-shadow-md"
+                />
+              </div>
+
+              {/* Product Details */}
+              <div className="space-y-4">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#8F9E68]">
+                    {quickViewProduct.category || "Cosmetics"}
+                  </span>
+                  <h3 className="text-2xl font-serif font-bold text-stone-900 mt-0.5">
+                    {quickViewProduct.name}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="text-lg font-bold text-stone-900">
+                      ${Number(quickViewProduct.price).toFixed(2)}
+                    </span>
+                    {quickViewProduct.compareAtPrice && (
+                      <span className="text-xs text-stone-400 line-through">
+                        ${Number(quickViewProduct.compareAtPrice).toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  {quickViewProduct.description ||
+                    "Hydrating botanical formula infused with cold-pressed seed oils."}
+                </p>
+
+                {/* Shades if available */}
+                {quickViewProduct.shades && quickViewProduct.shades.length > 0 && (
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-bold text-stone-700 block">
+                      Color Shade: {quickViewShade?.name || "Selected"}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {quickViewProduct.shades.map((shade, sIdx) => (
+                        <button
+                          key={sIdx}
+                          onClick={() => setQuickViewShade(shade)}
+                          className={`w-6 h-6 rounded-full border transition cursor-pointer ${
+                            quickViewShade?.hex === shade.hex
+                              ? "ring-2 ring-[#8F9E68] ring-offset-2 scale-110"
+                              : "border-stone-300 hover:scale-105"
+                          }`}
+                          style={{ backgroundColor: shade.hex }}
+                          title={shade.name}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Quantity & Add to Cart */}
+                <div className="flex items-center gap-3 pt-2">
+                  <div className="flex items-center border border-stone-200 rounded-full px-3 py-1.5 bg-stone-50">
+                    <button
+                      onClick={() => setQuickViewQty(Math.max(1, quickViewQty - 1))}
+                      className="p-1 text-stone-500 hover:text-stone-900 transition cursor-pointer"
+                    >
+                      <Minus size={13} />
+                    </button>
+                    <span className="w-8 text-center text-xs font-bold text-stone-900">
+                      {quickViewQty}
+                    </span>
+                    <button
+                      onClick={() => setQuickViewQty(quickViewQty + 1)}
+                      className="p-1 text-stone-500 hover:text-stone-900 transition cursor-pointer"
+                    >
+                      <Plus size={13} />
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      handleAddToCart(quickViewProduct, quickViewQty, quickViewShade)
+                    }
+                    className="flex-1 py-3 px-6 bg-[#8F9E68] hover:bg-[#7D8C57] text-white rounded-full text-xs font-bold uppercase tracking-wider transition shadow-sm hover:shadow cursor-pointer active:scale-95 text-center"
+                  >
+                    Add to Bag
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

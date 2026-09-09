@@ -1,23 +1,24 @@
 import React, { useState } from "react";
 import {
   ArrowLeft,
-  Zap,
   ShoppingBag,
   ShieldCheck,
   Star,
   Check,
-  Flame,
-  Layers,
   ChevronRight,
   Share2,
-  Clock,
-  Compass,
-  Activity,
-  Maximize2,
+  Truck,
+  RotateCcw,
+  Ruler,
+  Heart,
+  Plus,
+  Minus,
+  Sparkles,
 } from "lucide-react";
 import { isOutOfStock } from "../../../utils/stockUtils";
 import { getProductImage } from "../../../utils/productImage";
 import toast from "react-hot-toast";
+import ProductCard from "./ProductCard";
 
 export default function ProductDetails({
   product = {},
@@ -25,334 +26,403 @@ export default function ProductDetails({
   onAddToCart = () => {},
   relatedProducts = [],
   onSelectProduct = () => {},
-  sizeStandard = "US",
+  sizeStandard = "EU",
+  setSizeStandard = () => {},
 }) {
-  const [selectedSize, setSelectedSize] = useState(product.selectedSize || "10");
-  const [selectedWidth, setSelectedWidth] = useState("Regular (D)");
-  const [activeAngle, setActiveAngle] = useState("Lateral Profile");
-  const [archProfile, setArchProfile] = useState("neutral"); // "high" | "neutral" | "flat"
-  const [quantity, setQuantity] = useState(1);
-  const outOfStock = isOutOfStock(product);
+  const defaultSizes = product.sizes || ["38", "40", "41", "42", "42.5", "43"];
+  const [selectedSize, setSelectedSize] = useState(defaultSizes[2] || defaultSizes[0] || "41");
 
-  const availableSizes = product.sizes || [
-    "7", "7.5", "8", "8.5", "9", "9.5", "10", "10.5", "11", "11.5", "12", "13"
+  const defaultColors = product.colors || [
+    { name: "Navy Blue", hex: "#1E3A8A" },
+    { name: "White / Red", hex: "#EF4444" },
+    { name: "Black", hex: "#0F172A" },
+  ];
+  const [selectedColor, setSelectedColor] = useState(defaultColors[0]);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [activeTab, setActiveTab] = useState("specs"); // "specs" | "fit" | "shipping"
+
+  const outOfStock = isOutOfStock(product);
+  const price = Number(product.price) || 0;
+  const compareAtPrice = product.compareAtPrice ? Number(product.compareAtPrice) : null;
+  const imageSrc = getProductImage(product, product.image);
+
+  // Gallery angles
+  const galleryImages = [
+    imageSrc,
+    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=800&auto=format&fit=crop&q=80",
   ];
 
   const handleAdd = () => {
     if (outOfStock) {
-      toast.error("This silhouette is currently sold out in deadstock archive.");
+      toast.error("This silhouette is currently sold out.");
       return;
     }
-    onAddToCart({ ...product, selectedSize: `${sizeStandard} ${selectedSize}`, selectedWidth }, quantity);
+    for (let i = 0; i < quantity; i++) {
+      onAddToCart(product, {
+        selectedSize: `${sizeStandard} ${selectedSize}`,
+        selectedColor: selectedColor?.name || "Standard",
+      });
+    }
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast.success("Product link copied to clipboard!");
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12 font-sans">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 font-sans text-left">
       {/* Navigation Breadcrumb */}
-      <div className="flex items-center justify-between text-xs font-mono">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4 text-xs">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-zinc-400 hover:text-lime-400 transition cursor-pointer group"
+          className="flex items-center gap-2 text-slate-600 hover:text-blue-600 transition cursor-pointer font-bold"
         >
-          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition" />
-          <span>BACK TO SNEAKER VAULT</span>
+          <ArrowLeft size={16} />
+          <span>Back to All Sneakers</span>
         </button>
 
-        <div className="flex items-center gap-2 text-zinc-500">
-          <span>VAULT</span>
+        <div className="flex items-center gap-2 text-slate-400">
+          <span className="hover:text-slate-600 cursor-pointer" onClick={onBack}>Home</span>
           <ChevronRight size={12} />
-          <span className="text-zinc-300">{product.category || "Running"}</span>
+          <span className="text-slate-600">{product.category || "Footwear"}</span>
           <ChevronRight size={12} />
-          <span className="text-lime-400 font-bold uppercase truncate max-w-[180px]">
+          <span className="text-blue-600 font-bold truncate max-w-[200px]">
             {product.name}
           </span>
         </div>
+
+        <button
+          onClick={handleShare}
+          className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer flex items-center gap-1.5"
+        >
+          <Share2 size={14} />
+          <span className="hidden sm:inline">Share</span>
+        </button>
       </div>
 
       {/* Main Showcase Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-        {/* Left: High-Tech Visualizer & Angles (7 Cols) */}
-        <div className="lg:col-span-7 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm items-start">
+        {/* Left: Gallery & Angles (6 cols) */}
+        <div className="lg:col-span-6 space-y-4">
           {/* Main Visualizer Stage */}
-          <div className="relative bg-gradient-to-b from-[#131317] to-[#0A0A0C] rounded-3xl border border-zinc-800 p-8 sm:p-12 overflow-hidden shadow-2xl">
-            {/* Speed Telemetry HUD Corner */}
-            <div className="absolute top-6 left-6 flex flex-col gap-1 z-10 font-mono text-[10px]">
-              <span className="bg-lime-500/10 text-lime-400 border border-lime-500/30 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1.5">
-                <Zap size={12} className="fill-lime-400" />
-                {product.propulsionTag || "CARBON RACE TECH"}
+          <div className="aspect-square w-full rounded-2xl bg-slate-50 border border-slate-100 p-8 flex items-center justify-center relative overflow-hidden group">
+            <img
+              src={galleryImages[activeImageIndex] || imageSrc}
+              alt={product.name}
+              className="max-h-[340px] w-auto object-contain filter drop-shadow-xl group-hover:scale-105 transition-transform duration-500"
+            />
+
+            {/* Badges Overlay */}
+            <div className="absolute top-4 left-4 flex flex-col gap-1.5">
+              {product.badge && (
+                <span className="px-2.5 py-1 rounded bg-[#1E3A8A] text-white text-[10px] font-black uppercase tracking-wider shadow-sm">
+                  {product.badge}
+                </span>
+              )}
+              <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold">
+                100% Authentic
               </span>
-              <span className="text-zinc-500 tracking-wider">RFID ARCHIVE #SC-{product._id || "9001"}</span>
-            </div>
-
-            {/* Angle Indicator Top Right */}
-            <div className="absolute top-6 right-6 font-mono text-[10px] text-zinc-400 bg-black/60 px-3 py-1 rounded-full border border-zinc-800">
-              VIEW: <span className="text-white font-bold">{activeAngle}</span>
-            </div>
-
-            {/* Kinetic Backlight Glow */}
-            <div className="absolute inset-0 bg-radial-gradient from-lime-500/15 via-transparent to-transparent pointer-events-none" />
-
-            {/* Large Sneaker Silhouette */}
-            <div className="relative z-10 w-full aspect-[4/3] flex items-center justify-center my-6">
-              <img
-                src={getProductImage(product, product.image)}
-                alt={product.name}
-                className="w-full h-full object-contain filter drop-shadow-[0_25px_35px_rgba(0,0,0,0.9)] transform hover:scale-105 transition-transform duration-500"
-              />
-            </div>
-
-            {/* Live Telemetry Overlay Bottom */}
-            <div className="grid grid-cols-3 gap-3 pt-4 border-t border-zinc-800/80 font-mono text-center">
-              <div className="p-2.5 rounded-xl bg-black/50 border border-zinc-800/80">
-                <span className="text-[10px] text-zinc-500 block uppercase">Energy Return</span>
-                <span className="text-sm font-black text-lime-400">{product.energyReturn || "89%"}</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-black/50 border border-zinc-800/80">
-                <span className="text-[10px] text-zinc-500 block uppercase">Heel Stack Drop</span>
-                <span className="text-sm font-black text-white">{product.heelDrop || "38mm / 8mm"}</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-black/50 border border-zinc-800/80">
-                <span className="text-[10px] text-zinc-500 block uppercase">Shoe Weight</span>
-                <span className="text-sm font-black text-white">{product.weight || "184g (Men's 10)"}</span>
-              </div>
             </div>
           </div>
 
-          {/* Angle Switcher Strip */}
-          <div className="grid grid-cols-4 gap-3 font-mono text-xs">
-            {["Lateral Profile", "Medial Arch", "Outsole Lugs", "Heel Counter"].map((angle) => (
+          {/* Gallery Thumbnails */}
+          <div className="grid grid-cols-3 gap-3">
+            {galleryImages.map((img, idx) => (
               <button
-                key={angle}
-                onClick={() => setActiveAngle(angle)}
-                className={`py-3 px-2 rounded-2xl border text-center transition cursor-pointer ${
-                  activeAngle === angle
-                    ? "bg-zinc-900 border-lime-400 text-lime-400 font-bold shadow-lg shadow-lime-500/10"
-                    : "bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-white"
+                key={idx}
+                onClick={() => setActiveImageIndex(idx)}
+                className={`aspect-video rounded-xl bg-white border-2 p-2 flex items-center justify-center transition cursor-pointer ${
+                  activeImageIndex === idx
+                    ? "border-blue-600 shadow-sm"
+                    : "border-slate-200 opacity-70 hover:opacity-100"
                 }`}
               >
-                <span className="block text-[10px] uppercase">{angle}</span>
+                <img src={img} alt={`Angle ${idx + 1}`} className="max-h-full object-contain" />
               </button>
             ))}
           </div>
 
-          {/* Interactive Arch & Lacing Fit Advisor */}
-          <div className="p-6 rounded-3xl bg-[#111115] border border-zinc-800 space-y-4 font-mono text-xs">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Activity size={16} className="text-lime-400" />
-                <span className="font-bold text-white uppercase tracking-wider">
-                  Gait & Arch Fit Advisor
-                </span>
+          {/* Trust Guarantees */}
+          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-slate-100 text-center text-xs">
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
+              <Truck size={18} className="mx-auto text-blue-600" />
+              <span className="font-bold text-slate-900 block">Free Shipping</span>
+              <p className="text-[10px] text-slate-500">Orders over $50</p>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
+              <RotateCcw size={18} className="mx-auto text-blue-600" />
+              <span className="font-bold text-slate-900 block">30-Day Trial</span>
+              <p className="text-[10px] text-slate-500">Zero return fees</p>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
+              <ShieldCheck size={18} className="mx-auto text-blue-600" />
+              <span className="font-bold text-slate-900 block">Deadstock Verified</span>
+              <p className="text-[10px] text-slate-500">Tamper-proof seal</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Sneaker Specs, Size Selector & Cart Action (6 cols) */}
+        <div className="lg:col-span-6 space-y-6">
+          <div className="space-y-2">
+            <span className="text-xs uppercase tracking-wider text-slate-400 font-bold block">
+              {product.category || "Footwear"}
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              {product.name}
+            </h1>
+
+            {/* Rating */}
+            <div className="flex items-center gap-3 pt-1">
+              <div className="flex items-center gap-1 text-amber-400">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} size={14} className="fill-amber-400" />
+                ))}
               </div>
-              <span className="text-[10px] text-zinc-400">Tuned for this chassis</span>
+              <span className="text-xs font-bold text-slate-800">
+                {product.rating || "4.9"}
+              </span>
+              <span className="text-xs text-slate-500">
+                ({product.reviewCount || 128} verified reviews)
+              </span>
+            </div>
+          </div>
+
+          {/* Pricing Box */}
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-baseline justify-between">
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-slate-900">
+                ${price.toFixed(2)}
+              </span>
+              {compareAtPrice && (
+                <span className="text-sm text-slate-400 line-through">
+                  ${compareAtPrice.toFixed(2)}
+                </span>
+              )}
+            </div>
+            <span
+              className={`text-xs font-bold px-3 py-1 rounded-full ${
+                outOfStock
+                  ? "bg-rose-100 text-rose-700"
+                  : "bg-emerald-100 text-emerald-800"
+              }`}
+            >
+              {outOfStock ? "Sold Out" : "In Stock • Ready to Ship"}
+            </span>
+          </div>
+
+          {/* Colorway Selection */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-xs">
+              <span className="font-bold text-slate-800">
+                Colorway: <span className="font-normal text-slate-600">{selectedColor?.name}</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {defaultColors.map((col, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setSelectedColor(col)}
+                  className={`w-7 h-7 rounded-lg border transition cursor-pointer ${
+                    selectedColor?.name === col.name
+                      ? "ring-2 ring-blue-600 ring-offset-2 scale-105"
+                      : "border-slate-300 hover:scale-105"
+                  }`}
+                  style={{ backgroundColor: col.hex }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Size Selector with US / UK / EU switch */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-xs">
+              <span className="font-bold text-slate-800">Select Size:</span>
+              <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500">
+                <span>Standard:</span>
+                {["EU", "US", "UK"].map((std) => (
+                  <button
+                    key={std}
+                    onClick={() => setSizeStandard && setSizeStandard(std)}
+                    className={`px-1.5 py-0.5 rounded ${
+                      sizeStandard === std ? "bg-slate-900 text-white" : "hover:underline"
+                    }`}
+                  >
+                    {std}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <p className="text-zinc-400 font-sans text-xs">
-              Select your foot arch profile to unlock the ideal lockdown lacing technique for zero heel slip:
-            </p>
-
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { id: "high", label: "High Arch", rec: "Window Lacing (Relieves top pressure)" },
-                { id: "neutral", label: "Neutral Arch", rec: "Criss-Cross Racer Loop (Balanced lock)" },
-                { id: "flat", label: "Flat / Low Arch", rec: "Straight Bar Lacing (Midfoot support)" },
-              ].map((arch) => (
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+              {defaultSizes.map((sz) => (
                 <button
-                  key={arch.id}
-                  onClick={() => setArchProfile(arch.id)}
-                  className={`p-3 rounded-2xl border text-left transition cursor-pointer ${
-                    archProfile === arch.id
-                      ? "bg-lime-500/10 border-lime-400 text-lime-400"
-                      : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white"
+                  key={sz}
+                  type="button"
+                  onClick={() => setSelectedSize(sz)}
+                  className={`py-2 text-xs font-bold rounded-xl border text-center transition cursor-pointer ${
+                    selectedSize === sz
+                      ? "bg-[#1E3A8A] text-white border-[#1E3A8A] shadow-sm font-black"
+                      : "bg-white text-slate-700 border-slate-200 hover:border-slate-400"
                   }`}
                 >
-                  <span className="block font-bold text-white text-[11px] mb-1">{arch.label}</span>
-                  <span className="block text-[9px] text-zinc-400 line-clamp-2">{arch.rec}</span>
+                  {sizeStandard} {sz}
                 </button>
               ))}
             </div>
           </div>
-        </div>
 
-        {/* Right: Silhouette Configurator & Purchase Controls (5 Cols) */}
-        <div className="lg:col-span-5 space-y-6">
-          <div className="bg-[#111115] rounded-3xl border border-zinc-800 p-6 sm:p-8 space-y-6">
-            {/* Title & Pricing */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-lime-400">
-                  {product.category || "PERFORMANCE SNEAKER"}
-                </span>
-                <div className="flex items-center gap-1 text-xs font-mono text-zinc-400">
-                  <Star size={13} className="text-amber-400 fill-amber-400" />
-                  <span className="font-bold text-white">{product.rating || "4.9"}</span>
-                  <span>({product.reviewCount || 48} verified runners)</span>
-                </div>
-              </div>
-
-              <h1 className="text-2xl sm:text-3xl font-black text-white font-mono uppercase tracking-tight">
-                {product.name}
-              </h1>
-
-              <div className="flex items-baseline gap-3 font-mono pt-1">
-                <span className="text-3xl font-black text-white">
-                  ₹{Number(product.price || 0).toLocaleString()}
-                </span>
-                {product.compareAtPrice && (
-                  <span className="text-sm text-zinc-500 line-through">
-                    ₹{Number(product.compareAtPrice).toLocaleString()}
-                  </span>
-                )}
-                <span className="text-xs text-lime-400 font-bold bg-lime-500/10 px-2 py-0.5 rounded border border-lime-500/20">
-                  Deadstock Guaranteed
-                </span>
-              </div>
-            </div>
-
-            {/* Description */}
-            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-sans border-t border-b border-zinc-800 py-4">
-              {product.description ||
-                "Engineered with a full-length spooned carbon-fiber lever and supercritical nitrogen gas foam for explosive forward push-off. Built for personal bests and elevated street aesthetics."}
-            </p>
-
-            {/* Size Selector */}
-            <div className="space-y-3 font-mono">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-zinc-400 uppercase font-bold">
-                  SELECT {sizeStandard} SIZE:
-                </span>
-                <span className="text-lime-400 font-bold">
-                  {sizeStandard} {selectedSize} (In Stock)
-                </span>
-              </div>
-
-              <div className="grid grid-cols-4 gap-2">
-                {availableSizes.map((sz) => (
-                  <button
-                    key={sz}
-                    onClick={() => setSelectedSize(sz)}
-                    className={`py-3 rounded-xl text-xs font-bold transition cursor-pointer border ${
-                      selectedSize === sz
-                        ? "bg-lime-400 text-black border-lime-400 shadow-md shadow-lime-500/20 font-black"
-                        : "bg-zinc-900 text-zinc-300 border-zinc-800 hover:border-zinc-700 hover:text-white"
-                    }`}
-                  >
-                    {sz}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Width Selector */}
-            <div className="space-y-2 font-mono text-xs">
-              <span className="text-zinc-400 uppercase font-bold">WIDTH FITTING:</span>
-              <div className="grid grid-cols-2 gap-3">
-                {["Regular (D)", "Wide (2E)"].map((w) => (
-                  <button
-                    key={w}
-                    onClick={() => setSelectedWidth(w)}
-                    className={`py-2.5 px-3 rounded-xl border text-center transition cursor-pointer ${
-                      selectedWidth === w
-                        ? "bg-lime-500/10 border-lime-400 text-lime-400 font-bold"
-                        : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white"
-                    }`}
-                  >
-                    {w}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Quantity and Add to Shoebox */}
-            <div className="space-y-4 pt-2">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl font-mono text-xs">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="px-3.5 py-3 text-zinc-400 hover:text-white transition cursor-pointer"
-                  >
-                    -
-                  </button>
-                  <span className="px-3 font-bold text-white">{quantity}</span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="px-3.5 py-3 text-zinc-400 hover:text-white transition cursor-pointer"
-                  >
-                    +
-                  </button>
-                </div>
-
+          {/* Quantity & Add to Cart */}
+          <div className="pt-2 space-y-3">
+            <div className="flex items-center gap-4">
+              {/* Stepper */}
+              <div className="flex items-center bg-slate-100 border border-slate-200 rounded-xl p-1">
                 <button
-                  onClick={handleAdd}
-                  disabled={outOfStock}
-                  className={`flex-1 py-3.5 px-6 rounded-xl font-mono font-black text-xs uppercase tracking-wider transition-all shadow-xl flex items-center justify-center gap-2 cursor-pointer ${
-                    outOfStock
-                      ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
-                      : "bg-gradient-to-r from-lime-400 to-lime-500 hover:from-lime-300 hover:to-lime-400 text-black shadow-lime-500/20 hover:scale-[1.02] active:scale-[0.98]"
-                  }`}
+                  type="button"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="p-2 text-slate-600 hover:text-black cursor-pointer"
                 >
-                  <ShoppingBag size={16} className="fill-black" />
-                  <span>{outOfStock ? "Sold Out in Deadstock" : "Add to Shoebox"}</span>
+                  <Minus size={14} />
+                </button>
+                <span className="w-8 text-center text-xs font-black text-slate-900">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="p-2 text-slate-600 hover:text-black cursor-pointer"
+                >
+                  <Plus size={14} />
                 </button>
               </div>
+
+              {/* Wishlist Button */}
+              <button
+                type="button"
+                onClick={() => setIsWishlisted(!isWishlisted)}
+                className={`p-3 rounded-xl border transition cursor-pointer flex items-center justify-center ${
+                  isWishlisted
+                    ? "bg-rose-50 text-rose-600 border-rose-200"
+                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                <Heart size={18} className={isWishlisted ? "fill-rose-600" : ""} />
+              </button>
             </div>
 
-            {/* Trust Badges */}
-            <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-2.5 font-mono text-[11px] text-zinc-400">
-              <div className="flex items-center gap-2 text-zinc-200">
-                <ShieldCheck size={16} className="text-lime-400 shrink-0" />
-                <span className="font-bold">100% Verified Deadstock with NFC Tag</span>
-              </div>
-              <div className="flex items-center gap-2 text-zinc-200">
-                <Clock size={16} className="text-lime-400 shrink-0" />
-                <span>Dispatches from SoleCraft Vault within 24 Hours</span>
-              </div>
-              <div className="flex items-center gap-2 text-zinc-200">
-                <Check size={16} className="text-lime-400 shrink-0" />
-                <span>30-Day Street Run Guarantee & Free Size Exchange</span>
-              </div>
-            </div>
+            {/* Main Add Button */}
+            <button
+              type="button"
+              onClick={handleAdd}
+              disabled={outOfStock}
+              className={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-md ${
+                outOfStock
+                  ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                  : "bg-[#1E3A8A] hover:bg-blue-800 text-white active:scale-98"
+              }`}
+            >
+              <ShoppingBag size={16} />
+              <span>
+                {outOfStock
+                  ? "Item Sold Out"
+                  : `Add to Bag • $${(price * quantity).toFixed(2)} (${sizeStandard} ${selectedSize})`}
+              </span>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Related Silhouettes */}
-      {relatedProducts.length > 0 && (
-        <div className="space-y-6 pt-8 border-t border-zinc-800">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-xs font-mono uppercase text-lime-400 font-bold">From the Same Class</span>
-              <h3 className="text-2xl font-black text-white font-mono uppercase">Complementary Silhouettes</h3>
-            </div>
+      {/* Tabs: Specifications & Sizing Guide */}
+      <div className="space-y-6 pt-6">
+        <div className="flex gap-6 border-b-2 border-slate-200 text-xs font-bold uppercase tracking-wider">
+          {[
+            { id: "specs", label: "Footwear Specifications" },
+            { id: "fit", label: "Sizing & Fit Advice" },
+            { id: "shipping", label: "Shipping & Free Returns" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`pb-3 transition border-b-2 -mb-[2px] cursor-pointer ${
+                activeTab === tab.id
+                  ? "border-[#1E3A8A] text-blue-900 font-black"
+                  : "border-transparent text-slate-400 hover:text-slate-800"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "specs" && (
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-2xs">
+            <table className="w-full text-xs text-left">
+              <tbody className="divide-y divide-slate-100">
+                <tr>
+                  <td className="py-3 px-4 font-bold text-slate-400 w-1/3">Upper Composition</td>
+                  <td className="py-3 px-4 text-slate-800 font-semibold">Tumbled Full-Grain Leather & Breathable Mesh</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-4 font-bold text-slate-400">Midsole Technology</td>
+                  <td className="py-3 px-4 text-slate-800 font-semibold">Encapsulated Air-Sole Propulsion Cushioning</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-4 font-bold text-slate-400">Outsole Compound</td>
+                  <td className="py-3 px-4 text-slate-800 font-semibold">Solid Rubber Pivot Traction Circle Outsole</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-4 font-bold text-slate-400">Weight</td>
+                  <td className="py-3 px-4 text-slate-800 font-semibold">410 grams (Sample Size EU 42)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {activeTab === "fit" && (
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 text-xs text-slate-600 space-y-3">
+            <h4 className="font-bold text-slate-900">True to Size (92% Customer Consensus)</h4>
+            <p>
+              We recommend ordering your standard athletic shoe size. If you have wider feet, we suggest sizing up by a half-size (e.g., from EU 42 to EU 42.5).
+            </p>
+          </div>
+        )}
+
+        {activeTab === "shipping" && (
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 text-xs text-slate-600 space-y-3">
+            <h4 className="font-bold text-slate-900">Complimentary 2-Day Air Shipping</h4>
+            <p>
+              All deadstock sneakers are authenticated, tagged with verified NFC proof, and dispatched within 24 hours of purchase. Returns are 100% free within 30 days.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Related Footwear Lineup */}
+      {relatedProducts && relatedProducts.length > 0 && (
+        <div className="pt-10 border-t border-slate-200 space-y-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-black text-slate-900">You Might Also Like</h3>
+            <span className="text-xs text-slate-500 font-medium">Similar Silhouettes</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             {relatedProducts
-              .filter((p) => p._id !== product._id)
-              .slice(0, 4)
+              .filter((p) => (p._id || p.id) !== (product._id || product.id))
+              .slice(0, 5)
               .map((item) => (
-                <div
-                  key={item._id}
-                  onClick={() => onSelectProduct(item)}
-                  className="bg-zinc-900/60 p-4 rounded-3xl border border-zinc-800 hover:border-lime-500/50 transition cursor-pointer space-y-3 group"
-                >
-                  <div className="aspect-[4/3] rounded-2xl bg-zinc-950 flex items-center justify-center p-4 overflow-hidden">
-                    <img
-                      src={getProductImage(item, item.image)}
-                      alt={item.name}
-                      className="w-full h-full object-contain group-hover:scale-105 transition"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-mono text-lime-400 font-bold">{item.category}</span>
-                    <h4 className="text-sm font-bold text-white font-mono truncate group-hover:text-lime-400 transition">
-                      {item.name}
-                    </h4>
-                    <span className="text-sm font-mono font-black text-white block">
-                      ₹{Number(item.price).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
+                <ProductCard
+                  key={item._id || item.id}
+                  product={item}
+                  onSelectProduct={onSelectProduct}
+                  onAddToCart={onAddToCart}
+                  sizeStandard={sizeStandard}
+                />
               ))}
           </div>
         </div>

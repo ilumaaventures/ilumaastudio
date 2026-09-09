@@ -18,7 +18,26 @@ import ThanksYou from "./ThanksYou";
 import GiftHamper from "./GiftHamper";
 import StarlingCollection from "./StarlingCollection";
 import StarlingAbout from "./StarlingAbout";
+import StarlingLandingIntro from "./components/StarlingLandingIntro";
+
 export default function StarlingTalesHome() {
+  const [showIntro, setShowIntro] = useState(() => {
+    try {
+      return !localStorage.getItem("starling_intro_seen");
+    } catch {
+      return true;
+    }
+  });
+
+  const handleEnterIntro = () => {
+    setShowIntro(false);
+    try {
+      localStorage.setItem("starling_intro_seen", "true");
+    } catch (err) {
+      console.warn("Could not save intro state in localStorage", err);
+    }
+  };
+
   // Cart, wishlist and dialog states
   const [cart, setCart] = useState(() => readStorage("starling_cart", []));
   const [wishlist, setWishlist] = useState(() =>
@@ -35,8 +54,12 @@ export default function StarlingTalesHome() {
   }, [wishlist]);
 
   return (
-    <div className="min-h-screen bg-cream text-text-dark font-sans selection:bg-blue-light selection:text-blue-soft relative overflow-x-hidden">
-      <div className="bg-text-dark text-cream text-[11px] tracking-[0.2em] uppercase py-2 text-center font-medium px-4">
+    <>
+      {showIntro && (
+        <StarlingLandingIntro onEnter={handleEnterIntro} />
+      )}
+      <div className="min-h-screen bg-cream text-text-dark font-sans selection:bg-blue-light selection:text-blue-soft relative overflow-x-hidden">
+        <div className="bg-text-dark text-cream text-[11px] tracking-[0.2em] uppercase py-2 text-center font-medium px-4">
         Free shipping on all heirloom keepsakes over ₹5,000
       </div>
       <StarlingTalesHero />
@@ -48,6 +71,7 @@ export default function StarlingTalesHome() {
       <BrandPillars />
 
       <ThanksYou />
-    </div>
+      </div>
+    </>
   );
 }

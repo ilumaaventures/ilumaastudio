@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Cpu,
   Zap,
@@ -6,19 +6,10 @@ import {
   RotateCcw,
   Star,
   Search,
-  Check,
-  ShoppingBag,
+  ShoppingCart,
   SlidersHorizontal,
   ChevronRight,
-  Battery,
-  Wifi,
-  Radio,
-  HardDrive,
-  Headphones,
-  Sliders,
-  Volume2,
-  Activity,
-  Layers,
+  ChevronLeft,
   ArrowRight,
   Plus,
   Minus,
@@ -30,6 +21,15 @@ import {
   Tag,
   Eye,
   Award,
+  Clock,
+  CheckCircle2,
+  Tv,
+  Gamepad2,
+  Laptop,
+  Headphones,
+  Camera,
+  Layers,
+  Flame,
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -39,16 +39,16 @@ import {
   removeFromCart,
 } from "../../../redux/reducers/cartReducer";
 import toast from "react-hot-toast";
-import { isOutOfStock, getProductStock } from "../../../utils/stockUtils";
+import { isOutOfStock } from "../../../utils/stockUtils";
 import CartDrawer from "../../common/CartDrawer";
 import { getProductImage } from "../../../utils/productImage";
 
-// Import new modular components
+// Modular Components
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import ProductCard from "./ProductCard";
 import Product from "./Product";
-import ProductDeltails from "./ProductDeltails";
+import ProductDetails from "./ProductDetails";
 import Offer from "./Offer";
 
 export default function TechNovaTemplate({
@@ -59,7 +59,7 @@ export default function TechNovaTemplate({
   reviews = [],
   customization = {},
 }) {
-  // Navigation: "home" | "specs" | "compare" | "eq-lab" | "battery-calc" | "offers" | "product-detail"
+  // Navigation: "home" | "specs" | "compare" | "offers" | "product-detail"
   const [activePage, setActivePage] = useState("home");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -67,182 +67,337 @@ export default function TechNovaTemplate({
   // Search & Filtering
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("featured");
 
-  // Comparison Matrix State (2 device IDs)
-  const [compareId1, setCompareId1] = useState("tn-1");
-  const [compareId2, setCompareId2] = useState("tn-2");
+  // Comparison Matrix List
   const [compareList, setCompareList] = useState([]);
 
-  // Interactive EQ Simulator State
-  const [activeEqPreset, setActiveEqPreset] = useState("flat"); // "flat" | "bass" | "vocal" | "gaming"
+  // Top Week Deal Tab State
+  const [activeDealTab, setActiveDealTab] = useState("gamepad");
 
-  // Battery Life Calculator State
-  const [dailyMusicHours, setDailyMusicHours] = useState(4);
-  const [dailyCallHours, setDailyCallHours] = useState(2);
-  const [ancEnabled, setAncEnabled] = useState(true);
+  // Warehouse Cleaning Discount Filter State
+  const [warehouseDiscount, setWarehouseDiscount] = useState("80");
+
+  // Carousel Indexes
+  const [warehouseIndex, setWarehouseIndex] = useState(0);
+  const [trendingIndex, setTrendingIndex] = useState(0);
+  const [popularIndex, setPopularIndex] = useState(0);
+  const [laptopsIndex, setLaptopsIndex] = useState(0);
+
+  // Limited Week Deal Live Countdown (Hours, Mins, Secs)
+  const [dealCountdown, setDealCountdown] = useState({
+    days: 3,
+    hours: 14,
+    minutes: 36,
+    seconds: 42,
+  });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setDealCountdown((prev) => {
+        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
+        if (prev.minutes > 0)
+          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
+        if (prev.hours > 0)
+          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
+        return {
+          days: prev.days > 0 ? prev.days - 1 : 0,
+          hours: 23,
+          minutes: 59,
+          seconds: 59,
+        };
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const cartItems = useSelector((state) => state.cart?.cartItems || []);
 
-  // Comprehensive 8-item default silicon catalog
+  // Products matching the exact attached reference screenshot
   const defaultTech = [
     {
-      _id: "tn-1",
-      name: "AeroPulse Master Studio ANC Headphones",
-      category: "Pro Audio & ANC",
-      price: 299.0,
-      compareAtPrice: 380.0,
+      _id: "el-1",
+      name: "Universal Headphones Case in Black",
+      category: "Accessories, Headphones",
+      price: 150.0,
+      compareAtPrice: 180.0,
       rating: 4.9,
-      reviewCount: 168,
-      badge: "Flagship Audio",
-      batteryLifeHours: 50,
-      driverSize: "40mm Beryllium Diaphragm",
-      ancDb: "45 dB Hybrid ANC",
-      codecs: "LDAC, aptX Adaptive, AAC",
-      weightGrams: "248g",
-      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=900&auto=format&fit=crop&q=80",
-      description: "Audiophile-grade pure titanium acoustic chambers with custom DSP equalization, spatial head-tracking, and 50 hours of wireless stamina.",
+      reviewCount: 42,
+      badge: "In Stock",
+      image:
+        "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&auto=format&fit=crop&q=80",
+      description:
+        "Rigid shockproof ballistic nylon travel case compatible with premium over-ear headphones.",
       inStock: true,
+      specs: [
+        "Ballistic Nylon",
+        "Shockproof Core",
+        "Water Resistant",
+        "YKK Zippers",
+      ],
     },
     {
-      _id: "tn-2",
-      name: "PulsePro Biomark Titanium Smartwatch",
-      category: "Smart Wearables",
-      price: 249.0,
+      _id: "el-2",
+      name: "Headphones USB Wires",
+      category: "Accessories, Headphones",
+      price: 50.0,
+      compareAtPrice: 65.0,
+      rating: 4.8,
+      reviewCount: 28,
+      badge: "OEM Cable",
+      image:
+        "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop&q=80",
+      description:
+        "Oxygen-free copper braided audiophile 3.5mm to USB-C audio cable with 24k gold plating.",
+      inStock: true,
+      specs: [
+        "Oxygen-Free Copper",
+        "Gold-Plated 3.5mm",
+        "DAC Built-In",
+        "1.5m Length",
+      ],
+    },
+    {
+      _id: "el-3",
+      name: "Ultra Wireless 350 Headphones 350 with",
+      category: "Accessories, Headphones",
+      price: 350.0,
+      compareAtPrice: 420.0,
+      rating: 4.9,
+      reviewCount: 164,
+      badge: "Hi-Res Audio",
+      image:
+        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80",
+      description:
+        "Rose gold metallic studio cans with hybrid active noise cancellation and 50-hour continuous playback.",
+      inStock: true,
+      specs: [
+        "40mm Titanium Drivers",
+        "Hybrid ANC",
+        "50hr Battery",
+        "Memory Foam Pads",
+      ],
+    },
+    {
+      _id: "el-4",
+      name: "Game Console Controller + USB 3.0 Cable",
+      category: "Game Consoles, Video Games",
+      price: 90.0,
+      compareAtPrice: 130.0,
+      rating: 5.0,
+      reviewCount: 310,
+      badge: "-30% OFF",
+      image:
+        "https://images.unsplash.com/photo-1600080972464-8e5f35f63d08?w=600&auto=format&fit=crop&q=80",
+      description:
+        "Ergonomic wireless gamepad with textured grips, haptic trigger feedback, and ultra-fast 1ms latency.",
+      inStock: true,
+      specs: [
+        "Haptic Triggers",
+        "1ms Latency",
+        "Bluetooth & 2.4GHz",
+        "40hr Battery",
+      ],
+    },
+    {
+      _id: "el-5",
+      name: "Wireless Audio System Multiroom 360",
+      category: "Audio Systems, TV & Audio",
+      price: 2299.0,
+      compareAtPrice: 2600.0,
+      rating: 4.9,
+      reviewCount: 84,
+      badge: "Audiophile Tier",
+      image:
+        "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=600&auto=format&fit=crop&q=80",
+      description:
+        "Omnidirectional spatial acoustic pillar speaker with integrated dual passive radiators and AirPlay 2.",
+      inStock: true,
+      specs: [
+        "360° Spatial Audio",
+        "Dual Subwoofers",
+        "WiFi & AirPlay 2",
+        "Lossless 24-bit",
+      ],
+    },
+    {
+      _id: "el-6",
+      name: "Tablet White EliteBook Revolve X10 G2",
+      category: "Laptops, Laptops & Computers",
+      price: 1300.0,
+      compareAtPrice: 1550.0,
+      rating: 4.8,
+      reviewCount: 76,
+      badge: "2-in-1 Hybrid",
+      image:
+        "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=600&auto=format&fit=crop&q=80",
+      description:
+        "Reversible 360-degree touchscreen convertible ultrabook with Corning Gorilla Glass and Intel Core i7.",
+      inStock: true,
+      specs: [
+        "Intel Core i7",
+        "16GB LPDDR5",
+        "512GB NVMe SSD",
+        '14" Touch IPS',
+      ],
+    },
+    {
+      _id: "el-7",
+      name: "Purple Solo 2 Wireless On-Ear Headphones",
+      category: "Accessories, Headphones",
+      price: 248.0,
       compareAtPrice: 299.0,
       rating: 4.8,
-      reviewCount: 94,
-      badge: "Grade-5 Titanium",
-      batteryLifeHours: 168, // 7 days
-      driverSize: '1.43" AMOLED 1000 nits',
-      ancDb: "50m Water Resistance (5 ATM)",
-      codecs: "Bluetooth 5.4 LE, GNSS Multi-Band",
-      weightGrams: "52g",
-      image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=900&auto=format&fit=crop&q=80",
-      description: "Aerospace Grade-5 titanium chassis, sapphire crystal lens, optical heart rate & ECG telemetry, and dual-frequency precision GPS.",
+      reviewCount: 92,
+      badge: "Wireless Solo",
+      image:
+        "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=600&auto=format&fit=crop&q=80",
+      description:
+        "Streamlined folding acoustic headset delivering punchy bass, crisp highs, and quick charging.",
       inStock: true,
+      specs: [
+        "Dynamic Bass",
+        "Fast Fuel Charge",
+        "Built-In Mic",
+        "Folding Design",
+      ],
     },
     {
-      _id: "tn-3",
-      name: "NeoKey 75% Magnetic Hall-Effect Keyboard",
-      category: "Peripherals",
-      price: 189.0,
-      compareAtPrice: 230.0,
+      _id: "el-8",
+      name: "Notebook Widescreen Y-700-17 Gaming Laptop",
+      category: "Laptops, Computers",
+      price: 1299.0,
+      compareAtPrice: 1499.0,
+      rating: 4.9,
+      reviewCount: 114,
+      badge: "144Hz Screen",
+      image:
+        "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=600&auto=format&fit=crop&q=80",
+      description:
+        "17.3-inch gaming powerhouse with dedicated NVIDIA RTX graphics and dual vapor-chamber cooling.",
+      inStock: true,
+      specs: [
+        "RTX 4060 8GB",
+        "Intel Core i7-13700H",
+        '17.3" 144Hz FHD',
+        "1TB Gen4 SSD",
+      ],
+    },
+    {
+      _id: "el-9",
+      name: 'Laptop WiFi C581 2CP 15.6" 6210M',
+      category: "Laptops, Workstations",
+      price: 2299.0,
+      compareAtPrice: 2500.0,
       rating: 5.0,
-      reviewCount: 82,
-      badge: "Rapid Trigger",
-      batteryLifeHours: 200,
-      driverSize: "0.1mm Rapid Trigger Switches",
-      ancDb: "Gasket Mount Poron Dampening",
-      codecs: "8000Hz Polling, 2.4GHz Wireless",
-      weightGrams: "920g (CNC Aluminum)",
-      image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=900&auto=format&fit=crop&q=80",
-      description: "Magnetic Hall-Effect switches with adjustable 0.1mm actuation points, CNC anodized aluminum chassis, and hyper-speed 8000Hz polling rate.",
+      reviewCount: 52,
+      badge: "Pro Workstation",
+      image:
+        "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&auto=format&fit=crop&q=80",
+      description:
+        "Precision aluminum mobile workstation with 100% DCI-P3 color gamut display and liquid metal cooling.",
       inStock: true,
+      specs: [
+        "Apple Silicon / M-Series",
+        "32GB Unified Memory",
+        "1TB SSD",
+        "Liquid Retina XDR",
+      ],
     },
     {
-      _id: "tn-4",
-      name: "SonicBeam Spatial Dolby Atmos Soundbar",
-      category: "Creator Studio",
-      price: 499.0,
-      compareAtPrice: 599.0,
+      _id: "el-10",
+      name: "Laptop Screener CX70 2QF-621XPL",
+      category: "Laptops, Creator Studio",
+      price: 2399.0,
+      compareAtPrice: 2700.0,
+      rating: 4.9,
+      reviewCount: 68,
+      badge: "OLED Creator",
+      image:
+        "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=600&auto=format&fit=crop&q=80",
+      description:
+        "Ultra-thin 4K OLED creator laptop with factory color calibration and Thunderbolt 4 connectivity.",
+      inStock: true,
+      specs: [
+        "Intel Core i9",
+        "32GB DDR5",
+        "4K OLED Display",
+        "2TB NVMe PCIe 4.0",
+      ],
+    },
+    {
+      _id: "el-11",
+      name: "Aerocool EN52277 Dead Silence Gaming PC Tower",
+      category: "Computer Cases, Hardware",
+      price: 150.0,
+      compareAtPrice: 199.0,
+      rating: 4.8,
+      reviewCount: 88,
+      badge: "Acoustic Dampened",
+      image:
+        "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=600&auto=format&fit=crop&q=80",
+      description:
+        "Chambered high-airflow desktop chassis with noise-dampening foam panels and magnetic dust filters.",
+      inStock: true,
+      specs: [
+        "Tempered Glass",
+        "Sound Dampening Foam",
+        "Up to 360mm Radiator",
+        "ARGB Sync",
+      ],
+    },
+    {
+      _id: "el-12",
+      name: "Pendrive USB 3.0 Flash 64 GB",
+      category: "Accessories, Storage",
+      price: 110.0,
+      compareAtPrice: 130.0,
+      rating: 4.9,
+      reviewCount: 220,
+      badge: "USB 3.2 High-Speed",
+      image:
+        "https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?w=600&auto=format&fit=crop&q=80",
+      description:
+        "Solid zinc alloy waterproof USB 3.0 flash drive with 400MB/s sustained read performance.",
+      inStock: true,
+      specs: [
+        "64GB Solid State",
+        "Zinc Alloy Shell",
+        "400 MB/s Read",
+        "AES 256-Bit Encrypt",
+      ],
+    },
+    {
+      _id: "el-13",
+      name: "Tablet Red EliteBook Revolve 810 G2",
+      category: "Laptops, Hybrid Tablets",
+      price: 2100.0,
+      compareAtPrice: 2300.0,
       rating: 4.9,
       reviewCount: 45,
-      badge: "Dolby Atmos",
-      batteryLifeHours: 0,
-      driverSize: "11 Independent Neodymium Drivers",
-      ancDb: "Room Acoustic Auto-Calibration",
-      codecs: "eARC, AirPlay 2, Spotify Connect",
-      weightGrams: "4.2 kg",
-      image: "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=900&auto=format&fit=crop&q=80",
-      description: "True 7.1.2 physical upward-firing acoustic transducers bouncing spatial Dolby audio objects off walls and ceilings.",
+      badge: "Executive Touch",
+      image:
+        "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&auto=format&fit=crop&q=80",
+      description:
+        "Military-grade tested 11.6-inch multi-touch revolving display tablet with active stylus pen support.",
       inStock: true,
-    },
-    {
-      _id: "tn-5",
-      name: "ApexPrecision 8K Ultra-Light Wireless Mouse",
-      category: "Peripherals",
-      price: 129.0,
-      compareAtPrice: 159.0,
-      rating: 4.9,
-      reviewCount: 63,
-      badge: "38g Featherweight",
-      batteryLifeHours: 90,
-      driverSize: "PAW3950 Optical 30K Sensor",
-      ancDb: "Zero-Smoothing Tracking",
-      codecs: "8000Hz Wireless Nano Dongle",
-      weightGrams: "38g",
-      image: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=900&auto=format&fit=crop&q=80",
-      description: "Ultra-lightweight magnesium alloy skeletal frame, 30,000 DPI optical sensor, optical micro-switches, and zero-latency 8K wireless polling.",
-      inStock: true,
-    },
-    {
-      _id: "tn-6",
-      name: "StreamMaster 4K 60FPS HDR Creator Webcam",
-      category: "Creator Studio",
-      price: 179.0,
-      compareAtPrice: 219.0,
-      rating: 4.7,
-      reviewCount: 51,
-      badge: "Sony STARVIS 2",
-      batteryLifeHours: 0,
-      driverSize: '1/1.8" STARVIS 2 Sensor',
-      ancDb: "Dual AI Noise-Cancelling Mics",
-      codecs: "USB 3.2 Gen 2 Type-C (Uncompressed)",
-      weightGrams: "165g",
-      image: "https://images.unsplash.com/photo-1587826080692-f439cd0b70da?w=900&auto=format&fit=crop&q=80",
-      description: "Ultra-low-light Sony STARVIS 2 image sensor with hardware HDR, phase-detection autofocus, and studio ring mount.",
-      inStock: true,
-    },
-    {
-      _id: "tn-7",
-      name: "AeroBuds Pro Active Spatial In-Ear Monitors",
-      category: "Pro Audio & ANC",
-      price: 199.0,
-      compareAtPrice: 249.0,
-      rating: 4.8,
-      reviewCount: 112,
-      badge: "Dual Drivers",
-      batteryLifeHours: 38,
-      driverSize: "11mm Dynamic + Planar Tweeter",
-      ancDb: "48 dB Smart Adaptive ANC",
-      codecs: "LDAC, LHDC 5.0, AAC",
-      weightGrams: "5.1g per earbud",
-      image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=900&auto=format&fit=crop&q=80",
-      description: "Coaxial dual-driver acoustic architecture with ultra-deep 48dB adaptive active noise cancellation and IP55 water resistance.",
-      inStock: true,
-    },
-    {
-      _id: "tn-8",
-      name: "TitanCharge 140W GaN 4-Port Fast Station",
-      category: "Peripherals",
-      price: 89.0,
-      compareAtPrice: 119.0,
-      rating: 4.9,
-      reviewCount: 78,
-      badge: "GaN III Tech",
-      batteryLifeHours: 0,
-      driverSize: "140W PD 3.1 Architecture",
-      ancDb: "Active Thermal Guard 2.0",
-      codecs: "3x USB-C + 1x USB-A Fast Charging",
-      weightGrams: "215g",
-      image: "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=900&auto=format&fit=crop&q=80",
-      description: "Gallium Nitride III power delivery charging laptops, phones, and peripherals simultaneously with multi-temperature protection.",
-      inStock: true,
+      specs: [
+        "Intel Core i7",
+        "16GB RAM",
+        "Stylus Pen Included",
+        "5G LTE Cellular",
+      ],
     },
   ];
 
-  const techItems = products.length > 0 ? products : defaultTech;
+  const techCatalog = products.length > 0 ? products : defaultTech;
 
   const brandName =
     business?.businessName ||
     business?.name ||
     customization?.heroHeadline ||
     "TECHNOVA";
-
-  const brandLogo = customization?.logo || business?.logo || null;
   const brandPhone =
     business?.phone ||
     business?.businessPhone ||
@@ -253,57 +408,19 @@ export default function TechNovaTemplate({
     business?.businessEmail ||
     business?.contactEmail ||
     "support@technovagear.io";
-
-  const rawAddr = business?.address || business?.registered_business_address;
   const brandAddress =
-    typeof rawAddr === "string"
-      ? rawAddr
-      : rawAddr && typeof rawAddr === "object"
-      ? [rawAddr.street, rawAddr.addressLine2, rawAddr.city, rawAddr.state, rawAddr.postalCode, rawAddr.country]
-          .filter(Boolean)
-          .join(", ")
-      : "100 Silicon Way, Austin, TX 78701";
+    business?.address ||
+    business?.registered_business_address ||
+    "100 Silicon Way, Austin, TX 78701";
 
-  // Comparison entities
-  const device1 = techItems.find((t) => t._id === compareId1) || techItems[0];
-  const device2 = techItems.find((t) => t._id === compareId2) || techItems[1];
-
-  const handleToggleCompare = (product) => {
-    setCompareList((prev) => {
-      const exists = prev.some((p) => p._id === product._id);
-      if (exists) {
-        toast.success(`Removed ${product.name.split(" ")[0]} from shootout.`);
-        return prev.filter((p) => p._id !== product._id);
-      } else {
-        if (prev.length >= 4) {
-          toast.error("You can compare up to 4 devices simultaneously.");
-          return prev;
-        }
-        toast.success(`Added ${product.name.split(" ")[0]} to shootout!`);
-        const updated = [...prev, product];
-        if (updated.length >= 2) {
-          setCompareId1(updated[0]._id);
-          setCompareId2(updated[1]._id);
-        }
-        return updated;
-      }
-    });
-  };
-
-  const handleAddToCart = (product, qty = 1, warrantyOption = null) => {
+  // Cart operations
+  const handleAddToCart = (product, qty = 1) => {
     if (isOutOfStock(product)) {
       toast.error(`Sorry, ${product.name} is currently out of stock!`);
       return;
     }
-
-    const itemToAdd = {
-      ...product,
-      price: warrantyOption ? product.price + 39 : product.price,
-      name: warrantyOption ? `${product.name} (+TechShield 2-Yr)` : product.name,
-    };
-
-    dispatch(addToCart({ product: itemToAdd, quantity: qty }));
-    toast.success(`${itemToAdd.name} added to Tech Cart! ⚡`);
+    dispatch(addToCart({ product, quantity: qty }));
+    toast.success(`${product.name} added to cart! 🚀`);
     setCartOpen(true);
   };
 
@@ -320,280 +437,692 @@ export default function TechNovaTemplate({
     navigate("/cart");
   };
 
-  const cartCount = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
+  const cartCount = cartItems.reduce(
+    (sum, item) => sum + (item.quantity || 1),
+    0,
+  );
 
-  // Battery calculations
-  const calculatedDays = useMemo(() => {
-    const totalDailyHours = dailyMusicHours + dailyCallHours;
-    if (totalDailyHours === 0) return 14;
-    const baseBattery = 50; // AeroPulse 50h
-    const drainFactor = ancEnabled ? 1.25 : 1.0;
-    const actualHours = baseBattery / drainFactor;
-    return (actualHours / totalDailyHours).toFixed(1);
-  }, [dailyMusicHours, dailyCallHours, ancEnabled]);
+  const cartTotal = cartItems.reduce(
+    (sum, item) => sum + Number(item.price || 0) * (item.quantity || 1),
+    0,
+  );
 
-  const handleSelectProduct = (product) => {
-    setSelectedProduct(product);
-    setActivePage("product-detail");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  // Compare toggling
+  const handleToggleCompare = (product) => {
+    const exists = compareList.find(
+      (p) => (p._id || p.id) === (product._id || product.id),
+    );
+    if (exists) {
+      setCompareList(
+        compareList.filter(
+          (p) => (p._id || p.id) !== (product._id || product.id),
+        ),
+      );
+      toast.success(`Removed ${product.name} from comparison.`);
+    } else {
+      if (compareList.length >= 4) {
+        toast.error("You can compare up to 4 devices at once.");
+        return;
+      }
+      setCompareList([...compareList, product]);
+      toast.success(`Added ${product.name} to comparison! ⚖️`);
+    }
   };
 
+  // Featured Deal Item for Top Tabs
+  const featuredDealItem = useMemo(() => {
+    switch (activeDealTab) {
+      case "tv":
+        return {
+          title: '55" Ultra HD Curved 4K Smart OLED TV',
+          category: "Television Entertainment",
+          price: 1199.0,
+          originalPrice: 1599.0,
+          image:
+            "https://images.unsplash.com/photo-1593784991095-a205069470b6?w=800&auto=format&fit=crop&q=80",
+          desc: "120Hz native refresh rate with Quantum Dot OLED illumination and Dolby Vision Atmos.",
+        };
+      case "console":
+        return {
+          title: "Next-Gen Cyber Console Pro Edition 1TB",
+          category: "Game Consoles & Video Games",
+          price: 499.0,
+          originalPrice: 599.0,
+          image:
+            "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=800&auto=format&fit=crop&q=80",
+          desc: "True 4K 120 FPS gaming with ultra-high-speed custom SSD and wireless gamepad.",
+        };
+      case "laptop":
+        return {
+          title: "Notebook Widescreen Y-700-17 Gaming Laptop",
+          category: "Laptops, Computers",
+          price: 1299.0,
+          originalPrice: 1499.0,
+          image:
+            "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=800&auto=format&fit=crop&q=80",
+          desc: "17.3-inch gaming powerhouse with dedicated NVIDIA RTX graphics and dual vapor-chamber cooling.",
+        };
+      case "under10":
+        return {
+          title: "High-Speed Braided Gold-Plated HDMI 2.1 Cable",
+          category: "Accessories, Cables",
+          price: 9.99,
+          originalPrice: 19.99,
+          image:
+            "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&auto=format&fit=crop&q=80",
+          desc: "48Gbps ultra-high bandwidth certified 8K@60Hz and 4K@120Hz HDR video transfer.",
+        };
+      case "gamepad":
+      default:
+        return {
+          title: "Game Console Controller + USB 3.0 Cable",
+          category: "Game Consoles, Video Games",
+          price: 90.0,
+          originalPrice: 130.0,
+          image:
+            "https://images.unsplash.com/photo-1600080972464-8e5f35f63d08?w=800&auto=format&fit=crop&q=80",
+          desc: "Ergonomic wireless gamepad with textured grips, haptic trigger feedback, and ultra-fast 1ms latency.",
+        };
+    }
+  }, [activeDealTab]);
+
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-[#080D18] text-[#F8FAFC] antialiased selection:bg-cyan-500/30 selection:text-cyan-200">
-      {/* ================= 1. CYBER TECH NAVBAR ================= */}
+    <div className="min-h-screen flex flex-col font-sans bg-[#FBFDFB] text-slate-800 antialiased selection:bg-yellow-100 selection:text-slate-900">
+      {/* ================= 1. NAVBAR ================= */}
       <Navbar
         brandName={brandName}
-        brandLogo={brandLogo}
+        brandLogo={customization?.logo || business?.logo || null}
         brandPhone={brandPhone}
         activePage={activePage}
         setActivePage={setActivePage}
         cartCount={cartCount}
+        cartTotal={cartTotal}
         onOpenCart={() => setCartOpen(true)}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         compareCount={compareList.length}
-        onOpenCompare={() => {
-          setActivePage("compare");
-          window.scrollTo({ top: 0, behavior: "smooth" });
+        onOpenCompare={() => setActivePage("compare")}
+        onSelectDepartment={(dept) => {
+          setSelectedCategory(dept);
+          setActivePage("specs");
         }}
       />
 
-      {/* ================= 2. MAIN ACTIVE VIEW ================= */}
+      {/* ================= 2. MAIN CONTENT ================= */}
       <main className="flex-1">
-        {/* ================= VIEW 1: HOME (FLAGSHIPS & INTERACTIVE SUITE) ================= */}
+        {/* ================= VIEW 1: HOME (MATCHING ATTACHED SCREENSHOT) ================= */}
         {activePage === "home" && (
-          <>
-            {/* HERO SECTION */}
-            <section className="relative overflow-hidden bg-gradient-to-b from-[#0B1120] via-[#090E1B] to-[#080D18] pt-12 pb-20 md:pt-20 md:pb-28 border-b border-slate-800">
-              {/* Background ambient lighting */}
-              <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="space-y-10 py-6 text-left">
+            {/* ================= SECTION 1: TOP LIMITED WEEK DEAL ================= */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
+                {/* Deal Header */}
+                <div className="bg-[#F8FAFC] border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#EAB308] animate-ping" />
+                    <h2 className="text-sm sm:text-base font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                      <span>WEEK DEAL</span>
+                      <span className="text-slate-400 font-normal">|</span>
+                      <span className="text-xs text-rose-600 font-bold">
+                        HURRY UP BEFORE OFFER WILL END
+                      </span>
+                    </h2>
+                  </div>
 
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-                  <div className="lg:col-span-7 space-y-6 text-left">
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-cyan-500/30 text-cyan-300 text-xs font-semibold shadow-inner font-mono">
-                      <Zap size={14} className="text-cyan-400 animate-pulse" />
-                      <span>Next-Gen Audio & Silicon 3.0 Architecture Released</span>
-                    </div>
+                  {/* Countdown Timer */}
+                  <div className="flex items-center gap-1 text-xs font-bold text-slate-700">
+                    <Clock size={14} className="text-[#EAB308]" />
+                    <span className="font-mono bg-slate-900 text-yellow-400 px-2 py-0.5 rounded">
+                      {dealCountdown.days}d
+                    </span>
+                    <span>:</span>
+                    <span className="font-mono bg-slate-900 text-yellow-400 px-2 py-0.5 rounded">
+                      {String(dealCountdown.hours).padStart(2, "0")}h
+                    </span>
+                    <span>:</span>
+                    <span className="font-mono bg-slate-900 text-yellow-400 px-2 py-0.5 rounded">
+                      {String(dealCountdown.minutes).padStart(2, "0")}m
+                    </span>
+                    <span>:</span>
+                    <span className="font-mono bg-slate-900 text-yellow-400 px-2 py-0.5 rounded">
+                      {String(dealCountdown.seconds).padStart(2, "0")}s
+                    </span>
+                  </div>
+                </div>
 
-                    <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-[1.08]">
-                      Precision Acoustic Engineering & Pure Silicon Speed.
-                    </h1>
+                {/* Category Deal Navigation Tabs (Matching Reference) */}
+                <div className="border-b border-slate-200 overflow-x-auto">
+                  <div className="flex items-center text-xs font-bold uppercase tracking-wider min-w-[680px]">
+                    {[
+                      { id: "tv", label: "50-INCH TO WATCH IN 4K TVS" },
+                      { id: "console", label: "GAME CONSOLES" },
+                      { id: "gamepad", label: "LIMITED WEEK DEAL - GAMEPAD" },
+                      { id: "laptop", label: "SECOND PRODUCT 50% CHEAPER" },
+                      { id: "under10", label: "$10 BUCKS OR LESS" },
+                    ].map((tab) => {
+                      const isActive = activeDealTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveDealTab(tab.id)}
+                          className={`flex-1 py-3.5 px-4 transition cursor-pointer text-center relative border-r border-slate-100 last:border-r-0 ${
+                            isActive
+                              ? "text-slate-950 font-black bg-white"
+                              : "text-slate-500 hover:text-slate-900 bg-slate-50/50 hover:bg-slate-50"
+                          }`}
+                        >
+                          <span>{tab.label}</span>
+                          {isActive && (
+                            <span className="absolute bottom-0 left-0 right-0 h-1 bg-[#EAB308]" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-                    <p className="text-sm sm:text-base text-slate-400 leading-relaxed max-w-xl">
-                      Custom 40mm Beryllium acoustic chambers, 45dB hybrid active noise cancellation, and zero-latency wireless connectivity. Engineered for audiophiles and competitive esports athletes.
+                {/* Deal Showcase Banner */}
+                <div className="p-6 sm:p-10 grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-gradient-to-r from-white via-slate-50 to-white">
+                  <div className="md:col-span-7 space-y-4">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#EAB308] bg-yellow-50 px-3 py-1 rounded-full border border-yellow-200">
+                      {featuredDealItem.category}
+                    </span>
+
+                    <h3 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
+                      {featuredDealItem.title}
+                    </h3>
+
+                    <p className="text-xs sm:text-sm text-slate-500 leading-relaxed max-w-lg">
+                      {featuredDealItem.desc}
                     </p>
 
-                    <div className="flex flex-wrap gap-4 pt-2">
+                    <div className="flex items-baseline gap-3 pt-2">
+                      <span className="text-3xl font-black text-rose-600">
+                        ₹{featuredDealItem.price.toFixed(2)}
+                      </span>
+                      <span className="text-base text-slate-400 line-through">
+                        ₹{featuredDealItem.originalPrice.toFixed(2)}
+                      </span>
+                      <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-lg">
+                        Save ₹
+                        {(
+                          featuredDealItem.originalPrice -
+                          featuredDealItem.price
+                        ).toFixed(2)}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3 pt-3">
+                      <button
+                        onClick={() =>
+                          handleAddToCart({
+                            _id: `deal-${activeDealTab}`,
+                            name: featuredDealItem.title,
+                            price: featuredDealItem.price,
+                            compareAtPrice: featuredDealItem.originalPrice,
+                            image: featuredDealItem.image,
+                            category: featuredDealItem.category,
+                          })
+                        }
+                        className="px-8 py-3.5 bg-[#EAB308] hover:bg-yellow-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition shadow-md flex items-center gap-2 cursor-pointer active:scale-95"
+                      >
+                        <ShoppingCart size={16} />
+                        <span>Claim Week Deal</span>
+                      </button>
+
                       <button
                         onClick={() => {
                           setActivePage("specs");
                           window.scrollTo({ top: 0, behavior: "smooth" });
                         }}
-                        className="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-2xl text-xs font-bold uppercase tracking-wider transition shadow-xl shadow-blue-600/30 flex items-center gap-2 cursor-pointer transform hover:-translate-y-0.5 active:scale-95"
+                        className="px-6 py-3.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 font-bold text-xs uppercase tracking-wider rounded-xl transition cursor-pointer"
                       >
-                        <Headphones size={17} className="text-cyan-200" />
-                        <span>Explore Flagships</span>
+                        View All Deals
                       </button>
-
-                      <button
-                        onClick={() => {
-                          setActivePage("compare");
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                        }}
-                        className="px-7 py-4 bg-slate-900/90 border border-slate-700 hover:border-cyan-400 text-slate-200 rounded-2xl text-xs font-bold uppercase tracking-wider transition flex items-center gap-2 cursor-pointer hover:bg-slate-800"
-                      >
-                        <SlidersHorizontal size={16} className="text-cyan-400" />
-                        <span>Spec Shootout Matrix</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setActivePage("offers");
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                        }}
-                        className="px-5 py-4 bg-slate-900/60 border border-rose-500/30 hover:border-rose-400 text-rose-300 rounded-2xl text-xs font-bold uppercase tracking-wider transition flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Tag size={15} />
-                        <span>Flash Drops</span>
-                      </button>
-                    </div>
-
-                    {/* Technical Specs Strip */}
-                    <div className="grid grid-cols-3 gap-4 pt-6 border-t border-slate-800/80 text-left">
-                      <div>
-                        <span className="text-xl sm:text-2xl font-black text-cyan-400 font-mono">45 dB</span>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Hybrid Noise Cancellation</p>
-                      </div>
-                      <div>
-                        <span className="text-xl sm:text-2xl font-black text-emerald-400 font-mono">50 Hours</span>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Playback On Single Charge</p>
-                      </div>
-                      <div>
-                        <span className="text-xl sm:text-2xl font-black text-violet-400 font-mono">0.1 ms</span>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Ultra-Low Wireless Latency</p>
-                      </div>
                     </div>
                   </div>
 
-                  {/* Hero Visual Card */}
-                  <div className="lg:col-span-5 relative">
-                    <div className="aspect-[4/3] rounded-[36px] overflow-hidden shadow-2xl border-4 border-slate-800 bg-slate-950 relative group">
+                  <div className="md:col-span-5 flex justify-center">
+                    <div className="w-72 h-72 sm:w-80 sm:h-80 rounded-3xl overflow-hidden bg-white p-4 border border-slate-200/80 shadow-lg flex items-center justify-center">
                       <img
-                        src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=900&auto=format&fit=crop&q=80"
-                        alt="TechNova Audio Flagship"
-                        className="w-full h-full object-cover transform group-hover:scale-105 transition duration-700"
+                        src={featuredDealItem.image}
+                        alt={featuredDealItem.title}
+                        className="w-full h-full object-contain"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
-
-                      <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between">
-                        <div>
-                          <span className="text-xs font-bold text-cyan-400 uppercase tracking-widest font-mono">
-                            Flagship Acoustics
-                          </span>
-                          <h4 className="text-lg font-bold text-white">AeroPulse Master Studio ANC</h4>
-                        </div>
-                        <button
-                          onClick={() => handleSelectProduct(techItems[0])}
-                          className="p-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl transition cursor-pointer font-bold shadow-lg"
-                        >
-                          <ChevronRight size={18} />
-                        </button>
-                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* FLAGSHIP HARDWARE SHOWCASE GRID */}
-            <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 text-left">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-slate-800 pb-6">
-                <div>
-                  <div className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider text-cyan-400 font-bold font-mono">
-                    <Sparkles size={14} />
-                    <span>Acoustic & Hardware Lineup</span>
-                  </div>
-                  <h2 className="text-3xl sm:text-4xl font-black text-white mt-1">
-                    Featured Flagships
-                  </h2>
+            {/* ================= SECTION 2: SAVE BIG ON WAREHOUSE CLEANING ================= */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b-2 border-slate-100 pb-3">
+                {/* Yellow Underlined Title */}
+                <div className="relative">
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900">
+                    Save Big on Warehouse Cleaning
+                  </h3>
+                  <div className="h-1 w-28 bg-[#EAB308] rounded-full mt-1.5" />
                 </div>
 
-                <div className="flex items-center gap-3">
+                {/* Filter discount pills & Section link */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    {["80", "65", "45", "25"].map((pct) => (
+                      <button
+                        key={pct}
+                        onClick={() => setWarehouseDiscount(pct)}
+                        className={`px-3 py-1 rounded-full text-xs font-black transition cursor-pointer ${
+                          warehouseDiscount === pct
+                            ? "bg-[#EAB308] text-slate-950 shadow-xs"
+                            : "bg-slate-100 hover:bg-slate-200 text-slate-600"
+                        }`}
+                      >
+                        -{pct}% off
+                      </button>
+                    ))}
+                  </div>
+
                   <button
                     onClick={() => {
-                      setActivePage("specs");
+                      setActivePage("offers");
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-400 hover:text-cyan-300 transition cursor-pointer font-mono"
+                    className="text-xs font-bold text-slate-600 hover:text-sky-600 transition flex items-center gap-1 cursor-pointer"
                   >
-                    <span>View All Specifications ({techItems.length} models)</span>
-                    <ArrowRight size={14} />
+                    <span>Go to Daily Deals Section</span>
+                    <ChevronRight size={14} />
                   </button>
                 </div>
               </div>
 
-              {/* Hardware Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {techItems.slice(0, 8).map((item) => {
-                  const isCompared = compareList.some((c) => c._id === item._id);
-                  return (
-                    <ProductCard
-                      key={item._id}
-                      product={item}
-                      onSelectProduct={handleSelectProduct}
-                      onAddToCart={handleAddToCart}
-                      onToggleCompare={handleToggleCompare}
-                      isCompared={isCompared}
+              {/* Product Grid / Row */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+                {techCatalog.slice(0, 6).map((item) => (
+                  <ProductCard
+                    key={item._id || item.id}
+                    product={item}
+                    onSelectProduct={(p) => {
+                      setSelectedProduct(p);
+                      setActivePage("product-detail");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    onAddToCart={handleAddToCart}
+                    onToggleCompare={handleToggleCompare}
+                    isCompared={compareList.some(
+                      (c) => (c._id || c.id) === (item._id || item.id),
+                    )}
+                  />
+                ))}
+              </div>
+
+              {/* Carousel Pagination Indicator Dots */}
+              <div className="flex justify-center items-center gap-1.5 pt-2">
+                <span className="w-4 h-1.5 rounded-full bg-[#EAB308]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+              </div>
+            </section>
+
+            {/* ================= SECTION 3: DUAL CATEGORY PROMO BANNERS ================= */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Banner 1: Cameras */}
+                <div className="rounded-3xl bg-[#F8FAFC] border border-slate-200 p-6 sm:p-8 flex items-center justify-between overflow-hidden shadow-2xs group hover:shadow-md transition">
+                  <div className="w-36 sm:w-44 h-36 shrink-0">
+                    <img
+                      src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&auto=format&fit=crop&q=80"
+                      alt="Digital Camera"
+                      className="w-full h-full object-contain group-hover:scale-105 transition duration-300"
                     />
-                  );
-                })}
+                  </div>
+
+                  <div className="space-y-2 text-right pl-4">
+                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                      CATCH HOTTEST
+                    </span>
+                    <h4 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                      DEALS IN CAMERAS CATEGORY
+                    </h4>
+                    <button
+                      onClick={() => {
+                        setSelectedCategory("Cameras & Photography");
+                        setActivePage("specs");
+                      }}
+                      className="text-xs font-black text-slate-900 hover:text-sky-600 inline-flex items-center gap-1 transition pt-1 cursor-pointer"
+                    >
+                      <span>Shop now</span>
+                      <span className="w-4 h-4 rounded-full bg-[#EAB308] text-slate-950 flex items-center justify-center text-[10px]">
+                        ›
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Banner 2: Desktop & Tablets */}
+                <div className="rounded-3xl bg-[#F8FAFC] border border-slate-200 p-6 sm:p-8 flex items-center justify-between overflow-hidden shadow-2xs group hover:shadow-md transition">
+                  <div className="w-36 sm:w-44 h-36 shrink-0">
+                    <img
+                      src="https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=400&auto=format&fit=crop&q=80"
+                      alt="Gaming PC"
+                      className="w-full h-full object-contain group-hover:scale-105 transition duration-300"
+                    />
+                  </div>
+
+                  <div className="space-y-2 text-right pl-4">
+                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                      TABLETS, SMARTPHONES
+                    </span>
+                    <h4 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                      AND MORE
+                    </h4>
+                    <div className="text-xs text-slate-600 font-bold">
+                      FROM{" "}
+                      <strong className="text-lg text-slate-900 font-black">
+                        $749.99
+                      </strong>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSelectedCategory("Laptops, Computers");
+                        setActivePage("specs");
+                      }}
+                      className="text-xs font-black text-slate-900 hover:text-sky-600 inline-flex items-center gap-1 transition pt-1 cursor-pointer"
+                    >
+                      <span>Shop now</span>
+                      <span className="w-4 h-4 rounded-full bg-[#EAB308] text-slate-950 flex items-center justify-center text-[10px]">
+                        ›
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </section>
 
-            {/* INTERACTIVE LABORATORY CALLOUT BANNER */}
-            <section className="py-16 bg-gradient-to-r from-slate-900/90 via-[#0B1222] to-slate-900/90 border-y border-slate-800">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center max-w-2xl mx-auto space-y-2 mb-10">
-                  <span className="text-xs uppercase tracking-widest text-cyan-400 font-bold font-mono">
-                    Laboratory Audio & Power Suites
-                  </span>
-                  <h2 className="text-3xl font-black text-white">Interactive Engineering Tools</h2>
-                  <p className="text-xs text-slate-400">
-                    Interact directly with simulated DSP acoustic response curves and real-time battery stamina calculations.
+            {/* ================= SECTION 4: TRENDING PRODUCTS ================= */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+              <div className="flex items-end justify-between border-b-2 border-slate-100 pb-3">
+                <div className="relative">
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900">
+                    Trending products
+                  </h3>
+                  <div className="h-1 w-20 bg-[#EAB308] rounded-full mt-1.5" />
+                </div>
+
+                <button
+                  onClick={() => {
+                    setActivePage("specs");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="text-xs font-bold text-slate-600 hover:text-sky-600 transition flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Go to Trending products</span>
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+
+              {/* Products Row */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4">
+                {techCatalog.slice(0, 7).map((item) => (
+                  <ProductCard
+                    key={item._id || item.id}
+                    product={item}
+                    onSelectProduct={(p) => {
+                      setSelectedProduct(p);
+                      setActivePage("product-detail");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    onAddToCart={handleAddToCart}
+                    onToggleCompare={handleToggleCompare}
+                    isCompared={compareList.some(
+                      (c) => (c._id || c.id) === (item._id || item.id),
+                    )}
+                  />
+                ))}
+              </div>
+
+              {/* Dots */}
+              <div className="flex justify-center items-center gap-1.5 pt-2">
+                <span className="w-4 h-1.5 rounded-full bg-[#EAB308]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+              </div>
+            </section>
+
+            {/* ================= SECTION 5: POPULAR PRODUCTS ================= */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+              <div className="flex items-end justify-between border-b-2 border-slate-100 pb-3">
+                <div className="relative">
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900">
+                    Popular Products
+                  </h3>
+                  <div className="h-1 w-20 bg-[#EAB308] rounded-full mt-1.5" />
+                </div>
+
+                <button
+                  onClick={() => {
+                    setActivePage("specs");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="text-xs font-bold text-slate-600 hover:text-sky-600 transition flex items-center gap-1 cursor-pointer"
+                >
+                  <span>View All</span>
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+
+              {/* Popular Products Row */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4">
+                {techCatalog.slice(0, 7).map((item) => (
+                  <ProductCard
+                    key={`pop-${item._id || item.id}`}
+                    product={item}
+                    onSelectProduct={(p) => {
+                      setSelectedProduct(p);
+                      setActivePage("product-detail");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    onAddToCart={handleAddToCart}
+                    onToggleCompare={handleToggleCompare}
+                    isCompared={compareList.some(
+                      (c) => (c._id || c.id) === (item._id || item.id),
+                    )}
+                  />
+                ))}
+              </div>
+
+              {/* Dots */}
+              <div className="flex justify-center items-center gap-1.5 pt-2">
+                <span className="w-4 h-1.5 rounded-full bg-[#EAB308]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+              </div>
+            </section>
+
+            {/* ================= SECTION 6: WIDE TABLET PROMO BANNER ================= */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="rounded-3xl bg-gradient-to-r from-[#F1F5F9] via-[#F8FAFC] to-[#F1F5F9] border border-slate-200 p-8 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs overflow-hidden">
+                <div className="space-y-3 max-w-lg">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h3 className="text-xl sm:text-2xl font-black text-slate-900">
+                      SHOP AND <span className="text-slate-900">SAVE BIG</span>{" "}
+                      ON HOTTEST TABLETS
+                    </h3>
+                    <span className="px-3 py-1 rounded-xl bg-[#EAB308] text-slate-950 font-black text-xs shadow-xs">
+                      STARTING AT $79.99
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Featuring high-density 2K retina screens, active digitizer
+                    stylus support, and all-day battery efficiency.
                   </p>
+                  <button
+                    onClick={() => {
+                      setSelectedCategory("Laptops, Hybrid Tablets");
+                      setActivePage("specs");
+                    }}
+                    className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer"
+                  >
+                    Explore Tablets
+                  </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-                  <div
-                    onClick={() => {
-                      setActivePage("compare");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    className="p-6 rounded-3xl bg-slate-950/80 border border-slate-800 hover:border-cyan-500/40 transition cursor-pointer group shadow-xl"
-                  >
-                    <SlidersHorizontal size={28} className="text-cyan-400 mb-4 group-hover:scale-110 transition duration-300" />
-                    <h3 className="text-lg font-bold text-white group-hover:text-cyan-300">Spec-by-Spec Shootout</h3>
-                    <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                      Place any two models side-by-side to contrast driver materials, acoustic isolation, and polling rates.
-                    </p>
-                    <span className="mt-4 inline-flex items-center gap-1 text-xs text-cyan-400 font-bold">
-                      Launch Shootout <ArrowRight size={13} />
-                    </span>
-                  </div>
-
-                  <div
-                    onClick={() => {
-                      setActivePage("eq-lab");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    className="p-6 rounded-3xl bg-slate-950/80 border border-slate-800 hover:border-cyan-500/40 transition cursor-pointer group shadow-xl"
-                  >
-                    <Sliders size={28} className="text-cyan-400 mb-4 group-hover:scale-110 transition duration-300" />
-                    <h3 className="text-lg font-bold text-white group-hover:text-cyan-300">EQ Soundstage Simulator</h3>
-                    <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                      Visualize 16-band DSP frequency responses across Studio Flat, Sub-Bass, and Vocal Clarity profiles.
-                    </p>
-                    <span className="mt-4 inline-flex items-center gap-1 text-xs text-cyan-400 font-bold">
-                      Tune Soundstage <ArrowRight size={13} />
-                    </span>
-                  </div>
-
-                  <div
-                    onClick={() => {
-                      setActivePage("battery-calc");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    className="p-6 rounded-3xl bg-slate-950/80 border border-slate-800 hover:border-cyan-500/40 transition cursor-pointer group shadow-xl"
-                  >
-                    <Battery size={28} className="text-emerald-400 mb-4 group-hover:scale-110 transition duration-300" />
-                    <h3 className="text-lg font-bold text-white group-hover:text-emerald-300">Battery Stamina Lab</h3>
-                    <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                      Calculate exact days between wall charges based on your daily music, calls, and ANC active status.
-                    </p>
-                    <span className="mt-4 inline-flex items-center gap-1 text-xs text-emerald-400 font-bold">
-                      Calculate Usage <ArrowRight size={13} />
-                    </span>
-                  </div>
+                <div className="w-64 sm:w-80 h-44 shrink-0 flex items-center justify-center">
+                  <img
+                    src="https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&auto=format&fit=crop&q=80"
+                    alt="Tablets"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
               </div>
             </section>
-          </>
+
+            {/* ================= SECTION 7: LAPTOPS & COMPUTERS ================= */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+              <div className="flex items-end justify-between border-b-2 border-slate-100 pb-3">
+                <div className="relative">
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900">
+                    Laptops & Computers
+                  </h3>
+                  <div className="h-1 w-24 bg-[#EAB308] rounded-full mt-1.5" />
+                </div>
+
+                <button
+                  onClick={() => {
+                    setSelectedCategory("Laptops, Computers");
+                    setActivePage("specs");
+                  }}
+                  className="text-xs font-bold text-slate-600 hover:text-sky-600 transition flex items-center gap-1 cursor-pointer"
+                >
+                  <span>View All Laptops</span>
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+
+              {/* Laptops Row */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4">
+                {techCatalog.slice(5, 12).map((item) => (
+                  <ProductCard
+                    key={`lap-${item._id || item.id}`}
+                    product={item}
+                    onSelectProduct={(p) => {
+                      setSelectedProduct(p);
+                      setActivePage("product-detail");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    onAddToCart={handleAddToCart}
+                    onToggleCompare={handleToggleCompare}
+                    isCompared={compareList.some(
+                      (c) => (c._id || c.id) === (item._id || item.id),
+                    )}
+                  />
+                ))}
+              </div>
+
+              {/* Dots */}
+              <div className="flex justify-center items-center gap-1.5 pt-2">
+                <span className="w-4 h-1.5 rounded-full bg-[#EAB308]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+              </div>
+            </section>
+
+            {/* ================= SECTION 8: TELEVISION ENTERTAINMENT ================= */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+              <div className="flex items-end justify-between border-b-2 border-slate-100 pb-3">
+                <div className="relative flex items-center gap-2">
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900">
+                    Television Entertainment
+                  </h3>
+                  <span className="px-2.5 py-0.5 rounded-md bg-[#EAB308] text-slate-950 font-black text-[10px]">
+                    Top 20
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setSelectedCategory("Audio Systems, TV & Audio");
+                    setActivePage("specs");
+                  }}
+                  className="text-xs font-bold text-slate-600 hover:text-sky-600 transition flex items-center gap-1 cursor-pointer"
+                >
+                  <span>View All Home Cinema</span>
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+
+              {/* TV & Audio Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {[
+                  {
+                    name: '4K Ultra HD Smart OLED Curved TV 55"',
+                    price: 1199.0,
+                    compareAtPrice: 1599.0,
+                    category: "Audio Systems, TV & Audio",
+                    image:
+                      "https://images.unsplash.com/photo-1593784991095-a205069470b6?w=600&auto=format&fit=crop&q=80",
+                  },
+                  {
+                    name: "Wireless Audio System Multiroom 360",
+                    price: 2299.0,
+                    compareAtPrice: 2600.0,
+                    category: "Audio Systems, TV & Audio",
+                    image:
+                      "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=600&auto=format&fit=crop&q=80",
+                  },
+                  {
+                    name: "Dolby Atmos Wireless Subwoofer Soundbar",
+                    price: 499.0,
+                    compareAtPrice: 650.0,
+                    category: "Audio Systems, TV & Audio",
+                    image:
+                      "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=600&auto=format&fit=crop&q=80",
+                  },
+                  {
+                    name: "Ultra 4K Laser Cinema Home Projector",
+                    price: 1899.0,
+                    compareAtPrice: 2200.0,
+                    category: "Audio Systems, TV & Audio",
+                    image:
+                      "https://images.unsplash.com/photo-1593784991095-a205069470b6?w=600&auto=format&fit=crop&q=80",
+                  },
+                ].map((tv, idx) => (
+                  <ProductCard
+                    key={`tv-${idx}`}
+                    product={{
+                      ...tv,
+                      _id: `tv-${idx}`,
+                      rating: 4.9,
+                      reviewCount: 65,
+                    }}
+                    onSelectProduct={(p) => {
+                      setSelectedProduct(p);
+                      setActivePage("product-detail");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    onAddToCart={handleAddToCart}
+                    onToggleCompare={handleToggleCompare}
+                  />
+                ))}
+              </div>
+            </section>
+          </div>
         )}
 
-        {/* ================= VIEW 2: HARDWARE ARSENAL (PRODUCT CATALOG) ================= */}
+        {/* ================= VIEW 2: HARDWARE SPECS CATALOG ================= */}
         {activePage === "specs" && (
           <Product
-            products={techItems}
-            onSelectProduct={handleSelectProduct}
+            products={techCatalog}
+            onSelectProduct={(p) => {
+              setSelectedProduct(p);
+              setActivePage("product-detail");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
             onAddToCart={handleAddToCart}
             compareList={compareList}
             onToggleCompare={handleToggleCompare}
-            onOpenCompareMatrix={() => {
-              setActivePage("compare");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
+            onOpenCompareMatrix={() => setActivePage("compare")}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             selectedCategory={selectedCategory}
@@ -601,319 +1130,184 @@ export default function TechNovaTemplate({
           />
         )}
 
-        {/* ================= VIEW 3: SPEC-BY-SPEC COMPARISON MATRIX ================= */}
+        {/* ================= VIEW 3: COMPARISON MATRIX ================= */}
         {activePage === "compare" && (
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-10 text-left">
-            <div className="text-center max-w-2xl mx-auto space-y-2">
-              <span className="text-xs uppercase tracking-[0.2em] text-cyan-400 font-bold font-mono">
-                Hardware Shootout
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-black text-white">Side-by-Side Spec Comparison</h1>
-              <p className="text-xs sm:text-sm text-slate-400">
-                Select any 2 devices from our laboratory arsenal to contrast active noise cancellation, driver architecture, and battery stamina.
-              </p>
+          <div className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 text-left">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900">
+                  Hardware Comparison Matrix
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Side-by-side technical evaluation of selected devices.
+                </p>
+              </div>
+              <button
+                onClick={() => setCompareList([])}
+                className="text-xs font-bold text-rose-600 hover:underline cursor-pointer"
+              >
+                Clear All
+              </button>
             </div>
 
-            {/* Device Selectors */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-slate-900/60 p-6 rounded-3xl border border-slate-800">
-              <div className="space-y-2">
-                <label className="block text-xs font-bold text-cyan-400 font-mono">Device A (Primary)</label>
-                <select
-                  value={compareId1}
-                  onChange={(e) => setCompareId1(e.target.value)}
-                  className="w-full px-3.5 py-3 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:border-cyan-400 focus:outline-none"
+            {compareList.length === 0 ? (
+              <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 space-y-3">
+                <SlidersHorizontal
+                  size={36}
+                  className="mx-auto text-slate-300"
+                />
+                <h3 className="text-base font-bold text-slate-700">
+                  No devices added to comparison
+                </h3>
+                <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                  Click the slider icon on any product card in the store to add
+                  it to this comparison matrix.
+                </p>
+                <button
+                  onClick={() => setActivePage("specs")}
+                  className="px-6 py-2.5 rounded-xl bg-[#EAB308] text-slate-950 font-bold text-xs"
                 >
-                  {techItems.map((t) => (
-                    <option key={t._id} value={t._id}>
-                      {t.name} (₹{t.price})
-                    </option>
-                  ))}
-                </select>
+                  Browse Catalog
+                </button>
               </div>
-
-              <div className="space-y-2">
-                <label className="block text-xs font-bold text-blue-400 font-mono">Device B (Challenger)</label>
-                <select
-                  value={compareId2}
-                  onChange={(e) => setCompareId2(e.target.value)}
-                  className="w-full px-3.5 py-3 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:border-blue-400 focus:outline-none"
-                >
-                  {techItems.map((t) => (
-                    <option key={t._id} value={t._id}>
-                      {t.name} (₹{t.price})
-                    </option>
-                  ))}
-                </select>
+            ) : (
+              <div className="overflow-x-auto bg-white rounded-3xl border border-slate-200 shadow-sm">
+                <table className="w-full text-xs text-left">
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50">
+                      <th className="p-4 font-bold text-slate-500 uppercase w-48">
+                        Spec
+                      </th>
+                      {compareList.map((p) => (
+                        <th
+                          key={p._id || p.id}
+                          className="p-4 font-black text-slate-900 min-w-[200px]"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span>{p.name}</span>
+                            <button
+                              onClick={() => handleToggleCompare(p)}
+                              className="text-slate-400 hover:text-rose-600 p-1"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    <tr>
+                      <td className="p-4 font-bold text-slate-500">
+                        Product Image
+                      </td>
+                      {compareList.map((p) => (
+                        <td key={p._id || p.id} className="p-4">
+                          <img
+                            src={getProductImage(p, p.image)}
+                            alt={p.name}
+                            className="w-24 h-24 object-contain rounded-lg border border-slate-100 p-1"
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                    <tr>
+                      <td className="p-4 font-bold text-slate-500">Price</td>
+                      {compareList.map((p) => (
+                        <td
+                          key={p._id || p.id}
+                          className="p-4 font-black text-base text-slate-900"
+                        >
+                          ${Number(p.price).toFixed(2)}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr>
+                      <td className="p-4 font-bold text-slate-500">Category</td>
+                      {compareList.map((p) => (
+                        <td
+                          key={p._id || p.id}
+                          className="p-4 text-slate-700 font-semibold"
+                        >
+                          {p.category}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr>
+                      <td className="p-4 font-bold text-slate-500">Rating</td>
+                      {compareList.map((p) => (
+                        <td
+                          key={p._id || p.id}
+                          className="p-4 font-semibold text-slate-700"
+                        >
+                          ★ {p.rating || "4.9"} ({p.reviewCount || 36} reviews)
+                        </td>
+                      ))}
+                    </tr>
+                    <tr>
+                      <td className="p-4 font-bold text-slate-500">
+                        Hardware Features
+                      </td>
+                      {compareList.map((p) => (
+                        <td key={p._id || p.id} className="p-4 text-slate-600">
+                          {p.specs
+                            ? p.specs.join(" • ")
+                            : "OEM Certified Silicon"}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr>
+                      <td className="p-4 font-bold text-slate-500">Action</td>
+                      {compareList.map((p) => (
+                        <td key={p._id || p.id} className="p-4">
+                          <button
+                            onClick={() => handleAddToCart(p)}
+                            className="w-full py-2 px-3 bg-[#EAB308] hover:bg-yellow-500 text-slate-950 font-bold rounded-xl transition text-xs"
+                          >
+                            Add to Cart
+                          </button>
+                        </td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-            </div>
-
-            {/* Comparison Table */}
-            <div className="bg-slate-900/90 rounded-3xl border border-slate-800 p-6 overflow-x-auto shadow-2xl">
-              <table className="w-full text-xs text-left">
-                <thead>
-                  <tr className="border-b border-slate-800 text-slate-400 bg-slate-950/60">
-                    <th className="py-3 px-4 font-mono font-bold text-[11px] uppercase">Technical Metric</th>
-                    <th className="py-3 px-4 font-bold text-cyan-300 text-sm">{device1.name}</th>
-                    <th className="py-3 px-4 font-bold text-blue-400 text-sm">{device2.name}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/80">
-                  <tr>
-                    <td className="py-3 px-4 font-bold text-slate-400">Price</td>
-                    <td className="py-3 px-4 font-black text-white font-mono text-sm">₹{device1.price}</td>
-                    <td className="py-3 px-4 font-black text-white font-mono text-sm">₹{device2.price}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-4 font-bold text-slate-400">Category</td>
-                    <td className="py-3 px-4 text-slate-300 font-mono">{device1.category}</td>
-                    <td className="py-3 px-4 text-slate-300 font-mono">{device2.category}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-4 font-bold text-slate-400">Driver / Core Engine</td>
-                    <td className="py-3 px-4 text-cyan-300 font-bold font-mono">{device1.driverSize}</td>
-                    <td className="py-3 px-4 text-cyan-300 font-bold font-mono">{device2.driverSize}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-4 font-bold text-slate-400">Acoustic Isolation</td>
-                    <td className="py-3 px-4 text-slate-300 font-mono">{device1.ancDb}</td>
-                    <td className="py-3 px-4 text-slate-300 font-mono">{device2.ancDb}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-4 font-bold text-slate-400">Battery Stamina</td>
-                    <td className="py-3 px-4 text-emerald-400 font-bold font-mono">{device1.batteryLifeHours} Hours</td>
-                    <td className="py-3 px-4 text-emerald-400 font-bold font-mono">{device2.batteryLifeHours} Hours</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-4 font-bold text-slate-400">Codecs / Telemetry</td>
-                    <td className="py-3 px-4 text-slate-300 font-mono">{device1.codecs}</td>
-                    <td className="py-3 px-4 text-slate-300 font-mono">{device2.codecs}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-4 font-bold text-slate-400">Weight Metric</td>
-                    <td className="py-3 px-4 text-slate-300 font-mono">{device1.weightGrams}</td>
-                    <td className="py-3 px-4 text-slate-300 font-mono">{device2.weightGrams}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-4 font-bold text-slate-400">Action</td>
-                    <td className="py-3 px-4">
-                      <button
-                        onClick={() => handleAddToCart(device1)}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold cursor-pointer transition shadow"
-                      >
-                        Add {device1.name.split(" ")[0]}
-                      </button>
-                    </td>
-                    <td className="py-3 px-4">
-                      <button
-                        onClick={() => handleAddToCart(device2)}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold cursor-pointer transition shadow"
-                      >
-                        Add {device2.name.split(" ")[0]}
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            )}
           </div>
         )}
 
-        {/* ================= VIEW 4: EQ SOUNDSTAGE SIMULATOR ================= */}
-        {activePage === "eq-lab" && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-10 text-left">
-            <div className="text-center max-w-2xl mx-auto space-y-2">
-              <span className="text-xs uppercase tracking-[0.2em] text-cyan-400 font-bold font-mono">
-                DSP Acoustic Tuning
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-black text-white">Interactive EQ Soundstage Simulator</h1>
-              <p className="text-xs sm:text-sm text-slate-400">
-                Experience how our custom 40mm Beryllium acoustic chambers reproduce sound across distinct DSP harmonic profiles.
-              </p>
-            </div>
-
-            <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-6 shadow-2xl">
-              {/* Preset Buttons */}
-              <div className="flex flex-wrap justify-between items-center gap-3">
-                <span className="text-xs font-bold text-slate-300 font-mono uppercase">Select Acoustic Preset:</span>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { id: "flat", label: "Studio Flat Reference (Neutral)" },
-                    { id: "bass", label: "Sub-Bass Punch (+6dB @ 60Hz)" },
-                    { id: "vocal", label: "Vocal Clarity (+4dB @ 3kHz)" },
-                    { id: "gaming", label: "Esports Footsteps (Presence Peak)" },
-                  ].map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => setActiveEqPreset(p.id)}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition cursor-pointer ${
-                        activeEqPreset === p.id
-                          ? "bg-cyan-500 text-slate-950 border-cyan-400 font-black shadow-md"
-                          : "bg-slate-950 text-slate-400 border-slate-700 hover:text-white"
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Graphic Soundwave Bars */}
-              <div className="p-8 rounded-2xl bg-slate-950 border border-slate-800 space-y-4 shadow-inner">
-                <div className="h-44 flex items-end justify-between gap-1 sm:gap-2 px-2">
-                  {[30, 45, 60, 80, 70, 55, 65, 90, 85, 60, 50, 65, 75, 80, 50, 40].map((h, i) => {
-                    let adjustedH = h;
-                    if (activeEqPreset === "bass" && i < 6) adjustedH = Math.min(100, h * 1.5);
-                    if (activeEqPreset === "vocal" && i >= 6 && i <= 11) adjustedH = Math.min(100, h * 1.4);
-                    if (activeEqPreset === "gaming" && i >= 9 && i <= 13) adjustedH = Math.min(100, h * 1.45);
-                    return (
-                      <div
-                        key={i}
-                        className="w-full bg-gradient-to-t from-blue-600 via-cyan-500 to-cyan-300 rounded-t-lg transition-all duration-300 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
-                        style={{ height: `${adjustedH}%` }}
-                      />
-                    );
-                  })}
-                </div>
-                <div className="flex justify-between text-[10px] font-mono text-slate-500 pt-2 border-t border-slate-800">
-                  <span>20 Hz (Sub)</span>
-                  <span>250 Hz (Low Mid)</span>
-                  <span>2.5 kHz (Presence)</span>
-                  <span>20 kHz (Air)</span>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs text-slate-300 leading-relaxed font-mono">
-                {activeEqPreset === "flat" && (
-                  <p>
-                    🎯 <strong>Reference Mode:</strong> Perfectly flat Harman target calibration. Zero artificial low-end coloration, allowing producers and mastering engineers to hear honest transients.
-                  </p>
-                )}
-                {activeEqPreset === "bass" && (
-                  <p>
-                    🔥 <strong>Bass Extension:</strong> Enhanced sub-bass magnetic induction delivering visceral visceral slam for cinematic trailers and EDM without muddying the vocal midrange.
-                  </p>
-                )}
-                {activeEqPreset === "vocal" && (
-                  <p>
-                    🎙️ <strong>Vocal Presence:</strong> Elevated 3kHz–8kHz acoustic contour emphasizing crisp podcast speech articulation, acoustic instruments, and high vocal harmonies.
-                  </p>
-                )}
-                {activeEqPreset === "gaming" && (
-                  <p>
-                    ⚡ <strong>Esports Precision:</strong> Acoustic profile tuned to sharpen enemy footstep transients, tactical reloads, and spatial audio cues in competitive FPS environments.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ================= VIEW 5: BATTERY USAGE LAB ================= */}
-        {activePage === "battery-calc" && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-10 text-left">
-            <div className="text-center max-w-2xl mx-auto space-y-2">
-              <span className="text-xs uppercase tracking-[0.2em] text-emerald-400 font-bold font-mono">
-                Power Optimization
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-black text-white">Daily Battery Stamina Calculator</h1>
-              <p className="text-xs sm:text-sm text-slate-400">
-                Estimate how many days our AeroPulse headphones will last based on your exact listening habits and ANC toggles.
-              </p>
-            </div>
-
-            <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-6 shadow-2xl">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs font-bold text-slate-300 font-mono">
-                    <span>Music Playback: {dailyMusicHours} Hours/Day</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    value={dailyMusicHours}
-                    onChange={(e) => setDailyMusicHours(Number(e.target.value))}
-                    className="w-full accent-cyan-400 cursor-pointer"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs font-bold text-slate-300 font-mono">
-                    <span>Calls & Gaming: {dailyCallHours} Hours/Day</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="8"
-                    value={dailyCallHours}
-                    onChange={(e) => setDailyCallHours(Number(e.target.value))}
-                    className="w-full accent-cyan-400 cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <label className="flex items-center justify-between p-4 rounded-2xl bg-slate-950 border border-slate-800 cursor-pointer">
-                  <span className="text-xs font-bold text-white">Enable 45dB Active Noise Cancellation</span>
-                  <input
-                    type="checkbox"
-                    checked={ancEnabled}
-                    onChange={(e) => setAncEnabled(e.target.checked)}
-                    className="accent-cyan-400 w-4 h-4 cursor-pointer"
-                  />
-                </label>
-              </div>
-
-              {/* Output Stats */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-800">
-                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-emerald-400 block font-mono">Single Charge Stamina</span>
-                  <span className="text-3xl font-black text-white font-mono">{calculatedDays} Days</span>
-                  <p className="text-[10px] text-slate-500">between wall charges</p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-cyan-400 block font-mono">Fast Charge Top-Up</span>
-                  <span className="text-3xl font-black text-white font-mono">10m = 5h</span>
-                  <p className="text-[10px] text-slate-500">via USB-C GaN fast charge</p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-violet-400 block font-mono">Cell Chemistry</span>
-                  <span className="text-3xl font-black text-white font-mono">1000 mAh</span>
-                  <p className="text-[10px] text-slate-500">High-density lithium polymer</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ================= VIEW 6: OFFERS & FLASH DROPS ================= */}
+        {/* ================= VIEW 4: WAREHOUSE DEALS ================= */}
         {activePage === "offers" && (
           <Offer
-            products={techItems}
-            onSelectProduct={handleSelectProduct}
-            onAddToCart={handleAddToCart}
-            onOpenSpecs={() => {
-              setActivePage("specs");
+            products={techCatalog}
+            onSelectProduct={(p) => {
+              setSelectedProduct(p);
+              setActivePage("product-detail");
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
+            onAddToCart={handleAddToCart}
           />
         )}
 
-        {/* ================= VIEW 7: FULL PRODUCT DETAILS INSPECTOR ================= */}
+        {/* ================= VIEW 5: PRODUCT DETAILS ================= */}
         {activePage === "product-detail" && selectedProduct && (
-          <ProductDeltails
+          <ProductDetails
             product={selectedProduct}
             onBack={() => {
-              setActivePage("home");
+              setActivePage("specs");
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
             onAddToCart={handleAddToCart}
-            relatedProducts={techItems}
-            onSelectProduct={handleSelectProduct}
+            relatedProducts={techCatalog}
+            onSelectProduct={(p) => {
+              setSelectedProduct(p);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
             onToggleCompare={handleToggleCompare}
-            isCompared={compareList.some((c) => c._id === selectedProduct._id)}
+            isCompared={compareList.some(
+              (c) =>
+                (c._id || c.id) === (selectedProduct._id || selectedProduct.id),
+            )}
           />
         )}
       </main>
@@ -921,18 +1315,13 @@ export default function TechNovaTemplate({
       {/* ================= 3. FOOTER ================= */}
       <Footer
         brandName={brandName}
-        brandLogo={brandLogo}
         brandPhone={brandPhone}
         brandEmail={brandEmail}
         brandAddress={brandAddress}
-        onNavigate={(page, cat = null) => {
-          if (cat) setSelectedCategory(cat);
-          setActivePage(page);
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }}
+        setActivePage={setActivePage}
       />
 
-      {/* ================= 4. REDUX CART DRAWER ================= */}
+      {/* ================= 4. CART DRAWER ================= */}
       <CartDrawer
         isOpen={cartOpen}
         onClose={() => setCartOpen(false)}
@@ -940,7 +1329,7 @@ export default function TechNovaTemplate({
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
         onCheckout={handleCheckout}
-        themeColors={{ primary: "#06B6D4" }}
+        themeColors={{ primary: "#EAB308" }}
       />
     </div>
   );

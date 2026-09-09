@@ -96,11 +96,31 @@ export default function StoreRenderer({ templateKey = "freshmart", data = {}, is
     };
   });
 
+  const rawBanners =
+    data.banners && data.banners.length > 0
+      ? data.banners
+      : entry.demoData?.banners || entry.demoData?.heroSlides || [];
+
+  const sanitizedBanners = rawBanners.map((b, idx) => ({
+    id: b.id || b._id || `banner-${idx}`,
+    _id: b._id || b.id || `banner-${idx}`,
+    title: b.title || sanitizedBusiness.businessName || sanitizedBusiness.name || "Featured Collection",
+    subtitle: b.subtitle || b.description || "",
+    description: b.description || b.subtitle || "",
+    image: b.image || b.bgImage || b.bannerUrl || "",
+    bgImage: b.bgImage || b.image || b.bannerUrl || "",
+    ctaText: b.ctaText || b.buttonText || "Shop Now",
+    ctaCategory: b.ctaCategory || b.category || "all",
+    link: b.link || b.targetUrl || "#products",
+    type: b.type || "hero",
+  }));
+
   return (
     <TemplateComponent
       business={sanitizedBusiness}
       products={sanitizedProducts}
       services={sanitizedServices}
+      banners={sanitizedBanners}
       categories={data.categories?.length ? data.categories : entry.demoData?.categories || []}
       offers={data.offers?.length ? data.offers : entry.demoData?.offers || []}
       coupons={data.coupons?.length ? data.coupons : entry.demoData?.coupons || []}

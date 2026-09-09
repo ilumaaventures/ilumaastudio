@@ -1,27 +1,25 @@
 import React, { useState } from "react";
 import {
-  Gem,
-  Award,
   ShieldCheck,
+  Truck,
+  Sparkles,
   Phone,
   Mail,
   MapPin,
-  Check,
   ArrowRight,
-  Lock,
+  Clock,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function Footer({
-  brandName = "LUXE JEWELS",
-  brandLogo = null,
-  brandPhone = "+41 22 819 9000",
-  brandEmail = "concierge@luxejewels.ch",
-  brandAddress = "Rue du Rhône 42, 1204 Genève, Switzerland",
+  brandName = "LUXE & CO. HAUTE JOAILLERIE",
+  brandPhone = "+1 (800) 777-LUXE",
+  brandEmail = "concierge@luxejewels.com",
   onNavigate,
+  onSelectCategory,
+  onOpenShowroom,
 }) {
   const [email, setEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
 
   const handleSubscribe = (e) => {
     e.preventDefault();
@@ -29,222 +27,200 @@ export default function Footer({
       toast.error("Please enter a valid email address.");
       return;
     }
-    setSubscribed(true);
-    toast.success("Welcome to the Haute Joaillerie Society. Private viewing invitations will be sent to your registry. 💎");
+    toast.success("Thank you for subscribing to our private jewelry releases! ✨");
     setEmail("");
-    setTimeout(() => setSubscribed(false), 5000);
   };
 
   return (
-    <footer className="bg-[#08080A] text-[#A89F91] pt-16 pb-12 border-t border-[#D4AF37]/25 text-left text-xs font-serif">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        {/* Salon Newsletter Banner */}
-        <div className="rounded-3xl bg-gradient-to-r from-[#141418] via-[#1A181F] to-[#141418] border border-[#D4AF37]/30 p-6 sm:p-8 flex flex-col lg:flex-row items-center justify-between gap-6 shadow-2xl">
-          <div className="space-y-1.5 text-center lg:text-left">
-            <span className="text-[#D4AF37] text-[10px] tracking-widest uppercase font-bold block font-sans">
-              THE GENEVA SALON PRIVILEGE REGISTRY
-            </span>
-            <h3 className="text-xl sm:text-2xl font-black text-[#FAFAFA]">
-              Private viewings of rare multi-carat diamonds & gala exhibitions.
-            </h3>
-            <p className="text-[#78716C] text-xs font-sans">
-              Receive confidential gemological dossiers and invitations to private salon viewings.
-            </p>
+    <footer className="bg-[#191919] text-stone-300 pt-16 pb-12 border-t border-stone-800 text-left">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-14">
+        {/* 4 Brand Pillars */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-12 border-b border-stone-800">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-full bg-stone-800 flex items-center justify-center text-[#AA771C] shrink-0">
+              <Truck size={18} />
+            </div>
+            <div className="space-y-0.5">
+              <h4 className="text-white font-semibold text-xs uppercase tracking-wider">
+                Insured Armored Courier
+              </h4>
+              <p className="text-[11px] text-stone-400">
+                Discreet worldwide armored delivery with adult signature required.
+              </p>
+            </div>
           </div>
 
-          <form
-            onSubmit={handleSubscribe}
-            className="w-full lg:w-auto flex flex-col sm:flex-row items-center gap-2 max-w-md font-sans"
-          >
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="patron@domain.com"
-              className="w-full sm:w-72 bg-[#0E0E12] text-xs text-[#FAFAFA] placeholder-[#555] px-4 py-3 rounded-xl border border-[#D4AF37]/40 focus:border-[#FBBF24] focus:outline-none transition shadow-inner"
-            />
-            <button
-              type="submit"
-              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#AA771C] hover:from-[#E5C158] hover:to-[#B88622] text-[#0A0A0C] font-black text-xs transition cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap shadow"
-            >
-              {subscribed ? (
-                <>
-                  <Check size={14} />
-                  <span>Enrolled!</span>
-                </>
-              ) : (
-                <>
-                  <span>Join Registry</span>
-                  <ArrowRight size={14} />
-                </>
-              )}
-            </button>
-          </form>
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-full bg-stone-800 flex items-center justify-center text-[#AA771C] shrink-0">
+              <ShieldCheck size={18} />
+            </div>
+            <div className="space-y-0.5">
+              <h4 className="text-white font-semibold text-xs uppercase tracking-wider">
+                100% Conflict-Free
+              </h4>
+              <p className="text-[11px] text-stone-400">
+                Certified ethical gemstones adhering to strict Kimberley Process standards.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-full bg-stone-800 flex items-center justify-center text-[#AA771C] shrink-0">
+              <Sparkles size={18} />
+            </div>
+            <div className="space-y-0.5">
+              <h4 className="text-white font-semibold text-xs uppercase tracking-wider">
+                Lifetime Care & Polish
+              </h4>
+              <p className="text-[11px] text-stone-400">
+                Complimentary prong inspection and ultrasonic cleaning at our showroom.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-full bg-stone-800 flex items-center justify-center text-[#AA771C] shrink-0">
+              <Clock size={18} />
+            </div>
+            <div className="space-y-0.5">
+              <h4 className="text-white font-semibold text-xs uppercase tracking-wider">
+                Showroom Consultations
+              </h4>
+              <p className="text-[11px] text-stone-400">
+                Private appointments with certified master gemologists.
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Footer Navigation Columns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-          {/* Brand Col */}
+        {/* Main Footer Links */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
+          {/* Brand Info */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              {brandLogo ? (
-                <img
-                  src={brandLogo}
-                  alt={brandName}
-                  className="h-8 w-auto max-w-[130px] object-contain"
-                />
-              ) : (
-                <div className="w-9 h-9 rounded-xl bg-[#141418] text-[#D4AF37] border border-[#D4AF37]/40 flex items-center justify-center shadow-md">
-                  <Gem size={18} className="text-[#FBBF24]" />
-                </div>
-              )}
-              <span className="text-lg font-black tracking-widest text-[#FAFAFA] uppercase">
-                {brandName}
-              </span>
+              <div className="w-9 h-9 rounded-full bg-[#AA771C] text-white flex items-center justify-center font-serif text-base font-bold">
+                L
+              </div>
+              <span className="text-lg font-bold font-serif text-white">{brandName}</span>
             </div>
-
-            <p className="text-[#78716C] leading-relaxed text-xs max-w-sm font-sans">
-              Geneva haute joaillerie atelier crafting certified conflict-free solitaire creations, unheated colored gemstones, and bespoke bridal parures since 1984.
+            <p className="text-xs text-stone-400 leading-relaxed max-w-sm">
+              Having an exclusive range of handmade jewelry. Designed for timeless distinction, using 18k solid gold, 925 sterling silver, and ethically cut diamonds.
             </p>
-
-            <div className="flex items-center gap-4 text-xs font-sans text-[#FAFAFA]">
-              <span className="flex items-center gap-1 text-[#D4AF37]">
-                <Award size={14} /> GIA Triple Excellent
-              </span>
-              <span className="flex items-center gap-1 text-[#D4AF37]">
-                <Lock size={14} /> 100% Conflict-Free
-              </span>
+            <div className="space-y-1.5 text-xs text-stone-400 pt-1">
+              <p className="flex items-center gap-2">
+                <Phone size={13} className="text-[#AA771C]" /> {brandPhone}
+              </p>
+              <p className="flex items-center gap-2">
+                <Mail size={13} className="text-[#AA771C]" /> {brandEmail}
+              </p>
+              <p className="flex items-center gap-2">
+                <MapPin size={13} className="text-[#AA771C]" /> 680 Fifth Avenue, New York, NY 10019
+              </p>
             </div>
           </div>
 
-          {/* Col 2: Precious Vault */}
+          {/* Collections */}
           <div className="space-y-3">
-            <h5 className="font-bold text-[#FAFAFA] uppercase text-[11px] tracking-wider font-sans">
-              Precious Vault
-            </h5>
-            <ul className="space-y-2 text-xs">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-white">
+              Collections
+            </h4>
+            <ul className="space-y-2 text-xs text-stone-400">
+              {["Bracelets", "Earrings", "Gold Set", "Necklaces", "Silver Set", "Rings"].map((cat) => (
+                <li key={cat}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectCategory?.(cat);
+                      onNavigate?.("catalog");
+                    }}
+                    className="hover:text-white transition cursor-pointer"
+                  >
+                    {cat}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Atelier Services */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-white">
+              Atelier Services
+            </h4>
+            <ul className="space-y-2 text-xs text-stone-400">
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("catalog", "Solitaire Rings")}
-                  className="hover:text-[#FBBF24] transition cursor-pointer text-left"
+                  type="button"
+                  onClick={onOpenShowroom}
+                  className="hover:text-white transition cursor-pointer"
                 >
-                  Solitaire Diamond Rings
+                  Book Showroom Visit
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("catalog", "Diamond Necklaces")}
-                  className="hover:text-[#FBBF24] transition cursor-pointer text-left"
+                  type="button"
+                  onClick={() => onNavigate?.("catalog")}
+                  className="hover:text-white transition cursor-pointer"
                 >
-                  Rivière Necklaces & Pendants
+                  Ring Sizing Guide
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("catalog", "Fine Earrings")}
-                  className="hover:text-[#FBBF24] transition cursor-pointer text-left"
+                  type="button"
+                  onClick={() => onNavigate?.("catalog")}
+                  className="hover:text-white transition cursor-pointer"
                 >
-                  Diamond Chandelier Earrings
+                  Diamond Certification
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("catalog", "Bracelets & Baffles")}
-                  className="hover:text-[#FBBF24] transition cursor-pointer text-left"
+                  type="button"
+                  onClick={() => onNavigate?.("catalog")}
+                  className="hover:text-white transition cursor-pointer"
                 >
-                  Tennis & Baffle Bracelets
+                  Custom Bespoke Commissions
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* Col 3: Gemological Standards */}
+          {/* Newsletter */}
           <div className="space-y-3">
-            <h5 className="font-bold text-[#FAFAFA] uppercase text-[11px] tracking-wider font-sans">
-              Salon Services
-            </h5>
-            <ul className="space-y-2 text-xs">
-              <li>
-                <button
-                  onClick={() => onNavigate && onNavigate("diamonds")}
-                  className="hover:text-[#FBBF24] transition cursor-pointer text-left"
-                >
-                  The GIA 4Cs Standards
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigate && onNavigate("bespoke")}
-                  className="hover:text-[#FBBF24] transition cursor-pointer text-left"
-                >
-                  Bespoke Geneva Commission
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigate && onNavigate("appointment")}
-                  className="hover:text-[#FBBF24] transition cursor-pointer text-left"
-                >
-                  Private Salon Viewing
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigate && onNavigate("offers")}
-                  className="hover:text-[#FBBF24] transition cursor-pointer text-left"
-                >
-                  Heirloom Parures & Grants
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Col 4: Geneva Concierge */}
-          <div className="space-y-3">
-            <h5 className="font-bold text-[#FAFAFA] uppercase text-[11px] tracking-wider font-sans">
-              Geneva Concierge
-            </h5>
-            <div className="space-y-2 text-xs font-sans">
-              <a
-                href={`tel:${brandPhone}`}
-                className="flex items-center gap-1.5 text-[#FAFAFA] hover:text-[#FBBF24] font-mono transition"
+            <h4 className="text-xs font-bold uppercase tracking-wider text-white">
+              Private Registry
+            </h4>
+            <p className="text-xs text-stone-400 leading-relaxed">
+              Receive confidential gemological releases and VIP invitations.
+            </p>
+            <form onSubmit={handleSubscribe} className="space-y-2">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter email address"
+                className="w-full px-3.5 py-2 bg-stone-800 border border-stone-700 rounded text-xs text-white placeholder:text-stone-500 focus:outline-none focus:border-[#AA771C]"
+              />
+              <button
+                type="submit"
+                className="w-full py-2 bg-[#AA771C] hover:bg-[#936616] text-white text-xs font-semibold rounded uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <Phone size={13} className="text-[#D4AF37]" />
-                <span>{brandPhone}</span>
-              </a>
-              <a
-                href={`mailto:${brandEmail}`}
-                className="flex items-center gap-1.5 text-[#A89F91] hover:text-[#FBBF24] transition truncate"
-              >
-                <Mail size={13} className="text-[#D4AF37]" />
-                <span>{brandEmail}</span>
-              </a>
-              {brandAddress && (
-                <div className="flex items-start gap-1.5 text-[#78716C] pt-1">
-                  <MapPin size={13} className="text-[#D4AF37] flex-shrink-0 mt-0.5" />
-                  <span className="leading-tight">{brandAddress}</span>
-                </div>
-              )}
-            </div>
+                <span>Subscribe</span>
+                <ArrowRight size={12} />
+              </button>
+            </form>
           </div>
         </div>
 
-        {/* Swiss Made & GIA Seals */}
-        <div className="pt-8 border-t border-[#D4AF37]/25 flex flex-wrap items-center justify-between gap-4 font-sans">
-          <div className="flex flex-wrap items-center gap-3 text-[10px] text-[#78716C]">
-            <span className="px-2.5 py-1 rounded-lg bg-[#141418] border border-[#D4AF37]/40 text-[#FBBF24]">
-              ★ Swiss Haute Joaillerie
-            </span>
-            <span className="px-2.5 py-1 rounded-lg bg-[#141418] border border-[#D4AF37]/40">
-              GIA Graduate Gemologists
-            </span>
-            <span className="px-2.5 py-1 rounded-lg bg-[#141418] border border-[#D4AF37]/40">
-              100% Conflict-Free Kimberley Process
-            </span>
-          </div>
-
-          <div className="text-[11px] text-[#78716C]">
-            © {new Date().getFullYear()} {brandName}. Handcrafted for eternal brilliance.
+        {/* Bottom Copyright */}
+        <div className="pt-8 border-t border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
+          <p>© {new Date().getFullYear()} {brandName}. All rights reserved.</p>
+          <div className="flex gap-6">
+            <span className="hover:text-stone-400 cursor-pointer">Privacy Policy</span>
+            <span className="hover:text-stone-400 cursor-pointer">Terms & Conditions</span>
+            <span className="hover:text-stone-400 cursor-pointer">Kimberley Process</span>
           </div>
         </div>
       </div>

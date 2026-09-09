@@ -32,16 +32,16 @@ export default function Product({
   setSelectedCategory,
 }) {
   const [viewMode, setViewMode] = useState("grid"); // "grid" | "table"
-  const [sortBy, setSortBy] = useState("featured"); // "featured" | "price-asc" | "price-desc" | "rating" | "battery"
+  const [sortBy, setSortBy] = useState("featured"); // "featured" | "price-asc" | "price-desc" | "rating"
   const [inStockOnly, setInStockOnly] = useState(false);
-  const [filterSpec, setFilterSpec] = useState("all"); // "all" | "anc" | "long-battery" | "low-latency"
+  const [filterSpec, setFilterSpec] = useState("all"); // "all" | "anc" | "long-battery" | "deals"
 
   const categories = [
     "all",
-    "Pro Audio & ANC",
-    "Smart Wearables",
-    "Peripherals",
-    "Creator Studio",
+    "Accessories, Headphones",
+    "Game Consoles, Video Games",
+    "Laptops, Computers",
+    "Audio Systems, TV & Audio",
   ];
 
   // Filtering & Sorting
@@ -61,9 +61,7 @@ export default function Product({
           const matchName = (item.name || "").toLowerCase().includes(q);
           const matchCat = (item.category || "").toLowerCase().includes(q);
           const matchDesc = (item.description || "").toLowerCase().includes(q);
-          const matchDriver = (item.driverSize || "").toLowerCase().includes(q);
-          const matchCodecs = (item.codecs || "").toLowerCase().includes(q);
-          if (!matchName && !matchCat && !matchDesc && !matchDriver && !matchCodecs) {
+          if (!matchName && !matchCat && !matchDesc) {
             return false;
           }
         }
@@ -74,18 +72,17 @@ export default function Product({
         }
 
         // Filter Spec
-        if (filterSpec === "anc") {
-          const anc = (item.ancDb || "").toLowerCase();
-          if (!anc.includes("anc") && !anc.includes("db") && !anc.includes("isolation")) {
+        if (filterSpec === "deals") {
+          if (!item.compareAtPrice || Number(item.compareAtPrice) <= Number(item.price)) {
             return false;
           }
         } else if (filterSpec === "long-battery") {
           if (!item.batteryLifeHours || item.batteryLifeHours < 40) {
             return false;
           }
-        } else if (filterSpec === "low-latency") {
-          const codecs = (item.codecs || "").toLowerCase();
-          if (!codecs.includes("8000hz") && !codecs.includes("wireless") && !codecs.includes("2.4ghz") && !codecs.includes("aptx")) {
+        } else if (filterSpec === "anc") {
+          const anc = (item.ancDb || "").toLowerCase();
+          if (!anc.includes("anc") && !anc.includes("db") && !anc.includes("isolation")) {
             return false;
           }
         }
@@ -96,7 +93,6 @@ export default function Product({
         if (sortBy === "price-asc") return (Number(a.price) || 0) - (Number(b.price) || 0);
         if (sortBy === "price-desc") return (Number(b.price) || 0) - (Number(a.price) || 0);
         if (sortBy === "rating") return (b.rating || 5) - (a.rating || 5);
-        if (sortBy === "battery") return (b.batteryLifeHours || 0) - (a.batteryLifeHours || 0);
         return 0;
       });
   }, [products, selectedCategory, searchQuery, inStockOnly, filterSpec, sortBy]);
@@ -116,38 +112,38 @@ export default function Product({
   };
 
   return (
-    <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 text-left">
+    <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 text-left">
       {/* Catalog Header & Breadcrumb */}
-      <div className="space-y-4 border-b border-slate-800 pb-6">
+      <div className="space-y-4 border-b border-slate-200 pb-6">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/70 border border-cyan-500/30 text-cyan-300 text-xs font-semibold mb-2">
-              <Cpu size={13} className="text-cyan-400" />
-              <span>Silicon & Acoustic Engineering Arsenal</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold mb-2">
+              <Cpu size={13} className="text-amber-700" />
+              <span>Full Hardware Catalog & Lineup</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-              Hardware Specifications & Catalog
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Electronics Department
             </h1>
-            <p className="text-sm text-slate-400 mt-1 max-w-2xl">
-              Compare laboratory measurements, custom beryllium acoustic drivers, and real-world battery endurance.
+            <p className="text-xs text-slate-500 mt-1 max-w-2xl">
+              Browse top rated smart electronics, audio gear, video consoles, and modern mobile workstations.
             </p>
           </div>
 
           {/* View Mode Toggle & Total count */}
           <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-400 font-mono">
-              Showing <strong className="text-white">{filteredProducts.length}</strong> of {products.length} models
+            <span className="text-xs text-slate-500 font-medium">
+              Showing <strong className="text-slate-900">{filteredProducts.length}</strong> of {products.length} items
             </span>
 
-            <div className="flex items-center bg-slate-900 rounded-xl p-1 border border-slate-800">
+            <div className="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200">
               <button
                 type="button"
                 onClick={() => setViewMode("grid")}
                 title="Grid View"
                 className={`p-2 rounded-lg text-xs font-bold transition cursor-pointer ${
                   viewMode === "grid"
-                    ? "bg-cyan-500 text-slate-950 font-black shadow-sm"
-                    : "text-slate-400 hover:text-white"
+                    ? "bg-white text-slate-950 font-black shadow-xs"
+                    : "text-slate-500 hover:text-slate-900"
                 }`}
               >
                 <Grid size={15} />
@@ -155,11 +151,11 @@ export default function Product({
               <button
                 type="button"
                 onClick={() => setViewMode("table")}
-                title="Engineering Spec Table View"
+                title="Table Spec View"
                 className={`p-2 rounded-lg text-xs font-bold transition cursor-pointer ${
                   viewMode === "table"
-                    ? "bg-cyan-500 text-slate-950 font-black shadow-sm"
-                    : "text-slate-400 hover:text-white"
+                    ? "bg-white text-slate-950 font-black shadow-xs"
+                    : "text-slate-500 hover:text-slate-900"
                 }`}
               >
                 <List size={15} />
@@ -174,16 +170,16 @@ export default function Product({
           <div className="md:col-span-4 relative">
             <input
               type="text"
-              placeholder="Search model, driver size, codecs..."
+              placeholder="Search model, category, specs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
-              className="w-full bg-slate-900 text-xs text-white placeholder-slate-500 pl-9 pr-8 py-2.5 rounded-xl border border-slate-700 focus:border-cyan-500 focus:outline-none transition shadow-inner"
+              className="w-full bg-white text-xs text-slate-900 placeholder-slate-400 pl-9 pr-8 py-2.5 rounded-xl border border-slate-200 focus:border-[#EAB308] focus:outline-none transition shadow-xs"
             />
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery && setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
               >
                 <X size={13} />
               </button>
@@ -200,11 +196,11 @@ export default function Product({
                   onClick={() => setSelectedCategory(c)}
                   className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer border ${
                     isSelected
-                      ? "bg-blue-600 text-white border-blue-500 shadow-sm"
-                      : "bg-slate-900/80 text-slate-400 hover:text-slate-200 border-slate-800 hover:border-slate-700"
+                      ? "bg-[#EAB308] text-slate-950 border-[#EAB308] shadow-xs font-black"
+                      : "bg-white text-slate-600 hover:text-slate-900 border-slate-200 hover:border-slate-300"
                   }`}
                 >
-                  {c === "all" ? "All Arsenal" : c}
+                  {c === "all" ? "All Departments" : c.split(",")[0]}
                 </button>
               );
             })}
@@ -216,13 +212,12 @@ export default function Product({
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full appearance-none bg-slate-900 text-xs text-slate-200 pl-3 pr-8 py-2.5 rounded-xl border border-slate-700 focus:border-cyan-500 focus:outline-none cursor-pointer"
+                className="w-full appearance-none bg-white text-xs text-slate-800 pl-3 pr-8 py-2.5 rounded-xl border border-slate-200 focus:border-[#EAB308] focus:outline-none cursor-pointer"
               >
-                <option value="featured">Sort: Featured Silicon</option>
+                <option value="featured">Sort: Featured</option>
                 <option value="price-asc">Sort: Price (Lowest First)</option>
                 <option value="price-desc">Sort: Price (Highest First)</option>
                 <option value="rating">Sort: Customer Rating</option>
-                <option value="battery">Sort: Battery Stamina</option>
               </select>
               <ArrowUpDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
@@ -232,32 +227,32 @@ export default function Product({
         {/* Technical Sub-Filters & Active Badges */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Quick Spec:</span>
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Quick Filter:</span>
             {[
-              { id: "all", label: "All Specs" },
-              { id: "anc", label: "ANC / Isolation Only" },
-              { id: "long-battery", label: "40h+ Ultra Stamina" },
-              { id: "low-latency", label: "Ultra-Low Latency" },
+              { id: "all", label: "All Items" },
+              { id: "deals", label: "Discounted Only" },
+              { id: "long-battery", label: "40h+ Stamina" },
+              { id: "anc", label: "Active Noise Cancellation" },
             ].map((pill) => (
               <button
                 key={pill.id}
                 onClick={() => setFilterSpec(pill.id)}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer border ${
                   filterSpec === pill.id
-                    ? "bg-cyan-950 text-cyan-300 border-cyan-500/50"
-                    : "bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-300"
+                    ? "bg-slate-900 text-white border-slate-900 font-bold"
+                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
                 }`}
               >
                 {pill.label}
               </button>
             ))}
 
-            <label className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900/60 border border-slate-800 text-[11px] text-slate-300 font-semibold cursor-pointer select-none ml-1">
+            <label className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-700 font-semibold cursor-pointer select-none ml-1">
               <input
                 type="checkbox"
                 checked={inStockOnly}
                 onChange={(e) => setInStockOnly(e.target.checked)}
-                className="accent-cyan-400 rounded"
+                className="accent-[#EAB308] rounded"
               />
               <span>In-Stock Only</span>
             </label>
@@ -266,7 +261,7 @@ export default function Product({
           {activeFilterCount > 0 && (
             <button
               onClick={resetAllFilters}
-              className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 font-bold transition cursor-pointer"
+              className="text-xs text-rose-600 hover:text-rose-700 flex items-center gap-1 font-bold transition cursor-pointer"
             >
               <X size={13} />
               <span>Reset All Filters ({activeFilterCount})</span>
@@ -277,18 +272,18 @@ export default function Product({
 
       {/* Floating Comparison Drawer Strip if items are selected */}
       {compareList && compareList.length > 0 && (
-        <div className="sticky top-24 z-30 bg-gradient-to-r from-blue-950/90 via-slate-900/95 to-cyan-950/90 backdrop-blur-xl border border-cyan-500/40 p-3 sm:p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xl animate-in slide-in-from-top-2">
+        <div className="sticky top-24 z-30 bg-white/95 backdrop-blur-md border border-slate-200 p-3 sm:p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-lg animate-in slide-in-from-top-2">
           <div className="flex items-center gap-2">
-            <SlidersHorizontal size={16} className="text-cyan-400" />
-            <span className="text-xs font-bold text-white">
-              Comparing <strong>{compareList.length}</strong> hardware models:
+            <SlidersHorizontal size={16} className="text-[#EAB308]" />
+            <span className="text-xs font-bold text-slate-900">
+              Comparing <strong>{compareList.length}</strong> devices:
             </span>
             <div className="flex -space-x-2">
               {compareList.map((c) => (
                 <span
-                  key={c._id}
+                  key={c._id || c.id}
                   title={c.name}
-                  className="inline-block bg-slate-800 text-[10px] text-cyan-300 font-bold px-2 py-0.5 rounded-full border border-cyan-500/30 truncate max-w-[120px]"
+                  className="inline-block bg-slate-100 text-[10px] text-slate-800 font-bold px-2 py-0.5 rounded-full border border-slate-300 truncate max-w-[120px]"
                 >
                   {c.name.split(" ")[0]}
                 </span>
@@ -299,9 +294,9 @@ export default function Product({
           <div className="flex items-center gap-2">
             <button
               onClick={onOpenCompareMatrix}
-              className="px-3.5 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs cursor-pointer transition shadow-md"
+              className="px-3.5 py-1.5 rounded-xl bg-[#EAB308] hover:bg-yellow-500 text-slate-950 font-black text-xs cursor-pointer transition shadow-xs"
             >
-              Launch Side-by-Side Matrix
+              Open Comparison Matrix
             </button>
           </div>
         </div>
@@ -309,27 +304,27 @@ export default function Product({
 
       {/* Results Content */}
       {filteredProducts.length === 0 ? (
-        <div className="py-20 text-center space-y-4 bg-slate-900/50 rounded-3xl border border-slate-800">
-          <Cpu size={40} className="mx-auto text-slate-600" />
-          <h3 className="text-lg font-bold text-white">No hardware models match your filters</h3>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            Try adjusting your search criteria, clearing the acoustic spec pills, or viewing all categories.
+        <div className="py-20 text-center space-y-4 bg-white rounded-3xl border border-slate-200">
+          <Cpu size={40} className="mx-auto text-slate-300" />
+          <h3 className="text-lg font-bold text-slate-800">No hardware models match your filters</h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            Try adjusting your search criteria, clearing the filters, or viewing all departments.
           </p>
           <button
             onClick={resetAllFilters}
-            className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-500 transition cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-[#EAB308] text-slate-950 text-xs font-bold hover:bg-yellow-500 transition cursor-pointer"
           >
             Reset Filters
           </button>
         </div>
       ) : viewMode === "grid" ? (
         /* GRID VIEW */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
           {filteredProducts.map((item) => {
-            const isCompared = compareList.some((c) => c._id === item._id);
+            const isCompared = compareList.some((c) => (c._id || c.id) === (item._id || item.id));
             return (
               <ProductCard
-                key={item._id}
+                key={item._id || item.id}
                 product={item}
                 onSelectProduct={onSelectProduct}
                 onAddToCart={onAddToCart}
@@ -340,48 +335,47 @@ export default function Product({
           })}
         </div>
       ) : (
-        /* ENGINEERING SPEC TABLE VIEW */
-        <div className="bg-slate-900/90 rounded-3xl border border-slate-800 overflow-x-auto shadow-2xl">
+        /* SPEC TABLE VIEW */
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-xs">
           <table className="w-full text-xs text-left">
             <thead>
-              <tr className="border-b border-slate-800 text-slate-400 bg-slate-950/80">
-                <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10px]">Model & Specs</th>
+              <tr className="border-b border-slate-200 text-slate-500 bg-slate-50">
+                <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10px]">Product & Model</th>
                 <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10px]">Category</th>
-                <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10px]">Core Architecture</th>
-                <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10px]">Acoustic Isolation</th>
-                <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10px]">Battery Stamina</th>
-                <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10px]">Pricing</th>
+                <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10px]">Rating</th>
+                <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10px]">Key Feature</th>
+                <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10px]">Price</th>
                 <th className="py-3.5 px-4 font-bold uppercase tracking-wider text-[10px] text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-100">
               {filteredProducts.map((item) => {
                 const outOfStock = isOutOfStock(item);
-                const isCompared = compareList.some((c) => c._id === item._id);
+                const isCompared = compareList.some((c) => (c._id || c.id) === (item._id || item.id));
                 return (
                   <tr
-                    key={item._id}
+                    key={item._id || item.id}
                     onClick={() => onSelectProduct && onSelectProduct(item)}
-                    className="hover:bg-slate-800/50 transition cursor-pointer group"
+                    className="hover:bg-slate-50 transition cursor-pointer group"
                   >
                     {/* Model & Thumb */}
                     <td className="py-3 px-4 flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-950 flex-shrink-0 border border-slate-800">
+                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-white flex-shrink-0 border border-slate-100 p-1 flex items-center justify-center">
                         <img
                           src={getProductImage(item, item.image)}
                           alt={item.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
+                          className="max-h-full max-w-full object-contain group-hover:scale-110 transition duration-300"
                         />
                       </div>
                       <div>
-                        <span className="font-bold text-white group-hover:text-cyan-300 block line-clamp-1">
+                        <span className="font-bold text-slate-900 group-hover:text-sky-600 block line-clamp-1">
                           {item.name}
                         </span>
-                        <div className="flex items-center gap-1 text-slate-400 text-[10px]">
+                        <div className="flex items-center gap-1 text-slate-500 text-[10px]">
                           <Star size={10} className="text-amber-400 fill-amber-400" />
                           <span>{item.rating || 5.0}</span>
                           {item.badge && (
-                            <span className="text-cyan-400 font-mono ml-1">
+                            <span className="text-slate-400 ml-1">
                               • {item.badge}
                             </span>
                           )}
@@ -390,28 +384,23 @@ export default function Product({
                     </td>
 
                     {/* Category */}
-                    <td className="py-3 px-4 text-slate-300 font-mono text-[11px]">
+                    <td className="py-3 px-4 text-slate-600 text-[11px]">
                       {item.category}
                     </td>
 
-                    {/* Core Architecture */}
-                    <td className="py-3 px-4 text-cyan-300 font-mono font-bold text-[11px]">
-                      {item.driverSize || "N/A"}
+                    {/* Rating */}
+                    <td className="py-3 px-4 text-slate-700 font-semibold text-[11px]">
+                      ★ {item.rating || "4.9"}
                     </td>
 
-                    {/* Isolation */}
-                    <td className="py-3 px-4 text-slate-300 font-mono text-[11px]">
-                      {item.ancDb || "Passive Seal"}
-                    </td>
-
-                    {/* Battery */}
-                    <td className="py-3 px-4 text-emerald-400 font-mono font-bold text-[11px]">
-                      {item.batteryLifeHours ? `${item.batteryLifeHours} Hours` : "Wired / AC"}
+                    {/* Key Feature */}
+                    <td className="py-3 px-4 text-slate-600 text-[11px]">
+                      {item.driverSize || item.ancDb || "OEM Certified"}
                     </td>
 
                     {/* Pricing */}
-                    <td className="py-3 px-4 font-mono font-black text-white text-sm">
-                      ₹{Number(item.price).toFixed(2)}
+                    <td className="py-3 px-4 font-black text-slate-900 text-sm">
+                      ${Number(item.price).toFixed(2)}
                     </td>
 
                     {/* Actions */}
@@ -425,8 +414,8 @@ export default function Product({
                           }}
                           className={`px-2.5 py-1.5 rounded-lg border text-[11px] font-bold transition cursor-pointer ${
                             isCompared
-                              ? "bg-cyan-500 text-slate-950 border-cyan-400"
-                              : "bg-slate-800 text-slate-300 border-slate-700 hover:border-cyan-400"
+                              ? "bg-slate-900 text-white border-slate-900"
+                              : "bg-white text-slate-700 border-slate-200 hover:border-slate-400"
                           }`}
                         >
                           {isCompared ? "Compared" : "Compare"}
@@ -434,7 +423,7 @@ export default function Product({
                       )}
 
                       {outOfStock ? (
-                        <span className="text-[10px] font-bold text-rose-400 bg-rose-950/40 px-2 py-1 rounded-md">
+                        <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded-md">
                           Sold Out
                         </span>
                       ) : (
@@ -444,7 +433,7 @@ export default function Product({
                             e.stopPropagation();
                             onAddToCart(item);
                           }}
-                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition cursor-pointer shadow"
+                          className="px-3 py-1.5 bg-[#EAB308] hover:bg-yellow-500 text-slate-950 rounded-lg text-xs font-bold transition cursor-pointer shadow-xs"
                         >
                           + Add
                         </button>

@@ -12,7 +12,7 @@ const getInitialCart = () => {
 
 // Helper to map DB response (where items is [{ product: {}, quantity: n, price: p }]) to local flat structure
 const mapDbCartToRedux = (dbItems) => {
-  if (!dbItems) return [];
+  if (!dbItems || !Array.isArray(dbItems)) return [];
   return dbItems.map((item) => {
     const prod = item.product || {};
     const effectiveStock =
@@ -24,19 +24,35 @@ const mapDbCartToRedux = (dbItems) => {
         ? Number(prod.stock)
         : prod.countInStock !== undefined
         ? Number(prod.countInStock)
-        : 0;
+        : 99;
+    const prodId = prod._id || item.customProductId || item.product || item._id;
+    const prodName = prod.name || item.name || "Product";
+    const prodPrice = item.price !== undefined ? item.price : (prod.price || 0);
+    const prodImg =
+      prod.images?.[0]?.url ||
+      (typeof prod.images?.[0] === "string" ? prod.images[0] : null) ||
+      prod.image?.url ||
+      prod.image ||
+      item.image ||
+      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80";
+
     return {
-      _id: prod._id || item.product,
+      _id: prodId,
+      id: prodId,
       cartItemId: item._id,
-      name: prod.name || "Unknown Product",
-      price: item.price !== undefined ? item.price : (prod.price || 0),
+      name: prodName,
+      price: Number(prodPrice) || 0,
+      originalPrice: item.regularPrice || item.originalPrice || prod.originalPrice || prodPrice,
       selectedOptions: item.selectedOptions || null,
       sku: item.sku || prod.sku || "",
       variantId: item.variantId || null,
-      category: prod.category?.name || "Uncategorized",
-      image: prod.images?.[0]?.url || "https://via.placeholder.com/400x300?text=No+Image",
+      category:
+        (typeof prod.category === "object" ? prod.category?.name : prod.category) ||
+        item.category ||
+        "General",
+      image: typeof prodImg === "object" ? prodImg.url : prodImg,
       stock: effectiveStock,
-      quantity: item.quantity,
+      quantity: item.quantity || 1,
     };
   });
 };
@@ -46,9 +62,13 @@ export const fetchCart = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await cartService.getCart();
-      return mapDbCartToRedux(response.items);
+      const mapped = mapDbCartToRedux(response.items);
+      try {
+        localStorage.setItem("cartItems", JSON.stringify(mapped));
+      } catch (_) {}
+      return mapped;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message);
+      return getInitialCart();
     }
   }
 );
@@ -58,8 +78,11 @@ export const syncCart = createAsyncThunk(
   async (items, { rejectWithValue }) => {
     try {
       const response = await cartService.syncCart(items);
-      localStorage.removeItem("cartItems"); // clear local storage guest cart once synced
-      return mapDbCartToRedux(response.items);
+      const mapped = mapDbCartToRedux(response.items);
+      try {
+        localStorage.setItem("cartItems", JSON.stringify(mapped));
+      } catch (_) {}
+      return mapped;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
@@ -69,17 +92,50 @@ export const syncCart = createAsyncThunk(
 export const addToCart = createAsyncThunk(
   "cart/addToCart",
   async ({ product, quantity = 1 }, { getState, rejectWithValue }) => {
-    const { auth, cart } = getState();
+    const { cart } = getState();
+    const prodId = product._id || product.id || String(Date.now());
+    const effectivePrice = Number(product.price || 0);
+    const img =
+      product.image ||
+      (Array.isArray(product.images) && product.images[0]?.url) ||
+      (Array.isArray(product.images) && product.images[0]) ||
+      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80";
+    const categoryVal =
+      typeof product.category === "object"
+        ? product.category?.name
+        : product.category || "General";
 
-    if (!auth.isAuthenticated) {
+    try {
+      const response = await cartService.addToCart(prodId, quantity, {
+        name: product.name || product.title || "Product",
+        price: effectivePrice,
+        originalPrice: product.originalPrice || effectivePrice,
+        image: typeof img === "object" ? img.url : img,
+        category: categoryVal,
+        selectedOptions: product.selectedOptions || product.selectedVariant || null,
+        variantSku: product.variantSku || product.sku || null,
+        variantId: product.variantId || null,
+        product: {
+          _id: prodId,
+          name: product.name || product.title,
+          price: effectivePrice,
+          image: typeof img === "object" ? img.url : img,
+          category: categoryVal,
+        },
+      });
+      const mapped = mapDbCartToRedux(response.items);
+      try {
+        localStorage.setItem("cartItems", JSON.stringify(mapped));
+      } catch (_) {}
+      return mapped;
+    } catch (error) {
+      console.warn("Backend addToCart error, using resilient fallback:", error);
       const currentItems = Array.isArray(cart.cartItems) ? [...cart.cartItems] : [];
-      const prodId = product._id || product.id || String(Date.now());
       const itemKey = product.itemKey || `${prodId}-${product.selectedVariant || product.variantId || product.selectedSize || ""}`;
       const existingIdx = currentItems.findIndex(
-        (i) => (i.itemKey && i.itemKey === itemKey) || i._id === prodId
+        (i) => (i.itemKey && i.itemKey === itemKey) || i._id === prodId || i.id === prodId
       );
 
-      const effectivePrice = Number(product.price || 0);
       const effectiveStock =
         product.stockQuantity !== undefined
           ? Number(product.stockQuantity)
@@ -89,12 +145,6 @@ export const addToCart = createAsyncThunk(
           ? Number(product.inventory.stockQuantity)
           : 99;
 
-      const img =
-        product.image ||
-        (Array.isArray(product.images) && product.images[0]?.url) ||
-        (Array.isArray(product.images) && product.images[0]) ||
-        "https://via.placeholder.com/400x300?text=No+Image";
-
       if (existingIdx > -1) {
         currentItems[existingIdx] = {
           ...currentItems[existingIdx],
@@ -103,11 +153,12 @@ export const addToCart = createAsyncThunk(
       } else {
         currentItems.push({
           _id: prodId,
+          id: prodId,
           itemKey,
           name: product.name || product.title || "Product",
           price: effectivePrice,
           image: typeof img === "object" ? img.url : img,
-          category: typeof product.category === "object" ? product.category?.name : product.category || "General",
+          category: categoryVal,
           selectedOptions: product.selectedOptions || product.selectedVariant || null,
           selectedSize: product.selectedSize || product.selectedVariant || null,
           sku: product.sku || "",
@@ -123,41 +174,31 @@ export const addToCart = createAsyncThunk(
 
       return currentItems;
     }
-
-    try {
-      const response = await cartService.addToCart(product._id || product.id, quantity, {
-        selectedOptions: product.selectedOptions,
-        variantSku: product.variantSku,
-        variantId: product.variantId,
-        price: product.price,
-      });
-      return mapDbCartToRedux(response.items);
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message);
-    }
   }
 );
 
 export const removeFromCart = createAsyncThunk(
   "cart/removeFromCart",
   async (productId, { getState, rejectWithValue }) => {
-    const { auth, cart } = getState();
-
-    if (!auth.isAuthenticated) {
+    try {
+      const response = await cartService.removeFromCart(productId);
+      const mapped = mapDbCartToRedux(response.items);
+      try {
+        localStorage.setItem("cartItems", JSON.stringify(mapped));
+      } catch (_) {}
+      return mapped;
+    } catch (error) {
+      console.warn("Backend removeFromCart error, falling back to local:", error);
+      const { cart } = getState();
       const currentItems = Array.isArray(cart.cartItems)
-        ? cart.cartItems.filter((i) => i._id !== productId && i.itemKey !== productId)
+        ? cart.cartItems.filter(
+            (i) => i._id !== productId && i.id !== productId && i.itemKey !== productId && i.cartItemId !== productId
+          )
         : [];
       try {
         localStorage.setItem("cartItems", JSON.stringify(currentItems));
       } catch (_) {}
       return currentItems;
-    }
-
-    try {
-      const response = await cartService.removeFromCart(productId);
-      return mapDbCartToRedux(response.items);
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
@@ -165,12 +206,19 @@ export const removeFromCart = createAsyncThunk(
 export const updateCartQuantity = createAsyncThunk(
   "cart/updateCartQuantity",
   async ({ productId, quantity }, { getState, rejectWithValue }) => {
-    const { auth, cart } = getState();
-
-    if (!auth.isAuthenticated) {
+    try {
+      const response = await cartService.updateCartQuantity(productId, quantity);
+      const mapped = mapDbCartToRedux(response.items);
+      try {
+        localStorage.setItem("cartItems", JSON.stringify(mapped));
+      } catch (_) {}
+      return mapped;
+    } catch (error) {
+      console.warn("Backend updateCartQuantity error, falling back to local:", error);
+      const { cart } = getState();
       const currentItems = Array.isArray(cart.cartItems)
         ? cart.cartItems.map((i) =>
-            i._id === productId || i.itemKey === productId
+            i._id === productId || i.id === productId || i.itemKey === productId || i.cartItemId === productId
               ? { ...i, quantity: Math.max(1, quantity) }
               : i
           )
@@ -180,31 +228,18 @@ export const updateCartQuantity = createAsyncThunk(
       } catch (_) {}
       return currentItems;
     }
-
-    try {
-      const response = await cartService.updateCartQuantity(productId, quantity);
-      return mapDbCartToRedux(response.items);
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message);
-    }
   }
 );
 
 export const clearCart = createAsyncThunk(
   "cart/clearCart",
-  async (_, { getState, rejectWithValue }) => {
-    const { auth } = getState();
-
+  async (_, { rejectWithValue }) => {
     localStorage.removeItem("cartItems");
-    if (!auth.isAuthenticated) {
-      return [];
-    }
-
     try {
       const response = await cartService.clearCart();
       return mapDbCartToRedux(response.items);
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message);
+      return [];
     }
   }
 );

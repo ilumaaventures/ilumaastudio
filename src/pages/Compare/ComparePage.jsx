@@ -184,13 +184,13 @@ export default function ComparePage() {
             };
           }
           const foundInRedux = reduxCompareItems.find(
-            (r) => String(r.id || r._id) === String(id)
+            (r) => String(r.id || r._id) === String(id),
           );
           return foundInRedux || null;
         } catch (err) {
           console.warn(`Could not load full product details for ${id}:`, err);
           const fallback = reduxCompareItems.find(
-            (r) => String(r.id || r._id) === String(id)
+            (r) => String(r.id || r._id) === String(id),
           );
           return fallback || null;
         }
@@ -220,7 +220,8 @@ export default function ComparePage() {
   // Check scroll capability
   const checkScrollability = () => {
     if (tableContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = tableContainerRef.current;
+      const { scrollLeft, scrollWidth, clientWidth } =
+        tableContainerRef.current;
       setCanScrollLeft(scrollLeft > 10);
       setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 10);
     }
@@ -268,7 +269,7 @@ export default function ComparePage() {
   // Handle Remove Product
   const handleRemoveProduct = (productId) => {
     const updated = detailedProducts.filter(
-      (p) => String(p._id || p.id) !== String(productId)
+      (p) => String(p._id || p.id) !== String(productId),
     );
     setDetailedProducts(updated);
     dispatch(removeFromCompare(productId));
@@ -330,8 +331,8 @@ export default function ComparePage() {
         : prod.category || "General";
     const categoryTax =
       typeof prod.category === "object"
-        ? prod.category?.tax ?? 0
-        : prod.categoryTax ?? 0;
+        ? (prod.category?.tax ?? 0)
+        : (prod.categoryTax ?? 0);
 
     dispatch(
       addToCart({
@@ -348,7 +349,7 @@ export default function ComparePage() {
           sku: prod.sku,
         },
         quantity: 1,
-      })
+      }),
     );
     toast.success(`${prod.name} added to cart!`);
   };
@@ -370,8 +371,8 @@ export default function ComparePage() {
       detailedProducts.map((p) =>
         typeof p.category === "object"
           ? p.category?.name || "General"
-          : p.category || "General"
-      )
+          : p.category || "General",
+      ),
     );
     return {
       isSameCategory: categories.size === 1,
@@ -399,7 +400,7 @@ export default function ComparePage() {
       const reviews = Number(
         Array.isArray(p.reviews)
           ? p.reviews.length
-          : p.numReviews || p.reviewsCount || 10
+          : p.numReviews || p.reviewsCount || 10,
       );
       const inStock = p.inStock !== false && !p.isOutOfStock;
 
@@ -499,7 +500,7 @@ export default function ComparePage() {
       const vals = detailedProducts.map((p) => {
         if (!Array.isArray(p.details)) return "—";
         const found = p.details.find(
-          (d) => d?.title && d.title.trim().toLowerCase() === key.toLowerCase()
+          (d) => d?.title && d.title.trim().toLowerCase() === key.toLowerCase(),
         );
         return found?.value || "—";
       });
@@ -513,7 +514,7 @@ export default function ComparePage() {
         return p.features.some(
           (f) =>
             typeof f === "string" &&
-            f.trim().toLowerCase() === feat.toLowerCase()
+            f.trim().toLowerCase() === feat.toLowerCase(),
         );
       });
       featuresDiff[feat] = checkDiff(bools);
@@ -522,28 +523,25 @@ export default function ComparePage() {
     return {
       price: checkDiff(detailedProducts.map((p) => Number(p.price) || 0)),
       rating: checkDiff(
-        detailedProducts.map((p) => Number(p.rating || p.ratings || 4.5))
+        detailedProducts.map((p) => Number(p.rating || p.ratings || 4.5)),
       ),
       stock: checkDiff(
         detailedProducts.map((p) =>
-          Boolean(p.inStock !== false && !p.isOutOfStock)
-        )
+          Boolean(p.inStock !== false && !p.isOutOfStock),
+        ),
       ),
       brand: checkDiff(
         detailedProducts.map(
           (p) =>
-            p.brand ||
-            p.business?.businessName ||
-            p.vendor?.storeName ||
-            ""
-        )
+            p.brand || p.business?.businessName || p.vendor?.storeName || "",
+        ),
       ),
       category: checkDiff(
         detailedProducts.map((p) =>
           typeof p.category === "object"
             ? p.category?.name || "General"
-            : p.category || "General"
-        )
+            : p.category || "General",
+        ),
       ),
       sku: checkDiff(detailedProducts.map((p) => p.sku || "")),
       weight: checkDiff(detailedProducts.map((p) => p.weight || "")),
@@ -551,11 +549,11 @@ export default function ComparePage() {
         detailedProducts.map((p) =>
           p.dimensions
             ? `${p.dimensions.length}x${p.dimensions.width}x${p.dimensions.height}`
-            : ""
-        )
+            : "",
+        ),
       ),
       countryOfOrigin: checkDiff(
-        detailedProducts.map((p) => p.countryOfOrigin || "")
+        detailedProducts.map((p) => p.countryOfOrigin || ""),
       ),
       productType: checkDiff(detailedProducts.map((p) => p.productType || "")),
       details: detailsDiff,
@@ -782,7 +780,9 @@ export default function ComparePage() {
               ) : (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-medium text-[10px] sm:text-[11px]">
                   <Info size={12} className="text-amber-600 shrink-0" />
-                  <span>Comparing: {categoryCompatibility.categories.join(", ")}</span>
+                  <span>
+                    Comparing: {categoryCompatibility.categories.join(", ")}
+                  </span>
                 </span>
               )}
             </div>
@@ -842,7 +842,8 @@ export default function ComparePage() {
                   Add at least one more product to compare
                 </h4>
                 <p className="text-[11px] text-amber-700">
-                  Select another product to view differences and specifications side-by-side.
+                  Select another product to view differences and specifications
+                  side-by-side.
                 </p>
               </div>
             </div>
@@ -876,147 +877,6 @@ export default function ComparePage() {
             >
               Show all
             </button>
-          </div>
-        )}
-
-        {/* =========================================================
-            RECOMMENDATION ENGINE CARDS (Responsive 2x2 on mobile, 4x1 on desktop)
-        ========================================================== */}
-        {!isSingleProduct && recommendations.bestOverall && (
-          <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-3 sm:p-5 shadow-xs space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <Sparkles size={15} className="text-[#2563eb]" />
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
-                  Quick Verdict & Recommendations
-                </h3>
-              </div>
-              <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">
-                Data-driven based on pricing, ratings, and specifications
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-              {/* Best Overall */}
-              {recommendations.bestOverall && (
-                <div className="p-2.5 sm:p-3 rounded-2xl bg-blue-50/70 border border-blue-200 flex flex-col justify-between hover:shadow-xs transition-shadow">
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1 text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-[#2563eb] bg-white px-1.5 sm:px-2 py-0.5 rounded-md shadow-2xs">
-                        <Award size={10} /> Best Overall
-                      </span>
-                      <span className="text-[11px] sm:text-xs font-black text-slate-900">
-                        ₹{Number(recommendations.bestOverall.price).toLocaleString()}
-                      </span>
-                    </div>
-                    <h4 className="text-[11px] sm:text-xs font-black text-slate-900 truncate">
-                      {recommendations.bestOverall.name}
-                    </h4>
-                    <p className="text-[9px] sm:text-[10px] text-slate-500 leading-snug line-clamp-1 sm:line-clamp-2">
-                      Top satisfaction: {recommendations.bestOverall.rating || 4.5} ★
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e) => handleDirectAddToCart(recommendations.bestOverall, e)}
-                    className="mt-2 w-full py-1.5 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-[10px] sm:text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer shadow-2xs active:scale-95"
-                  >
-                    <ShoppingCart size={11} />
-                    <span>Add to Cart</span>
-                  </button>
-                </div>
-              )}
-
-              {/* Best Value */}
-              {recommendations.bestValue && (
-                <div className="p-2.5 sm:p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200 flex flex-col justify-between hover:shadow-xs transition-shadow">
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1 text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-white px-1.5 sm:px-2 py-0.5 rounded-md shadow-2xs">
-                        <Zap size={10} /> Best Value
-                      </span>
-                      <span className="text-[11px] sm:text-xs font-black text-slate-900">
-                        ₹{Number(recommendations.bestValue.price).toLocaleString()}
-                      </span>
-                    </div>
-                    <h4 className="text-[11px] sm:text-xs font-black text-slate-900 truncate">
-                      {recommendations.bestValue.name}
-                    </h4>
-                    <p className="text-[9px] sm:text-[10px] text-slate-500 leading-snug line-clamp-1 sm:line-clamp-2">
-                      Highest rating-to-price ratio
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e) => handleDirectAddToCart(recommendations.bestValue, e)}
-                    className="mt-2 w-full py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] sm:text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer shadow-2xs active:scale-95"
-                  >
-                    <ShoppingCart size={11} />
-                    <span>Add to Cart</span>
-                  </button>
-                </div>
-              )}
-
-              {/* Lowest Price */}
-              {recommendations.lowestPrice && (
-                <div className="p-2.5 sm:p-3 rounded-2xl bg-amber-50/70 border border-amber-200 flex flex-col justify-between hover:shadow-xs transition-shadow">
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1 text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-amber-700 bg-white px-1.5 sm:px-2 py-0.5 rounded-md shadow-2xs">
-                        Lowest Price
-                      </span>
-                      <span className="text-[11px] sm:text-xs font-black text-slate-900">
-                        ₹{Number(recommendations.lowestPrice.price).toLocaleString()}
-                      </span>
-                    </div>
-                    <h4 className="text-[11px] sm:text-xs font-black text-slate-900 truncate">
-                      {recommendations.lowestPrice.name}
-                    </h4>
-                    <p className="text-[9px] sm:text-[10px] text-slate-500 leading-snug line-clamp-1 sm:line-clamp-2">
-                      Most economical choice
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e) => handleDirectAddToCart(recommendations.lowestPrice, e)}
-                    className="mt-2 w-full py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-[10px] sm:text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer shadow-2xs active:scale-95"
-                  >
-                    <ShoppingCart size={11} />
-                    <span>Add to Cart</span>
-                  </button>
-                </div>
-              )}
-
-              {/* Highest Rated */}
-              {recommendations.highestRated && (
-                <div className="p-2.5 sm:p-3 rounded-2xl bg-purple-50/70 border border-purple-200 flex flex-col justify-between hover:shadow-xs transition-shadow">
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1 text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-purple-700 bg-white px-1.5 sm:px-2 py-0.5 rounded-md shadow-2xs">
-                        <Star size={10} fill="currentColor" /> Top Rated
-                      </span>
-                      <span className="text-[11px] sm:text-xs font-black text-slate-900">
-                        ₹{Number(recommendations.highestRated.price).toLocaleString()}
-                      </span>
-                    </div>
-                    <h4 className="text-[11px] sm:text-xs font-black text-slate-900 truncate">
-                      {recommendations.highestRated.name}
-                    </h4>
-                    <p className="text-[9px] sm:text-[10px] text-slate-500 leading-snug line-clamp-1 sm:line-clamp-2">
-                      {recommendations.highestRated.rating || 4.8} ★ customer review score
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e) => handleDirectAddToCart(recommendations.highestRated, e)}
-                    className="mt-2 w-full py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-[10px] sm:text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer shadow-2xs active:scale-95"
-                  >
-                    <ShoppingCart size={11} />
-                    <span>Add to Cart</span>
-                  </button>
-                </div>
-              )}
-            </div>
           </div>
         )}
 
@@ -1127,7 +987,7 @@ export default function ComparePage() {
                           Number(prod.compareAtPrice) ||
                           null;
                         const prodRating = Number(
-                          prod.rating || prod.ratings || 4.5
+                          prod.rating || prod.ratings || 4.5,
                         ).toFixed(1);
                         const inStock =
                           prod.inStock !== false && !prod.isOutOfStock;
@@ -1257,7 +1117,9 @@ export default function ComparePage() {
                         );
                       }
 
-                      {/* Single Add Next Product Slot */}
+                      {
+                        /* Single Add Next Product Slot */
+                      }
                       return (
                         <div
                           key="add-next-slot"
@@ -1278,7 +1140,8 @@ export default function ComparePage() {
                               Add Product
                             </span>
                             <span className="text-[9px] sm:text-[10px] text-slate-400">
-                              Slot {detailedProducts.length + 1} of {MAX_COMPARE_PRODUCTS}
+                              Slot {detailedProducts.length + 1} of{" "}
+                              {MAX_COMPARE_PRODUCTS}
                             </span>
                           </button>
                         </div>
@@ -1306,7 +1169,8 @@ export default function ComparePage() {
                       isDifferent={differences.price}
                       renderCell={(colIdx) => {
                         const p = detailedProducts[colIdx];
-                        if (!p) return <span className="text-slate-300">—</span>;
+                        if (!p)
+                          return <span className="text-slate-300">—</span>;
                         const isLowest =
                           recommendations.lowestPrice?._id === (p._id || p.id);
                         return (
@@ -1342,7 +1206,8 @@ export default function ComparePage() {
                       isDifferent={differences.rating}
                       renderCell={(colIdx) => {
                         const p = detailedProducts[colIdx];
-                        if (!p) return <span className="text-slate-300">—</span>;
+                        if (!p)
+                          return <span className="text-slate-300">—</span>;
                         const isHighest =
                           recommendations.highestRated?._id === (p._id || p.id);
                         return (
@@ -1376,7 +1241,8 @@ export default function ComparePage() {
                       isDifferent={differences.stock}
                       renderCell={(colIdx) => {
                         const p = detailedProducts[colIdx];
-                        if (!p) return <span className="text-slate-300">—</span>;
+                        if (!p)
+                          return <span className="text-slate-300">—</span>;
                         const inStock = p.inStock !== false && !p.isOutOfStock;
                         return (
                           <span
@@ -1412,7 +1278,8 @@ export default function ComparePage() {
                       isDifferent={differences.brand}
                       renderCell={(colIdx) => {
                         const p = detailedProducts[colIdx];
-                        if (!p) return <span className="text-slate-300">—</span>;
+                        if (!p)
+                          return <span className="text-slate-300">—</span>;
                         return (
                           <span className="font-bold text-slate-800">
                             {p.brand ||
@@ -1435,7 +1302,8 @@ export default function ComparePage() {
                       isDifferent={differences.category}
                       renderCell={(colIdx) => {
                         const p = detailedProducts[colIdx];
-                        if (!p) return <span className="text-slate-300">—</span>;
+                        if (!p)
+                          return <span className="text-slate-300">—</span>;
                         const catName =
                           typeof p.category === "object"
                             ? p.category?.name || "General"
@@ -1444,7 +1312,7 @@ export default function ComparePage() {
                           typeof p.category === "object" &&
                           p.category?.tax !== undefined
                             ? p.category.tax
-                            : p.categoryTax ?? 0;
+                            : (p.categoryTax ?? 0);
                         return (
                           <div className="space-y-0.5">
                             <span className="font-bold text-slate-800 block">
@@ -1479,7 +1347,8 @@ export default function ComparePage() {
                       isDifferent={differences.sku}
                       renderCell={(colIdx) => {
                         const p = detailedProducts[colIdx];
-                        if (!p) return <span className="text-slate-300">—</span>;
+                        if (!p)
+                          return <span className="text-slate-300">—</span>;
                         return (
                           <span className="font-mono text-[10px] sm:text-[11px] text-slate-700 truncate">
                             {p.sku || "—"}
@@ -1500,7 +1369,8 @@ export default function ComparePage() {
                       isDifferent={differences.weight}
                       renderCell={(colIdx) => {
                         const p = detailedProducts[colIdx];
-                        if (!p) return <span className="text-slate-300">—</span>;
+                        if (!p)
+                          return <span className="text-slate-300">—</span>;
                         return (
                           <span className="font-semibold text-slate-800">
                             {p.weight ? `${p.weight} kg` : "—"}
@@ -1520,7 +1390,8 @@ export default function ComparePage() {
                       isDifferent={differences.dimensions}
                       renderCell={(colIdx) => {
                         const p = detailedProducts[colIdx];
-                        if (!p) return <span className="text-slate-300">—</span>;
+                        if (!p)
+                          return <span className="text-slate-300">—</span>;
                         return (
                           <span className="font-semibold text-slate-800">
                             {p.dimensions?.length &&
@@ -1545,7 +1416,8 @@ export default function ComparePage() {
                       isDifferent={differences.countryOfOrigin}
                       renderCell={(colIdx) => {
                         const p = detailedProducts[colIdx];
-                        if (!p) return <span className="text-slate-300">—</span>;
+                        if (!p)
+                          return <span className="text-slate-300">—</span>;
                         return (
                           <span className="font-semibold text-slate-800">
                             {p.countryOfOrigin || "India"}
@@ -1565,7 +1437,8 @@ export default function ComparePage() {
                       isDifferent={differences.productType}
                       renderCell={(colIdx) => {
                         const p = detailedProducts[colIdx];
-                        if (!p) return <span className="text-slate-300">—</span>;
+                        if (!p)
+                          return <span className="text-slate-300">—</span>;
                         return (
                           <span className="font-semibold text-slate-800">
                             {p.productType || "Standard"}
@@ -1602,13 +1475,14 @@ export default function ComparePage() {
                           isDifferent={isDiff}
                           renderCell={(colIdx) => {
                             const p = detailedProducts[colIdx];
-                            if (!p) return <span className="text-slate-300">—</span>;
+                            if (!p)
+                              return <span className="text-slate-300">—</span>;
                             const found = Array.isArray(p.details)
                               ? p.details.find(
                                   (d) =>
                                     d?.title &&
                                     d.title.trim().toLowerCase() ===
-                                      titleKey.toLowerCase()
+                                      titleKey.toLowerCase(),
                                 )
                               : null;
                             return (
@@ -1634,7 +1508,8 @@ export default function ComparePage() {
                     </div>
 
                     {filteredFeaturesList.map((featureText, fIdx) => {
-                      const isDiff = differences.features?.[featureText] || false;
+                      const isDiff =
+                        differences.features?.[featureText] || false;
                       if (showDifferencesOnly && !isDiff) {
                         return null;
                       }
@@ -1649,14 +1524,15 @@ export default function ComparePage() {
                           isDifferent={isDiff}
                           renderCell={(colIdx) => {
                             const p = detailedProducts[colIdx];
-                            if (!p) return <span className="text-slate-300">—</span>;
+                            if (!p)
+                              return <span className="text-slate-300">—</span>;
                             const hasFeature =
                               Array.isArray(p.features) &&
                               p.features.some(
                                 (feat) =>
                                   typeof feat === "string" &&
                                   feat.trim().toLowerCase() ===
-                                    featureText.toLowerCase()
+                                    featureText.toLowerCase(),
                               );
 
                             return (

@@ -1,222 +1,207 @@
 import React, { useState } from "react";
 import {
-  BookOpen,
   Search,
   ShoppingBag,
-  Sparkles,
-  Award,
-  Phone,
-  Bookmark,
-  Menu,
+  User,
+  LayoutGrid,
+  Globe,
   X,
-  Clock,
-  Tag,
-  Coffee,
+  Check,
+  BookOpen,
 } from "lucide-react";
 
 export default function Navbar({
-  brandName = "CHAPTER & VERSE",
+  brandName = "ENIGMA | Enigma",
   brandLogo = null,
-  brandPhone = "+1 (800) 555-READ",
   activePage = "home",
   setActivePage,
   cartCount = 0,
   onOpenCart,
   searchQuery = "",
   setSearchQuery,
-  onOpenReadingCalc,
+  onOpenCategoryMenu,
 }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [langModalOpen, setLangModalOpen] = useState(false);
+  const [selectedLang, setSelectedLang] = useState("English (US)");
+  const [searchOpen, setSearchOpen] = useState(false);
 
-  const navLinks = [
-    { id: "home", label: "Front Stacks", icon: BookOpen },
-    { id: "stacks", label: "Library Catalog", icon: Bookmark },
-    { id: "book-club", label: "The Book Club", icon: Coffee },
-    { id: "calculator", label: "Reading Speed Lab", icon: Clock },
-    { id: "rare-vault", label: "Rare & Signed", icon: Award },
-    { id: "offers", label: "Literary Bundles", icon: Tag },
+  const languages = [
+    { code: "en", label: "English (US)" },
+    { code: "es", label: "Español" },
+    { code: "fr", label: "Français" },
+    { code: "de", label: "Deutsch" },
+    { code: "ja", label: "日本語" },
+    { code: "pt", label: "Português" },
   ];
 
-  const handleNav = (id) => {
-    setActivePage(id);
-    setMobileMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
   return (
-    <header className="sticky top-0 z-40 bg-[#FAF7F2]/95 backdrop-blur-md border-b border-[#E7DFD5] shadow-[0_4px_25px_rgba(28,25,23,0.06)] font-serif">
-      {/* Top Literary Salon Ribbon */}
-      <div className="bg-[#1C1917] text-[#E7DFD5] text-[11px] py-2 px-4 tracking-wider">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#D97706] animate-pulse" />
-            <span>
-              <strong className="text-[#FBBF24] uppercase text-[10px] tracking-widest mr-1">
-                Independent Press Notice:
-              </strong>
-              Complimentary hand-letterpressed linen bookmark & archival acid-free dust jacket on all Hardcover acquisitions.
-            </span>
-          </div>
-
-          <div className="hidden md:flex items-center gap-6 text-[11px] text-[#D5C7B8]">
-            <span className="flex items-center gap-1.5">
-              <Award size={13} className="text-[#D97706]" /> Signed First Editions Verified
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Bookmark size={13} className="text-[#D97706]" /> Member of Independent Booksellers Guild
-            </span>
-            <a
-              href={`tel:${brandPhone}`}
-              className="flex items-center gap-1 text-[#FBBF24] hover:text-white transition font-mono"
-            >
-              <Phone size={12} /> {brandPhone}
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Classical Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-        {/* Brand Crest */}
+    <header className="sticky top-0 z-40 bg-white border-b border-[#E5E7EB] font-sans">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-4">
+        {/* ================= LEFT: ENIGMA OVAL BRAND CREST ================= */}
         <div
-          onClick={() => handleNav("home")}
-          className="flex items-center gap-3.5 cursor-pointer group select-none flex-shrink-0"
+          onClick={() => {
+            setActivePage("home");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className="flex items-center gap-2.5 cursor-pointer group select-none flex-shrink-0"
         >
           {brandLogo ? (
             <img
               src={brandLogo}
               alt={brandName}
-              className="h-10 w-auto max-w-[150px] object-contain"
+              className="h-8 w-auto max-w-[120px] object-contain"
             />
           ) : (
-            <div className="w-10 h-10 rounded-xl bg-[#1C1917] text-[#FAF7F2] flex items-center justify-center border border-[#78350F]/40 group-hover:bg-[#292524] transition shadow-md">
-              <BookOpen size={20} className="text-[#D97706]" />
+            <div className="flex items-center gap-2">
+              {/* ENIGMA Oval Pill Badge matching Reference */}
+              <div className="px-3 py-1 rounded-full border-2 border-black flex items-center justify-center tracking-widest text-xs font-serif font-black uppercase text-black">
+                ENIGMA
+              </div>
+              <span className="hidden sm:inline-block text-stone-400 font-light text-sm">
+                |
+              </span>
+              <span className="hidden sm:inline-block text-sm font-medium text-stone-700 tracking-tight">
+                Enigma
+              </span>
             </div>
           )}
-          <div className="text-left">
-            <span className="text-xl sm:text-2xl font-black tracking-widest text-[#1C1917] block leading-none">
-              {brandName}
-            </span>
-            <span className="text-[9px] uppercase tracking-[0.3em] text-[#78350F] font-bold block pt-1">
-              Independent Press & Curated Books
-            </span>
-          </div>
         </div>
 
-        {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-1.5">
-          {navLinks.map((tab) => {
-            const isActive = activePage === tab.id;
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleNav(tab.id)}
-                className={`relative px-3.5 py-2 rounded-xl text-xs font-bold tracking-wider uppercase transition-all duration-200 flex items-center gap-1.5 cursor-pointer ${
-                  isActive
-                    ? "text-[#1C1917] bg-[#EFE9DF] border border-[#D5C7B8] shadow-sm font-black"
-                    : "text-[#574B40] hover:text-[#1C1917] hover:bg-[#F3EDE3] border border-transparent"
-                }`}
-              >
-                <Icon size={14} className={isActive ? "text-[#9A3412]" : "text-[#78350F]"} />
-                <span>{tab.label}</span>
-                {tab.id === "rare-vault" && (
-                  <span className="bg-[#9A3412] text-white text-[9px] font-sans font-bold px-1.5 py-0.2 rounded-full uppercase">
-                    Signed
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Actions: Search, Speed Calc & Cart */}
-        <div className="flex items-center gap-3">
-          {/* Search Input */}
-          <div className="relative hidden md:block">
-            <input
-              type="text"
-              placeholder="Search title, author, translator..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                if (activePage !== "stacks" && activePage !== "home") {
-                  setActivePage("stacks");
-                }
-              }}
-              className="w-44 lg:w-56 bg-white text-xs text-[#1C1917] placeholder-[#8C7A6B] pl-9 pr-3 py-2 rounded-xl border border-[#D8CCBD] focus:border-[#9A3412] focus:w-64 focus:outline-none transition-all duration-300 shadow-inner font-sans"
-            />
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#78350F]" />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#78350F] hover:text-[#1C1917]"
-              >
-                <X size={13} />
-              </button>
-            )}
-          </div>
-
-          {/* Reading Speed Calc Shortcut */}
+        {/* ================= CENTER: CHANGE STORE LANGUAGE ================= */}
+        <div className="hidden md:flex items-center">
           <button
-            onClick={onOpenReadingCalc || (() => handleNav("calculator"))}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#F0EAE1] hover:bg-[#E7DFD5] text-[#1C1917] border border-[#D5C7B8] text-xs font-bold transition cursor-pointer"
+            type="button"
+            onClick={() => setLangModalOpen(true)}
+            className="text-xs text-stone-600 hover:text-black transition flex items-center gap-1.5 py-1.5 px-3 rounded-full hover:bg-stone-50 border border-transparent hover:border-stone-200 cursor-pointer"
           >
-            <Clock size={14} className="text-[#9A3412]" />
-            <span>Reading Lab</span>
+            <Globe size={13} className="text-stone-400" />
+            <span>Change store language</span>
+            <span className="text-[10px] text-stone-400 font-mono">({selectedLang.split(" ")[0]})</span>
+          </button>
+        </div>
+
+        {/* ================= RIGHT: ICON ACTION GROUP ================= */}
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Quick Categories Grid Icon */}
+          <button
+            type="button"
+            title="Browse All Digital Products"
+            onClick={() => {
+              setActivePage("catalog");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="p-2 text-stone-700 hover:text-black hover:bg-stone-100 rounded-full transition cursor-pointer"
+          >
+            <LayoutGrid size={18} />
           </button>
 
-          {/* Bookshelf Cart Trigger */}
+          {/* Search Toggle Icon */}
           <button
+            type="button"
+            title="Search Books"
+            onClick={() => setSearchOpen(!searchOpen)}
+            className={`p-2 rounded-full transition cursor-pointer ${
+              searchOpen
+                ? "bg-[#133E47] text-white"
+                : "text-stone-700 hover:text-black hover:bg-stone-100"
+            }`}
+          >
+            <Search size={18} />
+          </button>
+
+          {/* User Account Icon */}
+          <button
+            type="button"
+            title="My Library Account"
+            onClick={() => {
+              setActivePage("catalog");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="p-2 text-stone-700 hover:text-black hover:bg-stone-100 rounded-full transition cursor-pointer"
+          >
+            <User size={18} />
+          </button>
+
+          {/* Shopping Bag with Badge */}
+          <button
+            type="button"
+            title="Shopping Cart"
             onClick={onOpenCart}
-            className="relative px-3.5 sm:px-4 py-2 rounded-xl bg-[#1C1917] hover:bg-[#292524] text-[#FAF7F2] transition cursor-pointer flex items-center gap-2 font-bold text-xs shadow-md border border-[#78350F]/30 active:scale-95"
+            className="relative p-2 text-stone-800 hover:text-black hover:bg-stone-100 rounded-full transition cursor-pointer"
           >
-            <ShoppingBag size={16} className="text-[#D97706]" />
-            <span className="hidden sm:inline">Book Bag</span>
-            <span className="bg-[#D97706] text-white text-[11px] font-sans font-black min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center">
-              {cartCount}
-            </span>
-          </button>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-xl bg-[#EFE9DF] text-[#1C1917] border border-[#D5C7B8] cursor-pointer"
-          >
-            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            <ShoppingBag size={19} />
+            {cartCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#133E47] text-white text-[10px] font-bold flex items-center justify-center shadow-xs">
+                {cartCount}
+              </span>
+            )}
           </button>
         </div>
       </div>
 
-      {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-[#E7DFD5] bg-[#FAF7F2] px-4 py-4 space-y-2 shadow-xl animate-in slide-in-from-top duration-200">
-          <div className="grid grid-cols-2 gap-2 pb-3">
-            {navLinks.map((tab) => {
-              const isActive = activePage === tab.id;
-              const Icon = tab.icon;
-              return (
+      {/* ================= EXPANDABLE SEARCH OVERLAY ================= */}
+      {searchOpen && (
+        <div className="border-t border-stone-200 bg-[#FAF9F6] px-4 py-3 sm:px-6">
+          <div className="max-w-2xl mx-auto flex items-center gap-3">
+            <Search size={16} className="text-stone-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                if (activePage !== "catalog") setActivePage("catalog");
+              }}
+              placeholder="Search by title, author, or topic (e.g. Atomic Habits, Chip War, Robert Iger)..."
+              className="flex-1 bg-transparent text-sm text-stone-900 placeholder-stone-400 focus:outline-none py-1"
+              autoFocus
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="text-stone-400 hover:text-stone-600 p-1"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ================= LANGUAGE SELECTOR MODAL ================= */}
+      {langModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-2xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-stone-200 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-stone-900">
+                Select Store Language
+              </h3>
+              <button
+                onClick={() => setLangModalOpen(false)}
+                className="p-1 text-stone-400 hover:text-stone-700"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-1">
+              {languages.map((l) => (
                 <button
-                  key={tab.id}
-                  onClick={() => handleNav(tab.id)}
-                  className={`flex items-center gap-2 p-2.5 rounded-xl text-xs font-bold tracking-wider uppercase transition cursor-pointer text-left ${
-                    isActive
-                      ? "text-[#1C1917] bg-[#EFE9DF] border border-[#9A3412]"
-                      : "text-[#574B40] hover:bg-[#F3EDE3] border border-[#E7DFD5]"
+                  key={l.code}
+                  onClick={() => {
+                    setSelectedLang(l.label);
+                    setLangModalOpen(false);
+                  }}
+                  className={`w-full px-3 py-2.5 rounded-lg text-xs text-left flex items-center justify-between transition cursor-pointer ${
+                    selectedLang === l.label
+                      ? "bg-[#133E47] text-white font-medium"
+                      : "text-stone-700 hover:bg-stone-100"
                   }`}
                 >
-                  <Icon size={16} className={isActive ? "text-[#9A3412]" : "text-[#78350F]"} />
-                  <span className="truncate">{tab.label}</span>
+                  <span>{l.label}</span>
+                  {selectedLang === l.label && <Check size={14} />}
                 </button>
-              );
-            })}
-          </div>
-
-          <div className="pt-2 border-t border-[#E7DFD5] flex items-center justify-between text-xs text-[#574B40]">
-            <span className="italic">Printed on Archival Paper</span>
-            <a href={`tel:${brandPhone}`} className="text-[#1C1917] font-mono">
-              {brandPhone}
-            </a>
+              ))}
+            </div>
           </div>
         </div>
       )}

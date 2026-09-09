@@ -37,19 +37,19 @@ export default function Footer({
   };
 
   return (
-    <footer className="bg-[#FFF8F8] text-rose-900 pt-16 pb-12 border-t border-rose-200/80 text-left text-xs font-sans">
+    <footer className="bg-[#FAF8F5] text-stone-800 pt-16 pb-12 border-t border-[#E8E2D9] text-left text-xs font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         {/* Newsletter Banner */}
-        <div className="rounded-3xl bg-gradient-to-r from-rose-100 via-pink-50 to-rose-100 border border-rose-200 p-6 sm:p-8 flex flex-col lg:flex-row items-center justify-between gap-6 shadow-sm">
+        <div className="rounded-3xl bg-gradient-to-r from-[#F7EFE9] via-[#FAF5F0] to-[#F3ECE4] border border-[#E5DDD2] p-6 sm:p-8 flex flex-col lg:flex-row items-center justify-between gap-6 shadow-xs">
           <div className="space-y-1.5 text-center lg:text-left">
-            <span className="text-rose-600 text-[10px] tracking-widest uppercase font-bold block">
-              THE CLEAN BEAUTY DISPATCH
+            <span className="text-[#8F9E68] text-[11px] tracking-widest uppercase font-bold block">
+              THE BOTANICAL DISPATCH
             </span>
-            <h3 className="text-xl sm:text-2xl font-serif font-black text-rose-950">
+            <h3 className="text-xl sm:text-2xl font-serif font-black text-[#2D2A26]">
               Receive 15% off your first ritual + clinical skincare guides.
             </h3>
-            <p className="text-rose-700/80 text-xs">
-              Direct access to dermatologist Q&As, early access drops, and clean beauty news.
+            <p className="text-stone-600 text-xs">
+              Direct access to dermatologist Q&As, seasonal launches, and pure formulation science.
             </p>
           </div>
 
@@ -62,16 +62,16 @@ export default function Footer({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@domain.com"
-              className="w-full sm:w-72 bg-white text-xs text-rose-950 placeholder-rose-400 px-4 py-3 rounded-xl border border-rose-200 focus:border-rose-400 focus:outline-none transition shadow-inner"
+              className="w-full sm:w-72 bg-white text-xs text-stone-900 placeholder-stone-400 px-4 py-3 rounded-full border border-stone-200 focus:border-[#8F9E68] focus:outline-none transition shadow-inner"
             />
             <button
               type="submit"
-              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap shadow-sm"
+              className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#8F9E68] hover:bg-[#7D8C57] text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap shadow-sm active:scale-95"
             >
               {subscribed ? (
                 <>
                   <Check size={14} />
-                  <span>Enrolled!</span>
+                  <span>Subscribed!</span>
                 </>
               ) : (
                 <>
@@ -95,106 +95,106 @@ export default function Footer({
                   className="h-9 w-auto max-w-[130px] object-contain"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-rose-400 to-pink-600 text-white flex items-center justify-center shadow-sm">
+                <div className="w-10 h-10 rounded-2xl bg-[#8F9E68] text-white flex items-center justify-center shadow-sm">
                   <Sparkles size={20} />
                 </div>
               )}
-              <span className="text-lg font-serif font-black tracking-tight text-rose-950 uppercase">
+              <span className="text-lg font-serif font-black tracking-widest text-[#2D2A26] uppercase">
                 {brandName}
               </span>
             </div>
 
-            <p className="text-rose-800/80 leading-relaxed text-xs max-w-sm">
-              Clinical-grade botanical skincare developed with multi-weight hyaluronic acid, plant peptides, and barrier ceramides. 100% cruelty-free, vegan, and kind to sensitive skin.
+            <p className="text-stone-600 leading-relaxed text-xs max-w-sm">
+              Clinical-grade botanical skincare developed with pure plant lipids, cold-pressed seed oils, and restorative ceramides. 100% cruelty-free, clean, and dermatologist tested.
             </p>
 
-            <div className="flex items-center gap-4 text-xs font-semibold text-rose-800">
-              <span className="flex items-center gap-1 text-rose-600">
+            <div className="flex items-center gap-4 text-xs font-semibold text-stone-700">
+              <span className="flex items-center gap-1 text-[#8F9E68]">
                 <Leaf size={14} /> Leaping Bunny Vegan
               </span>
-              <span className="flex items-center gap-1 text-rose-600">
-                <ShieldCheck size={14} /> EWG Verified Clean
+              <span className="flex items-center gap-1 text-[#8F9E68]">
+                <ShieldCheck size={14} /> Clean Certified
               </span>
             </div>
           </div>
 
           {/* Col 2: Skincare Formulas */}
           <div className="space-y-3">
-            <h5 className="font-bold text-rose-950 uppercase text-[11px] tracking-wider">
-              Botanical Steps
+            <h5 className="font-bold text-[#2D2A26] uppercase text-[11px] tracking-wider">
+              Botanical Care
             </h5>
             <ul className="space-y-2 text-xs">
               <li>
                 <button
                   onClick={() => onNavigate && onNavigate("catalog", "Cleanse")}
-                  className="hover:text-rose-600 transition cursor-pointer text-left text-rose-800"
+                  className="hover:text-[#8F9E68] transition cursor-pointer text-left text-stone-600"
                 >
                   Milky Gentle Cleansers
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("catalog", "Tone")}
-                  className="hover:text-rose-600 transition cursor-pointer text-left text-rose-800"
+                  onClick={() => onNavigate && onNavigate("catalog", "Toners")}
+                  className="hover:text-[#8F9E68] transition cursor-pointer text-left text-stone-600"
                 >
-                  Rose Hydrosol Toners
+                  Balancing Toners & Mists
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("catalog", "Treat")}
-                  className="hover:text-rose-600 transition cursor-pointer text-left text-rose-800"
+                  onClick={() => onNavigate && onNavigate("catalog", "Serums")}
+                  className="hover:text-[#8F9E68] transition cursor-pointer text-left text-stone-600"
                 >
-                  Hyaluronic Dew Drops
+                  Smoothing Essences & Drops
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("catalog", "Moisturize")}
-                  className="hover:text-rose-600 transition cursor-pointer text-left text-rose-800"
+                  onClick={() => onNavigate && onNavigate("catalog", "Moisturizers")}
+                  className="hover:text-[#8F9E68] transition cursor-pointer text-left text-stone-600"
                 >
-                  Ceramide Barrier Creams
+                  Barrier Hydration Creams
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* Col 3: Diagnostics */}
+          {/* Col 3: Labs & Benefits */}
           <div className="space-y-3">
-            <h5 className="font-bold text-rose-950 uppercase text-[11px] tracking-wider">
-              Diagnostic Labs
+            <h5 className="font-bold text-[#2D2A26] uppercase text-[11px] tracking-wider">
+              Skin Science
             </h5>
             <ul className="space-y-2 text-xs">
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("routines")}
-                  className="hover:text-rose-600 transition cursor-pointer text-left text-rose-800"
+                  onClick={() => onNavigate && onNavigate("home")}
+                  className="hover:text-[#8F9E68] transition cursor-pointer text-left text-stone-600"
                 >
-                  Skin Routine Builder Quiz
+                  Before & After Clinicals
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("shade-finder")}
-                  className="hover:text-rose-600 transition cursor-pointer text-left text-rose-800"
+                  onClick={() => onNavigate && onNavigate("catalog")}
+                  className="hover:text-[#8F9E68] transition cursor-pointer text-left text-stone-600"
                 >
-                  Virtual Undertone Finder
+                  Winter Body Care Series
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("ingredients")}
-                  className="hover:text-rose-600 transition cursor-pointer text-left text-rose-800"
+                  onClick={() => onNavigate && onNavigate("catalog")}
+                  className="hover:text-[#8F9E68] transition cursor-pointer text-left text-stone-600"
                 >
-                  Ingredient Transparency Deck
+                  Pure Cold-Pressed Hemp Oil
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => onNavigate && onNavigate("offers")}
-                  className="hover:text-rose-600 transition cursor-pointer text-left text-rose-800"
+                  className="hover:text-[#8F9E68] transition cursor-pointer text-left text-stone-600"
                 >
-                  Ritual Sets & VIP Vouchers
+                  Seasonal Gift Sets
                 </button>
               </li>
             </ul>
@@ -202,27 +202,27 @@ export default function Footer({
 
           {/* Col 4: Skin Concierge */}
           <div className="space-y-3">
-            <h5 className="font-bold text-rose-950 uppercase text-[11px] tracking-wider">
+            <h5 className="font-bold text-[#2D2A26] uppercase text-[11px] tracking-wider">
               Skin Concierge
             </h5>
             <div className="space-y-2 text-xs">
               <a
                 href={`tel:${brandPhone}`}
-                className="flex items-center gap-1.5 text-rose-950 hover:text-rose-600 font-semibold transition"
+                className="flex items-center gap-1.5 text-stone-800 hover:text-[#8F9E68] font-semibold transition"
               >
-                <Phone size={13} className="text-rose-500" />
+                <Phone size={13} className="text-[#8F9E68]" />
                 <span>{brandPhone}</span>
               </a>
               <a
                 href={`mailto:${brandEmail}`}
-                className="flex items-center gap-1.5 text-rose-800 hover:text-rose-600 transition truncate"
+                className="flex items-center gap-1.5 text-stone-600 hover:text-[#8F9E68] transition truncate"
               >
-                <Mail size={13} className="text-rose-500" />
+                <Mail size={13} className="text-[#8F9E68]" />
                 <span>{brandEmail}</span>
               </a>
               {brandAddress && (
-                <div className="flex items-start gap-1.5 text-rose-700/80 pt-1">
-                  <MapPin size={13} className="text-rose-500 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-1.5 text-stone-500 pt-1">
+                  <MapPin size={13} className="text-[#8F9E68] flex-shrink-0 mt-0.5" />
                   <span className="leading-tight">{brandAddress}</span>
                 </div>
               )}
@@ -231,21 +231,21 @@ export default function Footer({
         </div>
 
         {/* Certifications Ribbon */}
-        <div className="pt-8 border-t border-rose-200/80 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3 text-[10px] text-rose-700 font-medium">
-            <span className="px-2.5 py-1 rounded-lg bg-rose-100 border border-rose-200 text-rose-900 font-bold">
+        <div className="pt-8 border-t border-stone-200 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-3 text-[11px] text-stone-600 font-medium">
+            <span className="px-3 py-1 rounded-full bg-[#EAE5DE] border border-[#DDD6CC] text-stone-800 font-bold">
               ★ Leaping Bunny Cruelty-Free
             </span>
-            <span className="px-2.5 py-1 rounded-lg bg-rose-100 border border-rose-200 text-rose-900">
-              100% Post-Consumer Recycled Glass
+            <span className="px-3 py-1 rounded-full bg-[#EAE5DE] border border-[#DDD6CC] text-stone-800">
+              100% Recycled Sustainable Glass
             </span>
-            <span className="px-2.5 py-1 rounded-lg bg-rose-100 border border-rose-200 text-rose-900">
+            <span className="px-3 py-1 rounded-full bg-[#EAE5DE] border border-[#DDD6CC] text-stone-800">
               Zero Synthetic Fragrances
             </span>
           </div>
 
-          <div className="text-[11px] text-rose-600">
-            © {new Date().getFullYear()} {brandName}. Radiant, calm skin formulated by nature and science.
+          <div className="text-[11px] text-stone-500">
+            © {new Date().getFullYear()} {brandName}. Formulated with pure botanical extracts and dermatological care.
           </div>
         </div>
       </div>

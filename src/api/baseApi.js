@@ -20,9 +20,22 @@ const baseApi = axios.create({
 baseApi.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
-    if (token) {
+    if (token && token !== "null" && token !== "undefined") {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    let guestId = localStorage.getItem("guestId");
+    if (!guestId) {
+      guestId =
+        "guest_" +
+        Math.random().toString(36).substring(2, 12) +
+        Date.now().toString(36);
+      try {
+        localStorage.setItem("guestId", guestId);
+      } catch (_) {}
+    }
+    config.headers["x-guest-id"] = guestId;
+
     return config;
   },
   (error) => Promise.reject(error),

@@ -1,12 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  Heart,
-  ShoppingCart,
-  Share2,
-  ChevronRight,
-} from "lucide-react";
+import { Heart, ShoppingCart, Share2, ChevronRight } from "lucide-react";
 import { addToCart } from "../../redux/reducers/cartReducer";
 import toast from "react-hot-toast";
 import ProductCard from "../../Components/ProductCard";
@@ -25,7 +20,10 @@ export default function Wishlist() {
   const handleShare = async () => {
     if (navigator.share) {
       try {
-        await navigator.share({ title: "My Wishlist", url: window.location.href });
+        await navigator.share({
+          title: "My Wishlist",
+          url: window.location.href,
+        });
       } catch (_) {}
     } else {
       await navigator.clipboard.writeText(window.location.href);
@@ -36,17 +34,18 @@ export default function Wishlist() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 transition-colors pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        
         {/* Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-slate-200/80 pb-4 p-5 rounded-2xl bg-white shadow-sm">
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-              <Link to="/" className="hover:text-[#2563eb]">Home</Link>
+              <Link to="/" className="hover:text-[#2563eb]">
+                Home
+              </Link>
               <ChevronRight size={12} />
               <span className="text-slate-900 font-bold">Wishlist</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-black text-slate-900 pt-1">
-              My Wishlist <span className="text-sm font-semibold text-slate-400">({wishlist.length} items)</span>
+              My Wishlist{" "}
             </h1>
           </div>
 
@@ -59,6 +58,15 @@ export default function Wishlist() {
                 <Share2 size={14} />
                 <span>Share</span>
               </button>
+              <div>
+                <select className="border border-slate-300 text-xs font-bold rounded-lg px-3 py-2 hover:bg-slate-100 transition-colors cursor-pointer">
+                  <option value="sort">Sort By</option>
+                  <option value="price-asc">Price: Low to High</option>
+                  <option value="price-desc">Price: High to Low</option>
+                  <option value="name-asc">Name: A-Z</option>
+                  <option value="name-desc">Name: Z-A</option>
+                </select>
+              </div>
               <button
                 onClick={handleMoveAllToCart}
                 className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
@@ -75,9 +83,12 @@ export default function Wishlist() {
             <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto">
               <Heart size={32} />
             </div>
-            <h2 className="text-lg font-black text-slate-900">Your wishlist is empty</h2>
+            <h2 className="text-lg font-black text-slate-900">
+              Your wishlist is empty
+            </h2>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              Save your favorite items here to purchase later or keep track of special deals.
+              Save your favorite items here to purchase later or keep track of
+              special deals.
             </p>
             <div>
               <Link
@@ -90,13 +101,12 @@ export default function Wishlist() {
           </div>
         ) : (
           /* Wishlist Items Grid */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-4 gap-3 sm:gap-4">
             {wishlist.map((prod) => (
               <ProductCard key={prod._id || prod.id} product={prod} />
             ))}
           </div>
         )}
-
       </div>
     </div>
   );

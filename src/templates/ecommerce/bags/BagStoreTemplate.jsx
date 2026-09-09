@@ -1,21 +1,18 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import {
   ShoppingBag,
-  Search,
-  ShieldCheck,
-  Sparkles,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   Star,
   Check,
-  ArrowRight,
-  Compass,
-  Award,
-  Layers,
+  Eye,
   Heart,
-  SlidersHorizontal,
-  Briefcase,
-  ChevronRight,
-  Feather,
-  Plus,
+  X,
+  Sparkles,
+  ShieldCheck,
+  Leaf,
+  Compass,
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -45,567 +42,380 @@ export default function BagStoreTemplate({
   reviews = [],
   customization = {},
 }) {
-  // Navigation: "home" | "catalog" | "leather-craft" | "monogram" | "offers" | "warranty" | "product-detail"
+  // Navigation: "home" | "catalog" | "product-detail" | "offers"
   const [activePage, setActivePage] = useState("home");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
-
-  // Search & Filters
-  const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Monogram Studio State
-  const [monogramText, setMonogramText] = useState("J.V.");
-  const [monogramFoil, setMonogramFoil] = useState("Gold");
+  // Newsletter state
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterConsent, setNewsletterConsent] = useState(true);
+
+  // Quick View Modal
+  const [quickViewProduct, setQuickViewProduct] = useState(null);
+
+  // Carousel shift state for featured row
+  const [featuredIndex, setFeaturedIndex] = useState(0);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const cartItems = useSelector((state) => state.cart?.cartItems || []);
 
-  const defaultProducts = [
+  // Curated handcrafted backpack & bag lineup matching the reference screenshot
+  const defaultBags = [
     {
       _id: "bag-1",
-      name: "The Executive Full-Grain Leather Briefcase",
-      price: 385.0,
-      compareAtPrice: 460.0,
-      leather: "Vachetta Tan",
-      category: "Briefcases",
-      capacity: "Fits 16\" MacBook Pro",
-      rating: 4.9,
-      reviewCount: 64,
+      name: "CORIN LEATHER BACK PACK",
+      category: "Backpacks",
+      price: 38.99,
+      compareAtPrice: 42.0,
+      material: "Full-Grain Saddle Leather",
+      capacity: "22 Liters",
+      rating: 5.0,
+      reviewCount: 0,
       image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&auto=format&fit=crop&q=80",
-      description: "Handcrafted from 6oz Tuscan vegetable-tanned leather with solid brass hardware, padded laptop compartment, and dual smartphone sleeves.",
+      description: "Handcrafted with full-grain vegetable-tanned saddle leather, reinforced dual shoulder straps, solid brass buckle hardware, and protective interior laptop sleeve.",
       inStock: true,
     },
     {
       _id: "bag-2",
-      name: "The Weekender 48-Hour Heritage Duffel",
-      price: 440.0,
-      compareAtPrice: 520.0,
-      leather: "Cognac Brown",
-      category: "Weekenders & Duffels",
-      capacity: "42 Liters Overhead Compliant",
+      name: "HERITAGE WAXED CANVAS PACK",
+      category: "Backpacks",
+      price: 48.0,
+      compareAtPrice: 55.0,
+      material: "18oz Waxed Cotton Canvas",
+      capacity: "26 Liters",
       rating: 5.0,
-      reviewCount: 88,
+      reviewCount: 0,
       image: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&auto=format&fit=crop&q=80",
-      description: "Reinforced luggage-grade leather base, removable wool shoulder strap, waterproof lining, and integrated passport pocket.",
+      description: "Weatherproof 18oz Scottish waxed cotton canvas with Tuscan bridle leather accents and quick-access top flap pocket.",
       inStock: true,
     },
     {
       _id: "bag-3",
-      name: "The Minimalist Sculpted Day Tote",
-      price: 295.0,
-      compareAtPrice: 350.0,
-      leather: "Obsidian Black",
-      category: "Totes",
-      capacity: "Fits 14\" Laptop & Essentials",
-      rating: 4.8,
-      reviewCount: 42,
-      image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&auto=format&fit=crop&q=80",
-      description: "Structured seamless silhouette with magnetic closure, reinforced handles, and dual interior organizer zip pockets.",
+      name: "VINTAGE SADDLE MESSENGER",
+      category: "Messenger & Crossbody",
+      price: 36.5,
+      compareAtPrice: 45.0,
+      material: "Heavy Duty Washed Canvas",
+      capacity: "16 Liters",
+      rating: 5.0,
+      reviewCount: 0,
+      image: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800&auto=format&fit=crop&q=80",
+      description: "Rugged washed khaki canvas courier with adjustable webbing strap, dual front utility pockets, and padded tablet partition.",
       inStock: true,
     },
     {
       _id: "bag-4",
-      name: "The Urban Commuter Roll-Top Backpack",
-      price: 360.0,
-      compareAtPrice: 420.0,
-      leather: "Vachetta Tan",
+      name: "CLASSIC FJORD BLUE DAYPACK",
       category: "Backpacks",
-      capacity: "Expandable 24L • Fits 16\" Laptop",
-      rating: 4.9,
-      reviewCount: 56,
-      image: "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?w=800&auto=format&fit=crop&q=80",
-      description: "Ergonomic padded leather shoulder straps, expandable roll-top capacity, and quick-access trolley pass-through sleeve.",
+      price: 38.99,
+      compareAtPrice: 42.0,
+      material: "Organic Cotton Duck",
+      capacity: "20 Liters",
+      rating: 5.0,
+      reviewCount: 0,
+      image: "https://images.unsplash.com/photo-1546938576-6e6a64f317cc?w=800&auto=format&fit=crop&q=80",
+      description: "Minimalist Scandinavian daypack sewn from organic indigo cotton duck with natural leather cinch straps.",
       inStock: true,
     },
     {
       _id: "bag-5",
-      name: "The Florentine Crossbody Saddle Bag",
-      price: 225.0,
-      compareAtPrice: 275.0,
-      leather: "Heritage Olive",
-      category: "Accessories",
-      capacity: "Compact 6L Travel Silhouette",
-      rating: 4.9,
-      reviewCount: 38,
-      image: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800&auto=format&fit=crop&q=80",
-      description: "Classic equestrian curved silhouette with solid brass turnkey lock and adjustable bridle leather crossbody strap.",
+      name: "EXPEDITION ROLLTOP PACK",
+      category: "Backpacks",
+      price: 52.0,
+      compareAtPrice: 60.0,
+      material: "Waxed Canvas & Vachetta",
+      capacity: "30 Liters Expandable",
+      rating: 5.0,
+      reviewCount: 0,
+      image: "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?w=800&auto=format&fit=crop&q=80",
+      description: "Expandable rolltop closure engineered for wilderness trail hikes, cycling commutes, and weekend travel excursions.",
       inStock: true,
     },
     {
       _id: "bag-6",
-      name: "The Pilot Leather Dopp Kit & Travel Case",
-      price: 110.0,
-      compareAtPrice: 135.0,
-      leather: "Cognac Brown",
-      category: "Accessories",
-      capacity: "Waterproof Toiletry Organizers",
+      name: "CANVAS FIELD CROSSBODY BAG",
+      category: "Messenger & Crossbody",
+      price: 34.0,
+      compareAtPrice: 39.0,
+      material: "Earth-Toned Canvas",
+      capacity: "12 Liters",
       rating: 5.0,
-      reviewCount: 71,
-      image: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=800&auto=format&fit=crop&q=80",
-      description: "Wide-mouth framed opening with washable moisture-resistant interior lining and heavy-duty brass zipper.",
+      reviewCount: 0,
+      image: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800&auto=format&fit=crop&q=80",
+      description: "Compact EDC shoulder pack designed for cameras, notebooks, and travel essentials with anti-theft magnetic closure.",
       inStock: true,
     },
   ];
 
-  const bagItems = products.length > 0 ? products : defaultProducts;
+  const bagsCatalog = products && products.length > 0 ? products : defaultBags;
 
-  const brandName =
-    business?.businessName ||
-    business?.name ||
-    customization?.heroHeadline ||
-    "CUIR & CO.";
+  // Cart operations
+  const handleAddToCart = (productToAdd, qty = 1) => {
+    dispatch(
+      addToCart({
+        id: productToAdd._id || productToAdd.id,
+        name: productToAdd.name,
+        price: Number(productToAdd.price) || 38.99,
+        image: getProductImage(productToAdd, productToAdd.image),
+        quantity: qty,
+      })
+    );
+    toast.success(`Added ${productToAdd.name} to cart! 🎒`);
+  };
 
-  const brandLogo = customization?.logo || business?.logo || null;
-  const brandPhone =
-    business?.phone ||
-    business?.businessPhone ||
-    business?.contactPhone ||
-    "+39 055 289 400";
-  const brandEmail =
-    business?.email ||
-    business?.businessEmail ||
-    business?.contactEmail ||
-    "concierge@cuirandco.it";
-
-  const rawAddr = business?.address || business?.registered_business_address;
-  const brandAddress =
-    typeof rawAddr === "string"
-      ? rawAddr
-      : rawAddr && typeof rawAddr === "object"
-      ? [rawAddr.street, rawAddr.addressLine2, rawAddr.city, rawAddr.state, rawAddr.postalCode, rawAddr.country]
-          .filter(Boolean)
-          .join(", ")
-      : "Via de' Benci 24, 50122 Firenze, Italy";
-
-  const handleAddToCart = (product, qty = 1) => {
-    if (isOutOfStock(product)) {
-      toast.error(`Sorry, ${product.name} is currently out of stock!`);
-      return;
+  const handleUpdateQuantity = (itemId, qty) => {
+    if (qty <= 0) {
+      dispatch(removeFromCart(itemId));
+    } else {
+      dispatch(updateCartQuantity({ id: itemId, quantity: qty }));
     }
-    dispatch(addToCart({ product, quantity: qty }));
-    toast.success(`${product.name} added to Carry Cart! 🧳`);
-    setCartOpen(true);
   };
 
-  const handleUpdateQuantity = (id, newQty) => {
-    dispatch(updateCartQuantity({ productId: id, quantity: newQty }));
-  };
-
-  const handleRemoveItem = (id) => {
-    dispatch(removeFromCart(id));
+  const handleRemoveItem = (itemId) => {
+    dispatch(removeFromCart(itemId));
+    toast.success("Removed from bag");
   };
 
   const handleCheckout = () => {
+    if (cartItems.length === 0) {
+      toast.error("Your cart is empty!");
+      return;
+    }
     setCartOpen(false);
-    navigate("/cart");
+    navigate("/checkout");
   };
 
-  const cartCount = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
-
-  const handleSelectProduct = (p) => {
-    setSelectedProduct(p);
-    setActivePage("product-detail");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const handleNewsletterSubmit = (e) => {
+    e.preventDefault();
+    if (!newsletterEmail || !newsletterEmail.includes("@")) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+    toast.success("Thank you for signing up for our newsletter!");
+    setNewsletterEmail("");
   };
 
   return (
-    <div className="min-h-screen flex flex-col font-serif bg-[#FAF7F2] text-[#2C1810] antialiased selection:bg-[#B45309]/20 selection:text-[#B45309]">
-      {/* ================= 1. ATELIER NAVBAR ================= */}
+    <div className="min-h-screen bg-white text-slate-800 font-sans flex flex-col justify-between selection:bg-[#A0522D] selection:text-white">
+      {/* ================= 1. NAVBAR ================= */}
       <Navbar
-        brandName={brandName}
-        brandLogo={brandLogo}
-        brandPhone={brandPhone}
+        brandName={business?.name || "KRAFT & CANVAS"}
         activePage={activePage}
         setActivePage={setActivePage}
-        cartCount={cartCount}
+        cartCount={cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0)}
         onOpenCart={() => setCartOpen(true)}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        onOpenMonogram={() => {
-          setActivePage("monogram");
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }}
       />
 
-      {/* ================= 2. MAIN ACTIVE PAGE ================= */}
-      <main className="flex-1">
-        {/* ================= VIEW 1: HOME ================= */}
+      <main className="flex-1 pb-16">
+        {/* ================= VIEW 1: HOMEPAGE (Reference Image) ================= */}
         {activePage === "home" && (
-          <>
-            {/* HERO SECTION */}
-            <section className="relative overflow-hidden bg-[#FAF7F2] pt-12 pb-20 md:pt-20 md:pb-28 border-b border-[#E7DFD5]">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-                  <div className="lg:col-span-7 space-y-6 text-left">
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EFE9DF] border border-[#D5C7B8] text-[#2C1810] text-xs font-bold">
-                      <Sparkles size={14} className="text-[#B45309]" />
-                      <span>The Heritage Leather Collection 2026</span>
-                    </div>
+          <div className="space-y-16 sm:space-y-20">
+            {/* ================= SECTION: HERO SCENIC WILDERNESS BANNER ================= */}
+            <section className="relative w-full h-[420px] sm:h-[500px] lg:h-[560px] overflow-hidden bg-slate-800">
+              {/* Scenic Outdoor Background: Traveler with tan backpack by misty lake */}
+              <div
+                className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 scale-100 hover:scale-105"
+                style={{
+                  backgroundImage: `url("https://images.unsplash.com/photo-1501555088652-021faa106b9b?w=1600&auto=format&fit=crop&q=80")`,
+                }}
+              >
+                {/* Subtle natural misty atmospheric wash */}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent" />
+              </div>
 
-                    <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-[#2C1810] leading-[1.08]">
-                      Heirloom Vegetable-Tanned Tuscan Leather.
-                    </h1>
+              {/* Carousel Left Arrow Navigation Icon */}
+              <button
+                type="button"
+                aria-label="Previous Slide"
+                onClick={() => toast("Viewing first slide")}
+                className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full text-white/80 hover:text-white hover:bg-black/30 transition cursor-pointer z-20"
+              >
+                <ChevronLeft size={28} />
+              </button>
 
-                    <p className="text-sm sm:text-base text-[#6B5344] leading-relaxed max-w-xl font-sans">
-                      Handcrafted in Santa Croce sull'Arno using centuries-old chestnut bark infusions and solid cast antique brass hardware. Designed to age with your journeys and develop a magnificent living patina.
-                    </p>
+              {/* Carousel Right Arrow Navigation Icon */}
+              <button
+                type="button"
+                aria-label="Next Slide"
+                onClick={() => toast("Viewing next slide")}
+                className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full text-white/80 hover:text-white hover:bg-black/30 transition cursor-pointer z-20"
+              >
+                <ChevronRight size={28} />
+              </button>
 
-                    <div className="flex flex-wrap gap-4 pt-2">
-                      <button
-                        onClick={() => {
-                          setActivePage("catalog");
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                        }}
-                        className="px-8 py-4 bg-[#2C1810] hover:bg-[#3D2217] text-[#FAF7F2] rounded-2xl text-xs font-bold uppercase tracking-widest transition shadow-lg flex items-center gap-2 cursor-pointer transform hover:-translate-y-0.5 active:scale-95"
-                      >
-                        <Briefcase size={17} className="text-[#D97706]" />
-                        <span>Explore Silhouettes</span>
-                      </button>
+              {/* Floating Frosted Glass Card on Left (Matches Screenshot) */}
+              <div className="relative max-w-7xl mx-auto h-full px-6 sm:px-10 lg:px-12 flex items-center z-10">
+                <div className="max-w-md sm:max-w-lg p-8 sm:p-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 text-white shadow-2xl text-center space-y-6">
+                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black tracking-tight leading-tight drop-shadow-md">
+                    Unique & Sustainable <br />
+                    Back Packs
+                  </h1>
 
-                      <button
-                        onClick={() => {
-                          setActivePage("monogram");
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                        }}
-                        className="px-7 py-4 bg-white border border-[#D5C7B8] hover:border-[#8C6D58] text-[#2C1810] rounded-2xl text-xs font-bold uppercase tracking-widest transition flex items-center gap-2 cursor-pointer shadow-sm"
-                      >
-                        <Sparkles size={16} className="text-[#B45309]" />
-                        <span>Bespoke 24k Monogram</span>
-                      </button>
-                    </div>
-
-                    {/* Tuscan Metrics Strip */}
-                    <div className="grid grid-cols-3 gap-4 pt-6 border-t border-[#E7DFD5] text-left">
-                      <div>
-                        <span className="text-xl sm:text-2xl font-bold text-[#2C1810]">6 oz Hide</span>
-                        <p className="text-[11px] text-[#8C6D58] font-sans mt-0.5">Full-Grain Vachetta</p>
-                      </div>
-                      <div>
-                        <span className="text-xl sm:text-2xl font-bold text-[#2C1810]">Lifetime</span>
-                        <p className="text-[11px] text-[#8C6D58] font-sans mt-0.5">Stitching Guarantee</p>
-                      </div>
-                      <div>
-                        <span className="text-xl sm:text-2xl font-bold text-[#B45309]">24k Gold</span>
-                        <p className="text-[11px] text-[#8C6D58] font-sans mt-0.5">Complimentary Monogram</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Hero Visual Card */}
-                  <div className="lg:col-span-5 relative">
-                    <div className="aspect-[4/3] rounded-[36px] overflow-hidden shadow-2xl border-4 border-white bg-[#FAF7F2] relative group">
-                      <img
-                        src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=900&auto=format&fit=crop&q=80"
-                        alt="The Weekender Heritage Duffel"
-                        className="w-full h-full object-cover transform group-hover:scale-105 transition duration-700"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#2C1810]/70 via-transparent to-transparent" />
-
-                      <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between text-white">
-                        <div>
-                          <span className="text-xs font-bold uppercase tracking-widest text-[#FBBF24]">
-                            Flagship Travel Carry
-                          </span>
-                          <h4 className="text-lg font-bold">The Weekender 48-Hour Duffel</h4>
-                        </div>
-                        <button
-                          onClick={() => handleSelectProduct(bagItems[1])}
-                          className="p-3 bg-[#FAF7F2] hover:bg-white text-[#2C1810] rounded-xl transition cursor-pointer font-bold shadow-lg"
-                        >
-                          <ChevronRight size={18} />
-                        </button>
-                      </div>
-                    </div>
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActivePage("catalog");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className="px-8 py-3.5 rounded-sm bg-[#D4BA9E]/90 hover:bg-[#C8AA8B] text-slate-900 font-bold text-xs uppercase tracking-widest transition duration-300 shadow-md border border-white/40 cursor-pointer active:scale-98"
+                    >
+                      SHOP NOW
+                    </button>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* FEATURED HERITAGE SILHOUETTES */}
-            <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 text-left">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-[#E7DFD5] pb-6">
-                <div>
-                  <span className="text-xs uppercase tracking-widest text-[#B45309] font-bold">
-                    Pelletteria Fiorentina
-                  </span>
-                  <h2 className="text-3xl sm:text-4xl font-black text-[#2C1810] mt-1">
-                    Featured Handcrafted Carry
-                  </h2>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setActivePage("catalog");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#B45309] hover:underline cursor-pointer"
-                >
-                  <span>View Full Silhouette Catalog ({bagItems.length} designs)</span>
-                  <ArrowRight size={14} />
-                </button>
+            {/* ================= SECTION: FEATURED PRODUCTS ================= */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+              {/* Lined Header: ─────── Featured Products ─────── */}
+              <div className="flex items-center gap-4 text-center">
+                <div className="flex-1 h-[1px] bg-slate-200" />
+                <h2 className="text-xl sm:text-2xl font-serif text-slate-800 tracking-wide">
+                  Featured Products
+                </h2>
+                <div className="flex-1 h-[1px] bg-slate-200" />
               </div>
 
-              {/* Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {bagItems.slice(0, 4).map((item) => (
+              {/* Carousel Container with Left Arrow and Product Row */}
+              <div className="relative">
+                {/* Carousel Left Arrow on Side (Matches Screenshot) */}
+                <button
+                  type="button"
+                  onClick={() => setFeaturedIndex(Math.max(0, featuredIndex - 1))}
+                  className="hidden md:flex absolute -left-5 top-1/2 -translate-y-1/2 p-2 rounded-full text-slate-700 hover:text-black hover:bg-slate-100 transition cursor-pointer z-10"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+
+                {/* Products Row (4 columns) */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
+                  {bagsCatalog.slice(0, 4).map((bag) => (
+                    <ProductCard
+                      key={`feat-${bag._id || bag.id}`}
+                      product={bag}
+                      onSelectProduct={(p) => {
+                        setSelectedProduct(p);
+                        setActivePage("product-detail");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      onAddToCart={handleAddToCart}
+                      onQuickView={(p) => setQuickViewProduct(p)}
+                    />
+                  ))}
+                </div>
+
+                {/* Carousel Right Arrow on Side */}
+                <button
+                  type="button"
+                  onClick={() => setFeaturedIndex(featuredIndex + 1)}
+                  className="hidden md:flex absolute -right-5 top-1/2 -translate-y-1/2 p-2 rounded-full text-slate-700 hover:text-black hover:bg-slate-100 transition cursor-pointer z-10"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </div>
+            </section>
+
+            {/* ================= SECTION: NEW RELEASES ================= */}
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+              {/* Lined Header: ─────── New Releases ─────── */}
+              <div className="flex items-center gap-4 text-center">
+                <div className="flex-1 h-[1px] bg-slate-200" />
+                <h2 className="text-xl sm:text-2xl font-serif text-slate-800 tracking-wide">
+                  New Releases
+                </h2>
+                <div className="flex-1 h-[1px] bg-slate-200" />
+              </div>
+
+              {/* New Releases Product Row */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                {bagsCatalog.slice(3, 6).map((bag) => (
                   <ProductCard
-                    key={item._id}
-                    product={item}
-                    onSelectProduct={handleSelectProduct}
-                    onAddToCart={handleAddToCart}
-                    onOpenMonogram={() => {
-                      setActivePage("monogram");
+                    key={`new-${bag._id || bag.id}`}
+                    product={bag}
+                    onSelectProduct={(p) => {
+                      setSelectedProduct(p);
+                      setActivePage("product-detail");
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
+                    onAddToCart={handleAddToCart}
+                    onQuickView={(p) => setQuickViewProduct(p)}
                   />
                 ))}
               </div>
             </section>
 
-            {/* ATELIER CRAFTSMANSHIP SPOTLIGHT */}
-            <section className="py-16 bg-[#F3EDE3] border-y border-[#E7DFD5]">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center max-w-2xl mx-auto space-y-2 mb-10">
-                  <span className="text-xs uppercase tracking-widest text-[#B45309] font-bold">
-                    Uncompromising Standards
-                  </span>
-                  <h2 className="text-3xl font-black text-[#2C1810]">
-                    The Florentine Guild Difference
-                  </h2>
-                  <p className="text-xs text-[#6B5344] font-sans">
-                    Every hide is inspected for density, hand-cut, beveled, and finished with organic vegetable extracts.
-                  </p>
-                </div>
+            {/* ================= SECTION: SIGN UP FOR OUR NEWSLETTER ================= */}
+            <section className="border-t border-slate-200 pt-12 pb-6">
+              <div className="max-w-xl mx-auto px-4 text-center space-y-6">
+                <h3 className="text-lg sm:text-xl font-serif text-slate-800 tracking-wide">
+                  sign up for our newsletter
+                </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-                  <div
-                    onClick={() => {
-                      setActivePage("leather-craft");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    className="p-6 rounded-3xl bg-white border border-[#E7DFD5] hover:border-[#8C6D58] transition cursor-pointer group shadow-sm"
+                {/* Newsletter Input + GO Button (Matches Screenshot) */}
+                <form onSubmit={handleNewsletterSubmit} className="flex max-w-md mx-auto">
+                  <input
+                    type="email"
+                    placeholder="Email Address"
+                    value={newsletterEmail}
+                    onChange={(e) => setNewsletterEmail(e.target.value)}
+                    className="flex-1 px-4 py-2.5 bg-white border border-slate-300 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-800 rounded-l-none"
+                  />
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 bg-slate-900 hover:bg-black text-white font-black text-xs uppercase tracking-widest transition cursor-pointer"
                   >
-                    <Award size={28} className="text-[#B45309] mb-4 group-hover:scale-110 transition duration-300" />
-                    <h3 className="text-lg font-bold text-[#2C1810] group-hover:text-[#B45309]">Vegetable Tanned Bark</h3>
-                    <p className="text-xs text-[#6B5344] mt-2 leading-relaxed font-sans">
-                      Processed using natural chestnut and mimosa tannins rather than toxic chromium salts, ensuring rich leather aroma.
-                    </p>
-                    <span className="mt-4 inline-flex items-center gap-1 text-xs text-[#B45309] font-bold">
-                      Read Leather Story <ArrowRight size={13} />
-                    </span>
-                  </div>
+                    GO
+                  </button>
+                </form>
 
-                  <div
-                    onClick={() => {
-                      setActivePage("monogram");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    className="p-6 rounded-3xl bg-white border border-[#E7DFD5] hover:border-[#8C6D58] transition cursor-pointer group shadow-sm"
-                  >
-                    <Sparkles size={28} className="text-[#B45309] mb-4 group-hover:scale-110 transition duration-300" />
-                    <h3 className="text-lg font-bold text-[#2C1810] group-hover:text-[#B45309]">Bespoke Monogramming</h3>
-                    <p className="text-xs text-[#6B5344] mt-2 leading-relaxed font-sans">
-                      Personalize your bag with 24k gold foil or blind debossed initials using our heated brass artisan stamping press.
-                    </p>
-                    <span className="mt-4 inline-flex items-center gap-1 text-xs text-[#B45309] font-bold">
-                      Launch Monogram Studio <ArrowRight size={13} />
-                    </span>
-                  </div>
-
-                  <div
-                    onClick={() => {
-                      setActivePage("offers");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    className="p-6 rounded-3xl bg-white border border-[#E7DFD5] hover:border-[#8C6D58] transition cursor-pointer group shadow-sm"
-                  >
-                    <Briefcase size={28} className="text-[#B45309] mb-4 group-hover:scale-110 transition duration-300" />
-                    <h3 className="text-lg font-bold text-[#2C1810] group-hover:text-[#B45309]">Curated Luggage Sets</h3>
-                    <p className="text-xs text-[#6B5344] mt-2 leading-relaxed font-sans">
-                      Acquire matching briefcase and weekender duffel sets with up to 25% instant atelier savings.
-                    </p>
-                    <span className="mt-4 inline-flex items-center gap-1 text-xs text-[#B45309] font-bold">
-                      View Travel Sets <ArrowRight size={13} />
-                    </span>
-                  </div>
+                {/* Checkbox Preferences (Matches Screenshot) */}
+                <div className="flex items-center justify-center gap-6 text-[11px] text-slate-500">
+                  <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={newsletterConsent}
+                      onChange={(e) => setNewsletterConsent(e.target.checked)}
+                      className="accent-slate-800 rounded"
+                    />
+                    <span>Fashion/Lifestyle</span>
+                  </label>
+                  <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      defaultChecked
+                      className="accent-slate-800 rounded"
+                    />
+                    <span>Outdoor Gear</span>
+                  </label>
                 </div>
               </div>
             </section>
-          </>
+          </div>
         )}
 
-        {/* ================= VIEW 2: LEATHER CATALOG ================= */}
+        {/* ================= VIEW 2: FULL CATALOG ================= */}
         {activePage === "catalog" && (
           <Product
-            products={bagItems}
-            onSelectProduct={handleSelectProduct}
-            onAddToCart={handleAddToCart}
-            onOpenMonogram={() => {
-              setActivePage("monogram");
+            products={bagsCatalog}
+            onSelectProduct={(p) => {
+              setSelectedProduct(p);
+              setActivePage("product-detail");
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
+            onAddToCart={handleAddToCart}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
           />
         )}
 
-        {/* ================= VIEW 3: BESPOKE MONOGRAM STUDIO ================= */}
-        {activePage === "monogram" && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 text-left">
-            <div className="text-center max-w-2xl mx-auto space-y-2">
-              <span className="text-xs uppercase tracking-[0.2em] text-[#B45309] font-bold">
-                Personalized Leather Stamping
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-black text-[#2C1810]">
-                Bespoke 24k Hot-Foil Monogram Studio
-              </h1>
-              <p className="text-xs sm:text-sm text-[#6B5344] font-sans">
-                Every Cuir & Co. bag is eligible for complimentary artisan hot-foil stamping. Test your initials below to preview the finished leather deboss.
-              </p>
-            </div>
-
-            <div className="p-8 rounded-3xl bg-white border border-[#E7DFD5] space-y-8 shadow-md">
-              {/* Interactive Leather Patch Visualizer */}
-              <div className="aspect-[3/1] max-w-lg mx-auto rounded-3xl bg-gradient-to-r from-[#3D2217] via-[#2C1810] to-[#3D2217] border-4 border-[#D5C7B8] flex items-center justify-center shadow-2xl relative">
-                <div className="text-center space-y-1">
-                  <span className="text-[10px] uppercase tracking-widest text-[#D5C7B8] font-sans">
-                    Hand-Debossed in Florence
-                  </span>
-                  <span className={`text-4xl sm:text-6xl font-black tracking-widest block transition-all duration-300 ${
-                    monogramFoil === "Gold"
-                      ? "text-[#FBBF24] drop-shadow-[0_2px_10px_rgba(251,191,36,0.5)]"
-                      : monogramFoil === "Silver"
-                      ? "text-slate-100 drop-shadow-[0_2px_10px_rgba(255,255,255,0.4)]"
-                      : "text-[#1A0E0A] drop-shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
-                  }`}>
-                    {monogramText.trim() ? monogramText.toUpperCase() : "C.C."}
-                  </span>
-                </div>
-              </div>
-
-              {/* Controls */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-[#2C1810] uppercase">
-                    Enter Your Initials (Max 3 letters)
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={3}
-                    value={monogramText}
-                    onChange={(e) => setMonogramText(e.target.value)}
-                    placeholder="J.V."
-                    className="w-full bg-[#FAF7F2] text-sm font-bold uppercase text-[#2C1810] px-4 py-3 rounded-xl border border-[#D5C7B8] focus:border-[#B45309] focus:outline-none"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-[#2C1810] uppercase">
-                    Foil Stamping Style
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: "Gold", label: "24k Gold Foil" },
-                      { id: "Silver", label: "Pure Silver Leaf" },
-                      { id: "Blind", label: "Blind Heat Deboss" },
-                    ].map((f) => (
-                      <button
-                        key={f.id}
-                        type="button"
-                        onClick={() => setMonogramFoil(f.id)}
-                        className={`py-3 rounded-xl text-xs font-bold transition cursor-pointer border ${
-                          monogramFoil === f.id
-                            ? "bg-[#2C1810] text-white border-[#2C1810] shadow-sm"
-                            : "bg-[#FAF7F2] text-[#6B5344] border-[#E7DFD5]"
-                        }`}
-                      >
-                        {f.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-center pt-4 border-t border-[#E7DFD5]">
-                <button
-                  onClick={() => {
-                    toast.success(`Monogram "[${monogramText.toUpperCase()} - ${monogramFoil}]" saved! Choose any bag in the catalog to apply.`);
-                    setActivePage("catalog");
-                  }}
-                  className="px-8 py-3.5 bg-[#2C1810] hover:bg-[#3D2217] text-[#FAF7F2] rounded-2xl text-xs font-bold uppercase tracking-widest transition cursor-pointer shadow-lg"
-                >
-                  Apply to a Leather Silhouette
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ================= VIEW 4: TUSCAN ATELIER LEATHER CRAFT ================= */}
-        {activePage === "leather-craft" && (
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12 text-left">
-            <div className="text-center max-w-2xl mx-auto space-y-2">
-              <span className="text-xs uppercase tracking-[0.2em] text-[#B45309] font-bold">
-                Santa Croce sull'Arno
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-black text-[#2C1810]">
-                Centuries of Tuscan Vegetable Tanning
-              </h1>
-              <p className="text-xs sm:text-sm text-[#6B5344] font-sans">
-                Unlike industrial chrome-tanned leather that decays within years, vegetable-tanned hides become richer, softer, and more characterful with every journey.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-              <div className="aspect-[4/3] rounded-3xl overflow-hidden shadow-xl border border-[#E7DFD5]">
-                <img
-                  src="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=900&auto=format&fit=crop&q=80"
-                  alt="Tuscan leather workshop"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              <div className="space-y-4 font-sans text-xs text-[#6B5344] leading-relaxed">
-                <h3 className="font-serif text-xl font-bold text-[#2C1810]">
-                  The Living Patina Journey
-                </h3>
-                <p>
-                  Our leather is tanned in traditional wooden drums over 40 days using vegetable extracts derived exclusively from chestnut wood, mimosa, and quebracho trees.
-                </p>
-                <p>
-                  As sunlight, humidity, and the natural oils of your hands interact with the uncorrected grain, the leather oxidizes from a soft golden honey hue into a rich, deep amber caramel.
-                </p>
-                <div className="pt-2 flex items-center gap-4 text-[#2C1810] font-serif font-bold">
-                  <span className="flex items-center gap-1 text-[#B45309]">
-                    <Check size={16} /> 100% Biodegradable
-                  </span>
-                  <span className="flex items-center gap-1 text-[#B45309]">
-                    <Check size={16} /> Zero Chromium Salts
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ================= VIEW 5: CURATED OFFERS & BUNDLES ================= */}
-        {activePage === "offers" && (
-          <Offer
-            products={bagItems}
-            onSelectProduct={handleSelectProduct}
-            onAddToCart={handleAddToCart}
-            onOpenCatalog={() => {
-              setActivePage("catalog");
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-          />
-        )}
-
-        {/* ================= VIEW 6: PRODUCT DETAIL INSPECTOR ================= */}
+        {/* ================= VIEW 3: PRODUCT DETAILS ================= */}
         {activePage === "product-detail" && selectedProduct && (
           <ProductDetails
             product={selectedProduct}
@@ -614,27 +424,35 @@ export default function BagStoreTemplate({
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
             onAddToCart={handleAddToCart}
-            relatedProducts={bagItems}
-            onSelectProduct={handleSelectProduct}
+            relatedProducts={bagsCatalog}
+            onSelectProduct={(p) => {
+              setSelectedProduct(p);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
+        )}
+
+        {/* ================= VIEW 4: OFFERS & BUNDLES ================= */}
+        {activePage === "offers" && (
+          <Offer
+            products={bagsCatalog}
+            onSelectProduct={(p) => {
+              setSelectedProduct(p);
+              setActivePage("product-detail");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onAddToCart={handleAddToCart}
           />
         )}
       </main>
 
-      {/* ================= 3. FOOTER ================= */}
+      {/* ================= 2. FOOTER ================= */}
       <Footer
-        brandName={brandName}
-        brandLogo={brandLogo}
-        brandPhone={brandPhone}
-        brandEmail={brandEmail}
-        brandAddress={brandAddress}
-        onNavigate={(page, cat = null) => {
-          if (cat) setSelectedCategory(cat);
-          setActivePage(page);
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }}
+        brandName={business?.name || "KRAFT & CANVAS"}
+        setActivePage={setActivePage}
       />
 
-      {/* ================= 4. CARRY CART DRAWER ================= */}
+      {/* ================= 3. REDUX CART DRAWER ================= */}
       <CartDrawer
         isOpen={cartOpen}
         onClose={() => setCartOpen(false)}
@@ -642,8 +460,60 @@ export default function BagStoreTemplate({
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
         onCheckout={handleCheckout}
-        themeColors={{ primary: "#2C1810" }}
+        themeColors={{ primary: "#A0522D" }}
       />
+
+      {/* ================= 4. QUICK VIEW MODAL ================= */}
+      {quickViewProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 text-left">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-6 sm:p-8 shadow-2xl relative border border-slate-200 space-y-6">
+            <button
+              type="button"
+              onClick={() => setQuickViewProduct(null)}
+              className="absolute right-4 top-4 p-2 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 transition cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
+              <div className="bg-slate-50 rounded-xl p-4 flex items-center justify-center min-h-[220px]">
+                <img
+                  src={getProductImage(quickViewProduct, quickViewProduct.image)}
+                  alt={quickViewProduct.name}
+                  className="max-h-48 object-contain filter drop-shadow-md"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <span className="text-[10px] font-black uppercase text-[#A0522D] tracking-wider">
+                  {quickViewProduct.category || "Backpack"}
+                </span>
+                <h3 className="text-base font-bold text-slate-900 uppercase">
+                  {quickViewProduct.name}
+                </h3>
+                <div className="text-xl font-bold text-slate-900">
+                  ${Number(quickViewProduct.price).toFixed(2)}
+                </div>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  {quickViewProduct.description}
+                </p>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleAddToCart(quickViewProduct);
+                      setQuickViewProduct(null);
+                    }}
+                    className="w-full py-3 bg-[#A0522D] hover:bg-[#8B4513] text-white font-black text-xs uppercase tracking-widest rounded-sm transition cursor-pointer shadow"
+                  >
+                    ADD TO CART
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

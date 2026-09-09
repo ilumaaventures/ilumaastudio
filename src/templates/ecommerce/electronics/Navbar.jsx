@@ -1,21 +1,27 @@
 import React, { useState } from "react";
 import {
   Cpu,
-  ShieldCheck,
-  RotateCcw,
-  Phone,
   Search,
-  ShoppingBag,
+  ShoppingCart,
+  Heart,
   SlidersHorizontal,
-  Headphones,
-  Sliders,
-  Battery,
-  Tag,
+  Phone,
+  ShieldCheck,
+  Truck,
+  RotateCcw,
+  ChevronDown,
   Menu,
   X,
-  Radio,
   Zap,
+  Tag,
+  Laptop,
+  Smartphone,
+  Headphones,
+  Gamepad2,
+  Camera,
+  Tv,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function Navbar({
   brandName = "TECHNOVA",
@@ -24,259 +30,300 @@ export default function Navbar({
   activePage = "home",
   setActivePage,
   cartCount = 0,
+  cartTotal = 0,
   onOpenCart,
   searchQuery = "",
   setSearchQuery,
-  onOpenCompare,
   compareCount = 0,
+  onOpenCompare,
+  onSelectDepartment = null,
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showSearchInput, setShowSearchInput] = useState(false);
+  const [selectedDept, setSelectedDept] = useState("All Departments");
+  const [deptDropdownOpen, setDeptDropdownOpen] = useState(false);
 
-  const navLinks = [
-    { id: "home", label: "Flagships", icon: Headphones },
-    { id: "specs", label: "Hardware Catalog", icon: Cpu },
-    { id: "compare", label: "Spec Shootout", icon: SlidersHorizontal },
-    { id: "eq-lab", label: "EQ Simulator", icon: Sliders },
-    { id: "battery-calc", label: "Battery Lab", icon: Battery },
-    { id: "offers", label: "Deals & Drops", icon: Tag },
+  const departments = [
+    "All Departments",
+    "Laptops & Computers",
+    "Smartphones & Tablets",
+    "Audio & Headphones",
+    "Game Consoles & Gaming",
+    "Cameras & Photography",
+    "TV & Home Entertainment",
   ];
 
-  const handleNavClick = (id) => {
+  const handleNav = (id) => {
     setActivePage(id);
     setMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (activePage !== "specs") {
+      setActivePage("specs");
+    }
+  };
+
   return (
-    <header className="sticky top-0 z-40 bg-[#090D16]/95 backdrop-blur-xl border-b border-cyan-500/20 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
-      {/* Top Cyber Status Bar */}
-      <div className="bg-[#050811] text-slate-400 text-[11px] py-2 px-4 border-b border-slate-800/80">
+    <header className="sticky top-0 z-40 bg-white shadow-sm border-b border-slate-200 select-none font-sans">
+      {/* ================= 1. TOP SERVICE STRIP ================= */}
+      <div className="bg-[#F8FAFC] text-slate-500 text-[11px] py-1.5 px-4 border-b border-slate-200/80">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2 font-medium tracking-wide">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+          <div className="flex items-center gap-4">
+            <span className="font-semibold text-slate-700 flex items-center gap-1">
+              <Zap size={13} className="text-yellow-500 fill-yellow-500" />
+              <span>Welcome to {brandName} Electronics Megastore!</span>
             </span>
-            <span className="text-slate-300">
-              <strong className="text-cyan-400 font-semibold tracking-wider uppercase text-[10px] mr-1">
-                Hardware Drop 3.2:
-              </strong>
-              TechShield 2-Yr Warranty with 24-Hr Express Advance Replacement on all Flagships.
+            <span className="hidden sm:inline text-slate-300">|</span>
+            <span className="hidden sm:inline">
+              Free Express Delivery on Orders Over $99
             </span>
           </div>
 
-          <div className="hidden md:flex items-center gap-6 text-[11px] font-medium text-slate-300">
-            <span className="flex items-center gap-1.5 hover:text-cyan-300 transition cursor-default">
-              <ShieldCheck size={13} className="text-cyan-400" />
-              100% Authentic OEM Silicon
+          <div className="flex items-center gap-4 text-slate-600 text-[11px]">
+            <span className="hidden md:flex items-center gap-1">
+              <ShieldCheck size={12} className="text-emerald-600" />
+              <span>2-Year Full Hardware Warranty</span>
             </span>
-            <span className="flex items-center gap-1.5 hover:text-cyan-300 transition cursor-default">
-              <RotateCcw size={13} className="text-cyan-400" />
-              30-Day Risk-Free Audio Trial
+            <span className="hidden md:flex items-center gap-1">
+              <RotateCcw size={12} className="text-sky-600" />
+              <span>30-Day Easy Returns</span>
             </span>
             <a
               href={`tel:${brandPhone}`}
-              className="flex items-center gap-1 text-cyan-400 hover:text-cyan-300 transition"
+              className="flex items-center gap-1 font-bold text-slate-800 hover:text-sky-600 transition"
             >
-              <Phone size={12} />
-              <span className="font-mono">{brandPhone}</span>
+              <Phone size={11} />
+              <span>{brandPhone}</span>
             </a>
           </div>
         </div>
       </div>
 
-      {/* Main Cyber Navigation Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-        {/* Brand Logo & Tagline */}
+      {/* ================= 2. MAIN MEGASTORE HEADER ================= */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-4">
+        {/* Brand Logo */}
         <div
-          onClick={() => handleNavClick("home")}
-          className="flex items-center gap-3.5 cursor-pointer group select-none flex-shrink-0"
+          onClick={() => handleNav("home")}
+          className="flex items-center gap-2.5 cursor-pointer group shrink-0"
         >
           {brandLogo ? (
             <img
               src={brandLogo}
               alt={brandName}
-              className="h-10 w-auto max-w-[150px] object-contain rounded-lg"
+              className="h-10 w-auto max-w-[140px] object-contain"
             />
           ) : (
-            <div className="relative">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-500 via-blue-600 to-violet-600 p-[1px] group-hover:scale-105 transition-all duration-300 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
-                <div className="w-full h-full bg-[#0B1120] rounded-[15px] flex items-center justify-center">
-                  <Cpu size={22} className="text-cyan-400 group-hover:rotate-12 transition-transform duration-300" />
-                </div>
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 text-[#EAB308] flex items-center justify-center font-black text-xl shadow-md">
+                <Cpu size={22} className="text-yellow-400" />
               </div>
-              <span className="absolute -bottom-1 -right-1 flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-400"></span>
-              </span>
+              <div>
+                <span className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 leading-none block">
+                  {brandName}
+                </span>
+                <span className="text-[9px] uppercase tracking-[0.25em] font-extrabold text-[#EAB308] block">
+                  Electronics Store
+                </span>
+              </div>
             </div>
           )}
-          <div className="text-left">
-            <span className="text-xl sm:text-2xl font-black tracking-tight text-white block leading-none group-hover:text-cyan-300 transition-colors">
-              {brandName}
-            </span>
-            <span className="text-[9px] uppercase tracking-[0.25em] text-cyan-400/80 font-bold block pt-1 font-mono">
-              Next-Gen Audio & Silicon
-            </span>
-          </div>
         </div>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
-          {navLinks.map((tab) => {
-            const isActive = activePage === tab.id;
-            const Icon = tab.icon;
-            return (
+        {/* Search Bar with Department Selector */}
+        <div className="flex-1 max-w-2xl relative hidden md:block">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="flex items-center rounded-full border-2 border-slate-200 focus-within:border-[#EAB308] bg-white transition shadow-2xs overflow-hidden"
+          >
+            {/* Category Dropdown */}
+            <div className="relative border-r border-slate-200">
               <button
-                key={tab.id}
-                onClick={() => handleNavClick(tab.id)}
-                className={`relative px-3.5 py-2 rounded-xl text-xs font-bold tracking-wide uppercase transition-all duration-200 flex items-center gap-1.5 cursor-pointer ${
-                  isActive
-                    ? "text-cyan-300 bg-cyan-950/60 border border-cyan-500/40 shadow-[0_0_15px_rgba(6,182,212,0.2)]"
-                    : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 border border-transparent"
-                }`}
+                type="button"
+                onClick={() => setDeptDropdownOpen(!deptDropdownOpen)}
+                className="px-3.5 py-2.5 text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 transition flex items-center gap-1.5 shrink-0 cursor-pointer"
               >
-                <Icon size={14} className={isActive ? "text-cyan-400" : "text-slate-500"} />
-                <span>{tab.label}</span>
-                {tab.id === "offers" && (
-                  <span className="bg-gradient-to-r from-rose-500 to-amber-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase tracking-tighter shadow-sm animate-pulse">
-                    Hot
-                  </span>
-                )}
+                <span className="max-w-[120px] truncate">{selectedDept}</span>
+                <ChevronDown size={13} className="text-slate-400" />
               </button>
-            );
-          })}
-        </nav>
 
-        {/* Action Controls: Search, Compare & Tech Cart */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
-          {/* Quick Search toggle/input */}
-          <div className="relative hidden md:block">
-            <div className="relative flex items-center">
-              <input
-                type="text"
-                placeholder="Search specs, drivers, models..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  if (activePage !== "specs" && activePage !== "home") {
-                    setActivePage("specs");
-                  }
-                }}
-                className="w-44 lg:w-56 bg-slate-900/90 text-xs text-white placeholder-slate-500 pl-9 pr-3 py-2 rounded-xl border border-slate-700/80 focus:border-cyan-500 focus:w-64 focus:outline-none transition-all duration-300 shadow-inner"
-              />
-              <Search
-                size={14}
-                className="absolute left-3 text-slate-400 pointer-events-none"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 text-slate-400 hover:text-white text-xs"
-                >
-                  <X size={13} />
-                </button>
+              {deptDropdownOpen && (
+                <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 z-50 text-left">
+                  {departments.map((dept) => (
+                    <button
+                      key={dept}
+                      type="button"
+                      onClick={() => {
+                        setSelectedDept(dept);
+                        setDeptDropdownOpen(false);
+                        if (onSelectDepartment) onSelectDepartment(dept);
+                      }}
+                      className={`w-full px-4 py-2 text-xs text-left transition ${
+                        selectedDept === dept
+                          ? "bg-yellow-50 text-yellow-800 font-bold"
+                          : "text-slate-700 hover:bg-slate-50"
+                      }`}
+                    >
+                      {dept}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
-          </div>
 
-          {/* Quick Compare Trigger */}
+            {/* Keyword Input */}
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                if (
+                  activePage !== "specs" &&
+                  e.target.value.trim().length > 1
+                ) {
+                  setActivePage("specs");
+                }
+              }}
+              placeholder="Search 20,000+ tech gadgets, laptops, audio gear..."
+              className="w-full px-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden"
+            />
+
+            {/* Yellow Search Button */}
+            <button
+              type="submit"
+              className="px-5 py-2.5 bg-[#EAB308] hover:bg-yellow-500 text-slate-950 font-bold transition flex items-center justify-center shrink-0 cursor-pointer"
+            >
+              <Search size={16} />
+            </button>
+          </form>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          {/* Compare Specs Trigger */}
           <button
-            onClick={onOpenCompare || (() => handleNavClick("compare"))}
-            title="Open Spec Shootout Matrix"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800/90 text-slate-300 hover:text-cyan-300 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500/40 text-xs font-bold transition cursor-pointer"
+            onClick={() => handleNav("compare")}
+            title="Comparison Matrix"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-100 transition cursor-pointer text-xs font-semibold"
           >
-            <SlidersHorizontal size={14} className="text-cyan-400" />
-            <span className="hidden xl:inline">Compare</span>
-            {compareCount > 0 && (
-              <span className="bg-cyan-500 text-slate-950 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">
-                {compareCount}
-              </span>
-            )}
+            <div className="relative">
+              <SlidersHorizontal size={18} className="text-slate-600" />
+              {compareCount > 0 && (
+                <span className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-[#EAB308] text-slate-950 font-black text-[9px] flex items-center justify-center">
+                  {compareCount}
+                </span>
+              )}
+            </div>
+            <span className="hidden lg:inline">Compare</span>
           </button>
 
-          {/* Tech Cart Trigger Button */}
+          {/* Wishlist */}
+          <button
+            onClick={() => {
+              setActivePage("specs");
+              toast("Tip: Click heart icon on any gadget card to save it!", {
+                icon: "💛",
+              });
+            }}
+            title="Saved Favorites"
+            className="p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition cursor-pointer hidden sm:flex items-center justify-center"
+          >
+            <Heart size={20} />
+          </button>
+
+          {/* Cart Trigger Button */}
           <button
             onClick={onOpenCart}
-            className="relative px-3.5 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 via-blue-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white transition-all duration-200 cursor-pointer flex items-center gap-2 font-bold text-xs shadow-[0_4px_16px_rgba(37,99,235,0.35)] border border-cyan-400/30 active:scale-95"
+            className="flex items-center gap-3 px-4 py-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white transition cursor-pointer shadow-md"
           >
-            <ShoppingBag size={16} className="text-cyan-200" />
-            <span className="hidden sm:inline">Cart</span>
-            <span className="bg-cyan-300 text-slate-950 text-[11px] font-black min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center shadow-sm">
-              {cartCount}
-            </span>
+            <div className="relative">
+              <ShoppingCart size={18} className="text-yellow-400" />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2.5 w-4 h-4 rounded-full bg-[#EAB308] text-slate-950 font-black text-[10px] flex items-center justify-center animate-pulse">
+                  {cartCount}
+                </span>
+              )}
+            </div>
+            <div className="text-left text-xs leading-none hidden sm:block">
+              <span className="text-[10px] text-slate-400 block font-normal">
+                Your Cart
+              </span>
+              <span className="font-extrabold text-white font-mono">
+                ${Number(cartTotal).toFixed(2)}
+              </span>
+            </div>
           </button>
 
-          {/* Mobile Menu Toggle */}
+          {/* Mobile Hamburger Menu */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-xl bg-slate-800/80 text-slate-300 hover:text-white border border-slate-700/80 focus:outline-none cursor-pointer"
-            aria-label="Toggle navigation menu"
+            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition md:hidden cursor-pointer"
           >
             {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Search Bar if active */}
-      <div className="md:hidden px-4 pb-3">
-        <div className="relative flex items-center">
-          <input
-            type="text"
-            placeholder="Search specs, drivers, models..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              if (activePage !== "specs" && activePage !== "home") {
-                setActivePage("specs");
-              }
-            }}
-            className="w-full bg-slate-900/90 text-xs text-white placeholder-slate-500 pl-9 pr-8 py-2.5 rounded-xl border border-slate-700/80 focus:border-cyan-500 focus:outline-none"
-          />
-          <Search size={15} className="absolute left-3 text-slate-400 pointer-events-none" />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 text-slate-400 hover:text-white"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Mobile Navigation Drawer */}
+      {/* ================= 4. MOBILE DRAWER ================= */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-slate-800 bg-[#0B1120] px-4 py-4 space-y-2 shadow-2xl animate-in slide-in-from-top duration-200">
-          <div className="grid grid-cols-2 gap-2 pb-3">
-            {navLinks.map((tab) => {
-              const isActive = activePage === tab.id;
-              const Icon = tab.icon;
-              return (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          <div
+            onClick={() => setMobileMenuOpen(false)}
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+          />
+          <div className="relative ml-auto w-full max-w-xs bg-white h-full shadow-2xl p-6 overflow-y-auto flex flex-col justify-between z-10 text-left">
+            <div className="space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <span className="font-black text-lg text-slate-900">
+                  {brandName}
+                </span>
                 <button
-                  key={tab.id}
-                  onClick={() => handleNavClick(tab.id)}
-                  className={`flex items-center gap-2 p-2.5 rounded-xl text-xs font-bold tracking-wide uppercase transition cursor-pointer text-left ${
-                    isActive
-                      ? "text-cyan-300 bg-cyan-950/60 border border-cyan-500/40"
-                      : "text-slate-300 hover:bg-slate-800/80 border border-slate-800"
-                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-1 rounded-xl text-slate-400 hover:text-slate-600"
                 >
-                  <Icon size={16} className={isActive ? "text-cyan-400" : "text-slate-500"} />
-                  <span className="truncate">{tab.label}</span>
+                  <X size={20} />
                 </button>
-              );
-            })}
-          </div>
+              </div>
 
-          <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-            <span className="flex items-center gap-1 text-cyan-400 font-mono">
-              <Zap size={13} /> High-Fidelity Silicon
-            </span>
-            <a href={`tel:${brandPhone}`} className="text-slate-300 hover:text-white">
-              {brandPhone}
-            </a>
+              {/* Mobile Search */}
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search gadgets..."
+                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-800"
+                />
+                <Search
+                  size={15}
+                  className="absolute left-3 top-2.5 text-slate-400"
+                />
+              </div>
+
+              {/* Navigation */}
+              <div className="space-y-1">
+                {[
+                  { id: "home", label: "Today's Deals" },
+                  { id: "specs", label: "Hardware Catalog" },
+                  { id: "offers", label: "Warehouse Cleaning" },
+                  { id: "compare", label: "Compare Specs" },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleNav(item.id)}
+                    className="w-full text-left py-2.5 px-3 rounded-xl text-xs font-bold text-slate-800 hover:bg-yellow-50 hover:text-yellow-900 transition"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-slate-100 text-xs text-slate-500 space-y-2">
+              <p>24/7 Tech Care: {brandPhone}</p>
+              <p>2-Year Warranty Guaranteed</p>
+            </div>
           </div>
         </div>
       )}

@@ -1,250 +1,157 @@
-import React, { useState } from "react";
+import React from "react";
 import {
-  BookOpen,
-  Award,
-  Bookmark,
-  Phone,
+  Facebook,
+  Twitter,
+  Linkedin,
+  Instagram,
   Mail,
-  MapPin,
-  Check,
   ArrowRight,
-  Coffee,
 } from "lucide-react";
-import toast from "react-hot-toast";
 
 export default function Footer({
-  brandName = "CHAPTER & VERSE",
+  brandName = "ENIGMA | Enigma",
   brandLogo = null,
-  brandPhone = "+1 (800) 555-READ",
-  brandEmail = "curator@chapterversepress.com",
-  brandAddress = "12 Bodleian Alley, Oxford, OX1 3BG, UK",
+  brandEmail = "enigmaofficial@ilumaa.com",
   onNavigate,
 }) {
-  const [email, setEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
-
-  const handleSubscribe = (e) => {
-    e.preventDefault();
-    if (!email.trim()) {
-      toast.error("Please enter a valid email address.");
-      return;
-    }
-    setSubscribed(true);
-    toast.success("Welcome to the Literary Salon! You will receive our monthly curated reading list and first chapter excerpts. 📖");
-    setEmail("");
-    setTimeout(() => setSubscribed(false), 5000);
-  };
-
   return (
-    <footer className="bg-[#1C1917] text-[#D5C7B8] pt-16 pb-12 border-t border-[#78350F]/40 text-left text-xs font-serif">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        {/* Newsletter Banner */}
-        <div className="rounded-3xl bg-[#292524] border border-[#78350F]/40 p-6 sm:p-8 flex flex-col lg:flex-row items-center justify-between gap-6 shadow-xl">
-          <div className="space-y-1.5 text-center lg:text-left">
-            <span className="text-[#FBBF24] text-[10px] tracking-widest uppercase font-bold block font-sans">
-              THE LITERARY DISPATCH & ESSAYS
-            </span>
-            <h3 className="text-xl sm:text-2xl font-black text-[#FAF7F2]">
-              Join our private salon for rare signed editions & monthly excerpts.
-            </h3>
-            <p className="text-[#A8A29E] text-xs font-sans">
-              Curated by independent booksellers. Zero spam, purely timeless writing.
-            </p>
-          </div>
-
-          <form
-            onSubmit={handleSubscribe}
-            className="w-full lg:w-auto flex flex-col sm:flex-row items-center gap-2 max-w-md"
-          >
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="reader@domain.com"
-              className="w-full sm:w-72 bg-[#1C1917] text-xs text-[#FAF7F2] placeholder-[#78716C] px-4 py-3 rounded-xl border border-[#78350F]/60 focus:border-[#FBBF24] focus:outline-none transition font-sans shadow-inner"
-            />
-            <button
-              type="submit"
-              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-[#D97706] hover:bg-[#B45309] text-white font-bold text-xs transition cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap shadow"
-            >
-              {subscribed ? (
-                <>
-                  <Check size={14} />
-                  <span>Enrolled!</span>
-                </>
-              ) : (
-                <>
-                  <span>Join Salon</span>
-                  <ArrowRight size={14} />
-                </>
-              )}
-            </button>
-          </form>
-        </div>
-
-        {/* Footer Navigation Columns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-          {/* Brand Col */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center gap-3">
+    <footer className="bg-white border-t border-[#E5E7EB] pt-14 pb-12 text-left font-sans text-xs">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 pb-12 border-b border-[#F3F4F6]">
+          {/* ================= COL 1: BRAND & CONTACT ================= */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
               {brandLogo ? (
                 <img
                   src={brandLogo}
                   alt={brandName}
-                  className="h-8 w-auto max-w-[130px] object-contain brightness-0 invert"
+                  className="h-8 w-auto max-w-[120px] object-contain"
                 />
               ) : (
-                <div className="w-9 h-9 rounded-xl bg-[#FAF7F2] text-[#1C1917] flex items-center justify-center shadow-md">
-                  <BookOpen size={18} className="text-[#D97706]" />
+                <div className="px-3 py-1 rounded-full border-2 border-black inline-flex items-center justify-center tracking-widest text-xs font-serif font-black uppercase text-black">
+                  ENIGMA
                 </div>
               )}
-              <span className="text-lg font-black tracking-widest text-[#FAF7F2] uppercase">
-                {brandName}
-              </span>
             </div>
 
-            <p className="text-[#A8A29E] leading-relaxed text-xs max-w-sm font-sans">
-              An independent literary press and physical bookstore dedicated to unhurried reading, Smyth-sewn archival hardcovers, and author signed editions.
-            </p>
-
-            <div className="flex items-center gap-4 text-xs text-[#D5C7B8]">
-              <span className="flex items-center gap-1 text-[#FBBF24]">
-                <Award size={14} /> Certified First Editions
-              </span>
-              <span className="flex items-center gap-1 text-[#FBBF24]">
-                <Bookmark size={14} /> 100% Acid-Free Paper
-              </span>
+            <div className="space-y-1 text-stone-500 text-xs">
+              <p>For queries and help</p>
+              <p>
+                Contact:{" "}
+                <a
+                  href={`mailto:${brandEmail}`}
+                  className="text-stone-800 hover:text-black font-medium transition"
+                >
+                  {brandEmail}
+                </a>
+              </p>
             </div>
           </div>
 
-          {/* Col 2: Library Stacks */}
+          {/* ================= COL 2: COLLECTIONS ================= */}
           <div className="space-y-3">
-            <h5 className="font-bold text-[#FAF7F2] uppercase text-[11px] tracking-wider">
-              Library Stacks
-            </h5>
-            <ul className="space-y-2 text-xs">
+            <h4 className="text-xs font-semibold text-stone-900 uppercase tracking-wider">
+              Collections
+            </h4>
+            <ul className="space-y-2">
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("stacks", "Literary Fiction")}
-                  className="hover:text-[#FBBF24] transition cursor-pointer text-left"
+                  onClick={() => onNavigate && onNavigate("catalog")}
+                  className="text-stone-600 hover:text-black transition cursor-pointer text-xs"
                 >
-                  Contemporary Literary Fiction
+                  Digital Products
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("stacks", "Philosophy & Essays")}
-                  className="hover:text-[#FBBF24] transition cursor-pointer text-left"
+                  onClick={() => onNavigate && onNavigate("catalog", "Business & Leadership")}
+                  className="text-stone-600 hover:text-black transition cursor-pointer text-xs"
                 >
-                  Philosophy & Critical Essays
+                  Business & Leadership
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate && onNavigate("stacks", "Rare & Signed")}
-                  className="hover:text-[#FBBF24] transition cursor-pointer text-left"
+                  onClick={() => onNavigate && onNavigate("catalog", "Self-Improvement")}
+                  className="text-stone-600 hover:text-black transition cursor-pointer text-xs"
                 >
-                  Signed First Editions
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigate && onNavigate("stacks", "Poetry & Drama")}
-                  className="hover:text-[#FBBF24] transition cursor-pointer text-left"
-                >
-                  Poetry Chapbooks
+                  Self-Improvement & Habits
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* Col 3: Reading Salon */}
+          {/* ================= COL 3: STAY CONNECTED ================= */}
           <div className="space-y-3">
-            <h5 className="font-bold text-[#FAF7F2] uppercase text-[11px] tracking-wider">
-              Reading Salon
-            </h5>
-            <ul className="space-y-2 text-xs">
+            <h4 className="text-xs font-semibold text-stone-900 uppercase tracking-wider">
+              Stay Connected
+            </h4>
+            <ul className="space-y-2.5">
               <li>
-                <button
-                  onClick={() => onNavigate && onNavigate("book-club")}
-                  className="hover:text-[#FBBF24] transition cursor-pointer text-left"
+                <a
+                  href="https://facebook.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 text-stone-600 hover:text-black transition text-xs"
                 >
-                  Monthly Book Club Membership
-                </button>
+                  <Facebook size={14} className="text-stone-500" />
+                  <span>Facebook</span>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate && onNavigate("calculator")}
-                  className="hover:text-[#FBBF24] transition cursor-pointer text-left"
+                <a
+                  href="https://twitter.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 text-stone-600 hover:text-black transition text-xs"
                 >
-                  Reading Speed Calculator
-                </button>
+                  <Twitter size={14} className="text-stone-500" />
+                  <span>Twitter</span>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate && onNavigate("rare-vault")}
-                  className="hover:text-[#FBBF24] transition cursor-pointer text-left"
+                <a
+                  href="https://linkedin.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 text-stone-600 hover:text-black transition text-xs"
                 >
-                  The Rare Collector's Vault
-                </button>
+                  <Linkedin size={14} className="text-stone-500" />
+                  <span>LinkedIn</span>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => onNavigate && onNavigate("offers")}
-                  className="hover:text-[#FBBF24] transition cursor-pointer text-left"
+                <a
+                  href="https://instagram.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 text-stone-600 hover:text-black transition text-xs"
                 >
-                  Curated Seasonal Book Boxes
-                </button>
+                  <Instagram size={14} className="text-stone-500" />
+                  <span>Instagram</span>
+                </a>
               </li>
             </ul>
-          </div>
-
-          {/* Col 4: Bookshop Contact */}
-          <div className="space-y-3">
-            <h5 className="font-bold text-[#FAF7F2] uppercase text-[11px] tracking-wider">
-              Bookshop Concierge
-            </h5>
-            <div className="space-y-2 text-xs">
-              <a
-                href={`tel:${brandPhone}`}
-                className="flex items-center gap-1.5 text-[#FAF7F2] hover:text-[#FBBF24] font-mono transition"
-              >
-                <Phone size={13} className="text-[#D97706]" />
-                <span>{brandPhone}</span>
-              </a>
-              <a
-                href={`mailto:${brandEmail}`}
-                className="flex items-center gap-1.5 text-[#D5C7B8] hover:text-[#FBBF24] transition truncate font-sans"
-              >
-                <Mail size={13} className="text-[#D97706]" />
-                <span>{brandEmail}</span>
-              </a>
-              {brandAddress && (
-                <div className="flex items-start gap-1.5 text-[#A8A29E] pt-1">
-                  <MapPin size={13} className="text-[#D97706] flex-shrink-0 mt-0.5" />
-                  <span className="leading-tight">{brandAddress}</span>
-                </div>
-              )}
-            </div>
           </div>
         </div>
 
-        {/* Guild Badges */}
-        <div className="pt-8 border-t border-[#78350F]/40 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3 text-[10px] text-[#A8A29E]">
-            <span className="px-2.5 py-1 rounded-lg bg-[#292524] border border-[#78350F]/40 text-[#FBBF24]">
-              ★ Independent Booksellers Guild Member
-            </span>
-            <span className="px-2.5 py-1 rounded-lg bg-[#292524] border border-[#78350F]/40">
-              Munken 80gsm Archival Cream
-            </span>
-            <span className="px-2.5 py-1 rounded-lg bg-[#292524] border border-[#78350F]/40">
-              Smyth-Sewn Binding
-            </span>
-          </div>
-
-          <div className="text-[11px] text-[#A8A29E] font-sans">
-            © {new Date().getFullYear()} {brandName}. Dedicated to the enduring life of printed literature.
+        {/* Bottom copyright */}
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-stone-400 text-[11px]">
+          <p>© {new Date().getFullYear()} ENIGMA Publications. All rights reserved.</p>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => onNavigate && onNavigate("catalog")}
+              className="hover:text-stone-700 transition"
+            >
+              Privacy Policy
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => onNavigate && onNavigate("catalog")}
+              className="hover:text-stone-700 transition"
+            >
+              Terms of Service
+            </button>
           </div>
         </div>
       </div>

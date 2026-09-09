@@ -27,8 +27,6 @@ export default function Navbar({
     { id: "lookbook", label: "Editorial Lookbook" },
     { id: "collections", label: "Collections" },
     { id: "offers", label: "Runway Offers", badge: "VIP Sale" },
-    { id: "size-guide", label: "Size & Fit" },
-    { id: "atelier", label: "The Atelier" },
   ];
 
   const handleNavClick = (id) => {
@@ -42,9 +40,13 @@ export default function Navbar({
       {/* Top Luxury Announcement Bar */}
       <div className="bg-zinc-950 text-white text-[10px] uppercase font-mono tracking-widest py-1.5 px-4 text-center flex items-center justify-center gap-2">
         <Sparkles size={11} className="text-amber-400" />
-        <span>Complimentary Insured Express Worldwide Delivery on all luxury orders</span>
+        <span>
+          Complimentary Insured Express Worldwide Delivery on all luxury orders
+        </span>
         <span className="hidden sm:inline text-zinc-500">|</span>
-        <span className="hidden sm:inline text-zinc-400">Use code RUNWAY20 for 20% off selected outerwear</span>
+        <span className="hidden sm:inline text-zinc-400">
+          Use code RUNWAY20 for 20% off selected outerwear
+        </span>
       </div>
 
       {/* Main Navbar */}
@@ -85,7 +87,9 @@ export default function Navbar({
                 type="button"
                 onClick={() => handleNavClick(tab.id)}
                 className={`transition-colors cursor-pointer relative py-1 flex items-center gap-1.5 ${
-                  isActive ? "text-zinc-950 font-black" : "hover:text-zinc-950 text-zinc-600"
+                  isActive
+                    ? "text-zinc-950 font-black"
+                    : "hover:text-zinc-950 text-zinc-600"
                 }`}
               >
                 <span>{tab.label}</span>
@@ -104,28 +108,6 @@ export default function Navbar({
 
         {/* Action Controls */}
         <div className="flex items-center gap-3">
-          {/* Currency Selector */}
-          <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            className="text-xs font-bold uppercase tracking-wider bg-transparent border-none text-zinc-800 focus:outline-none cursor-pointer py-1"
-          >
-            <option value="INR">INR (₹)</option>
-            <option value="USD">USD ($)</option>
-            <option value="EUR">EUR (€)</option>
-            <option value="GBP">GBP (£)</option>
-          </select>
-
-          {/* Quick Collection Search shortcut */}
-          <button
-            type="button"
-            onClick={() => handleNavClick("collections")}
-            className="hidden sm:flex p-2.5 rounded-full hover:bg-zinc-100 text-zinc-700 transition cursor-pointer"
-            title="Browse Collections"
-          >
-            <Search size={18} />
-          </button>
-
           {/* Shopping Bag Button */}
           <button
             type="button"
@@ -163,7 +145,9 @@ export default function Navbar({
                 type="button"
                 onClick={() => handleNavClick(tab.id)}
                 className={`text-left text-sm font-bold uppercase tracking-wider py-2 transition flex items-center justify-between ${
-                  activePage === tab.id ? "text-zinc-950 font-black border-l-2 border-zinc-950 pl-3" : "text-zinc-500 pl-3"
+                  activePage === tab.id
+                    ? "text-zinc-950 font-black border-l-2 border-zinc-950 pl-3"
+                    : "text-zinc-500 pl-3"
                 }`}
               >
                 <span>{tab.label}</span>

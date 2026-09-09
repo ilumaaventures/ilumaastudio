@@ -19,7 +19,7 @@ export const fetchWishlist = createAsyncThunk(
       localStorage.setItem("wishlist", JSON.stringify(list));
       return list;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message);
+      return loadWishlistFromStorage();
     }
   }
 );
@@ -29,8 +29,9 @@ export const syncWishlist = createAsyncThunk(
   async (productIds, { rejectWithValue }) => {
     try {
       const response = await wishlistService.syncWishlist(productIds);
-      localStorage.removeItem("wishlist");
-      return response.products || response.wishlist || [];
+      const list = response.products || response.wishlist || [];
+      localStorage.setItem("wishlist", JSON.stringify(list));
+      return list;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
@@ -40,24 +41,36 @@ export const syncWishlist = createAsyncThunk(
 export const addToWishlist = createAsyncThunk(
   "wishlist/addToWishlist",
   async (product, { getState, rejectWithValue }) => {
-    const { auth } = getState();
     const productId = product._id || product.id;
+    const prodImg =
+      product.image ||
+      product.imageUrl ||
+      product.images?.[0]?.url ||
+      product.images?.[0] ||
+      "";
 
-    if (!auth.isAuthenticated) {
+    try {
+      const response = await wishlistService.addToWishlist(productId, {
+        name: product.name || product.title,
+        price: product.price,
+        originalPrice: product.originalPrice,
+        image: typeof prodImg === "object" ? prodImg.url : prodImg,
+        category: typeof product.category === "object" ? product.category?.name : product.category,
+        rating: product.rating,
+        inStock: product.inStock,
+      });
+      const list = response.products || response.wishlist || response.data || [];
+      localStorage.setItem("wishlist", JSON.stringify(list));
+      return list;
+    } catch (error) {
+      console.warn("Backend addToWishlist error, using local storage fallback:", error);
       const items = loadWishlistFromStorage();
       const exists = items.some(
         (i) => (i._id || i.id || i) === productId || String(i) === String(productId)
       );
-      const newItems = exists ? items : [...items, { ...product, _id: productId }];
+      const newItems = exists ? items : [...items, { ...product, _id: productId, id: productId }];
       localStorage.setItem("wishlist", JSON.stringify(newItems));
       return newItems;
-    }
-
-    try {
-      const response = await wishlistService.addToWishlist(productId);
-      return response.products || response.wishlist || [];
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
@@ -65,9 +78,13 @@ export const addToWishlist = createAsyncThunk(
 export const removeFromWishlist = createAsyncThunk(
   "wishlist/removeFromWishlist",
   async (productId, { getState, rejectWithValue }) => {
-    const { auth } = getState();
-
-    if (!auth.isAuthenticated) {
+    try {
+      const response = await wishlistService.removeFromWishlist(productId);
+      const list = response.products || response.wishlist || response.data || [];
+      localStorage.setItem("wishlist", JSON.stringify(list));
+      return list;
+    } catch (error) {
+      console.warn("Backend removeFromWishlist error, using local storage fallback:", error);
       const items = loadWishlistFromStorage();
       const newItems = items.filter(
         (i) => (i._id || i.id || i) !== productId && String(i) !== String(productId)
@@ -75,20 +92,13 @@ export const removeFromWishlist = createAsyncThunk(
       localStorage.setItem("wishlist", JSON.stringify(newItems));
       return newItems;
     }
-
-    try {
-      const response = await wishlistService.removeFromWishlist(productId);
-      return response.products || response.wishlist || [];
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message);
-    }
   }
 );
 
 export const toggleWishlist = createAsyncThunk(
   "wishlist/toggleWishlist",
   async (product, { getState, rejectWithValue }) => {
-    const { auth, wishlist } = getState();
+    const { wishlist } = getState();
     const productId = product._id || product.id;
 
     if (!productId) {
@@ -101,7 +111,32 @@ export const toggleWishlist = createAsyncThunk(
       return String(itemId) === String(productId);
     });
 
-    if (!auth.isAuthenticated) {
+    try {
+      let response;
+      if (existsInState) {
+        response = await wishlistService.removeFromWishlist(productId);
+      } else {
+        const prodImg =
+          product.image ||
+          product.imageUrl ||
+          product.images?.[0]?.url ||
+          product.images?.[0] ||
+          "";
+        response = await wishlistService.addToWishlist(productId, {
+          name: product.name || product.title,
+          price: product.price,
+          originalPrice: product.originalPrice,
+          image: typeof prodImg === "object" ? prodImg.url : prodImg,
+          category: typeof product.category === "object" ? product.category?.name : product.category,
+          rating: product.rating,
+          inStock: product.inStock,
+        });
+      }
+      const list = response.products || response.wishlist || response.data || [];
+      localStorage.setItem("wishlist", JSON.stringify(list));
+      return list;
+    } catch (error) {
+      console.warn("Backend toggleWishlist error, using fallback:", error);
       let newItems;
       if (existsInState) {
         newItems = items.filter((item) => {
@@ -109,22 +144,10 @@ export const toggleWishlist = createAsyncThunk(
           return String(itemId) !== String(productId);
         });
       } else {
-        newItems = [...items, { ...product, _id: productId }];
+        newItems = [...items, { ...product, _id: productId, id: productId }];
       }
       localStorage.setItem("wishlist", JSON.stringify(newItems));
       return newItems;
-    }
-
-    try {
-      if (existsInState) {
-        const response = await wishlistService.removeFromWishlist(productId);
-        return response.products || response.wishlist || [];
-      } else {
-        const response = await wishlistService.addToWishlist(productId);
-        return response.products || response.wishlist || [];
-      }
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );

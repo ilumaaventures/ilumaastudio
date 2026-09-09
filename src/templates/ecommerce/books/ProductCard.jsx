@@ -1,14 +1,5 @@
 import React, { useState } from "react";
-import {
-  Star,
-  Plus,
-  Check,
-  BookOpen,
-  Eye,
-  Bookmark,
-  Clock,
-  Award,
-} from "lucide-react";
+import { Check, ShoppingBag, Eye, Heart } from "lucide-react";
 import { isOutOfStock } from "../../../utils/stockUtils";
 import { getProductImage } from "../../../utils/productImage";
 
@@ -16,194 +7,131 @@ export default function ProductCard({
   product,
   onSelectProduct,
   onAddToCart,
-  onLookInside,
+  onQuickView,
 }) {
-  const [selectedFormat, setSelectedFormat] = useState(product?.format || "Hardcover");
   const [isAdding, setIsAdding] = useState(false);
 
   if (!product) return null;
 
   const outOfStock = isOutOfStock(product);
-  const basePrice = Number(product.price) || 0;
+  const currentPrice = Number(product.price) || 0;
   const originalPrice = product.compareAtPrice ? Number(product.compareAtPrice) : null;
-  // Paperback discount if selected
-  const isPaperback = selectedFormat.toLowerCase().includes("paperback");
-  const currentPrice = isPaperback ? Math.max(12, basePrice - 10) : basePrice;
+  const discountPercent =
+    product.discount ||
+    (originalPrice && originalPrice > currentPrice
+      ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
+      : null);
 
-  // Estimated read time (assuming 250 wpm)
-  const estReadTime = product.wordCount
-    ? `${Math.round((product.wordCount / 250 / 60) * 10) / 10} hrs`
-    : `${product.pages ? Math.round((product.pages * 0.9) * 10) / 10 : 6} hrs`;
+  // Background pad color (fallback to clean neutral if not provided)
+  const backdropColor = product.backdropColor || "#E8ECEF";
 
   const handleAdd = (e) => {
     e.stopPropagation();
     if (outOfStock) return;
     setIsAdding(true);
-    const itemToAdd = {
-      ...product,
-      format: selectedFormat,
-      price: currentPrice,
-      name: `${product.name} (${selectedFormat})`,
-    };
-    onAddToCart(itemToAdd, 1);
-    setTimeout(() => setIsAdding(false), 900);
+    onAddToCart(product, 1);
+    setTimeout(() => setIsAdding(false), 800);
+  };
+
+  const handleCardClick = () => {
+    if (onSelectProduct) {
+      onSelectProduct(product);
+    }
   };
 
   return (
     <div
-      onClick={() => onSelectProduct && onSelectProduct(product)}
-      className="group relative bg-white rounded-3xl border border-[#E7DFD5] hover:border-[#78350F] p-4 sm:p-5 flex flex-col justify-between transition-all duration-300 shadow-[0_4px_20px_rgba(28,25,23,0.04)] hover:shadow-[0_12px_35px_rgba(28,25,23,0.12)] cursor-pointer font-serif"
+      onClick={handleCardClick}
+      className="group flex flex-col justify-between bg-white border border-[#E5E7EB] hover:border-[#CBD5E1] rounded-sm p-3 sm:p-3.5 transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md select-none text-left"
     >
-      <div className="space-y-3.5">
-        {/* Book Cover Image Container */}
-        <div className="aspect-[3/4] w-full rounded-2xl overflow-hidden bg-[#FAF7F2] relative border border-[#EFE9DF] group-hover:border-[#D5C7B8] transition-colors shadow-sm">
-          <img
-            src={getProductImage(product, product.image)}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-          />
-
-          {/* Floating Badges */}
-          <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-10">
-            {product.badge && (
-              <span className="bg-[#1C1917] text-[#FAF7F2] text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md shadow-md border border-[#78350F]/40">
-                {product.badge}
-              </span>
-            )}
-            {product.genre && (
-              <span className="bg-white/95 backdrop-blur-md text-[#78350F] text-[9px] font-sans font-bold uppercase tracking-wider px-2 py-0.5 rounded-md shadow-xs border border-[#E7DFD5] w-fit">
-                {product.genre}
-              </span>
-            )}
+      <div className="space-y-3">
+        {/* ================= 1. COLORED BACKDROP MATTING BOX ================= */}
+        <div
+          className="w-full aspect-[4/5] rounded-xs flex items-center justify-center p-4 sm:p-5 relative overflow-hidden transition-transform duration-300 group-hover:scale-[1.01]"
+          style={{ backgroundColor: backdropColor }}
+        >
+          {/* Centered Book Cover with Realistic Shadow & Spine */}
+          <div className="relative w-3/4 max-w-[170px] aspect-[2/3] shadow-[0_8px_20px_rgba(0,0,0,0.22)] rounded-xs overflow-hidden bg-white">
+            <img
+              src={getProductImage(product, product.image)}
+              alt={product.name}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+            {/* Subtle Book Spine Left Highlight */}
+            <div className="absolute top-0 bottom-0 left-0 w-2.5 bg-gradient-to-r from-black/20 via-white/15 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 shadow-inner pointer-events-none border border-black/10" />
           </div>
 
-          {/* "Look Inside" Quick Reader Button */}
-          <div className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
+          {/* Quick Action Eye on Hover */}
+          <div className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
             <button
               type="button"
-              title="Read First Chapter"
+              title="Quick View"
               onClick={(e) => {
                 e.stopPropagation();
-                if (onLookInside) {
-                  onLookInside(product);
-                } else {
-                  onSelectProduct(product);
-                }
+                if (onQuickView) onQuickView(product);
+                else if (onSelectProduct) onSelectProduct(product);
               }}
-              className="p-2 rounded-xl bg-white/90 backdrop-blur-md border border-[#D5C7B8] text-[#1C1917] hover:bg-[#1C1917] hover:text-white transition shadow cursor-pointer flex items-center gap-1 text-xs"
+              className="p-1.5 rounded-full bg-white/90 text-stone-800 hover:bg-white hover:text-teal-900 shadow-md transition cursor-pointer"
             >
-              <BookOpen size={14} />
+              <Eye size={14} />
             </button>
-          </div>
-
-          {/* Read Time & Page Count Strip */}
-          <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-md text-[#1C1917] text-[10px] font-medium px-2 py-0.5 rounded-md border border-[#E7DFD5] flex items-center gap-1.5 shadow-xs font-sans">
-            <Clock size={11} className="text-[#9A3412]" />
-            <span>{product.pages || 380} pgs • ~{estReadTime}</span>
           </div>
         </div>
 
-        {/* Author & Rating */}
-        <div className="flex items-center justify-between text-[11px]">
-          <span className="text-[#78350F] italic font-medium">
-            By {product.author || "Elena Rostova"}
-          </span>
-          <div className="flex items-center gap-1 text-[#1C1917] bg-[#FAF7F2] px-2 py-0.5 rounded-md border border-[#EFE9DF]">
-            <Star size={11} className="text-[#D97706] fill-[#D97706]" />
-            <span className="font-sans font-bold text-xs">{product.rating || "5.0"}</span>
-            <span className="text-[#8C7A6B] text-[10px] font-sans">({product.reviewCount || 34})</span>
-          </div>
-        </div>
-
-        {/* Title */}
-        <h3 className="text-base font-bold text-[#1C1917] group-hover:text-[#9A3412] transition-colors line-clamp-1 text-left">
-          {product.name}
-        </h3>
-
-        {/* Excerpt / Description Snippet */}
-        <p className="text-xs text-[#574B40] line-clamp-2 leading-relaxed text-left font-sans italic">
-          "{product.description || "A sweeping multi-generational saga exploring memory, exile, and architectural marvels."}"
-        </p>
-
-        {/* Format Switcher Pills */}
-        <div className="pt-1 flex items-center gap-1.5">
-          {["Hardcover", "Paperback"].map((fmt) => (
-            <button
-              key={fmt}
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedFormat(fmt);
-              }}
-              className={`px-2.5 py-1 rounded-lg text-[10px] transition cursor-pointer border ${
-                selectedFormat === fmt
-                  ? "bg-[#1C1917] text-white border-[#1C1917] font-bold"
-                  : "bg-[#FAF7F2] text-[#574B40] border-[#E7DFD5] hover:bg-[#F3EDE3]"
-              }`}
-            >
-              {fmt}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (onLookInside) onLookInside(product);
-            }}
-            className="ml-auto text-[10px] text-[#9A3412] font-bold hover:underline flex items-center gap-0.5"
+        {/* ================= 2. TITLE ================= */}
+        <div>
+          <h3
+            className="text-xs sm:text-[13px] font-normal text-[#1F2937] leading-snug line-clamp-1 group-hover:text-[#113C48] transition-colors"
+            title={product.name}
           >
-            Look Inside →
-          </button>
+            {product.shortName || product.name}
+          </h3>
         </div>
       </div>
 
-      {/* Pricing & Add to Cart */}
-      <div className="pt-4 mt-3 flex items-center justify-between border-t border-[#EFE9DF] gap-2">
-        <div className="text-left">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-lg sm:text-xl font-bold text-[#1C1917]">
-              ₹{currentPrice.toFixed(2)}
-            </span>
-            {originalPrice && (
-              <span className="text-xs text-[#8C7A6B] line-through font-sans">
-                ₹{originalPrice.toFixed(2)}
-              </span>
-            )}
-          </div>
-          <span className="text-[9px] uppercase tracking-wider text-[#15803D] font-bold block font-sans">
-            {outOfStock ? "Reprinting Press" : "In Stock • Ships in 24h"}
+      {/* ================= 3. PRICE ROW & ADD TO CART BUTTON ================= */}
+      <div className="pt-3 flex items-center justify-between gap-2 border-t border-[#F3F4F6] mt-2">
+        <div className="flex items-baseline flex-wrap gap-1.5 text-left">
+          <span className="text-sm sm:text-base font-semibold text-[#111827]">
+            ${Number(currentPrice).toFixed(currentPrice % 1 === 0 ? 0 : 2)}
           </span>
+
+          {originalPrice && originalPrice > currentPrice && (
+            <span className="text-xs text-[#9CA3AF] line-through">
+              ${Number(originalPrice).toFixed(originalPrice % 1 === 0 ? 0 : 2)}
+            </span>
+          )}
+
+          {discountPercent > 0 && (
+            <span className="text-[11px] font-medium text-[#047857]">
+              ({discountPercent}% off)
+            </span>
+          )}
         </div>
 
-        {outOfStock ? (
-          <span className="text-[11px] font-bold text-[#991B1B] bg-[#FEE2E2] px-3 py-1.5 rounded-xl border border-[#FCA5A5]">
-            Backorder
-          </span>
-        ) : (
-          <button
-            type="button"
-            onClick={handleAdd}
-            disabled={isAdding}
-            className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold tracking-wider transition-all duration-200 flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 ${
-              isAdding
-                ? "bg-[#15803D] text-white"
-                : "bg-[#1C1917] hover:bg-[#292524] text-[#FAF7F2] border border-[#78350F]/40 hover:shadow-md"
-            }`}
-          >
-            {isAdding ? (
-              <>
-                <Check size={14} className="animate-bounce" />
-                <span>Added</span>
-              </>
-            ) : (
-              <>
-                <Plus size={14} className="text-[#D97706]" />
-                <span>Add</span>
-              </>
-            )}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={handleAdd}
+          disabled={outOfStock}
+          className={`px-3 sm:px-3.5 py-1.5 text-xs font-medium rounded-sm transition-all duration-200 cursor-pointer whitespace-nowrap flex items-center gap-1 shadow-2xs active:scale-95 ${
+            outOfStock
+              ? "bg-stone-200 text-stone-500 cursor-not-allowed"
+              : isAdding
+                ? "bg-[#065F46] text-white"
+                : "bg-[#133E47] hover:bg-[#0E2D34] text-white"
+          }`}
+        >
+          {isAdding ? (
+            <>
+              <Check size={13} />
+              <span>Added</span>
+            </>
+          ) : (
+            <span>Add to cart</span>
+          )}
+        </button>
       </div>
     </div>
   );

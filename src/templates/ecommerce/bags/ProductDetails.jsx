@@ -1,396 +1,318 @@
 import React, { useState } from "react";
 import {
   ArrowLeft,
+  ShoppingBag,
   Star,
-  ShieldCheck,
+  Check,
+  ChevronRight,
+  Share2,
+  Truck,
   RotateCcw,
-  Sparkles,
-  Award,
-  Briefcase,
+  ShieldCheck,
   Plus,
   Minus,
-  Check,
-  ShoppingBag,
-  Share2,
-  Layers,
-  Feather,
+  Briefcase,
+  Leaf,
 } from "lucide-react";
-import toast from "react-hot-toast";
 import { isOutOfStock } from "../../../utils/stockUtils";
 import { getProductImage } from "../../../utils/productImage";
+import toast from "react-hot-toast";
 import ProductCard from "./ProductCard";
 
 export default function ProductDetails({
-  product,
-  onBack,
-  onAddToCart,
+  product = {},
+  onBack = () => {},
+  onAddToCart = () => {},
   relatedProducts = [],
-  onSelectProduct,
+  onSelectProduct = () => {},
 }) {
-  const [quantity, setQuantity] = useState(1);
-  const [selectedLeather, setSelectedLeather] = useState(product?.leather || "Vachetta Tan");
-  const [monogramText, setMonogramText] = useState("J.V.");
-  const [monogramFoil, setMonogramFoil] = useState("Gold"); // "Gold" | "Silver" | "Blind"
-  const [enableMonogram, setEnableMonogram] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-
-  if (!product) return null;
+  const [quantity, setQuantity] = useState(1);
+  const [activeTab, setActiveTab] = useState("materials"); // "materials" | "specs" | "shipping"
 
   const outOfStock = isOutOfStock(product);
-  const basePrice = Number(product.price) || 0;
-  const originalPrice = product.compareAtPrice ? Number(product.compareAtPrice) : null;
-  const totalPrice = basePrice * quantity;
+  const price = Number(product.price) || 38.99;
+  const compareAtPrice = product.compareAtPrice ? Number(product.compareAtPrice) : 42.0;
+  const imageSrc = getProductImage(product, product.image);
 
-  // Multi-angle gallery
-  const images = [
-    getProductImage(product, product.image),
+  const galleryImages = [
+    imageSrc,
     "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&auto=format&fit=crop&q=80",
     "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&auto=format&fit=crop&q=80",
   ];
 
   const handleAdd = () => {
     if (outOfStock) return;
-    const itemToAdd = {
-      ...product,
-      leather: selectedLeather,
-      monogram: enableMonogram && monogramText.trim() ? `${monogramText} (${monogramFoil})` : null,
-      name: enableMonogram && monogramText.trim()
-        ? `${product.name} [Monogram: ${monogramText} - ${monogramFoil}]`
-        : product.name,
-    };
-    onAddToCart(itemToAdd, quantity);
-    toast.success(`Added ${quantity}x ${itemToAdd.name} to Carry Cart! 🧳`);
+    onAddToCart(product, quantity);
   };
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
-    toast.success("Bag silhouette link copied to clipboard!");
+    toast.success("Bag link copied to clipboard!");
   };
 
   return (
-    <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12 text-left font-serif">
-      {/* Breadcrumb & Back */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E7DFD5] pb-4">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10 font-sans text-left">
+      {/* Navigation Breadcrumb */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4 text-xs">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-2 text-xs font-bold text-[#B45309] hover:text-[#92400E] transition cursor-pointer"
+          className="flex items-center gap-2 text-slate-600 hover:text-[#A0522D] transition cursor-pointer font-bold"
         >
           <ArrowLeft size={16} />
-          <span>Return to Atelier Lineup</span>
+          <span>Back to All Bags</span>
         </button>
 
-        <div className="flex items-center gap-2 text-xs text-[#8C6D58]">
-          <span>Heritage Atelier</span>
-          <span>/</span>
-          <span>{product.category || "Leather Carry"}</span>
-          <span>/</span>
-          <span className="text-[#2C1810] font-bold truncate max-w-[200px]">{product.name}</span>
+        <div className="flex items-center gap-2 text-slate-400">
+          <span className="hover:text-slate-600 cursor-pointer" onClick={onBack}>Home</span>
+          <ChevronRight size={12} />
+          <span className="text-slate-600">{product.category || "Backpacks"}</span>
+          <ChevronRight size={12} />
+          <span className="text-[#A0522D] font-bold truncate max-w-[200px]">
+            {product.name}
+          </span>
         </div>
 
         <button
           onClick={handleShare}
-          className="p-2 rounded-xl bg-white border border-[#D5C7B8] text-[#2C1810] hover:bg-[#FAF7F2] transition cursor-pointer text-xs flex items-center gap-1.5 shadow-sm"
+          className="p-2 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer flex items-center gap-1.5"
         >
           <Share2 size={14} />
-          <span className="hidden sm:inline">Share Silhouette</span>
+          <span className="hidden sm:inline">Share</span>
         </button>
       </div>
 
-      {/* Two-Column Atelier Inspector */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
-        {/* Left Column: Visuals & Leather Seals */}
+      {/* Main Showcase Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 bg-white p-6 sm:p-8 border border-slate-200 shadow-2xs items-start">
+        {/* Left: Gallery & Angles (6 cols) */}
         <div className="lg:col-span-6 space-y-4">
-          <div className="aspect-square w-full rounded-3xl overflow-hidden bg-[#FAF7F2] border border-[#E7DFD5] relative group shadow-lg">
+          <div className="aspect-square w-full bg-slate-50 border border-slate-100 p-8 flex items-center justify-center relative overflow-hidden group">
             <img
-              src={images[activeImageIndex] || images[0]}
+              src={galleryImages[activeImageIndex] || imageSrc}
               alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              className="max-h-[340px] w-auto object-contain filter drop-shadow-md group-hover:scale-105 transition-transform duration-500"
             />
 
-            {/* Badges */}
-            <div className="absolute top-4 left-4 flex flex-col gap-2">
-              <span className="bg-[#2C1810] text-[#FAF7F2] text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-md border border-[#8C6D58]/40">
-                {selectedLeather}
-              </span>
-              <span className="bg-[#D97706] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow flex items-center gap-1">
-                <Award size={12} /> Pelle Conciata al Vegetale
-              </span>
+            {/* Circular Solid Black SALE Badge (Matches Reference) */}
+            <div className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black text-white flex items-center justify-center font-bold text-xs uppercase tracking-wider shadow-sm">
+              SALE
             </div>
-
-            {/* Live Monogram Stamp Tag Preview on the bag */}
-            {enableMonogram && monogramText.trim() && (
-              <div className="absolute bottom-4 right-4 bg-[#2C1810]/95 backdrop-blur-md border border-[#8C6D58] p-3 rounded-2xl shadow-xl flex items-center gap-2">
-                <Sparkles size={14} className="text-[#FBBF24]" />
-                <div>
-                  <span className="text-[9px] uppercase tracking-widest text-[#D5C7B8] block">
-                    {monogramFoil} Foil Stamping
-                  </span>
-                  <span className={`text-base font-serif font-black tracking-widest block ${
-                    monogramFoil === "Gold"
-                      ? "text-[#FBBF24]"
-                      : monogramFoil === "Silver"
-                      ? "text-slate-200"
-                      : "text-[#8C6D58]"
-                  }`}>
-                    [{monogramText.toUpperCase()}]
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Alternate Gallery Angle Buttons */}
+          {/* Gallery Thumbnails */}
           <div className="grid grid-cols-3 gap-3">
-            {images.map((img, idx) => (
+            {galleryImages.map((img, idx) => (
               <button
                 key={idx}
                 onClick={() => setActiveImageIndex(idx)}
-                className={`aspect-video rounded-2xl overflow-hidden bg-[#FAF7F2] border transition cursor-pointer ${
+                className={`aspect-video bg-white border-2 p-2 flex items-center justify-center transition cursor-pointer ${
                   activeImageIndex === idx
-                    ? "border-[#B45309] shadow-md"
-                    : "border-[#E7DFD5] opacity-70 hover:opacity-100"
+                    ? "border-[#A0522D]"
+                    : "border-slate-200 opacity-70 hover:opacity-100"
                 }`}
               >
-                <img src={img} alt={`Angle ${idx + 1}`} className="w-full h-full object-cover" />
+                <img src={img} alt={`Angle ${idx + 1}`} className="max-h-full object-contain" />
               </button>
             ))}
           </div>
 
-          {/* Italian Guild Seals */}
-          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-[#E7DFD5] text-center">
-            <div className="p-3 rounded-2xl bg-white border border-[#E7DFD5] space-y-1">
-              <Award size={18} className="mx-auto text-[#B45309]" />
-              <span className="text-[11px] font-bold text-[#2C1810] block">Tuscan Certified</span>
-              <p className="text-[10px] text-[#6B5344] font-sans">Natural bark tanning</p>
+          {/* Guarantees */}
+          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-slate-100 text-center text-xs">
+            <div className="p-3 bg-slate-50 border border-slate-100 space-y-1">
+              <Leaf size={18} className="mx-auto text-emerald-700" />
+              <span className="font-bold text-slate-800 block">100% Sustainable</span>
+              <p className="text-[10px] text-slate-500">Eco vegetable tanning</p>
             </div>
-            <div className="p-3 rounded-2xl bg-white border border-[#E7DFD5] space-y-1">
-              <ShieldCheck size={18} className="mx-auto text-[#B45309]" />
-              <span className="text-[11px] font-bold text-[#2C1810] block">Lifetime Guarantee</span>
-              <p className="text-[10px] text-[#6B5344] font-sans">Hardware & stitching</p>
+            <div className="p-3 bg-slate-50 border border-slate-100 space-y-1">
+              <ShieldCheck size={18} className="mx-auto text-[#A0522D]" />
+              <span className="font-bold text-slate-800 block">Lifetime Warranty</span>
+              <p className="text-[10px] text-slate-500">Stitching & hardware</p>
             </div>
-            <div className="p-3 rounded-2xl bg-white border border-[#E7DFD5] space-y-1">
-              <Feather size={18} className="mx-auto text-[#B45309]" />
-              <span className="text-[11px] font-bold text-[#2C1810] block">Living Patina</span>
-              <p className="text-[10px] text-[#6B5344] font-sans">Becomes richer over time</p>
+            <div className="p-3 bg-slate-50 border border-slate-100 space-y-1">
+              <Truck size={18} className="mx-auto text-slate-700" />
+              <span className="font-bold text-slate-800 block">Free Shipping</span>
+              <p className="text-[10px] text-slate-500">Orders over $50</p>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Specifications, Bespoke Monogram & Checkout */}
+        {/* Right: Details & Purchase (6 cols) */}
         <div className="lg:col-span-6 space-y-6">
           <div className="space-y-2">
-            <span className="text-xs uppercase tracking-widest text-[#B45309] font-bold">
-              {product.category || "Full-Grain Leather Silhouette"}
+            <span className="text-[11px] uppercase tracking-widest text-[#A0522D] font-bold block">
+              {product.category || "Backpacks"}
             </span>
-            <h1 className="text-2xl sm:text-4xl font-black text-[#2C1810] tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 uppercase tracking-wide">
               {product.name}
             </h1>
 
-            <div className="flex items-center gap-3 pt-1">
-              <div className="flex items-center gap-1 text-[#D97706]">
+            {/* Price with Strikethrough */}
+            <div className="flex items-center gap-3 pt-2">
+              {compareAtPrice && compareAtPrice > price && (
+                <span className="text-base text-slate-400 line-through">
+                  ${compareAtPrice.toFixed(2)}
+                </span>
+              )}
+              <span className="text-2xl sm:text-3xl font-bold text-slate-900">
+                ${price.toFixed(2)}
+              </span>
+            </div>
+
+            {/* In Stock Line */}
+            <div className="text-xs text-emerald-700 font-semibold italic pt-1">
+              In Stock. Ready to dispatch within 24 hours.
+            </div>
+
+            {/* Rating */}
+            <div className="flex items-center gap-1.5 pt-1 text-slate-400 text-xs">
+              <div className="flex">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={14} className="fill-[#D97706]" />
+                  <Star key={i} size={13} className="fill-slate-400 text-slate-400" />
                 ))}
               </div>
-              <span className="text-xs font-bold text-[#2C1810] font-sans">{product.rating || "4.9"}</span>
-              <span className="text-xs text-[#8C6D58] font-sans">({product.reviewCount || 42} verified owners)</span>
+              <span className="font-bold text-slate-700">5.0</span>
+              <span className="text-slate-400">({product.reviewCount || 0} reviews)</span>
             </div>
           </div>
 
-          {/* Pricing Box */}
-          <div className="p-5 rounded-2xl bg-[#FAF7F2] border border-[#E7DFD5] flex items-baseline justify-between">
-            <div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl sm:text-4xl font-bold text-[#2C1810]">
-                  ₹{basePrice.toFixed(2)}
-                </span>
-                {originalPrice && (
-                  <span className="text-sm text-[#8C6D58] line-through font-sans">
-                    ₹{originalPrice.toFixed(2)}
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-[#6B5344] mt-1 font-sans">
-                Complimentary global air shipping & wooden presentation box.
-              </p>
-            </div>
-
-            <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#DCFCE7] text-[#15803D] border border-[#86EFAC] font-sans">
-              Handcrafted in Tuscany
-            </span>
-          </div>
-
-          {/* Description */}
-          <p className="text-sm text-[#6B5344] leading-relaxed font-sans">
-            {product.description}
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+            {product.description ||
+              "Handcrafted with full-grain vegetable-tanned saddle leather, reinforced dual shoulder straps, solid brass buckle hardware, and protective interior laptop sleeve."}
           </p>
 
-          {/* Leather Swatch Selector */}
-          <div className="space-y-2">
-            <span className="text-xs font-bold text-[#2C1810] uppercase tracking-wider block">
-              Tuscan Leather Finish: <strong className="text-[#B45309]">{selectedLeather}</strong>
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {["Vachetta Tan", "Cognac Brown", "Obsidian Black", "Heritage Olive"].map((shade) => (
-                <button
-                  key={shade}
-                  type="button"
-                  onClick={() => setSelectedLeather(shade)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-serif transition cursor-pointer border ${
-                    selectedLeather === shade
-                      ? "bg-[#2C1810] text-white border-[#2C1810] shadow-sm font-bold"
-                      : "bg-white text-[#6B5344] border-[#E7DFD5] hover:bg-[#FAF7F2]"
-                  }`}
-                >
-                  {shade}
-                </button>
-              ))}
+          {/* Quick Specs Matrix */}
+          <div className="grid grid-cols-2 gap-3 p-4 bg-slate-50 rounded border border-slate-200 text-xs">
+            <div>
+              <span className="text-slate-400 text-[10px] uppercase font-bold block">Material</span>
+              <span className="text-slate-800 font-semibold">{product.material || "Full-Grain Saddle Leather"}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[10px] uppercase font-bold block">Capacity</span>
+              <span className="text-slate-800 font-semibold">{product.capacity || "22 Liters (Fits 15\" Laptop)"}</span>
             </div>
           </div>
 
-          {/* BESPOKE MONOGRAMMING STUDIO WIDGET */}
-          <div className="p-5 rounded-2xl bg-white border border-[#E7DFD5] space-y-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-[#B45309]" />
-                <span className="text-xs font-bold text-[#2C1810] uppercase tracking-wider">
-                  Complimentary 24k Hot-Foil Monogramming
-                </span>
-              </div>
-              <label className="flex items-center gap-1.5 text-xs text-[#2C1810] cursor-pointer font-sans">
-                <input
-                  type="checkbox"
-                  checked={enableMonogram}
-                  onChange={(e) => setEnableMonogram(e.target.checked)}
-                  className="accent-[#B45309] rounded"
-                />
-                <span>Include Monogram</span>
-              </label>
-            </div>
-
-            {enableMonogram && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-[#8C6D58] mb-1 font-sans">
-                    Initials (Max 3 Characters)
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={3}
-                    value={monogramText}
-                    onChange={(e) => setMonogramText(e.target.value)}
-                    placeholder="J.V."
-                    className="w-full bg-[#FAF7F2] text-xs font-serif font-black uppercase text-[#2C1810] px-3.5 py-2 rounded-xl border border-[#D5C7B8] focus:border-[#B45309] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-[#8C6D58] mb-1 font-sans">
-                    Foil Stamping Style
-                  </label>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {["Gold", "Silver", "Blind"].map((foil) => (
-                      <button
-                        key={foil}
-                        type="button"
-                        onClick={() => setMonogramFoil(foil)}
-                        className={`py-1.5 rounded-lg text-xs font-serif transition cursor-pointer border ${
-                          monogramFoil === foil
-                            ? "bg-[#2C1810] text-white border-[#2C1810] font-bold"
-                            : "bg-[#FAF7F2] text-[#6B5344] border-[#E7DFD5]"
-                        }`}
-                      >
-                        {foil}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Compartment & Dimensions Breakdown */}
-          <div className="grid grid-cols-2 gap-3 p-4 rounded-2xl bg-[#FAF7F2] border border-[#E7DFD5] text-xs">
-            <div className="space-y-0.5">
-              <span className="text-[#8C6D58] text-[10px] uppercase block font-sans">Laptop Fitting</span>
-              <span className="text-[#2C1810] font-bold">{product.capacity || "Fits up to 16\" MacBook Pro"}</span>
-            </div>
-            <div className="space-y-0.5">
-              <span className="text-[#8C6D58] text-[10px] uppercase block font-sans">Hardware Fittings</span>
-              <span className="text-[#2C1810] font-bold">Solid Antique Cast Brass</span>
-            </div>
-            <div className="space-y-0.5">
-              <span className="text-[#8C6D58] text-[10px] uppercase block font-sans">Hide Thickness</span>
-              <span className="text-[#2C1810] font-bold">6 oz (2.4mm) Full-Grain</span>
-            </div>
-            <div className="space-y-0.5">
-              <span className="text-[#8C6D58] text-[10px] uppercase block font-sans">Trolley Pass-Through</span>
-              <span className="text-[#2C1810] font-bold">Integrated Back Luggage Strap</span>
-            </div>
-          </div>
-
-          {/* Quantity & Add to Cart */}
-          <div className="pt-2 space-y-4">
+          {/* Quantity Stepper & ADD TO CART Button */}
+          <div className="space-y-4 pt-2">
             <div className="flex items-center gap-4">
-              <div className="flex items-center bg-white border border-[#D5C7B8] rounded-2xl p-1 shadow-sm">
+              <div className="flex items-center bg-slate-100 border border-slate-200 rounded p-1">
                 <button
                   type="button"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="p-2 text-[#8C6D58] hover:text-[#2C1810] transition cursor-pointer"
+                  className="p-2 text-slate-600 hover:text-black cursor-pointer"
                 >
                   <Minus size={14} />
                 </button>
-                <span className="w-12 text-center text-sm font-sans font-bold text-[#2C1810]">
+                <span className="w-8 text-center text-xs font-bold text-slate-900">
                   {quantity}
                 </span>
                 <button
                   type="button"
                   onClick={() => setQuantity(quantity + 1)}
-                  className="p-2 text-[#8C6D58] hover:text-[#2C1810] transition cursor-pointer"
+                  className="p-2 text-slate-600 hover:text-black cursor-pointer"
                 >
                   <Plus size={14} />
                 </button>
               </div>
-
-              <div className="text-xs text-[#6B5344] font-sans">
-                Includes complimentary beeswax conditioning balm & cotton dust bag.
-              </div>
             </div>
 
+            {/* Full-width Saddle Button (Matches Reference) */}
             <button
               type="button"
               onClick={handleAdd}
               disabled={outOfStock}
-              className={`w-full py-4 rounded-2xl font-serif font-bold text-sm uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-98 ${
+              className={`w-full py-3.5 rounded-sm font-black text-xs uppercase tracking-widest transition-all duration-200 shadow-sm cursor-pointer ${
                 outOfStock
-                  ? "bg-[#D5C7B8] text-[#8C6D58] cursor-not-allowed"
-                  : "bg-[#2C1810] hover:bg-[#3D2217] text-[#FAF7F2] border border-[#8C6D58]/40 hover:shadow-xl"
+                  ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                  : "bg-[#A0522D] hover:bg-[#8B4513] text-white active:scale-98"
               }`}
             >
-              <ShoppingBag size={18} className="text-[#D97706]" />
-              <span>
-                {outOfStock ? "Made to Order" : `Add to Carry Cart • ₹${totalPrice.toFixed(2)}`}
-              </span>
+              ADD TO CART • ${(price * quantity).toFixed(2)}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Related Silhouettes */}
+      {/* Tabs */}
+      <div className="space-y-6 pt-6">
+        <div className="flex gap-6 border-b-2 border-slate-200 text-xs font-serif uppercase tracking-widest">
+          {[
+            { id: "materials", label: "Sustainable Craftsmanship" },
+            { id: "specs", label: "Dimensions & Fit" },
+            { id: "shipping", label: "Shipping & Free Returns" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`pb-3 transition border-b-2 -mb-[2px] cursor-pointer ${
+                activeTab === tab.id
+                  ? "border-[#A0522D] text-[#A0522D] font-bold"
+                  : "border-transparent text-slate-400 hover:text-slate-800"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "materials" && (
+          <div className="bg-white p-6 rounded border border-slate-200 text-xs text-slate-600 space-y-3">
+            <h4 className="font-bold text-slate-900 font-serif">Tuscan Vegetable-Tanned Leather & Organic Cotton</h4>
+            <p className="leading-relaxed">
+              Tanned strictly with organic tree bark extracts including chestnut and mimosa tannins over 40 days, avoiding heavy metals or harmful chromium. Ages with a rich, unique patina that deepens with every journey.
+            </p>
+          </div>
+        )}
+
+        {activeTab === "specs" && (
+          <div className="bg-white p-6 rounded border border-slate-200 text-xs">
+            <table className="w-full text-left">
+              <tbody className="divide-y divide-slate-100">
+                <tr>
+                  <td className="py-2.5 px-3 font-bold text-slate-400 w-1/3">Dimensions</td>
+                  <td className="py-2.5 px-3 text-slate-800">42 cm (H) x 30 cm (W) x 14 cm (D)</td>
+                </tr>
+                <tr>
+                  <td className="py-2.5 px-3 font-bold text-slate-400">Device Compartment</td>
+                  <td className="py-2.5 px-3 text-slate-800">Padded compartment accommodates up to 15.6" laptop</td>
+                </tr>
+                <tr>
+                  <td className="py-2.5 px-3 font-bold text-slate-400">Hardware</td>
+                  <td className="py-2.5 px-3 text-slate-800">Solid antiqued brass buckles and YKK zippers</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {activeTab === "shipping" && (
+          <div className="bg-white p-6 rounded border border-slate-200 text-xs text-slate-600 space-y-2">
+            <h4 className="font-bold text-slate-900 font-serif">Carbon-Neutral Delivery</h4>
+            <p>
+              Free standard carbon-neutral delivery on all orders over $50. Hassle-free 30-day return policy with prepaid shipping labels.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Related Bags */}
       {relatedProducts && relatedProducts.length > 0 && (
-        <div className="pt-12 border-t border-[#E7DFD5] space-y-6">
-          <div className="flex justify-between items-center">
-            <h3 className="text-2xl font-black text-[#2C1810]">Complementary Travel Silhouettes</h3>
-            <span className="text-xs text-[#8C6D58]">Curated Leather Set</span>
+        <div className="pt-8 border-t border-slate-200 space-y-6">
+          <div className="flex items-center gap-4 text-center">
+            <div className="flex-1 h-[1px] bg-slate-200" />
+            <h3 className="text-xl font-serif text-slate-800 tracking-wide">
+              You May Also Like
+            </h3>
+            <div className="flex-1 h-[1px] bg-slate-200" />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
             {relatedProducts
-              .filter((p) => p._id !== product._id)
+              .filter((p) => (p._id || p.id) !== (product._id || product.id))
               .slice(0, 4)
               .map((item) => (
                 <ProductCard
-                  key={item._id}
+                  key={item._id || item.id}
                   product={item}
                   onSelectProduct={onSelectProduct}
                   onAddToCart={onAddToCart}

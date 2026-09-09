@@ -51,6 +51,19 @@
   animation: fadeInLeft 0.4s ease-out forwards;
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.35s ease-out forwards;
+}
+
 /* Premium Custom Scrollbars */
 .scrollbar-thin::-webkit-scrollbar {
   width: 5px;
@@ -78,14 +91,28 @@
 }
 
 .shimmer-placeholder {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background: linear-gradient(
+    90deg,
+    rgba(241, 245, 249, 0.9) 0%,
+    rgba(226, 232, 240, 0.85) 30%,
+    rgba(255, 255, 255, 0.95) 50%,
+    rgba(226, 232, 240, 0.85) 70%,
+    rgba(241, 245, 249, 0.9) 100%
+  );
   background-size: 200% 100%;
-  animation: shimmer 1.5s infinite linear;
-  border-radius: 4px;
+  animation: shimmer 1.6s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: background-position;
 }
 
 .dark .shimmer-placeholder {
-  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background: linear-gradient(
+    90deg,
+    rgba(30, 41, 59, 0.9) 0%,
+    rgba(51, 65, 85, 0.85) 30%,
+    rgba(71, 85, 105, 0.95) 50%,
+    rgba(51, 65, 85, 0.85) 70%,
+    rgba(30, 41, 59, 0.9) 100%
+  );
   background-size: 200% 100%;
 }
 

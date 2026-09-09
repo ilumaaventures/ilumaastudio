@@ -142,3 +142,5 @@ export function DetailSkeleton() {
     </div>
   );
 }
+
+export { default as HomeShimmer } from "../pages/Home/components/HomeShimmer";

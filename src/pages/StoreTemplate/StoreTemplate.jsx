@@ -33,18 +33,72 @@ import {
   SlidersHorizontal,
   BookOpen,
   Flower2,
+  Coffee,
+  Headphones,
 } from "lucide-react";
 import templateRegistry from "../../templates/registry";
 import StoreRenderer from "../../templates/StoreRenderer";
 
+// Priority order for newly launched templates so they appear first in the catalog
+const NEW_TEMPLATE_ORDER = {
+  "apex-audio": 1,
+  "luxury-audio": 1,
+  "crux-coffee": 2,
+  "coffee-roasters": 2,
+  "ethnic-couture": 3,
+  "modern-couture": 3,
+  "studio-apparel": 4,
+  "modern-apparel": 4,
+  "apparel": 4,
+};
+
+// Deduplicate registry values so aliases (e.g. coffee-roasters, luxury-audio, modern-apparel) don't create duplicate cards
+const deduplicatedTemplates = Object.values(
+  Object.values(templateRegistry).reduce((acc, t) => {
+    const compId = t.component?.name || t.name || t.key;
+    if (!acc[compId]) {
+      acc[compId] = t;
+    }
+    return acc;
+  }, {})
+);
+
+// Show new templates first, followed by existing catalog
+const uniqueRegistryTemplates = deduplicatedTemplates.sort((a, b) => {
+  const isANew = Boolean(a.isNew || NEW_TEMPLATE_ORDER[a.key]);
+  const isBNew = Boolean(b.isNew || NEW_TEMPLATE_ORDER[b.key]);
+
+  if (isANew && isBNew) {
+    const orderA = NEW_TEMPLATE_ORDER[a.key] || 99;
+    const orderB = NEW_TEMPLATE_ORDER[b.key] || 99;
+    return orderA - orderB;
+  }
+  if (isANew) return -1;
+  if (isBNew) return 1;
+  return 0;
+});
+
 // Enhanced list with icon mappings, colors, and industry tags
-const templateList = Object.values(templateRegistry).map((t) => {
+const templateList = uniqueRegistryTemplates.map((t) => {
   const isEcom = t.businessType === "ecommerce";
+  const isNew = Boolean(t.isNew || NEW_TEMPLATE_ORDER[t.key]);
 
   let icon = ShoppingBag;
   let industryLabel = t.category;
 
-  if (t.category === "grocery") {
+  if (t.key === "crux-coffee" || t.key === "coffee-roasters") {
+    icon = Coffee;
+    industryLabel = "Artisanal Coffee & Roasters";
+  } else if (t.key === "apex-audio" || t.key === "luxury-audio") {
+    icon = Headphones;
+    industryLabel = "Luxury Audio & Acoustics";
+  } else if (t.key === "ethnic-couture" || t.key === "modern-couture") {
+    icon = Sparkles;
+    industryLabel = "Ethnic & Festive Couture";
+  } else if (t.key === "studio-apparel" || t.key === "apparel") {
+    icon = ShoppingBag;
+    industryLabel = "Minimalist Studio Apparel";
+  } else if (t.category === "grocery") {
     icon = ShoppingBag;
     industryLabel = "Grocery & Fresh";
   } else if (t.category === "fashion") {
@@ -52,7 +106,7 @@ const templateList = Object.values(templateRegistry).map((t) => {
     industryLabel = "Fashion & Luxury";
   } else if (t.category === "electronics") {
     icon = Cpu;
-    industryLabel = "High-Tech & Audio";
+    industryLabel = "High-Tech & Gadgets";
   } else if (t.category === "beauty") {
     icon = Heart;
     industryLabel = "Beauty & Cosmetics";
@@ -104,6 +158,7 @@ const templateList = Object.values(templateRegistry).map((t) => {
     id: t.key,
     key: t.key,
     name: t.name,
+    isNew,
     category: isEcom ? "Ecommerce" : "Services",
     rawCategory: t.category,
     type: industryLabel,
@@ -142,6 +197,7 @@ const industryFilters = [
   { id: "grocery", label: "Grocery", icon: ShoppingBag },
   { id: "fashion", label: "Fashion", icon: Sparkles },
   { id: "electronics", label: "Electronics", icon: Cpu },
+  { id: "food", label: "Food & Coffee", icon: Coffee },
   { id: "beauty", label: "Beauty", icon: Heart },
   { id: "furniture", label: "Furniture", icon: Layers },
   { id: "jewelry", label: "Jewelry", icon: Sparkles },
@@ -256,14 +312,20 @@ export default function StoreTemplate() {
                     className="h-full w-full object-cover object-top transition-transform duration-500 ease-out group-hover:scale-[1.02]"
                   />
 
-                  {/* Badge */}
-                  {template.badge && (
-                    <div className="absolute right-3 top-3">
-                      <span className="rounded-lg bg-slate-900/85 px-2.5 py-1.5 text-[10px] font-semibold text-white shadow-sm backdrop-blur-md">
+                  {/* Badges */}
+                  <div className="absolute right-3 top-3 flex items-center gap-1.5">
+                    {template.isNew && (
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2 py-1 text-[10px] font-bold text-white shadow-md backdrop-blur-md">
+                        <Sparkles size={11} className="text-emerald-200" />
+                        NEW
+                      </span>
+                    )}
+                    {template.badge && (
+                      <span className="rounded-lg bg-slate-900/85 px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm backdrop-blur-md">
                         {template.badge}
                       </span>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   {/* Preview */}
                   <div className="absolute inset-0 flex items-center justify-center bg-slate-950/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
