@@ -10,7 +10,7 @@ import {
 } from "../../redux/reducers/cartReducer";
 import { toggleWishlist } from "../../redux/reducers/wishlistReducer";
 import toast from "react-hot-toast";
-import { navLinks, formatPrice } from "./constants";
+import { navLinks, formatPrice, PRODUCTS } from "./constants";
 import Icon from "./components/Icon";
 import ProductCard from "./components/ProductCard";
 import ProductModal from "./components/ProductModal";
@@ -20,7 +20,7 @@ export default function StarlingTalesProduct() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   // Retrieve data from Store Context (API fetched)
-  const { products } = useStore();
+  const { products, categories: storeCategories } = useStore();
 
   // Retrieve data from Redux Store
   const cartItems = useSelector((s) => s.cart?.cartItems || []);
@@ -30,47 +30,107 @@ export default function StarlingTalesProduct() {
   const [quickViewId, setQuickViewId] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
 
+  const rawProducts = useMemo(() => {
+    if (Array.isArray(products) && products.length > 0) {
+      return products;
+    }
+    return PRODUCTS || [];
+  }, [products]);
+
+  // Map store categories by ID and name (never exposing raw 24-char hex IDs)
+  const categoryIdToNameMap = useMemo(() => {
+    const map = new Map();
+    if (Array.isArray(storeCategories)) {
+      storeCategories.forEach((c) => {
+        if (!c) return;
+        const id = typeof c === "object" ? String(c._id || c.id || "") : "";
+        const name =
+          typeof c === "object" ? c.name || c.title || "" : String(c);
+        if (name && !/^[0-9a-fA-F]{24}$/.test(name.trim())) {
+          if (id) map.set(id, name.trim());
+          map.set(name.trim().toLowerCase(), name.trim());
+        }
+      });
+    }
+    return map;
+  }, [storeCategories]);
+
   // Map backend products to the structure expected by components
   const mappedProducts = useMemo(() => {
-    if (!products) return [];
-    return products.map((p, index) => {
+    if (!rawProducts || rawProducts.length === 0) return [];
+    return rawProducts.map((p, index) => {
       const mainImage =
+        p.image ||
         p.images?.[0]?.url ||
+        (typeof p.images?.[0] === "string" ? p.images[0] : "") ||
         "https://via.placeholder.com/400x300?text=No+Image";
+
       const galleryImages =
-        p.images && p.images.length > 0
-          ? p.images.map((img) => img.url)
-          : [mainImage];
+        Array.isArray(p.gallery) && p.gallery.length > 0
+          ? p.gallery
+          : Array.isArray(p.images) && p.images.length > 0
+            ? p.images.map((img) => (typeof img === "object" ? img.url : img))
+            : [mainImage];
 
       const productVariants =
         p.variants && p.variants.length > 0
           ? p.variants.map((v, i) => ({
               label: v.label || v.name || `Option ${i + 1}`,
-              sku: v.sku || `${p._id}-${i}`,
+              sku: v.sku || `${p._id || p.id}-${i}`,
             }))
-          : [{ label: "Standard", sku: p._id }];
+          : [{ label: "Standard", sku: p._id || p.id }];
+
+      // Resolve human-readable category name: never display a raw 24-character hex ID
+      let catName = "General";
+      const rawCat = p.category;
+
+      const rawCatId =
+        typeof rawCat === "object" && rawCat !== null
+          ? String(rawCat._id || rawCat.id || "")
+          : typeof rawCat === "string" && /^[0-9a-fA-F]{24}$/.test(rawCat.trim())
+            ? rawCat.trim()
+            : "";
+
+      const rawCatName =
+        typeof rawCat === "object" && rawCat !== null
+          ? rawCat.name || rawCat.title || ""
+          : typeof rawCat === "string" && !/^[0-9a-fA-F]{24}$/.test(rawCat.trim())
+            ? rawCat.trim()
+            : "";
+
+      if (rawCatName && !/^[0-9a-fA-F]{24}$/.test(rawCatName)) {
+        catName = rawCatName;
+      } else if (rawCatId && categoryIdToNameMap.has(rawCatId)) {
+        catName = categoryIdToNameMap.get(rawCatId);
+      } else if (
+        p.categoryName &&
+        !/^[0-9a-fA-F]{24}$/.test(p.categoryName.trim())
+      ) {
+        catName = p.categoryName.trim();
+      }
 
       return {
-        id: p._id,
+        id: p._id || p.id,
         name: p.name,
         tagline:
           p.tagline ||
           (p.description ? p.description.split(".")[0] + "." : p.name),
         price: p.price,
-        originalPrice: p.compareAtPrice || null,
+        originalPrice: p.compareAtPrice || p.originalPrice || null,
         image: mainImage,
         gallery: galleryImages,
-        category: p.category?.name || "General",
+        category: catName,
         badge:
-          p.compareAtPrice > p.price
+          p.badge ||
+          (p.compareAtPrice > p.price
             ? "Sale"
             : index % 4 === 0
               ? "Bestseller"
               : index % 4 === 1
                 ? "New"
-                : null,
+                : null),
         rating: p.rating || 4.8,
-        reviews: p.numReviews || 12,
+        reviews: p.numReviews || p.reviews || 12,
         inStock: p.stock === undefined || p.stock > 0,
         description: p.description || "",
         details: p.details || [
@@ -80,15 +140,16 @@ export default function StarlingTalesProduct() {
         ],
         tags: p.tags || [],
         variants: productVariants,
+        rawProduct: p,
       };
     });
-  }, [products]);
+  }, [rawProducts, categoryIdToNameMap]);
 
   // Map Redux cart items to what CartDrawer expects
   const mappedCart = useMemo(() => {
     return cartItems.map((item) => ({
-      productId: item._id,
-      sku: item._id,
+      productId: item._id || item.id,
+      sku: item._id || item.id,
       variantLabel: "Standard",
       quantity: item.quantity,
     }));
@@ -99,17 +160,90 @@ export default function StarlingTalesProduct() {
     [cartItems],
   );
 
+  // Extract all categories cleanly: only human-readable names, never ObjectIds
   const categoryNames = useMemo(() => {
-    const list = new Set(mappedProducts.map((p) => p.category));
-    return ["All", ...Array.from(list)];
-  }, [mappedProducts]);
+    const set = new Set(["All"]);
 
+    // 1. Add valid names from storeCategories
+    if (Array.isArray(storeCategories) && storeCategories.length > 0) {
+      storeCategories.forEach((c) => {
+        const name =
+          typeof c === "object" && c !== null ? c.name || c.title : c;
+        if (
+          name &&
+          typeof name === "string" &&
+          name.trim() &&
+          !/^[0-9a-fA-F]{24}$/.test(name.trim())
+        ) {
+          set.add(name.trim());
+        }
+      });
+    }
+
+    // 2. Add valid names from mappedProducts
+    mappedProducts.forEach((p) => {
+      if (
+        p.category &&
+        p.category !== "General" &&
+        !/^[0-9a-fA-F]{24}$/.test(p.category.trim())
+      ) {
+        set.add(p.category.trim());
+      }
+    });
+
+    return Array.from(set);
+  }, [storeCategories, mappedProducts]);
+
+  // Filter products by active category name
   const filteredProducts = useMemo(() => {
     if (activeCategory === "All") return mappedProducts;
-    return mappedProducts.filter(
-      (p) => p.category.toLowerCase() === activeCategory.toLowerCase(),
-    );
-  }, [activeCategory, mappedProducts]);
+    const target = activeCategory.trim().toLowerCase();
+
+    return mappedProducts.filter((p) => {
+      // 1. Direct resolved category name match
+      if (p.category && p.category.toLowerCase() === target) {
+        return true;
+      }
+      // 2. Check raw category object name
+      const rawCat = p.rawProduct?.category;
+      if (typeof rawCat === "object" && rawCat?.name) {
+        if (rawCat.name.toLowerCase() === target) return true;
+      }
+      // 3. Match by ID via categoryIdToNameMap
+      const rawCatId =
+        typeof rawCat === "object" && rawCat !== null
+          ? String(rawCat._id || rawCat.id || "")
+          : typeof rawCat === "string"
+            ? rawCat.trim()
+            : "";
+
+      if (
+        rawCatId &&
+        categoryIdToNameMap.get(rawCatId)?.toLowerCase() === target
+      ) {
+        return true;
+      }
+
+      // 4. Check rawProduct.categories array if present
+      if (Array.isArray(p.rawProduct?.categories)) {
+        const matchInArray = p.rawProduct.categories.some((catItem) => {
+          if (typeof catItem === "object" && catItem?.name) {
+            return catItem.name.toLowerCase() === target;
+          }
+          const catItemId =
+            typeof catItem === "object"
+              ? String(catItem._id || catItem.id || "")
+              : String(catItem || "");
+          return (
+            categoryIdToNameMap.get(catItemId)?.toLowerCase() === target
+          );
+        });
+        if (matchInArray) return true;
+      }
+
+      return false;
+    });
+  }, [activeCategory, mappedProducts, categoryIdToNameMap]);
 
   const quickViewProduct = useMemo(() => {
     if (!quickViewId) return null;
@@ -118,31 +252,35 @@ export default function StarlingTalesProduct() {
 
   // Cart Handlers
   const handleAddToCart = (productId, sku, qty = 1) => {
-    const origProduct = products.find((p) => p._id === productId);
+    const origProduct =
+      rawProducts.find((p) => (p._id || p.id) === productId) ||
+      mappedProducts.find((p) => p.id === productId)?.rawProduct;
     if (!origProduct) return;
 
     const availableStock =
       origProduct.inventory?.stockQuantity !== undefined
         ? Number(origProduct.inventory.stockQuantity)
         : origProduct.stockQuantity !== undefined
-        ? Number(origProduct.stockQuantity)
-        : origProduct.stock !== undefined
-        ? Number(origProduct.stock)
-        : origProduct.countInStock !== undefined
-        ? Number(origProduct.countInStock)
-        : 0;
+          ? Number(origProduct.stockQuantity)
+          : origProduct.stock !== undefined
+            ? Number(origProduct.stock)
+            : origProduct.countInStock !== undefined
+              ? Number(origProduct.countInStock)
+              : 99;
 
     if (availableStock <= 0) {
       toast.error(`Sorry, ${origProduct.name} is currently out of stock!`);
       return;
     }
 
-    const itemInCart = cartItems.find((item) => item._id === origProduct._id);
+    const itemInCart = cartItems.find(
+      (item) => (item._id || item.id) === (origProduct._id || origProduct.id),
+    );
     const currentCartQty = itemInCart ? itemInCart.quantity : 0;
 
     if (currentCartQty + qty > availableStock) {
       toast.error(
-        `Cannot add more. Only ${availableStock} units available in inventory (${currentCartQty} already in cart).`
+        `Cannot add more. Only ${availableStock} units available in inventory (${currentCartQty} already in cart).`,
       );
       return;
     }
@@ -151,8 +289,10 @@ export default function StarlingTalesProduct() {
     const remaining = availableStock - (currentCartQty + qty);
     toast.success(
       `${origProduct.name} added to cart! ${
-        remaining > 0 ? `(${remaining} units left in stock)` : "(Reached max available stock)"
-      }`
+        remaining > 0
+          ? `(${remaining} units left in stock)`
+          : "(Reached max available stock)"
+      }`,
     );
     setCartOpen(true);
   };
@@ -162,24 +302,35 @@ export default function StarlingTalesProduct() {
       handleRemoveFromCart(productId, sku);
       return;
     }
-    const origProduct = products.find((p) => p._id === productId);
+    const origProduct =
+      rawProducts.find((p) => (p._id || p.id) === productId) ||
+      mappedProducts.find((p) => p.id === productId)?.rawProduct;
+
     const availableStock = origProduct
       ? origProduct.inventory?.stockQuantity !== undefined
         ? Number(origProduct.inventory.stockQuantity)
         : origProduct.stockQuantity !== undefined
-        ? Number(origProduct.stockQuantity)
-        : origProduct.stock !== undefined
-        ? Number(origProduct.stock)
-        : origProduct.countInStock !== undefined
-        ? Number(origProduct.countInStock)
-        : 0
+          ? Number(origProduct.stockQuantity)
+          : origProduct.stock !== undefined
+            ? Number(origProduct.stock)
+            : origProduct.countInStock !== undefined
+              ? Number(origProduct.countInStock)
+              : 99
       : 99;
 
     if (newQty > availableStock) {
-      toast.error(`Cannot increase. Only ${availableStock} units available in inventory.`);
+      toast.error(
+        `Cannot increase. Only ${availableStock} units available in inventory.`,
+      );
       return;
     }
-    dispatch(updateCartQuantity({ productId: productId, _id: productId, quantity: newQty }));
+    dispatch(
+      updateCartQuantity({
+        productId: productId,
+        _id: productId,
+        quantity: newQty,
+      }),
+    );
   };
 
   const handleRemoveFromCart = (productId, sku) => {
@@ -188,11 +339,13 @@ export default function StarlingTalesProduct() {
   };
 
   const handleWishlistToggle = (productId) => {
-    const origProduct = products.find((p) => p._id === productId);
+    const origProduct =
+      rawProducts.find((p) => (p._id || p.id) === productId) ||
+      mappedProducts.find((p) => p.id === productId)?.rawProduct;
     if (origProduct) {
       dispatch(toggleWishlist(origProduct));
       const isCurrentlyWishlisted = wishlistItems.some(
-        (item) => item._id === productId,
+        (item) => (item._id || item.id) === productId,
       );
       if (isCurrentlyWishlisted) {
         toast.success(`${origProduct.name} removed from wishlist!`);

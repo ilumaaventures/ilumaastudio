@@ -114,14 +114,8 @@ export default function BusinessRegistration() {
 
         setFormData((prev) => ({
           ...prev,
-          business_type:
-            fetchedTypes.length > 0
-              ? fetchedTypes[0]._id
-              : "",
-          business_category:
-            fetchedCats.length > 0
-              ? fetchedCats[0]._id
-              : "",
+          business_type: fetchedTypes.length > 0 ? fetchedTypes[0]._id : "",
+          business_category: fetchedCats.length > 0 ? fetchedCats[0]._id : "",
         }));
       } catch (err) {
         console.error("Failed to load business metadata:", err);
@@ -332,12 +326,12 @@ export default function BusinessRegistration() {
             </p>
 
             <a
-              href="https://ilumaasocialdashboard.vercel.app/login"
+              href={`${import.meta.env.VITE_DASHBOARD_URL}/login`}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-2 block break-all text-xs font-semibold text-violet-600 hover:text-violet-700"
             >
-              https://ilumaasocialdashboard.vercel.app/login
+              {`${import.meta.env.VITE_DASHBOARD_URL}/login`}
             </a>
           </div>
 
@@ -357,7 +351,7 @@ export default function BusinessRegistration() {
           <button
             onClick={() =>
               window.open(
-                "https://ilumaasocialdashboard.vercel.app/login",
+                `${import.meta.env.VITE_DASHBOARD_URL}/login`,
                 "_blank",
                 "noopener,noreferrer",
               )
@@ -510,6 +504,7 @@ export default function BusinessRegistration() {
                           onChange={handleChange}
                           placeholder="e.g. Acme Enterprise Pvt Ltd"
                           required
+                          maxLength={80}
                           className="w-full rounded-xl border border-slate-300 bg-slate-50/50 pl-10 pr-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:border-[#C9956C] focus:bg-white outline-none transition"
                         />
                       </div>
@@ -601,10 +596,7 @@ export default function BusinessRegistration() {
                         >
                           {businessTypes.length > 0
                             ? businessTypes.map((bt) => (
-                                <option
-                                  key={bt._id}
-                                  value={bt._id}
-                                >
+                                <option key={bt._id} value={bt._id}>
                                   {bt.name} ({bt.code || "Type"})
                                 </option>
                               ))
@@ -628,10 +620,7 @@ export default function BusinessRegistration() {
                         >
                           {businessCategories.length > 0
                             ? businessCategories.map((cat) => (
-                                <option
-                                  key={cat._id}
-                                  value={cat._id}
-                                >
+                                <option key={cat._id} value={cat._id}>
                                   {cat.name} ({cat.code || "Scope"})
                                 </option>
                               ))
@@ -768,25 +757,37 @@ export default function BusinessRegistration() {
                       </div>
 
                       {/* Full Pricing Page */}
-                      <button
-                        type="button"
-                        onClick={() => navigate("/business-pricing")}
-                        className="hidden shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-[#C9956C] hover:text-[#C9956C] sm:flex"
+                      <a
+                        href={`${import.meta.env.VITE_STUDIO_URL}/business-pricing`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                       >
-                        Compare Plans
-                        <ExternalLink size={13} />
-                      </button>
+                        {" "}
+                        <button
+                          type="button"
+                          className="hidden shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-[#C9956C] hover:text-[#C9956C] sm:flex"
+                        >
+                          Compare Plans
+                          <ExternalLink size={13} />
+                        </button>
+                      </a>
                     </div>
 
                     {/* Mobile Pricing Link */}
-                    <button
-                      type="button"
-                      onClick={() => navigate("/business-pricing")}
-                      className="flex items-center gap-1.5 text-xs font-bold text-[#C9956C] sm:hidden"
+                    <a
+                      href={`${import.meta.env.VITE_STUDIO_URL}/business-pricing`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
-                      Compare all plans
-                      <ExternalLink size={13} />
-                    </button>
+                      {" "}
+                      <button
+                        type="button"
+                        className="flex items-center gap-1.5 text-xs font-bold text-[#C9956C] sm:hidden"
+                      >
+                        Compare all plans
+                        <ExternalLink size={13} />
+                      </button>
+                    </a>
 
                     {/* =====================================================
         BILLING TOGGLE
@@ -1139,18 +1140,19 @@ export default function BusinessRegistration() {
                                 {/* =======================================
                     FULL DETAILS
                 ======================================== */}
-                                <button
-                                  type="button"
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-
-                                    navigate("/business-pricing");
-                                  }}
-                                  className="mt-6 flex w-full items-center justify-center gap-1.5 border-t border-slate-100 pt-4 text-xs font-bold text-[#C9956C] transition hover:text-[#b07d54]"
+                                <a
+                                  href={`${import.meta.env.VITE_STUDIO_URL}/business-pricing`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
                                 >
-                                  See full plan details
-                                  <ExternalLink size={13} />
-                                </button>
+                                  <button
+                                    type="button"
+                                    className="mt-6 flex w-full items-center justify-center gap-1.5 border-t border-slate-100 pt-4 text-xs font-bold text-[#C9956C] transition hover:text-[#b07d54]"
+                                  >
+                                    See full plan details
+                                    <ExternalLink size={13} />
+                                  </button>{" "}
+                                </a>
 
                                 {/* =======================================
                     SELECT BUTTON
@@ -1211,13 +1213,18 @@ export default function BusinessRegistration() {
                               grows.
                             </p>
 
-                            <button
-                              type="button"
-                              onClick={() => navigate("/business-pricing")}
-                              className="mt-2 text-[11px] font-bold text-[#C9956C] hover:underline"
+                            <a
+                              href={`${import.meta.env.VITE_STUDIO_URL}/business-pricing`}
+                              target="_blank"
+                              rel="noopener noreferrer"
                             >
-                              Compare all features →
-                            </button>
+                              <button
+                                type="button"
+                                className="mt-2 text-[11px] font-bold text-[#C9956C] hover:underline"
+                              >
+                                Compare all features →
+                              </button>{" "}
+                            </a>
                           </div>
                         </div>
                       </div>

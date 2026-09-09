@@ -84,7 +84,11 @@ export default function ProductCard({ product, isWishlisted, onWishlist, onQuick
 
       <div className="p-5 pb-5 flex flex-col flex-1 justify-between">
         <div>
-          <p className="mb-1 text-blue-soft text-[10px] font-medium tracking-widest uppercase">{product.category}</p>
+          {product.category && !/^[0-9a-fA-F]{24}$/.test(product.category) && (
+            <p className="mb-1 text-blue-soft text-[10px] font-medium tracking-widest uppercase">
+              {product.category}
+            </p>
+          )}
           <h3 className="mb-1 text-text-dark font-display text-lg font-semibold line-clamp-2 min-h-[56px]">{product.name}</h3>
           <p className="min-h-[54px] mb-2.5 text-text-muted text-xs font-light leading-normal line-clamp-3">{product.tagline}</p>
 
