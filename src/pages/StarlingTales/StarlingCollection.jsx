@@ -104,14 +104,16 @@ export default function StarlingCollection() {
       const rawCatId =
         typeof rawCat === "object" && rawCat !== null
           ? String(rawCat._id || rawCat.id || "")
-          : typeof rawCat === "string" && /^[0-9a-fA-F]{24}$/.test(rawCat.trim())
+          : typeof rawCat === "string" &&
+              /^[0-9a-fA-F]{24}$/.test(rawCat.trim())
             ? rawCat.trim()
             : "";
 
       const rawCatName =
         typeof rawCat === "object" && rawCat !== null
           ? rawCat.name || rawCat.title || ""
-          : typeof rawCat === "string" && !/^[0-9a-fA-F]{24}$/.test(rawCat.trim())
+          : typeof rawCat === "string" &&
+              !/^[0-9a-fA-F]{24}$/.test(rawCat.trim())
             ? rawCat.trim()
             : "";
 
@@ -236,9 +238,7 @@ export default function StarlingCollection() {
             typeof catItem === "object"
               ? String(catItem._id || catItem.id || "")
               : String(catItem || "");
-          return (
-            categoryIdToNameMap.get(catItemId)?.toLowerCase() === target
-          );
+          return categoryIdToNameMap.get(catItemId)?.toLowerCase() === target;
         });
         if (matchInArray) return true;
       }
@@ -402,7 +402,7 @@ export default function StarlingCollection() {
           </p>
 
           {/* Category Filter Tabs */}
-          {categoryNames.length > 1 && (
+          {/* {categoryNames.length > 1 && (
             <div
               className="flex flex-wrap items-center justify-center gap-2 pt-4"
               role="tablist"
@@ -425,7 +425,7 @@ export default function StarlingCollection() {
                 </button>
               ))}
             </div>
-          )}
+          )} */}
         </div>
 
         {/* Products Grid */}
@@ -465,7 +465,8 @@ export default function StarlingCollection() {
             to={`${storeHomePath}/products`}
             className="text-text-dark font-semibold text-sm hover:text-blue-soft inline-flex items-center gap-1.5 transition-colors"
           >
-            Explore all nursery keepsakes <MoveRight className="inline-block h-4 w-4 ml-1" />
+            Explore all nursery keepsakes{" "}
+            <MoveRight className="inline-block h-4 w-4 ml-1" />
           </Link>
         </div>
       </main>
