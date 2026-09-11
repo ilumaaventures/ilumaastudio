@@ -496,7 +496,11 @@ function BusinessPricing() {
       }
 
       if (planRes.status === "fulfilled") {
-        const fetched = planRes.value?.data?.plans || planRes.value?.data?.data || planRes.value?.data || [];
+        const fetched =
+          planRes.value?.data?.plans ||
+          planRes.value?.data?.data ||
+          planRes.value?.data ||
+          [];
         if (Array.isArray(fetched) && fetched.length > 0) {
           const top3 = fetched.slice(0, 3);
           const enterprisePlan = DEFAULT_4_PLANS[3];
@@ -526,7 +530,10 @@ function BusinessPricing() {
     const filtered = plans.filter((p) => {
       if (p.isCustomTalk) return true; // Enterprise plan is always included as 4th card
       const pScope = p.businessCategoryScope || "";
-      const pCat = typeof p.businessCategory === "object" ? p.businessCategory?._id : p.businessCategory;
+      const pCat =
+        typeof p.businessCategory === "object"
+          ? p.businessCategory?._id
+          : p.businessCategory;
       return (
         pScope.toLowerCase() === selectedCategory.toLowerCase() ||
         pCat === selectedCategory ||
@@ -558,7 +565,7 @@ function BusinessPricing() {
 
   const handleSelectPlan = (plan) => {
     if (plan.isCustomTalk) {
-      navigate("/help");
+      navigate("/contact");
       return;
     }
     navigate(`/businessRegistration?plan=${plan._id}`);

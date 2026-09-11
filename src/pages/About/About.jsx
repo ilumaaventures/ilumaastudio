@@ -1,30 +1,20 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Heart, Award, Globe, Users, ArrowRight, ShieldCheck, Sparkles, Truck } from "lucide-react";
+import {
+  Heart,
+  Award,
+  Globe,
+  Users,
+  ArrowRight,
+  ShieldCheck,
+  Sparkles,
+  Truck,
+} from "lucide-react";
 
 function About() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-200 transition-colors pb-16">
-      
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 text-white py-20 relative overflow-hidden border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4 relative z-10">
-          <span className="inline-block px-3 py-1 bg-[#2563eb]/20 text-blue-400 font-extrabold text-xs uppercase tracking-wider rounded-md">
-            ABOUT ILUMAASTUDIO
-          </span>
-
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight max-w-4xl mx-auto">
-            Crafting Digital Simplicity & Delivering Happiness
-          </h1>
-
-          <p className="max-w-2xl mx-auto text-sm md:text-base text-slate-300 font-medium leading-relaxed">
-            Connecting customers with authentic, high-quality products across fashion, electronics, home decor, and luxury lifestyle.
-          </p>
-        </div>
-      </section>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
-        
         {/* Our Story Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <div className="lg:col-span-6 space-y-4">
@@ -35,10 +25,15 @@ function About() {
               Bringing Quality & Modern Design to Every Home
             </h2>
             <p className="text-xs md:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-              At ILumaaStudio, we believe online shopping should be seamless, enjoyable, and trusted. From handpicked electronics to stylish lifestyle products, we curate items that combine functionality with modern aesthetic standards.
+              At ILumaaStudio, we believe online shopping should be seamless,
+              enjoyable, and trusted. From handpicked electronics to stylish
+              lifestyle products, we curate items that combine functionality
+              with modern aesthetic standards.
             </p>
             <p className="text-xs md:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-              Every product on our platform undergoes rigorous quality verification, ensuring you receive genuine items delivered quickly and securely right to your doorstep.
+              Every product on our platform undergoes rigorous quality
+              verification, ensuring you receive genuine items delivered quickly
+              and securely right to your doorstep.
             </p>
 
             <div className="pt-2">
@@ -66,10 +61,26 @@ function About() {
         {/* Statistics Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { number: "500+", label: "Verified Brands", icon: <Users size={24} className="text-[#2563eb]" /> },
-            { number: "10,000+", label: "Curated Products", icon: <Award size={24} className="text-[#2563eb]" /> },
-            { number: "50+", label: "Cities Delivered", icon: <Globe size={24} className="text-[#2563eb]" /> },
-            { number: "99.4%", label: "Customer Satisfaction", icon: <Heart size={24} className="text-[#2563eb]" /> },
+            {
+              number: "500+",
+              label: "Verified Brands",
+              icon: <Users size={24} className="text-[#2563eb]" />,
+            },
+            {
+              number: "10,000+",
+              label: "Curated Products",
+              icon: <Award size={24} className="text-[#2563eb]" />,
+            },
+            {
+              number: "50+",
+              label: "Cities Delivered",
+              icon: <Globe size={24} className="text-[#2563eb]" />,
+            },
+            {
+              number: "99.4%",
+              label: "Customer Satisfaction",
+              icon: <Heart size={24} className="text-[#2563eb]" />,
+            },
           ].map((item, idx) => (
             <div
               key={idx}
@@ -78,12 +89,15 @@ function About() {
               <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-slate-800 flex items-center justify-center mx-auto">
                 {item.icon}
               </div>
-              <h3 className="text-3xl font-black text-slate-900 dark:text-white">{item.number}</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">{item.label}</p>
+              <h3 className="text-3xl font-black text-slate-900 dark:text-white">
+                {item.number}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                {item.label}
+              </p>
             </div>
           ))}
         </div>
-
       </div>
     </div>
   );

@@ -21,10 +21,13 @@ import {
   HelpCircle,
   Award,
   ExternalLink,
+  X,
+  AlertCircle,
+  KeyRound,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { registerBusiness } from "../../api/authService";
+import { registerBusiness, sendOTP, verifyOTP } from "../../api/authService";
 import baseApi from "../../api/baseApi";
 
 const BUSINESS_TYPES = [
@@ -84,6 +87,177 @@ export default function BusinessRegistration() {
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // OTP Verification state
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [verifiedEmail, setVerifiedEmail] = useState("");
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""]);
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpVerifying, setOtpVerifying] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(0);
+  const [otpError, setOtpError] = useState("");
+
+  useEffect(() => {
+    let interval;
+    if (otpTimer > 0) {
+      interval = setInterval(() => {
+        setOtpTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [otpTimer]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "business_email" && isEmailVerified) {
+      setIsEmailVerified(false);
+      setVerifiedEmail("");
+    }
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+  const validateStep1 = () => {
+    if (!formData.legal_business_name.trim()) {
+      toast.error("Legal Business Name is required.");
+      return false;
+    }
+    if (!formData.business_email.trim()) {
+      toast.error("Business Email address is required.");
+      return false;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.business_email.trim())) {
+      toast.error("Please enter a valid business email address.");
+      return false;
+    }
+    if (!formData.ownerPassword || formData.ownerPassword.length < 6) {
+      toast.error("Password must be at least 6 characters long.");
+      return false;
+    }
+    return true;
+  };
+
+  const validateStep2 = () => {
+    if (!formData.business_phone.trim()) {
+      toast.error("Contact phone number is required.");
+      return false;
+    }
+
+    const digitsOnly = formData.business_phone
+      .trim()
+      .replace(/[\s\-\(\)\+]/g, "");
+    if (
+      !/^\d+$/.test(digitsOnly) ||
+      (digitsOnly.length !== 10 && digitsOnly.length !== 12)
+    ) {
+      toast.error("Please enter a valid 10 or 12 digit mobile number.");
+      return false;
+    }
+    return true;
+  };
+
+  const handleInitiateOtp = async () => {
+    if (!validateStep1()) return;
+
+    try {
+      setOtpSending(true);
+      setOtpError("");
+      setOtpCode(["", "", "", "", "", ""]);
+      await sendOTP(
+        formData.legal_business_name,
+        formData.business_email,
+        "business_registration"
+      );
+      toast.success(`Verification code sent to ${formData.business_email}`);
+      setOtpTimer(60);
+      setShowOtpModal(true);
+    } catch (err) {
+      console.error("Failed to send OTP:", err);
+      const msg =
+        err.response?.data?.message || "Failed to send verification OTP.";
+      toast.error(msg);
+      setOtpError(msg);
+    } finally {
+      setOtpSending(false);
+    }
+  };
+
+  const handleVerifyOtpSubmit = async (e) => {
+    if (e) e.preventDefault();
+    const fullOtp = otpCode.join("").trim();
+    if (fullOtp.length !== 6) {
+      setOtpError("Please enter the complete 6-digit verification code.");
+      return;
+    }
+
+    try {
+      setOtpVerifying(true);
+      setOtpError("");
+      await verifyOTP(formData.business_email, fullOtp);
+      toast.success("Email verified successfully! Proceeding to Step 2.");
+      setIsEmailVerified(true);
+      setVerifiedEmail(formData.business_email.trim().toLowerCase());
+      setShowOtpModal(false);
+      setStep(2);
+    } catch (err) {
+      console.error("OTP verification failed:", err);
+      const msg = err.response?.data?.message || "Invalid or expired OTP code.";
+      setOtpError(msg);
+      toast.error(msg);
+    } finally {
+      setOtpVerifying(false);
+    }
+  };
+
+  const handleStep1Proceed = () => {
+    if (!validateStep1()) return;
+
+    if (
+      isEmailVerified &&
+      verifiedEmail === formData.business_email.trim().toLowerCase()
+    ) {
+      setStep(2);
+    } else {
+      handleInitiateOtp();
+    }
+  };
+
+  const handleOtpDigitChange = (index, value) => {
+    const cleanVal = value.replace(/[^0-9]/g, "");
+    if (!cleanVal && value !== "") return;
+
+    const newOtp = [...otpCode];
+    if (cleanVal.length > 1) {
+      const pastedDigits = cleanVal.slice(0, 6).split("");
+      pastedDigits.forEach((d, i) => {
+        if (i < 6) newOtp[i] = d;
+      });
+      setOtpCode(newOtp);
+      const nextIdx = Math.min(pastedDigits.length, 5);
+      const nextInput = document.getElementById(`studio-otp-input-${nextIdx}`);
+      if (nextInput) nextInput.focus();
+      return;
+    }
+
+    newOtp[index] = cleanVal;
+    setOtpCode(newOtp);
+    setOtpError("");
+
+    if (cleanVal && index < 5) {
+      const nextInput = document.getElementById(`studio-otp-input-${index + 1}`);
+      if (nextInput) nextInput.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !otpCode[index] && index > 0) {
+      const prevInput = document.getElementById(`studio-otp-input-${index - 1}`);
+      if (prevInput) prevInput.focus();
+    }
+  };
 
   // Fetch Business Types & Categories dynamically from Backend
   useEffect(() => {
@@ -161,55 +335,6 @@ export default function BusinessRegistration() {
       fetchPlans();
     }
   }, [formData.business_category, formData.business_type]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const validateStep1 = () => {
-    if (!formData.legal_business_name.trim()) {
-      toast.error("Legal Business Name is required.");
-      return false;
-    }
-    if (!formData.business_email.trim()) {
-      toast.error("Business Email address is required.");
-      return false;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.business_email.trim())) {
-      toast.error("Please enter a valid business email address.");
-      return false;
-    }
-    if (!formData.ownerPassword || formData.ownerPassword.length < 6) {
-      toast.error("Password must be at least 6 characters long.");
-      return false;
-    }
-    return true;
-  };
-
-  const validateStep2 = () => {
-    if (!formData.business_phone.trim()) {
-      toast.error("Contact phone number is required.");
-      return false;
-    }
-
-    // Verify 10 or 12 digit phone number
-    const digitsOnly = formData.business_phone
-      .trim()
-      .replace(/[\s\-\(\)\+]/g, "");
-    if (
-      !/^\d+$/.test(digitsOnly) ||
-      (digitsOnly.length !== 10 && digitsOnly.length !== 12)
-    ) {
-      toast.error("Please enter a valid 10 or 12 digit mobile number.");
-      return false;
-    }
-    return true;
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -377,15 +502,13 @@ export default function BusinessRegistration() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
           {/* Left Column: Value Prop & Trust Features */}
-          <div className="lg:col-span-4 flex flex-col justify-between space-y-8">
+          <div className="hidden lg:col-span-4 lg:flex flex-col justify-between space-y-8">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3.5 py-1 text-xs font-semibold text-amber-800">
                 <Sparkles size={14} className="text-[#C9956C]" /> Register Your
                 Commerce Portal
               </div>
-              <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-                Scale your brand with ILumaa Studio
-              </h1>
+
               <p className="mt-4 text-sm leading-6 text-slate-600">
                 Join thousands of leading brands using ILumaa to manage
                 multi-channel commerce, inventory, staff permissions, and vendor
@@ -511,9 +634,22 @@ export default function BusinessRegistration() {
                     </div>
 
                     <div>
-                      <label className="block text-slate-700 font-semibold mb-1.5">
-                        Business Email Address *
-                      </label>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-slate-700 font-semibold">
+                          Business Email Address *
+                        </label>
+                        {isEmailVerified &&
+                        verifiedEmail ===
+                          formData.business_email.trim().toLowerCase() ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                            <CheckCircle2 size={12} /> Email Verified
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-md">
+                            Verification Required
+                          </span>
+                        )}
+                      </div>
                       <div className="relative">
                         <Mail
                           size={16}
@@ -526,7 +662,13 @@ export default function BusinessRegistration() {
                           onChange={handleChange}
                           placeholder="owner@company.com"
                           required
-                          className="w-full rounded-xl border border-slate-300 bg-slate-50/50 pl-10 pr-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:border-[#C9956C] focus:bg-white outline-none transition"
+                          className={`w-full rounded-xl border bg-slate-50/50 pl-10 pr-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white outline-none transition ${
+                            isEmailVerified &&
+                            verifiedEmail ===
+                              formData.business_email.trim().toLowerCase()
+                              ? "border-emerald-300 focus:border-emerald-500 bg-emerald-50/10"
+                              : "border-slate-300 focus:border-[#C9956C]"
+                          }`}
                         />
                       </div>
                     </div>
@@ -565,12 +707,25 @@ export default function BusinessRegistration() {
 
                     <button
                       type="button"
-                      onClick={() => {
-                        if (validateStep1()) setStep(2);
-                      }}
-                      className="w-full py-3.5 rounded-xl bg-slate-900 font-bold text-white text-sm hover:bg-slate-800 transition cursor-pointer flex items-center justify-center gap-2 shadow-md mt-4"
+                      disabled={otpSending}
+                      onClick={handleStep1Proceed}
+                      className="w-full py-3.5 rounded-xl bg-slate-900 font-bold text-white text-sm hover:bg-slate-800 transition cursor-pointer flex items-center justify-center gap-2 shadow-md mt-4 disabled:opacity-50"
                     >
-                      Continue to Business Scale <ArrowRight size={16} />
+                      {otpSending ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" /> Sending Verification Code...
+                        </>
+                      ) : isEmailVerified &&
+                        verifiedEmail ===
+                          formData.business_email.trim().toLowerCase() ? (
+                        <>
+                          Continue to Business Scale <ArrowRight size={16} />
+                        </>
+                      ) : (
+                        <>
+                          Verify Email & Continue <ArrowRight size={16} />
+                        </>
+                      )}
                     </button>
                   </div>
                 )}
@@ -1278,6 +1433,111 @@ export default function BusinessRegistration() {
           </div>
         </div>
       </div>
+
+      {/* OTP Verification Modal */}
+      {showOtpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 text-center space-y-6 relative">
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={() => setShowOtpModal(false)}
+              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+
+            {/* Header Icon */}
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 text-[#C9956C] flex items-center justify-center mx-auto ring-8 ring-amber-50/50">
+              <Mail size={28} />
+            </div>
+
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#C9956C] bg-amber-50 px-3 py-1 rounded-full">
+                Email Ownership Verification
+              </span>
+              <h3 className="text-xl font-bold text-slate-900 mt-2">
+                Verify Business Email
+              </h3>
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed max-w-xs mx-auto">
+                We've sent a 6-digit verification code to{" "}
+                <strong className="text-slate-800">{formData.business_email}</strong>.
+                Enter the code below to confirm and proceed to the next step.
+              </p>
+            </div>
+
+            {/* 6 Digit Inputs */}
+            <div className="flex items-center justify-center gap-2 sm:gap-2.5">
+              {otpCode.map((digit, idx) => (
+                <input
+                  key={idx}
+                  id={`studio-otp-input-${idx}`}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={digit}
+                  onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
+                  onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                  className="w-11 h-13 sm:w-12 sm:h-14 text-center text-xl font-black rounded-xl border border-slate-300 bg-slate-50 text-slate-900 outline-none focus:border-[#C9956C] focus:bg-white focus:ring-2 focus:ring-[#C9956C]/20 transition"
+                />
+              ))}
+            </div>
+
+            {otpError && (
+              <p className="text-xs text-rose-500 font-bold flex items-center justify-center gap-1">
+                <AlertCircle size={13} />
+                {otpError}
+              </p>
+            )}
+
+            {/* Verify Button */}
+            <button
+              type="button"
+              disabled={otpVerifying || otpCode.join("").length !== 6}
+              onClick={handleVerifyOtpSubmit}
+              className="w-full py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer shadow-md"
+            >
+              {otpVerifying ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" /> Verifying Code...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 size={16} /> Verify & Proceed to Step 2
+                </>
+              )}
+            </button>
+
+            {/* Resend Timer & Change Email */}
+            <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowOtpModal(false)}
+                className="text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
+              >
+                Change Email
+              </button>
+
+              <div>
+                {otpTimer > 0 ? (
+                  <span className="text-slate-400 font-medium">
+                    Resend code in <strong className="text-slate-700">{otpTimer}s</strong>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={otpSending}
+                    onClick={handleInitiateOtp}
+                    className="text-[#C9956C] hover:underline font-bold cursor-pointer"
+                  >
+                    {otpSending ? "Sending..." : "Resend OTP"}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -23,7 +23,7 @@ import StarlingLandingIntro from "./components/StarlingLandingIntro";
 export default function StarlingTalesHome() {
   const [showIntro, setShowIntro] = useState(() => {
     try {
-      return !localStorage.getItem("starling_intro_seen");
+      return !sessionStorage.getItem("starling_intro_seen");
     } catch {
       return true;
     }
@@ -32,9 +32,9 @@ export default function StarlingTalesHome() {
   const handleEnterIntro = () => {
     setShowIntro(false);
     try {
-      localStorage.setItem("starling_intro_seen", "true");
+      sessionStorage.setItem("starling_intro_seen", "true");
     } catch (err) {
-      console.warn("Could not save intro state in localStorage", err);
+      console.warn("Could not save intro state in sessionStorage", err);
     }
   };
 
@@ -55,22 +55,20 @@ export default function StarlingTalesHome() {
 
   return (
     <>
-      {showIntro && (
-        <StarlingLandingIntro onEnter={handleEnterIntro} />
-      )}
+      {showIntro && <StarlingLandingIntro onEnter={handleEnterIntro} />}
       <div className="min-h-screen bg-cream text-text-dark font-sans selection:bg-blue-light selection:text-blue-soft relative overflow-x-hidden">
         <div className="bg-text-dark text-cream text-[11px] tracking-[0.2em] uppercase py-2 text-center font-medium px-4">
-        Free shipping on all heirloom keepsakes over ₹5,000
-      </div>
-      <StarlingTalesHero />
-      <Residents />
-      <StarlingAbout />
-      <StarlingCollection />
-      <PoeticBanner />
-      <GiftHamper />
-      <BrandPillars />
+          Free shipping on all heirloom keepsakes over ₹5,000
+        </div>
+        <StarlingTalesHero />
+        <Residents />
+        <StarlingAbout />
+        <StarlingCollection />
+        <PoeticBanner />
+        <GiftHamper />
+        <BrandPillars />
 
-      <ThanksYou />
+        <ThanksYou />
       </div>
     </>
   );

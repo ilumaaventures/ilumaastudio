@@ -1,11 +1,26 @@
 import React, { useState } from "react";
 import { FaGoogle, FaApple } from "react-icons/fa";
-import { User, Mail, Phone, Lock, Eye, EyeOff, ArrowLeft, ShieldCheck, CheckCircle2, Gift } from "lucide-react";
+import {
+  User,
+  Mail,
+  Phone,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowLeft,
+  ShieldCheck,
+  CheckCircle2,
+  Gift,
+} from "lucide-react";
 import { useDispatch } from "react-redux";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { registerUser } from "../../redux/actions/authActions";
 import toast from "react-hot-toast";
-import { sendOTP as sendOTPApi, verifyOTP as verifyOTPApi } from "../../api/authService";
+import {
+  sendOTP as sendOTPApi,
+  verifyOTP as verifyOTPApi,
+} from "../../api/authService";
+import ilumaIcon from "../../assests/iluma_icon.png";
 
 const Register = () => {
   const dispatch = useDispatch();
@@ -99,17 +114,34 @@ const Register = () => {
 
   const getPasswordQuality = (password) => {
     if (!password) return null;
-    if (password.length < 6) return { level: "Weak", color: "text-red-500", text: "Too short (min 6 chars)" };
+    if (password.length < 6)
+      return {
+        level: "Weak",
+        color: "text-red-500",
+        text: "Too short (min 6 chars)",
+      };
     const hasLetter = /[a-zA-Z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
     const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
 
     if (hasLetter && (hasNumber || hasSymbol) && password.length >= 8) {
-      return { level: "Strong", color: "text-emerald-600 dark:text-emerald-400", text: "High Quality (Strong)" };
+      return {
+        level: "Strong",
+        color: "text-emerald-600 dark:text-emerald-400",
+        text: "High Quality (Strong)",
+      };
     } else if (hasLetter && (hasNumber || hasSymbol)) {
-      return { level: "Good", color: "text-blue-600 dark:text-blue-400", text: "High Quality (Good)" };
+      return {
+        level: "Good",
+        color: "text-blue-600 dark:text-blue-400",
+        text: "High Quality (Good)",
+      };
     } else {
-      return { level: "Moderate", color: "text-amber-500", text: "Add numbers or special characters" };
+      return {
+        level: "Moderate",
+        color: "text-amber-500",
+        text: "Add numbers or special characters",
+      };
     }
   };
 
@@ -117,7 +149,9 @@ const Register = () => {
     e.preventDefault();
 
     if (!emailVerified) {
-      toast.error("Please verify your email address with OTP before creating account");
+      toast.error(
+        "Please verify your email address with OTP before creating account",
+      );
       return;
     }
 
@@ -145,7 +179,7 @@ const Register = () => {
           phone: formData.phone.trim(),
           password: formData.password,
           referralCode: formData.referralCode.trim().toUpperCase(),
-        })
+        }),
       );
       toast.success("Registration Successful!");
       navigate(searchParams.get("redirect") || "/");
@@ -159,7 +193,6 @@ const Register = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex items-center justify-center p-4 lg:p-8 font-sans transition-colors">
       <div className="w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl overflow-hidden grid lg:grid-cols-12">
-        
         {/* Left Side: Brand Visual Card */}
         <div className="hidden lg:col-span-5 bg-gradient-to-tr from-[#1e293b] via-[#2563eb] to-[#3b82f6] p-8 text-white flex flex-col justify-between relative overflow-hidden">
           <div className="absolute -top-16 -left-16 w-56 h-56 bg-white/10 rounded-full blur-2xl pointer-events-none" />
@@ -184,7 +217,9 @@ const Register = () => {
               Unlock Exclusive Rewards & Instant Perks
             </h2>
             <p className="text-xs text-blue-100/90 leading-relaxed font-medium">
-              Create your account to automatically receive 100 welcome loyalty points, earn referral rewards, and track orders across ILumaaStudio.
+              Create your account to automatically receive 100 welcome loyalty
+              points, earn referral rewards, and track orders across
+              ILumaaStudio.
             </p>
           </div>
 
@@ -209,11 +244,15 @@ const Register = () => {
               <ArrowLeft size={14} />
               <span>Back to Home</span>
             </Link>
-            
+
             {/* Mobile Brand Logo */}
             <div className="lg:hidden flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-[#2563eb] text-white flex items-center justify-center font-black text-sm">
-                S
+                <img
+                  src={ilumaIcon}
+                  alt="ILUMAA Studio"
+                  className="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-xl shadow-xs group-hover:scale-105 transition-transform"
+                />
               </div>
               <span className="font-black text-sm text-slate-900 dark:text-white">
                 ILUMAA<span className="text-[#2563eb]">Studio</span>
@@ -237,7 +276,10 @@ const Register = () => {
                 Full Name *
               </label>
               <div className="relative">
-                <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <User
+                  size={15}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                />
                 <input
                   type="text"
                   name="name"
@@ -258,7 +300,10 @@ const Register = () => {
               </label>
               <div className="flex gap-2 items-center">
                 <div className="relative flex-1">
-                  <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Mail
+                    size={15}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
                   <input
                     type="email"
                     name="email"
@@ -280,10 +325,10 @@ const Register = () => {
                     {sendingOTP
                       ? "Sending..."
                       : startTimer
-                      ? `Resend (${timer}s)`
-                      : otpSent
-                      ? "Resend OTP"
-                      : "Send OTP"}
+                        ? `Resend (${timer}s)`
+                        : otpSent
+                          ? "Resend OTP"
+                          : "Send OTP"}
                   </button>
                 )}
                 {emailVerified && (
@@ -331,7 +376,10 @@ const Register = () => {
                       Mobile Number *
                     </label>
                     <div className="relative">
-                      <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <Phone
+                        size={15}
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                      />
                       <input
                         type="tel"
                         name="phone"
@@ -350,7 +398,10 @@ const Register = () => {
                       Password *
                     </label>
                     <div className="relative">
-                      <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <Lock
+                        size={15}
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                      />
                       <input
                         type={showPassword ? "text" : "password"}
                         name="password"
@@ -365,11 +416,17 @@ const Register = () => {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                       >
-                        {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                        {showPassword ? (
+                          <EyeOff size={15} />
+                        ) : (
+                          <Eye size={15} />
+                        )}
                       </button>
                     </div>
                     {formData.password && (
-                      <p className={`text-[10px] font-bold mt-1 ${getPasswordQuality(formData.password)?.color}`}>
+                      <p
+                        className={`text-[10px] font-bold mt-1 ${getPasswordQuality(formData.password)?.color}`}
+                      >
                         Quality: {getPasswordQuality(formData.password)?.text}
                       </p>
                     )}
@@ -393,7 +450,8 @@ const Register = () => {
                     className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#2563eb] transition-colors text-slate-900 dark:text-white font-mono uppercase tracking-wider font-bold"
                   />
                   <p className="text-[11px] text-slate-400 font-medium">
-                    Entering a valid friend's referral code earns both of you +50 bonus loyalty points after your first purchase!
+                    Entering a valid friend's referral code earns both of you
+                    +50 bonus loyalty points after your first purchase!
                   </p>
                 </div>
               </div>
@@ -411,7 +469,8 @@ const Register = () => {
                 </button>
               ) : (
                 <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-center text-xs font-bold text-amber-800 dark:text-amber-300">
-                  Please click "Send OTP" above and verify your email to unlock registration.
+                  Please click "Send OTP" above and verify your email to unlock
+                  registration.
                 </div>
               )}
             </div>
@@ -450,18 +509,23 @@ const Register = () => {
           <div className="text-center text-xs space-y-1 pt-2 border-t border-slate-100 dark:border-slate-800">
             <p className="text-slate-500 dark:text-slate-400">
               Already have an account?{" "}
-              <Link to="/login" className="text-[#2563eb] font-bold hover:underline">
+              <Link
+                to="/login"
+                className="text-[#2563eb] font-bold hover:underline"
+              >
                 Log in
               </Link>
             </p>
             <p className="text-slate-500 dark:text-slate-400 text-[11px]">
               Want to sell on ILumaaStudio?{" "}
-              <Link to="/businessRegistration" className="text-[#2563eb] font-bold hover:underline">
+              <Link
+                to="/businessRegistration"
+                className="text-[#2563eb] font-bold hover:underline"
+              >
                 Register Business
               </Link>
             </p>
           </div>
-
         </div>
       </div>
     </div>

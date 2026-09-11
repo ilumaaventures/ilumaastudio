@@ -10,6 +10,7 @@ import { Eye, EyeOff, Lock, Mail, ArrowLeft } from "lucide-react";
 import { loginUser, loginWithGoogle } from "../../redux/actions/authActions";
 import { useGoogleLogin } from "@react-oauth/google";
 import toast from "react-hot-toast";
+import ilumaIcon from "../../assests/iluma_icon.png";
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -62,7 +63,11 @@ const Login = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-[#2563eb] flex items-center justify-center text-white font-black text-base">
-              S
+              <img
+                src={ilumaIcon}
+                alt="ILUMAA Studio"
+                className="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-xl shadow-xs group-hover:scale-105 transition-transform"
+              />
             </div>
             <span className="font-black text-lg text-slate-900 dark:text-white">
               ILUMAA<span className="text-[#2563eb]">Studio</span>
