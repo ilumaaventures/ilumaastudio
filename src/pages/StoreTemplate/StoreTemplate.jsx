@@ -35,21 +35,27 @@ import {
   Flower2,
   Coffee,
   Headphones,
+  Palmtree,
+  Compass,
 } from "lucide-react";
 import templateRegistry from "../../templates/registry";
 import StoreRenderer from "../../templates/StoreRenderer";
 
 // Priority order for newly launched templates so they appear first in the catalog
 const NEW_TEMPLATE_ORDER = {
-  "apex-audio": 1,
-  "luxury-audio": 1,
-  "crux-coffee": 2,
-  "coffee-roasters": 2,
-  "ethnic-couture": 3,
-  "modern-couture": 3,
-  "studio-apparel": 4,
-  "modern-apparel": 4,
-  "apparel": 4,
+  "hotel-resort": 1,
+  "hotel": 1,
+  "travel-agency": 2,
+  "travel": 2,
+  "apex-audio": 3,
+  "luxury-audio": 3,
+  "crux-coffee": 4,
+  "coffee-roasters": 4,
+  "ethnic-couture": 5,
+  "modern-couture": 5,
+  "studio-apparel": 6,
+  "modern-apparel": 6,
+  "apparel": 6,
 };
 
 // Deduplicate registry values so aliases (e.g. coffee-roasters, luxury-audio, modern-apparel) don't create duplicate cards
@@ -86,7 +92,13 @@ const templateList = uniqueRegistryTemplates.map((t) => {
   let icon = ShoppingBag;
   let industryLabel = t.category;
 
-  if (t.key === "crux-coffee" || t.key === "coffee-roasters") {
+  if (t.key === "hotel-resort" || t.key === "hotel" || t.category === "hotel") {
+    icon = Palmtree;
+    industryLabel = "Hotel & Luxury Resorts";
+  } else if (t.key === "travel-agency" || t.key === "travel" || t.category === "travel") {
+    icon = Compass;
+    industryLabel = "Travel & Expeditions";
+  } else if (t.key === "crux-coffee" || t.key === "coffee-roasters") {
     icon = Coffee;
     industryLabel = "Artisanal Coffee & Roasters";
   } else if (t.key === "apex-audio" || t.key === "luxury-audio") {
@@ -194,6 +206,8 @@ const categoryFilters = [
 
 const industryFilters = [
   { id: "All", label: "All Industries", icon: Globe },
+  { id: "hotel", label: "Hotel & Resort", icon: Palmtree },
+  { id: "travel", label: "Travel & Tours", icon: Compass },
   { id: "grocery", label: "Grocery", icon: ShoppingBag },
   { id: "fashion", label: "Fashion", icon: Sparkles },
   { id: "electronics", label: "Electronics", icon: Cpu },

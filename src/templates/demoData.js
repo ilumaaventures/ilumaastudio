@@ -2789,11 +2789,184 @@ export const demoData = {
       },
     ],
   },
+
+  // ================= 20. HOTEL & RESORT =================
+  "hotel-resort": {
+    business: {
+      name: "Azure Haven Resort & Villas",
+      logo: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200&auto=format&fit=crop&q=80",
+      description: "Forbes Five-Star coastal sanctuary with private oceanfront infinity pool villas, Michelin-starred gastronomy, and 24-hour dedicated island butler service.",
+      phone: "+91 98200 44555",
+      email: "concierge@azurehavenresort.com",
+      address: "Pelican Atoll, Sunset Cove Island, Goa 403515",
+      businessType: "Service",
+      category: "Hotel & Resort",
+      announcement: "✨ COMPLIMENTARY SUNSET CHAMPAGNE CRUISE & ₹5,000 SPA CREDIT WITH DIRECT VILLA RESERVATIONS",
+    },
+    services: [
+      {
+        _id: "res-s1",
+        serviceName: "Oceanfront Infinity Pool Villa",
+        category: "Ocean Villas",
+        price: 38500,
+        duration: "Per Night",
+        image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop&q=80",
+        description: "1,850 sq.ft secluded villa hovering above the lagoon featuring a private freshwater infinity plunge pool, sunrise sundeck, marble soaking tub, and dedicated butler.",
+      },
+      {
+        _id: "res-s2",
+        serviceName: "Presidential Royal Penthouse",
+        category: "Royal Penthouses",
+        price: 68000,
+        duration: "Per Night",
+        image: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800&auto=format&fit=crop&q=80",
+        description: "3,200 sq.ft two-story rooftop retreat offering 360-degree ocean views, private rooftop jacuzzi, full chef's dining room, and private elevator access.",
+      },
+      {
+        _id: "res-s3",
+        serviceName: "Garden Sanctuary Pool Suite",
+        category: "Luxury Suites",
+        price: 24500,
+        duration: "Per Night",
+        image: "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&auto=format&fit=crop&q=80",
+        description: "Surrounded by lush bougainvillea and frangipani gardens, this tranquil suite offers an outdoor rainfall shower, private patio plunge pool, and King canopy bed.",
+      },
+      {
+        _id: "res-s4",
+        serviceName: "Beachfront Sunset Pavilion Villa",
+        category: "Ocean Villas",
+        price: 46000,
+        duration: "Per Night",
+        image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&auto=format&fit=crop&q=80",
+        description: "Direct white-sand beachfront access with private outdoor daybed cabana, fire pit, open-air living salon, and sommelier-curated in-villa wine bar.",
+      },
+      {
+        _id: "res-s5",
+        serviceName: "Signature Romantic Honeymoon Suite",
+        category: "Luxury Suites",
+        price: 32000,
+        duration: "Per Night",
+        image: "https://images.unsplash.com/photo-1591088398332-8a7791972843?w=800&auto=format&fit=crop&q=80",
+        description: "Curated for couples with rose petal whirlpool bath, daily champagne breakfast in bed, private beach cabana dinner, and 90-minute couple's massage included.",
+      },
+      {
+        _id: "res-s6",
+        serviceName: "Grand Island Family Residence",
+        category: "Royal Penthouses",
+        price: 54000,
+        duration: "Per Night",
+        image: "https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800&auto=format&fit=crop&q=80",
+        description: "Three interconnected en-suite bedrooms, full living and media pavilion, oversized private pool, and dedicated private nanny/butler services.",
+      },
+    ],
+    reviews: [
+      {
+        customerName: "Eleanor & Harrison Wright",
+        rating: 5,
+        comment: "The most transcendent coastal sanctuary we have ever experienced. The overwater pool villa was pure perfection.",
+        date: "2 days ago",
+      },
+      {
+        customerName: "Devansh Singhania",
+        rating: 5,
+        comment: "Outstanding gastronomy, peaceful private beaches, and the butler team anticipated every detail before we even asked.",
+        date: "1 week ago",
+      },
+    ],
+  },
+
+  // ================= 21. TRAVEL AGENCY =================
+  "travel-agency": {
+    business: {
+      name: "Wanderlust Travel & Expeditions",
+      logo: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=200&auto=format&fit=crop&q=80",
+      description: "Premier luxury travel agency, small-group expedition designer, and visa concierge creating transformative journeys across 85+ countries.",
+      phone: "+91 98111 77333",
+      email: "expeditions@wanderlusttravels.com",
+      address: "402 World Trade Center, Connaught Place, New Delhi 110001",
+      businessType: "Service",
+      category: "Travel & Tourism",
+      announcement: "🌍 2026-2027 WORLD EXPEDITIONS NOW OPEN • SAVE UP TO ₹25,000 PER COUPLE ON EARLY BOOKINGS",
+    },
+    services: [
+      {
+        _id: "trv-s1",
+        serviceName: "10-Day Grand Switzerland & Glacier Express",
+        category: "Europe & Alps",
+        price: 185000,
+        duration: "10 Days / 9 Nights",
+        image: "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=800&auto=format&fit=crop&q=80",
+        description: "Scenic Alpine rail journey through Zermatt, St. Moritz, and Jungfraujoch with 5-star mountain chalet stays, scenic cogwheel passes, and private fondue tastings.",
+      },
+      {
+        _id: "trv-s2",
+        serviceName: "8-Day Bali & Komodo Dragon Luxury Island Hopping",
+        category: "Asia & Islands",
+        price: 98000,
+        duration: "8 Days / 7 Nights",
+        image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&auto=format&fit=crop&q=80",
+        description: "Ubud jungle villas, sunrise Mount Batur jeep safari, private phinisi yacht cruise to Pink Beach and Komodo National Park with certified marine naturalists.",
+      },
+      {
+        _id: "trv-s3",
+        serviceName: "7-Day Japan Cherry Blossom & High-Speed Shinkansen",
+        category: "Asia & Islands",
+        price: 165000,
+        duration: "7 Days / 6 Nights",
+        image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&auto=format&fit=crop&q=80",
+        description: "Tokyo neon to Kyoto bamboo groves, traditional Ryokan onsen stay with multi-course Kaiseki dinner, and VIP tickets for Mount Fuji scenic viewpoints.",
+      },
+      {
+        _id: "trv-s4",
+        serviceName: "6-Day Iceland Aurora Borealis & Geothermal Glaciers",
+        category: "Nordic & Auroras",
+        price: 142000,
+        duration: "6 Days / 5 Nights",
+        image: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=800&auto=format&fit=crop&q=80",
+        description: "Superjeep glacier ice caving, private Blue Lagoon retreat admission, Golden Circle geysers, and guided dark-sky Northern Lights hunts with pro astrophotographers.",
+      },
+      {
+        _id: "trv-s5",
+        serviceName: "5-Day Dubai & Desert Mirage Ultra-Luxury Getaway",
+        category: "Asia & Islands",
+        price: 75000,
+        duration: "5 Days / 4 Nights",
+        image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&auto=format&fit=crop&q=80",
+        description: "Burj Khalifa lounge access, vintage Land Rover desert conservation drive with stargazing dinner, private yacht marina cruise, and luxury transfers.",
+      },
+      {
+        _id: "trv-s6",
+        serviceName: "9-Day Kenya Masai Mara Great Migration Safari",
+        category: "Europe & Alps",
+        price: 215000,
+        duration: "9 Days / 8 Nights",
+        image: "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800&auto=format&fit=crop&q=80",
+        description: "Luxury canvas tented camp in the Masai Mara, hot-air balloon sunrise safari with champagne breakfast, and expert Big Five tracking game drives.",
+      },
+    ],
+    reviews: [
+      {
+        customerName: "Sameer & Kavita Roy",
+        rating: 5,
+        comment: "Our Switzerland rail journey was effortless from the moment we landed. Having a dedicated trip coordinator gave us total confidence.",
+        date: "3 days ago",
+      },
+      {
+        customerName: "Aakash Mehra",
+        rating: 5,
+        comment: "The Komodo dragon private yacht cruise was a once-in-a-lifetime experience. Flawless hotel selections and guide expertise.",
+        date: "2 weeks ago",
+      },
+    ],
+  },
 };
 
 // Aliases
 demoData["enigma"] = demoData["chapter-books"];
 demoData["modern-apparel"] = demoData["studio-apparel"];
+demoData["hotel"] = demoData["hotel-resort"];
+demoData["resort"] = demoData["hotel-resort"];
+demoData["travel"] = demoData["travel-agency"];
 
 // Fallback helper for unknown templates
 export const getDemoData = (templateKey) => {

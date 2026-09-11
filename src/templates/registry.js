@@ -24,6 +24,8 @@ import TutorAcademyTemplate from "./services/tutor/TutorAcademyTemplate";
 import HomeServiceProTemplate from "./services/home-services/HomeServiceProTemplate";
 import IronPulseFitnessTemplate from "./services/fitness/IronPulseFitnessTemplate";
 import CarePointClinicTemplate from "./services/clinic/CarePointClinicTemplate";
+import HotelResortTemplate from "./services/hotel/HotelResortTemplate";
+import TravelAgencyTemplate from "./services/travel/TravelAgencyTemplate";
 
 import { demoData } from "./demoData";
 
@@ -840,6 +842,98 @@ export const templateRegistry = {
     demoData: demoData["carepoint-clinic"],
   },
 
+  "hotel-resort": {
+    key: "hotel-resort",
+    name: "Azure Haven Resort & Villas",
+    category: "hotel",
+    businessType: "service",
+    isNew: true,
+    version: "1.0.0",
+    description: "Luxury coastal hotel & resort storefront featuring panoramic suites, infinity pool villas, bespoke reservation engine, and curated guest experiences.",
+    thumbnail: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&auto=format&fit=crop&q=80",
+    previewPath: "/template-preview/hotel-resort",
+    component: HotelResortTemplate,
+    capabilities: {
+      products: false,
+      categories: true,
+      variants: false,
+      cart: false,
+      checkout: false,
+      offers: true,
+      coupons: true,
+      reviews: true,
+      wishlist: false,
+      booking: true,
+      appointments: true,
+      services: true,
+      menu: false,
+      gallery: true,
+      contact: true,
+      location: true,
+    },
+    defaultTheme: {
+      colors: {
+        primary: "#0D9488",
+        secondary: "#0F766E",
+        accent: "#F59E0B",
+        background: "#022C22",
+        cardBg: "#064E3B",
+        text: "#F0FDFA",
+      },
+      fonts: {
+        heading: "Playfair Display, serif",
+        body: "Plus Jakarta Sans, sans-serif",
+      },
+    },
+    demoData: demoData["hotel-resort"],
+  },
+
+  "travel-agency": {
+    key: "travel-agency",
+    name: "Wanderlust Expeditions",
+    category: "travel",
+    businessType: "service",
+    isNew: true,
+    version: "1.0.0",
+    description: "World tour & bespoke travel agency storefront featuring destination expedition packages, interactive travel filter, inclusions breakdown, and booking inquiry workflows.",
+    thumbnail: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop&q=80",
+    previewPath: "/template-preview/travel-agency",
+    component: TravelAgencyTemplate,
+    capabilities: {
+      products: false,
+      categories: true,
+      variants: false,
+      cart: false,
+      checkout: false,
+      offers: true,
+      coupons: true,
+      reviews: true,
+      wishlist: false,
+      booking: true,
+      appointments: true,
+      services: true,
+      menu: false,
+      gallery: true,
+      contact: true,
+      location: true,
+    },
+    defaultTheme: {
+      colors: {
+        primary: "#2563EB",
+        secondary: "#1D4ED8",
+        accent: "#F97316",
+        background: "#0F172A",
+        cardBg: "#1E293B",
+        text: "#F8FAFC",
+      },
+      fonts: {
+        heading: "Plus Jakarta Sans, sans-serif",
+        body: "Inter, sans-serif",
+      },
+    },
+    demoData: demoData["travel-agency"],
+  },
+
   "studio-apparel": {
     key: "studio-apparel",
     name: "Studio Apparel",
@@ -1208,5 +1302,11 @@ export const templateRegistry = {
     demoData: audioDemoData,
   },
 };
+
+// Aliases for convenient resolution
+templateRegistry["hotel"] = templateRegistry["hotel-resort"];
+templateRegistry["resort"] = templateRegistry["hotel-resort"];
+templateRegistry["travel"] = templateRegistry["travel-agency"];
+templateRegistry["tour"] = templateRegistry["travel-agency"];
 
 export default templateRegistry;
