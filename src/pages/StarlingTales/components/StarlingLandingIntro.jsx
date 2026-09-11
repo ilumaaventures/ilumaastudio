@@ -181,10 +181,6 @@ export default function StarlingLandingIntro({ onEnter }) {
 
         {/* ---------------- 1. Top Storybook Prologue ---------------- */}
         <div className="relative z-10 w-full max-w-[500px] text-center pt-0.5">
-          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#FAF6F0]/90 border border-[#C5A880]/35 text-[9px] tracking-[0.25em] uppercase font-serif font-semibold text-[#8DAEC4] shadow-xs mb-1">
-            <Sparkles size={10} className="text-[#C5A880]" />
-            Chapter I · The Living Storybook
-          </div>
           <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#2F433C] tracking-tight leading-tight">
             Starling Tales
           </h1>
@@ -210,11 +206,6 @@ export default function StarlingLandingIntro({ onEnter }) {
             }}
             aria-hidden="true"
           />
-
-          {/* Corner Ribbon */}
-          <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-[#FAF6F0]/90 backdrop-blur-md border border-[#C5A880]/35 text-[9px] uppercase tracking-widest font-serif font-bold text-[#2F433C] shadow-sm flex items-center gap-1">
-            <Feather size={10} className="text-[#C5A880]" /> Touch Bird
-          </div>
 
           {/* Bird Hotspot on Mobile */}
           <button
