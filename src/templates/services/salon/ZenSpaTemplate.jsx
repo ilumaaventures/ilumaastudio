@@ -3,13 +3,16 @@ import { Sparkles, Clock, Calendar, Star, ArrowRight, ShieldCheck } from "lucide
 import TemplateHeader from "../../common/TemplateHeader";
 import TemplateFooter from "../../common/TemplateFooter";
 import BookingModal from "../../common/BookingModal";
+import { isSectionEnabled, getSectionContent } from "../../utils/sectionHelper";
 
 export default function ZenSpaTemplate({
   business = {},
   services = [],
   reviews = [],
   customization = {},
+  sections = [],
 }) {
+  const effectiveSections = sections && sections.length > 0 ? sections : customization?.sections || [];
   const [bookingOpen, setBookingOpen] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
 
@@ -27,6 +30,10 @@ export default function ZenSpaTemplate({
     setBookingOpen(true);
   };
 
+  const announcementContent = getSectionContent(effectiveSections, "announcement");
+  const heroContent = getSectionContent(effectiveSections, "hero") || {};
+  const srvContent = getSectionContent(effectiveSections, "services") || {};
+
   return (
     <div
       className="min-h-screen flex flex-col font-sans"
@@ -38,63 +45,71 @@ export default function ZenSpaTemplate({
         isService={true}
         themeColors={themeColors}
         announcementText={
-          customization.customContent?.announcement ||
-          "🌿 Complimentary Herbal Foot Soak & Aromatherapy Bar with all 90-Min Sessions"
+          isSectionEnabled(effectiveSections, "announcement")
+            ? (announcementContent?.text ||
+                customization.customContent?.announcement ||
+                "🌿 Complimentary Herbal Foot Soak & Aromatherapy Bar with all 90-Min Sessions")
+            : null
         }
       />
 
       <main className="flex-1">
         {/* HERO */}
-        <section className="py-20 md:py-28">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            <div className="lg:col-span-7 space-y-6">
-              <span className="text-xs font-bold uppercase tracking-[0.25em] text-teal-700">
-                Holistic Sanctuary & Atelier
-              </span>
-              <h1 className="text-4xl sm:text-6xl font-serif font-black tracking-tight text-teal-950 leading-tight">
-                {customization.heroHeadline || "Restore Your Mind, Body & Vitality."}
-              </h1>
-              <p className="text-xs sm:text-sm text-teal-900/80 leading-relaxed max-w-lg">
-                {customization.heroSubtitle ||
-                  "Himalayan heated stone therapies, bespoke clinical oxygen facials, and Japanese waterfall scalp rituals tailored to dissolve stress."}
-              </p>
-              <div className="pt-2">
-                <button
-                  onClick={() => handleBook()}
-                  className="px-8 py-4 bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs rounded-2xl shadow-lg transition flex items-center gap-2 cursor-pointer"
-                >
-                  <Calendar size={15} />
-                  <span>Reserve Treatment Session</span>
-                </button>
+        {isSectionEnabled(effectiveSections, "hero") && (
+          <section className="py-20 md:py-28">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+              <div className="lg:col-span-7 space-y-6">
+                <span className="text-xs font-bold uppercase tracking-[0.25em] text-teal-700">
+                  {heroContent.badge || "Holistic Sanctuary & Atelier"}
+                </span>
+                <h1 className="text-4xl sm:text-6xl font-serif font-black tracking-tight text-teal-950 leading-tight">
+                  {heroContent.title || customization.heroHeadline || "Restore Your Mind, Body & Vitality."}
+                </h1>
+                <p className="text-xs sm:text-sm text-teal-900/80 leading-relaxed max-w-lg">
+                  {heroContent.subtitle ||
+                    customization.heroSubtitle ||
+                    "Himalayan heated stone therapies, bespoke clinical oxygen facials, and Japanese waterfall scalp rituals tailored to dissolve stress."}
+                </p>
+                <div className="pt-2">
+                  <button
+                    onClick={() => handleBook()}
+                    className="px-8 py-4 bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs rounded-2xl shadow-lg transition flex items-center gap-2 cursor-pointer"
+                  >
+                    <Calendar size={15} />
+                    <span>{heroContent.ctaText || "Reserve Treatment Session"}</span>
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="lg:col-span-5">
-              <div className="aspect-4/3 rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
-                <img
-                  src={
-                    customization.heroBanner ||
-                    "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=900&auto=format&fit=crop&q=80"
-                  }
-                  alt="Spa Treatment"
-                  className="w-full h-full object-cover"
-                />
+              <div className="lg:col-span-5">
+                <div className="aspect-4/3 rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
+                  <img
+                    src={
+                      heroContent.image ||
+                      customization.heroBanner ||
+                      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=900&auto=format&fit=crop&q=80"
+                    }
+                    alt="Spa Treatment"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* SERVICES */}
-        <section id="services" className="py-16 bg-white border-y border-teal-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-xl mx-auto mb-10">
-              <h2 className="text-3xl font-serif font-black text-teal-950 mb-2">
-                Signature Wellness Rituals
-              </h2>
-              <p className="text-xs text-teal-800/70">
-                Performed by licensed master aestheticians and massage therapists.
-              </p>
-            </div>
+        {isSectionEnabled(effectiveSections, "services") && (
+          <section id="services" className="py-16 bg-white border-y border-teal-100">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center max-w-xl mx-auto mb-10">
+                <h2 className="text-3xl font-serif font-black text-teal-950 mb-2">
+                  {srvContent.title || "Signature Wellness Rituals"}
+                </h2>
+                <p className="text-xs text-teal-800/70">
+                  {srvContent.subtitle || "Performed by licensed master aestheticians and massage therapists."}
+                </p>
+              </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {services.map((srv) => (
@@ -137,6 +152,7 @@ export default function ZenSpaTemplate({
             </div>
           </div>
         </section>
+        )}
       </main>
 
       <BookingModal

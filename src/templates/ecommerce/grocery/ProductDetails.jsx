@@ -128,7 +128,7 @@ export default function ProductDetails({
           <span>Fresh Aisles</span>
           <ChevronRight size={12} />
           <span className="text-emerald-800 font-medium">
-            {product.category || "Produce"}
+            {typeof product.category === "object" ? product.category?.name : product.category || "Produce"}
           </span>
           <ChevronRight size={12} />
           <span className="text-slate-900 font-bold truncate max-w-[180px]">
@@ -222,7 +222,7 @@ export default function ProductDetails({
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-black uppercase tracking-wider text-[#16A34A] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                {product.category || "Fresh Produce"}
+                {typeof product.category === "object" ? product.category?.name : product.category || "Fresh Produce"}
               </span>
               <span className="text-xs text-slate-400">•</span>
               <div className="flex items-center gap-1 text-amber-500 text-xs font-bold">

@@ -20,6 +20,7 @@ import { isOutOfStock, getProductStock } from "../../../utils/stockUtils";
 import CartDrawer from "../../common/CartDrawer";
 import ProductDetailsPage from "../../common/ProductDetailsPage";
 import { getProductImage } from "../../../utils/productImage";
+import { isSectionEnabled, getSectionContent } from "../../utils/sectionHelper";
 
 export default function GourmetFoodTemplate({
   business = {},
@@ -28,7 +29,10 @@ export default function GourmetFoodTemplate({
   offers = [],
   reviews = [],
   customization = {},
+  sections = [],
 }) {
+  const effectiveSections =
+    sections && sections.length > 0 ? sections : customization?.sections || [];
   const [activePage, setActivePage] = useState("home"); // "home" | "pantry" | "tasting-boxes" | "dop-provenance" | "cold-shipping" | "product-detail"
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -146,9 +150,11 @@ export default function GourmetFoodTemplate({
     <div className="min-h-screen flex flex-col font-sans bg-[#FBF9F5] text-[#1C2826]">
       {/* ================= BESPOKE GOURMET NAVBAR ================= */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E8E2D5] shadow-xs">
+        {isSectionEnabled(effectiveSections, "announcement") && (
         <div className="bg-[#1B3B2B] text-[#D4E8C2] text-[10px] uppercase font-bold tracking-[0.2em] py-1.5 px-4 text-center">
-          <span>DOP Certified Artisans • Temperature-Controlled Insulated Overnight Shipping</span>
+          <span>{getSectionContent(effectiveSections, "announcement")?.text || "DOP Certified Artisans • Temperature-Controlled Insulated Overnight Shipping"}</span>
         </div>
+        )}
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
           <div onClick={() => setActivePage("home")} className="flex items-center gap-3 cursor-pointer group">
@@ -225,20 +231,21 @@ export default function GourmetFoodTemplate({
         {activePage === "home" && (
           <>
             {/* Gourmet Hero */}
+            {isSectionEnabled(effectiveSections, "hero") && (
             <section className="py-20 md:py-28 relative overflow-hidden bg-gradient-to-b from-[#EFF5EC] via-[#FBF9F5] to-transparent font-serif">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                 <div className="lg:col-span-7 space-y-6">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E0EDDC] text-[#224A37] text-xs font-sans font-bold">
                     <Award size={14} className="text-[#B45309]" />
-                    <span>Protected Geographic Origin (DOP & IGP)</span>
+                    <span>{getSectionContent(effectiveSections, "hero")?.badge || "Protected Geographic Origin (DOP & IGP)"}</span>
                   </div>
 
                   <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-[#1B3B2B] leading-tight">
-                    Artisanal European Delicacies Sourced Directly from Family Estates.
+                    {getSectionContent(effectiveSections, "hero")?.title || "Artisanal European Delicacies Sourced Directly from Family Estates."}
                   </h1>
 
                   <p className="text-xs sm:text-sm text-[#486653] leading-relaxed max-w-xl font-normal font-sans">
-                    36-month aged mountain Parmigiano, acorn-fed Iberian ham, cold-pressed single-estate olive oils, and barrel-aged balsamic vinegar delivered cold-packed to your table.
+                    {getSectionContent(effectiveSections, "hero")?.subtitle || "36-month aged mountain Parmigiano, acorn-fed Iberian ham, cold-pressed single-estate olive oils, and barrel-aged balsamic vinegar delivered cold-packed to your table."}
                   </p>
 
                   <div className="flex flex-wrap gap-4 pt-2 font-sans">
@@ -269,13 +276,17 @@ export default function GourmetFoodTemplate({
                 </div>
               </div>
             </section>
+            )}
 
             {/* Delicacies Showcase */}
+            {isSectionEnabled(effectiveSections, "featured_products") && (
             <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
               <div className="flex justify-between items-end">
                 <div>
                   <span className="text-xs uppercase tracking-wider text-[#B45309] font-bold">Estate Selections</span>
-                  <h2 className="text-2xl sm:text-3xl font-serif font-black text-[#1B3B2B]">Culinary Crown Jewels</h2>
+                  <h2 className="text-2xl sm:text-3xl font-serif font-black text-[#1B3B2B]">
+                    {getSectionContent(effectiveSections, "featured_products")?.title || "Culinary Crown Jewels"}
+                  </h2>
                 </div>
                 <button
                   onClick={() => setActivePage("pantry")}
@@ -327,6 +338,7 @@ export default function GourmetFoodTemplate({
                 })}
               </div>
             </section>
+            )}
           </>
         )}
 

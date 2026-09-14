@@ -22,6 +22,7 @@ import { isOutOfStock, getProductStock } from "../../../utils/stockUtils";
 import CartDrawer from "../../common/CartDrawer";
 import ProductDetailsPage from "../../common/ProductDetailsPage";
 import { getProductImage } from "../../../utils/productImage";
+import { isSectionEnabled, getSectionContent } from "../../utils/sectionHelper";
 
 export default function PowerToolsTemplate({
   business = {},
@@ -30,7 +31,10 @@ export default function PowerToolsTemplate({
   offers = [],
   reviews = [],
   customization = {},
+  sections = [],
 }) {
+  const effectiveSections =
+    sections && sections.length > 0 ? sections : customization?.sections || [];
   const [activePage, setActivePage] = useState("home"); // "home" | "tool-vault" | "battery-system" | "contractor-pro" | "service-repair" | "product-detail"
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -144,9 +148,11 @@ export default function PowerToolsTemplate({
     <div className="min-h-screen flex flex-col font-sans bg-[#121214] text-zinc-100">
       {/* ================= BESPOKE POWER TOOL NAVBAR ================= */}
       <header className="sticky top-0 z-40 bg-[#18181B]/95 backdrop-blur-md border-b border-zinc-800">
+        {isSectionEnabled(effectiveSections, "announcement") && (
         <div className="bg-[#EA580C] text-black font-black uppercase text-[10px] tracking-widest py-1.5 px-4 text-center">
-          <span>⚡ 3-Year Heavy Duty Commercial Warranty • Free Jobsite Delivery over ₹999 • Contractor Hotline: {brandPhone}</span>
+          <span>{getSectionContent(effectiveSections, "announcement")?.text || `⚡ 3-Year Heavy Duty Commercial Warranty • Free Jobsite Delivery over ₹999 • Contractor Hotline: ${brandPhone}`}</span>
         </div>
+        )}
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
           <div onClick={() => setActivePage("home")} className="flex items-center gap-3 cursor-pointer group">
@@ -223,20 +229,21 @@ export default function PowerToolsTemplate({
         {activePage === "home" && (
           <>
             {/* Tool Hero */}
+            {isSectionEnabled(effectiveSections, "hero") && (
             <section className="py-20 md:py-28 relative overflow-hidden border-b border-zinc-800 bg-gradient-to-b from-zinc-900/60 to-transparent">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                 <div className="lg:col-span-7 space-y-6">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 text-[#EA580C] text-xs font-mono font-bold border border-orange-500/30">
                     <Zap size={14} />
-                    <span>Next-Gen Brushless High-Output Motor</span>
+                    <span>{getSectionContent(effectiveSections, "hero")?.badge || "Next-Gen Brushless High-Output Motor"}</span>
                   </div>
 
                   <h1 className="text-4xl sm:text-6xl font-black uppercase tracking-tight text-white leading-tight font-mono">
-                    Built to Endure the Harshest Commercial Jobsites.
+                    {getSectionContent(effectiveSections, "hero")?.title || "Built to Endure the Harshest Commercial Jobsites."}
                   </h1>
 
                   <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-xl font-normal">
-                    Forged steel gearing, all-weather sealed electronics, and 60V Max lithium packs engineered for commercial framers, electricians, and master builders.
+                    {getSectionContent(effectiveSections, "hero")?.subtitle || "Forged steel gearing, all-weather sealed electronics, and 60V Max lithium packs engineered for commercial framers, electricians, and master builders."}
                   </p>
 
                   <div className="flex flex-wrap gap-4 pt-2">
@@ -267,13 +274,17 @@ export default function PowerToolsTemplate({
                 </div>
               </div>
             </section>
+            )}
 
             {/* Featured Tools */}
+            {isSectionEnabled(effectiveSections, "featured_products") && (
             <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
               <div className="flex justify-between items-end">
                 <div>
                   <span className="text-xs font-mono uppercase tracking-wider text-[#EA580C]">Top Jobsite Demand</span>
-                  <h2 className="text-2xl sm:text-3xl font-black text-white font-mono">Bestselling Cordless Rigs</h2>
+                  <h2 className="text-2xl sm:text-3xl font-black text-white font-mono">
+                    {getSectionContent(effectiveSections, "featured_products")?.title || "Bestselling Cordless Rigs"}
+                  </h2>
                 </div>
                 <button
                   onClick={() => setActivePage("tool-vault")}
@@ -327,6 +338,7 @@ export default function PowerToolsTemplate({
                 })}
               </div>
             </section>
+            )}
           </>
         )}
 

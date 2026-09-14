@@ -32,6 +32,7 @@ import Footer from "./Footer";
 import ProductCard from "./ProductCard";
 import Produts from "./Produts";
 import Offers from "./Offers";
+import { isSectionEnabled, getSectionContent } from "../../utils/sectionHelper";
 
 export default function UrbanFashionTemplate({
   business = {},
@@ -40,7 +41,13 @@ export default function UrbanFashionTemplate({
   offers = [],
   reviews = [],
   customization = {},
+  sections = [],
 }) {
+  const effectiveSections =
+    sections && sections.length > 0
+      ? sections
+      : customization?.sections || [];
+
   const [activePage, setActivePage] = useState("home"); // "home" | "lookbook" | "collections" | "offers" | "size-guide" | "atelier" | "product-detail"
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -196,94 +203,110 @@ export default function UrbanFashionTemplate({
         {activePage === "home" && (
           <>
             {/* Runway Editorial Hero */}
-            <section className="relative h-[85vh] bg-zinc-950 overflow-hidden flex items-end">
-              <img
-                src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&auto=format&fit=crop&q=80"
-                alt="Runway Model"
-                className="absolute inset-0 w-full h-full object-cover opacity-80"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+            {isSectionEnabled(effectiveSections, "hero") && (() => {
+              const heroContent = getSectionContent(effectiveSections, "hero");
+              return (
+                <section className="relative h-[85vh] bg-zinc-950 overflow-hidden flex items-end">
+                  <img
+                    src={heroContent?.bgImage || "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&auto=format&fit=crop&q=80"}
+                    alt="Runway Model"
+                    className="absolute inset-0 w-full h-full object-cover opacity-80"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
 
-              <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 w-full space-y-6">
-                <span className="text-[10px] uppercase font-mono tracking-widest text-zinc-300 border border-zinc-500/40 px-3 py-1 rounded-full backdrop-blur-md">
-                  Autumn / Winter Haute Couture
-                </span>
-                <h1 className="text-4xl sm:text-6xl lg:text-7xl font-serif text-white tracking-tight leading-none max-w-3xl">
-                  Uncompromising Elegance & Structured Form.
-                </h1>
-                <div className="flex flex-wrap gap-4 pt-2">
-                  <button
-                    onClick={() => setActivePage("collections")}
-                    className="px-8 py-4 bg-white hover:bg-zinc-100 text-zinc-950 font-black text-xs uppercase tracking-widest rounded-none transition shadow-2xl cursor-pointer"
-                  >
-                    Explore Collections
-                  </button>
-                  <button
-                    onClick={() => setActivePage("lookbook")}
-                    className="px-8 py-4 bg-transparent border border-white hover:bg-white/10 text-white font-black text-xs uppercase tracking-widest rounded-none transition cursor-pointer"
-                  >
-                    View Editorial Lookbook
-                  </button>
-                </div>
-              </div>
-            </section>
+                  <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 w-full space-y-6">
+                    <span className="text-[10px] uppercase font-mono tracking-widest text-zinc-300 border border-zinc-500/40 px-3 py-1 rounded-full backdrop-blur-md">
+                      {heroContent?.badge || "Autumn / Winter Haute Couture"}
+                    </span>
+                    <h1 className="text-4xl sm:text-6xl lg:text-7xl font-serif text-white tracking-tight leading-none max-w-3xl">
+                      {heroContent?.title || "Uncompromising Elegance & Structured Form."}
+                    </h1>
+                    <div className="flex flex-wrap gap-4 pt-2">
+                      <button
+                        onClick={() => setActivePage("collections")}
+                        className="px-8 py-4 bg-white hover:bg-zinc-100 text-zinc-950 font-black text-xs uppercase tracking-widest rounded-none transition shadow-2xl cursor-pointer"
+                      >
+                        {heroContent?.primaryCtaText || "Explore Collections"}
+                      </button>
+                      <button
+                        onClick={() => setActivePage("lookbook")}
+                        className="px-8 py-4 bg-transparent border border-white hover:bg-white/10 text-white font-black text-xs uppercase tracking-widest rounded-none transition cursor-pointer"
+                      >
+                        {heroContent?.secondaryCtaText || "View Editorial Lookbook"}
+                      </button>
+                    </div>
+                  </div>
+                </section>
+              );
+            })()}
 
             {/* Curated Grid */}
             <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-              <div className="flex justify-between items-baseline border-b border-zinc-200 pb-4">
-                <h2 className="text-2xl font-serif tracking-tight text-zinc-950">
-                  New Runway Releases
-                </h2>
-                <button
-                  onClick={() => setActivePage("collections")}
-                  className="text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 cursor-pointer"
-                >
-                  View All Pieces →
-                </button>
-              </div>
+              {isSectionEnabled(effectiveSections, "featured_products") && (
+                <>
+                  <div className="flex justify-between items-baseline border-b border-zinc-200 pb-4">
+                    <h2 className="text-2xl font-serif tracking-tight text-zinc-950">
+                      {getSectionContent(effectiveSections, "featured_products")?.title || "New Runway Releases"}
+                    </h2>
+                    <button
+                      onClick={() => setActivePage("collections")}
+                      className="text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 cursor-pointer"
+                    >
+                      View All Pieces →
+                    </button>
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                {products.slice(0, 4).map((item) => (
-                  <ProductCard
-                    key={item._id || item.id}
-                    product={item}
-                    currency={currency}
-                    onSelect={(p) => {
-                      setSelectedProduct(p);
-                      setActivePage("product-detail");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    onAddToCart={(p, sz, qty) => handleAddToCart(p, sz, qty)}
-                  />
-                ))}
-              </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    {products.slice(0, 4).map((item) => (
+                      <ProductCard
+                        key={item._id || item.id}
+                        product={item}
+                        currency={currency}
+                        onSelect={(p) => {
+                          setSelectedProduct(p);
+                          setActivePage("product-detail");
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        onAddToCart={(p, sz, qty) => handleAddToCart(p, sz, qty)}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
 
               {/* Private Client Archive Privileges Promo Banner */}
-              <div className="relative rounded-2xl overflow-hidden bg-zinc-950 text-white p-8 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-6 border border-zinc-800">
-                <div className="space-y-2 text-left">
-                  <span className="text-[9px] uppercase font-mono tracking-widest text-amber-400 font-bold block">
-                    Limited Seasonal Access
-                  </span>
-                  <h3 className="text-2xl font-serif font-bold text-white">
-                    Private Client Archive Sale: Up to 25% Off
-                  </h3>
-                  <p className="text-xs text-zinc-400 font-sans max-w-lg leading-relaxed">
-                    Exclusive vouchers for registered patrons. Enjoy preferred
-                    privileges on structured coats, virgin wool tailoring, and
-                    cashmere knitwear.
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    setActivePage("offers");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className="px-6 py-3.5 bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs uppercase tracking-widest rounded-xl transition cursor-pointer shrink-0 flex items-center gap-2"
-                >
-                  <span>Explore Privileges</span>
-                  <ArrowRight size={14} />
-                </button>
-              </div>
+              {(isSectionEnabled(effectiveSections, "promo_banner") || isSectionEnabled(effectiveSections, "banner")) && (() => {
+                const promoContent =
+                  getSectionContent(effectiveSections, "promo_banner") ||
+                  getSectionContent(effectiveSections, "banner") ||
+                  {};
+                return (
+                  <div className="relative rounded-2xl overflow-hidden bg-zinc-950 text-white p-8 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-6 border border-zinc-800">
+                    <div className="space-y-2 text-left">
+                      <span className="text-[9px] uppercase font-mono tracking-widest text-amber-400 font-bold block">
+                        {promoContent.badge || "Limited Seasonal Access"}
+                      </span>
+                      <h3 className="text-2xl font-serif font-bold text-white">
+                        {promoContent.title || "Private Client Archive Sale: Up to 25% Off"}
+                      </h3>
+                      <p className="text-xs text-zinc-400 font-sans max-w-lg leading-relaxed">
+                        {promoContent.subtitle ||
+                          "Exclusive vouchers for registered patrons. Enjoy preferred privileges on structured coats, virgin wool tailoring, and cashmere knitwear."}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setActivePage("offers");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className="px-6 py-3.5 bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs uppercase tracking-widest rounded-xl transition cursor-pointer shrink-0 flex items-center gap-2"
+                    >
+                      <span>Explore Privileges</span>
+                      <ArrowRight size={14} />
+                    </button>
+                  </div>
+                );
+              })()}
             </section>
           </>
         )}

@@ -18,6 +18,7 @@ import toast from "react-hot-toast";
 export default function HeroSection({
   brandName = "FreshKart",
   banners = [],
+  heroContent = {},
   onNavigateToAisles,
   onNavigateToMealKits,
   zipCode = "10001",
@@ -29,12 +30,13 @@ export default function HeroSection({
 
   const defaultSlides = [
     {
-      tag: "Certified Organic Harvest",
-      titleMain: "Freshness",
-      titleAccent: "Delivered Daily",
+      tag: heroContent.badge || "Certified Organic Harvest",
+      titleMain: heroContent.title ? heroContent.title.split(" ")[0] : "Freshness",
+      titleAccent: heroContent.title ? heroContent.title.split(" ").slice(1).join(" ") : "Delivered Daily",
       subtitle:
+        heroContent.subtitle ||
         "Handpicked essentials for a healthier, happier you. Orchard-crisp fruits, slow-fermented sourdoughs, and farm-fresh dairy delivered in 25 minutes.",
-      buttonText: "Shop Fresh Groceries",
+      buttonText: heroContent.primaryCtaText || "Shop Fresh Groceries",
       badge: "⚡ 25-Min Cold Chain Dispatch Active",
     },
     {
@@ -57,9 +59,17 @@ export default function HeroSection({
     },
   ];
 
+  const hasCustomHero = !!(heroContent.title || heroContent.subtitle || heroContent.description || heroContent.badge);
   const slides =
     banners && banners.length > 0
-      ? banners.map((b) => ({
+      ? banners.map((b, idx) => (idx === 0 && hasCustomHero ? {
+          tag: heroContent.badge || b.subtitle || "Certified Store Selection",
+          titleMain: (heroContent.title || b.title || brandName).split(" ")[0] || "Freshness",
+          titleAccent: (heroContent.title || b.title || "").split(" ").slice(1).join(" ") || "Delivered Daily",
+          subtitle: heroContent.subtitle || heroContent.description || b.description || b.subtitle || "Handpicked catalog essentials delivered directly with verified freshness.",
+          buttonText: heroContent.ctaText || heroContent.primaryCtaText || b.ctaText || "Shop Catalog",
+          badge: heroContent.badge || "⚡ Express Fast Dispatch Active",
+        } : {
           tag: b.subtitle || "Certified Store Selection",
           titleMain: (b.title || brandName).split(" ")[0] || "Freshness",
           titleAccent: (b.title || "").split(" ").slice(1).join(" ") || "Delivered Daily",
@@ -95,7 +105,7 @@ export default function HeroSection({
       {/* ================= 1. FULL-BLEED HERO BACKGROUND IMAGE ================= */}
       <div className="absolute inset-0 z-0">
         <img
-          src="/grocery_hero_banner.jpg"
+          src={heroContent.bgImage || "/grocery_hero_banner.jpg"}
           alt="FreshKart Box of Fresh Organic Groceries"
           className="w-full h-full object-cover object-center lg:object-right transform scale-100 transition-transform duration-1000"
         />

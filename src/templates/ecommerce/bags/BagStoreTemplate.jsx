@@ -25,6 +25,7 @@ import toast from "react-hot-toast";
 import { isOutOfStock } from "../../../utils/stockUtils";
 import CartDrawer from "../../common/CartDrawer";
 import { getProductImage } from "../../../utils/productImage";
+import { isSectionEnabled, getSectionContent } from "../../utils/sectionHelper";
 
 // Import modular sub-components
 import Navbar from "./Navbar";
@@ -41,7 +42,10 @@ export default function BagStoreTemplate({
   offers = [],
   reviews = [],
   customization = {},
+  sections = [],
 }) {
+  const effectiveSections =
+    sections && sections.length > 0 ? sections : customization?.sections || [];
   // Navigation: "home" | "catalog" | "product-detail" | "offers"
   const [activePage, setActivePage] = useState("home");
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -216,12 +220,13 @@ export default function BagStoreTemplate({
         {activePage === "home" && (
           <div className="space-y-16 sm:space-y-20">
             {/* ================= SECTION: HERO SCENIC WILDERNESS BANNER ================= */}
+            {isSectionEnabled(effectiveSections, "hero") && (
             <section className="relative w-full h-[420px] sm:h-[500px] lg:h-[560px] overflow-hidden bg-slate-800">
               {/* Scenic Outdoor Background: Traveler with tan backpack by misty lake */}
               <div
                 className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 scale-100 hover:scale-105"
                 style={{
-                  backgroundImage: `url("https://images.unsplash.com/photo-1501555088652-021faa106b9b?w=1600&auto=format&fit=crop&q=80")`,
+                  backgroundImage: `url("${getSectionContent(effectiveSections, "hero")?.bgImage || "https://images.unsplash.com/photo-1501555088652-021faa106b9b?w=1600&auto=format&fit=crop&q=80"}")`,
                 }}
               >
                 {/* Subtle natural misty atmospheric wash */}
@@ -252,9 +257,13 @@ export default function BagStoreTemplate({
               <div className="relative max-w-7xl mx-auto h-full px-6 sm:px-10 lg:px-12 flex items-center z-10">
                 <div className="max-w-md sm:max-w-lg p-8 sm:p-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 text-white shadow-2xl text-center space-y-6">
                   <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black tracking-tight leading-tight drop-shadow-md">
-                    Unique & Sustainable <br />
-                    Back Packs
+                    {getSectionContent(effectiveSections, "hero")?.title || "Unique & Sustainable Back Packs"}
                   </h1>
+                  {getSectionContent(effectiveSections, "hero")?.subtitle && (
+                    <p className="text-xs sm:text-sm text-stone-200">
+                      {getSectionContent(effectiveSections, "hero")?.subtitle}
+                    </p>
+                  )}
 
                   <div className="pt-2">
                     <button
@@ -265,20 +274,22 @@ export default function BagStoreTemplate({
                       }}
                       className="px-8 py-3.5 rounded-sm bg-[#D4BA9E]/90 hover:bg-[#C8AA8B] text-slate-900 font-bold text-xs uppercase tracking-widest transition duration-300 shadow-md border border-white/40 cursor-pointer active:scale-98"
                     >
-                      SHOP NOW
+                      {getSectionContent(effectiveSections, "hero")?.ctaText || "SHOP NOW"}
                     </button>
                   </div>
                 </div>
               </div>
             </section>
+            )}
 
             {/* ================= SECTION: FEATURED PRODUCTS ================= */}
+            {isSectionEnabled(effectiveSections, "featured_products") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
               {/* Lined Header: ─────── Featured Products ─────── */}
               <div className="flex items-center gap-4 text-center">
                 <div className="flex-1 h-[1px] bg-slate-200" />
                 <h2 className="text-xl sm:text-2xl font-serif text-slate-800 tracking-wide">
-                  Featured Products
+                  {getSectionContent(effectiveSections, "featured_products")?.title || "Featured Products"}
                 </h2>
                 <div className="flex-1 h-[1px] bg-slate-200" />
               </div>
@@ -321,14 +332,16 @@ export default function BagStoreTemplate({
                 </button>
               </div>
             </section>
+            )}
 
             {/* ================= SECTION: NEW RELEASES ================= */}
+            {isSectionEnabled(effectiveSections, "new_releases") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
               {/* Lined Header: ─────── New Releases ─────── */}
               <div className="flex items-center gap-4 text-center">
                 <div className="flex-1 h-[1px] bg-slate-200" />
                 <h2 className="text-xl sm:text-2xl font-serif text-slate-800 tracking-wide">
-                  New Releases
+                  {getSectionContent(effectiveSections, "new_releases")?.title || "New Releases"}
                 </h2>
                 <div className="flex-1 h-[1px] bg-slate-200" />
               </div>
@@ -350,12 +363,14 @@ export default function BagStoreTemplate({
                 ))}
               </div>
             </section>
+            )}
 
             {/* ================= SECTION: SIGN UP FOR OUR NEWSLETTER ================= */}
+            {isSectionEnabled(effectiveSections, "newsletter") && (
             <section className="border-t border-slate-200 pt-12 pb-6">
               <div className="max-w-xl mx-auto px-4 text-center space-y-6">
                 <h3 className="text-lg sm:text-xl font-serif text-slate-800 tracking-wide">
-                  sign up for our newsletter
+                  {getSectionContent(effectiveSections, "newsletter")?.title || "sign up for our newsletter"}
                 </h3>
 
                 {/* Newsletter Input + GO Button (Matches Screenshot) */}
@@ -371,7 +386,7 @@ export default function BagStoreTemplate({
                     type="submit"
                     className="px-6 py-2.5 bg-slate-900 hover:bg-black text-white font-black text-xs uppercase tracking-widest transition cursor-pointer"
                   >
-                    GO
+                    {getSectionContent(effectiveSections, "newsletter")?.buttonText || "GO"}
                   </button>
                 </form>
 
@@ -397,6 +412,7 @@ export default function BagStoreTemplate({
                 </div>
               </div>
             </section>
+            )}
           </div>
         )}
 

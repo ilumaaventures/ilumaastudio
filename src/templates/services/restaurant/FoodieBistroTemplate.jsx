@@ -17,6 +17,7 @@ import ServicesCatalogPage from "../../common/ServicesCatalogPage";
 import PricingPackagesPage from "../../common/PricingPackagesPage";
 import AboutPage from "../../common/AboutPage";
 import ContactPage from "../../common/ContactPage";
+import { isSectionEnabled, getSectionContent } from "../../utils/sectionHelper";
 
 export default function FoodieBistroTemplate({
   business = {},
@@ -24,7 +25,9 @@ export default function FoodieBistroTemplate({
   categories = [],
   reviews = [],
   customization = {},
+  sections = [],
 }) {
+  const effectiveSections = sections && sections.length > 0 ? sections : customization?.sections || [];
   const [activePage, setActivePage] = useState("home"); // "home" | "services" | "pricing" | "about" | "contact"
   const [bookingOpen, setBookingOpen] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
@@ -57,6 +60,10 @@ export default function FoodieBistroTemplate({
             (s.category || "").toLowerCase() === activeCategory.toLowerCase()
         );
 
+  const announcementContent = getSectionContent(effectiveSections, "announcement");
+  const heroContent = getSectionContent(effectiveSections, "hero") || {};
+  const menuContent = getSectionContent(effectiveSections, "menu") || {};
+
   return (
     <div
       className="min-h-screen flex flex-col font-sans transition-colors duration-300"
@@ -68,8 +75,11 @@ export default function FoodieBistroTemplate({
         isService={true}
         themeColors={themeColors}
         announcementText={
-          customization.customContent?.announcement ||
-          "🍷 Michelin-Star Inspired Tasting Menus • Reserve Your Weekend Table"
+          isSectionEnabled(effectiveSections, "announcement")
+            ? (announcementContent?.text ||
+                customization.customContent?.announcement ||
+                "🍷 Michelin-Star Inspired Tasting Menus • Reserve Your Weekend Table")
+            : null
         }
         activePage={activePage}
         onNavigate={handleNavigate}
@@ -80,114 +90,120 @@ export default function FoodieBistroTemplate({
         {activePage === "home" && (
           <>
             {/* Hero Section */}
-            <section className="relative py-20 md:py-28 overflow-hidden">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-                <div className="lg:col-span-7 space-y-6">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-orange-800 text-xs font-bold">
-                    <Flame size={14} className="text-orange-600" />
-                    <span>Artisanal Woodfire & Seasonal Harvest</span>
-                  </div>
+            {isSectionEnabled(effectiveSections, "hero") && (
+              <section className="relative py-20 md:py-28 overflow-hidden">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                  <div className="lg:col-span-7 space-y-6">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-orange-800 text-xs font-bold">
+                      <Flame size={14} className="text-orange-600" />
+                      <span>{heroContent.badge || "Artisanal Woodfire & Seasonal Harvest"}</span>
+                    </div>
 
-                  <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-orange-950 leading-tight">
-                    {customization.heroHeadline || "Culinary Passion on Every Plate."}
-                  </h1>
+                    <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-orange-950 leading-tight">
+                      {heroContent.title || customization.heroHeadline || "Culinary Passion on Every Plate."}
+                    </h1>
 
-                  <p className="text-xs sm:text-sm text-orange-950/80 leading-relaxed max-w-xl font-normal">
-                    {customization.heroSubtitle ||
-                      "Farm-fresh locally sourced ingredients, handcrafted pasta, aged steaks, and artisanal cocktails prepared by master chefs."}
-                  </p>
+                    <p className="text-xs sm:text-sm text-orange-950/80 leading-relaxed max-w-xl font-normal">
+                      {heroContent.subtitle ||
+                        customization.heroSubtitle ||
+                        "Farm-fresh locally sourced ingredients, handcrafted pasta, aged steaks, and artisanal cocktails prepared by master chefs."}
+                    </p>
 
-                  <div className="flex flex-wrap gap-4 pt-2">
-                    <button
-                      onClick={() => handleBookTable()}
-                      className="px-8 py-4 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg transition flex items-center gap-2 cursor-pointer"
-                    >
-                      <Calendar size={16} />
-                      <span>Reserve a Table</span>
-                    </button>
-                    <button
-                      onClick={() => handleNavigate("services")}
-                      className="px-6 py-4 bg-white border border-orange-200 text-orange-950 font-bold text-xs uppercase tracking-wider rounded-2xl shadow-xs hover:bg-orange-50 transition cursor-pointer"
-                    >
-                      Explore Menu
-                    </button>
-                  </div>
-                </div>
-
-                <div className="lg:col-span-5">
-                  <div className="aspect-4/3 rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
-                    <img
-                      src={
-                        customization.heroBanner ||
-                        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=900&auto=format&fit=crop&q=80"
-                      }
-                      alt="Bistro Interior"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Chef Highlights */}
-            <section className="py-16 bg-white border-y border-orange-100">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-                <div className="flex items-end justify-between">
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-orange-600">
-                      Signature Dishes
-                    </span>
-                    <h2 className="text-3xl font-black text-orange-950">
-                      Chef's Tasting Menu
-                    </h2>
-                  </div>
-                  <button
-                    onClick={() => handleNavigate("services")}
-                    className="text-xs font-bold text-orange-700 hover:text-orange-900 flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>View Complete Menu</span>
-                    <ArrowRight size={14} />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredDishes.slice(0, 6).map((dish) => (
-                    <div
-                      key={dish._id}
-                      className="p-5 rounded-3xl bg-orange-50/50 border border-orange-100/80 hover:shadow-md transition flex flex-col justify-between"
-                    >
-                      <div className="space-y-3">
-                        <div className="aspect-16/10 rounded-2xl overflow-hidden bg-orange-100">
-                          <img
-                            src={dish.image}
-                            alt={dish.serviceName}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="flex justify-between items-baseline">
-                          <h4 className="text-base font-bold text-orange-950">
-                            {dish.serviceName}
-                          </h4>
-                          <span className="text-sm font-black text-orange-600">
-                            ₹{Number(dish.price).toFixed(2)}
-                          </span>
-                        </div>
-                        <p className="text-xs text-orange-950/70 leading-relaxed line-clamp-2">
-                          {dish.description}
-                        </p>
-                      </div>
-
+                    <div className="flex flex-wrap gap-4 pt-2">
                       <button
-                        onClick={() => handleBookTable(dish)}
-                        className="w-full mt-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+                        onClick={() => handleBookTable()}
+                        className="px-8 py-4 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg transition flex items-center gap-2 cursor-pointer"
                       >
-                        Reserve Table for This Dish
+                        <Calendar size={16} />
+                        <span>{heroContent.ctaText || "Reserve a Table"}</span>
+                      </button>
+                      <button
+                        onClick={() => handleNavigate("services")}
+                        className="px-6 py-4 bg-white border border-orange-200 text-orange-950 font-bold text-xs uppercase tracking-wider rounded-2xl shadow-xs hover:bg-orange-50 transition cursor-pointer"
+                      >
+                        Explore Menu
                       </button>
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="lg:col-span-5">
+                    <div className="aspect-4/3 rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
+                      <img
+                        src={
+                          heroContent.image ||
+                          customization.heroBanner ||
+                          "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=900&auto=format&fit=crop&q=80"
+                        }
+                        alt="Bistro Interior"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            )}
+
+            {/* Chef Highlights */}
+            {isSectionEnabled(effectiveSections, "menu") && (
+              <section className="py-16 bg-white border-y border-orange-100">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-orange-600">
+                        {menuContent.subtitle || "Signature Dishes"}
+                      </span>
+                      <h2 className="text-3xl font-black text-orange-950">
+                        {menuContent.title || "Chef's Tasting Menu"}
+                      </h2>
+                    </div>
+                    <button
+                      onClick={() => handleNavigate("services")}
+                      className="text-xs font-bold text-orange-700 hover:text-orange-900 flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>View Complete Menu</span>
+                      <ArrowRight size={14} />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredDishes.slice(0, 6).map((dish) => (
+                      <div
+                        key={dish._id}
+                        className="p-5 rounded-3xl bg-orange-50/50 border border-orange-100/80 hover:shadow-md transition flex flex-col justify-between"
+                      >
+                        <div className="space-y-3">
+                          <div className="aspect-16/10 rounded-2xl overflow-hidden bg-orange-100">
+                            <img
+                              src={dish.image}
+                              alt={dish.serviceName}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex justify-between items-baseline">
+                            <h4 className="text-base font-bold text-orange-950">
+                              {dish.serviceName}
+                            </h4>
+                            <span className="text-sm font-black text-orange-600">
+                              ₹{Number(dish.price).toFixed(2)}
+                            </span>
+                          </div>
+                          <p className="text-xs text-orange-950/70 leading-relaxed line-clamp-2">
+                            {dish.description}
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={() => handleBookTable(dish)}
+                          className="w-full mt-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+                        >
+                          Reserve Table for This Dish
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
           </>
         )}
 

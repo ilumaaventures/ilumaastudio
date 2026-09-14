@@ -42,6 +42,7 @@ import toast from "react-hot-toast";
 import { isOutOfStock } from "../../../utils/stockUtils";
 import CartDrawer from "../../common/CartDrawer";
 import { getProductImage } from "../../../utils/productImage";
+import { isSectionEnabled, getSectionContent } from "../../utils/sectionHelper";
 
 // Modular Components
 import Navbar from "./Navbar";
@@ -58,7 +59,10 @@ export default function TechNovaTemplate({
   offers = [],
   reviews = [],
   customization = {},
+  sections = [],
 }) {
+  const effectiveSections =
+    sections && sections.length > 0 ? sections : customization?.sections || [];
   // Navigation: "home" | "specs" | "compare" | "offers" | "product-detail"
   const [activePage, setActivePage] = useState("home");
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -554,20 +558,21 @@ export default function TechNovaTemplate({
         {activePage === "home" && (
           <div className="space-y-10 py-6 text-left">
             {/* ================= SECTION 1: TOP LIMITED WEEK DEAL ================= */}
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
-                {/* Deal Header */}
-                <div className="bg-[#F8FAFC] border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#EAB308] animate-ping" />
-                    <h2 className="text-sm sm:text-base font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
-                      <span>WEEK DEAL</span>
-                      <span className="text-slate-400 font-normal">|</span>
-                      <span className="text-xs text-rose-600 font-bold">
-                        HURRY UP BEFORE OFFER WILL END
-                      </span>
-                    </h2>
-                  </div>
+            {isSectionEnabled(effectiveSections, "week_deal") && (
+              <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
+                  {/* Deal Header */}
+                  <div className="bg-[#F8FAFC] border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#EAB308] animate-ping" />
+                      <h2 className="text-sm sm:text-base font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                        <span>{getSectionContent(effectiveSections, "week_deal")?.badge?.split("|")[0]?.trim() || "WEEK DEAL"}</span>
+                        <span className="text-slate-400 font-normal">|</span>
+                        <span className="text-xs text-rose-600 font-bold">
+                          {getSectionContent(effectiveSections, "week_deal")?.badge?.split("|")[1]?.trim() || "HURRY UP BEFORE OFFER WILL END"}
+                        </span>
+                      </h2>
+                    </div>
 
                   {/* Countdown Timer */}
                   <div className="flex items-center gap-1 text-xs font-bold text-slate-700">
@@ -694,14 +699,16 @@ export default function TechNovaTemplate({
                 </div>
               </div>
             </section>
+            )}
 
             {/* ================= SECTION 2: SAVE BIG ON WAREHOUSE CLEANING ================= */}
+            {isSectionEnabled(effectiveSections, "warehouse_deals") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b-2 border-slate-100 pb-3">
                 {/* Yellow Underlined Title */}
                 <div className="relative">
                   <h3 className="text-xl sm:text-2xl font-black text-slate-900">
-                    Save Big on Warehouse Cleaning
+                    {getSectionContent(effectiveSections, "warehouse_deals")?.title || "Save Big on Warehouse Cleaning"}
                   </h3>
                   <div className="h-1 w-28 bg-[#EAB308] rounded-full mt-1.5" />
                 </div>
@@ -764,8 +771,10 @@ export default function TechNovaTemplate({
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
               </div>
             </section>
+            )}
 
             {/* ================= SECTION 3: DUAL CATEGORY PROMO BANNERS ================= */}
+            {isSectionEnabled(effectiveSections, "category_banners") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Banner 1: Cameras */}
@@ -839,13 +848,15 @@ export default function TechNovaTemplate({
                 </div>
               </div>
             </section>
+            )}
 
             {/* ================= SECTION 4: TRENDING PRODUCTS ================= */}
+            {isSectionEnabled(effectiveSections, "trending_products") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
               <div className="flex items-end justify-between border-b-2 border-slate-100 pb-3">
                 <div className="relative">
                   <h3 className="text-xl sm:text-2xl font-black text-slate-900">
-                    Trending products
+                    {getSectionContent(effectiveSections, "trending_products")?.title || "Trending products"}
                   </h3>
                   <div className="h-1 w-20 bg-[#EAB308] rounded-full mt-1.5" />
                 </div>
@@ -889,13 +900,15 @@ export default function TechNovaTemplate({
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
               </div>
             </section>
+            )}
 
             {/* ================= SECTION 5: POPULAR PRODUCTS ================= */}
+            {isSectionEnabled(effectiveSections, "popular_products") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
               <div className="flex items-end justify-between border-b-2 border-slate-100 pb-3">
                 <div className="relative">
                   <h3 className="text-xl sm:text-2xl font-black text-slate-900">
-                    Popular Products
+                    {getSectionContent(effectiveSections, "popular_products")?.title || "Popular Products"}
                   </h3>
                   <div className="h-1 w-20 bg-[#EAB308] rounded-full mt-1.5" />
                 </div>
@@ -939,18 +952,19 @@ export default function TechNovaTemplate({
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
               </div>
             </section>
+            )}
 
             {/* ================= SECTION 6: WIDE TABLET PROMO BANNER ================= */}
+            {isSectionEnabled(effectiveSections, "promo_banner") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="rounded-3xl bg-gradient-to-r from-[#F1F5F9] via-[#F8FAFC] to-[#F1F5F9] border border-slate-200 p-8 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs overflow-hidden">
                 <div className="space-y-3 max-w-lg">
                   <div className="flex items-center gap-3 flex-wrap">
                     <h3 className="text-xl sm:text-2xl font-black text-slate-900">
-                      SHOP AND <span className="text-slate-900">SAVE BIG</span>{" "}
-                      ON HOTTEST TABLETS
+                      {getSectionContent(effectiveSections, "promo_banner")?.title || "SHOP AND SAVE BIG ON HOTTEST TABLETS"}
                     </h3>
                     <span className="px-3 py-1 rounded-xl bg-[#EAB308] text-slate-950 font-black text-xs shadow-xs">
-                      STARTING AT $79.99
+                      {getSectionContent(effectiveSections, "promo_banner")?.badge || "STARTING AT $79.99"}
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 leading-relaxed">
@@ -977,13 +991,15 @@ export default function TechNovaTemplate({
                 </div>
               </div>
             </section>
+            )}
 
             {/* ================= SECTION 7: LAPTOPS & COMPUTERS ================= */}
+            {isSectionEnabled(effectiveSections, "laptops") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
               <div className="flex items-end justify-between border-b-2 border-slate-100 pb-3">
                 <div className="relative">
                   <h3 className="text-xl sm:text-2xl font-black text-slate-900">
-                    Laptops & Computers
+                    {getSectionContent(effectiveSections, "laptops")?.title || "Laptops & Computers"}
                   </h3>
                   <div className="h-1 w-24 bg-[#EAB308] rounded-full mt-1.5" />
                 </div>
@@ -1027,16 +1043,18 @@ export default function TechNovaTemplate({
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
               </div>
             </section>
+            )}
 
             {/* ================= SECTION 8: TELEVISION ENTERTAINMENT ================= */}
+            {isSectionEnabled(effectiveSections, "tv_entertainment") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
               <div className="flex items-end justify-between border-b-2 border-slate-100 pb-3">
                 <div className="relative flex items-center gap-2">
                   <h3 className="text-xl sm:text-2xl font-black text-slate-900">
-                    Television Entertainment
+                    {getSectionContent(effectiveSections, "tv_entertainment")?.title || "Television Entertainment"}
                   </h3>
                   <span className="px-2.5 py-0.5 rounded-md bg-[#EAB308] text-slate-950 font-black text-[10px]">
-                    Top 20
+                    {getSectionContent(effectiveSections, "tv_entertainment")?.badge || "Top 20"}
                   </span>
                 </div>
 
@@ -1107,6 +1125,7 @@ export default function TechNovaTemplate({
                 ))}
               </div>
             </section>
+            )}
           </div>
         )}
 

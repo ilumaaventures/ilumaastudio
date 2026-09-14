@@ -24,6 +24,7 @@ import toast from "react-hot-toast";
 import { isOutOfStock } from "../../../utils/stockUtils";
 import CartDrawer from "../../common/CartDrawer";
 import { getProductImage } from "../../../utils/productImage";
+import { isSectionEnabled, getSectionContent } from "../../utils/sectionHelper";
 
 import Navbar from "./Navbar";
 import Footer from "./Footer";
@@ -38,7 +39,10 @@ export default function LuxeJewelsTemplate({
   offers = [],
   reviews = [],
   customization = {},
+  sections = [],
 }) {
+  const effectiveSections =
+    sections && sections.length > 0 ? sections : customization?.sections || [];
   // Navigation: "home" | "catalog" | "product-detail"
   const [activePage, setActivePage] = useState("home");
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -281,11 +285,12 @@ export default function LuxeJewelsTemplate({
         {activePage === "home" && (
           <div className="space-y-16 sm:space-y-24">
             {/* 1. EDITORIAL MOODY HERO SECTION */}
+            {isSectionEnabled(effectiveSections, "hero") && (
             <section className="relative min-h-[460px] lg:min-h-[560px] flex items-center justify-center text-center overflow-hidden bg-stone-950">
               <div
                 className="absolute inset-0 bg-cover bg-center"
                 style={{
-                  backgroundImage: `url('https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1600&auto=format&fit=crop&q=80')`,
+                  backgroundImage: `url('${getSectionContent(effectiveSections, "hero")?.bgImage || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1600&auto=format&fit=crop&q=80"}')`,
                 }}
               >
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-[0.5px]" />
@@ -293,10 +298,10 @@ export default function LuxeJewelsTemplate({
 
               <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 py-20 space-y-4 text-white">
                 <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold font-serif tracking-tight leading-tight">
-                  Trust us. We are the best
+                  {getSectionContent(effectiveSections, "hero")?.title || "Trust us. We are the best"}
                 </h1>
                 <p className="text-xs sm:text-sm text-stone-300 font-normal tracking-wide">
-                  Having an exclusive range of handmade jewelry
+                  {getSectionContent(effectiveSections, "hero")?.subtitle || "Having an exclusive range of handmade jewelry"}
                 </p>
                 <div className="pt-4">
                   <button
@@ -308,16 +313,18 @@ export default function LuxeJewelsTemplate({
                     }}
                     className="inline-block px-8 py-2.5 border border-white text-white hover:bg-white hover:text-stone-900 text-xs font-semibold tracking-widest uppercase transition duration-300 cursor-pointer"
                   >
-                    Shop Collection
+                    {getSectionContent(effectiveSections, "hero")?.ctaText || "Shop Collection"}
                   </button>
                 </div>
               </div>
             </section>
+            )}
 
             {/* 2. TOP CURATED CATEGORIES SHOWCASE BANNER */}
+            {isSectionEnabled(effectiveSections, "categories") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 text-center">
               <p className="text-xs sm:text-sm text-stone-600 font-serif italic max-w-lg mx-auto">
-                "Choose us for complex, special and stylish designs you have never seen before."
+                "{getSectionContent(effectiveSections, "categories")?.subtitle || "Choose us for complex, special and stylish designs you have never seen before."}"
               </p>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
@@ -379,15 +386,17 @@ export default function LuxeJewelsTemplate({
                 ))}
               </div>
             </section>
+            )}
 
             {/* 3. WEEKLY SALES TABBED SHOWCASE 1 */}
+            {isSectionEnabled(effectiveSections, "featured_products") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 text-center">
               <div className="space-y-1">
                 <h2 className="text-xl sm:text-2xl font-serif font-bold text-stone-900">
-                  Don't miss this weeks sales
+                  {getSectionContent(effectiveSections, "featured_products")?.title || "Don't miss this weeks sales"}
                 </h2>
                 <p className="text-xs text-stone-500">
-                  Handmade jewelry that always makes you happy
+                  {getSectionContent(effectiveSections, "featured_products")?.subtitle || "Handmade jewelry that always makes you happy"}
                 </p>
               </div>
 
@@ -430,8 +439,10 @@ export default function LuxeJewelsTemplate({
                 ))}
               </div>
             </section>
+            )}
 
             {/* 4. IN-STORE SHOWROOM PROMO SECTION */}
+            {isSectionEnabled(effectiveSections, "showroom") && (
             <section className="bg-[#FAF9F8] py-12 sm:py-16 border-y border-stone-200/80">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center text-left">
@@ -441,10 +452,10 @@ export default function LuxeJewelsTemplate({
                       IN-STORE PROMO SHOWROOM
                     </span>
                     <h2 className="text-2xl sm:text-3xl font-bold font-serif text-stone-900">
-                      Our Showroom
+                      {getSectionContent(effectiveSections, "showroom")?.title || "Our Showroom"}
                     </h2>
                     <p className="text-xs text-stone-600 leading-relaxed max-w-sm">
-                      Massa. Ambiantal praehulo benpoffering, reumatiek omegaammara. Morri gahno ebijenjukan till IVPA. Näringslivs franta vurst i kammuldelan lkasom giggning.
+                      {getSectionContent(effectiveSections, "showroom")?.subtitle || "Massa. Ambiantal praehulo benpoffering, reumatiek omegaammara. Morri gahno ebijenjukan till IVPA. Näringslivs franta vurst i kammuldelan lkasom giggning."}
                     </p>
 
                     <div className="space-y-0.5 text-xs text-stone-700 pt-2 border-t border-stone-200">
@@ -474,15 +485,17 @@ export default function LuxeJewelsTemplate({
                 </div>
               </div>
             </section>
+            )}
 
             {/* 5. MID-PAGE FEATURE SPOTLIGHT: "JEWELRY THAT SPEAKS" */}
+            {isSectionEnabled(effectiveSections, "feature_spotlight") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 text-center">
               <div className="space-y-1">
                 <h2 className="text-xl sm:text-2xl font-serif font-bold text-stone-900">
-                  Don't miss this week's sales
+                  {getSectionContent(effectiveSections, "feature_spotlight")?.title || "Don't miss this week's sales"}
                 </h2>
                 <p className="text-xs text-stone-500">
-                  The craftsmanship that aims to make you look beautiful
+                  {getSectionContent(effectiveSections, "feature_spotlight")?.subtitle || "The craftsmanship that aims to make you look beautiful"}
                 </p>
               </div>
 
@@ -553,15 +566,17 @@ export default function LuxeJewelsTemplate({
                 </div>
               </div>
             </section>
+            )}
 
             {/* 6. SECONDARY WEEKLY SALES TABBED PRODUCT GRID */}
+            {isSectionEnabled(effectiveSections, "secondary_sales") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 text-center">
               <div className="space-y-1">
                 <h2 className="text-xl sm:text-2xl font-serif font-bold text-stone-900">
-                  Don't miss this weeks sales
+                  {getSectionContent(effectiveSections, "secondary_sales")?.title || "Don't miss this weeks sales"}
                 </h2>
                 <p className="text-xs text-stone-500">
-                  Having an exclusive range of handmade jewelry
+                  {getSectionContent(effectiveSections, "secondary_sales")?.subtitle || "Having an exclusive range of handmade jewelry"}
                 </p>
               </div>
 
@@ -604,8 +619,10 @@ export default function LuxeJewelsTemplate({
                 ))}
               </div>
             </section>
+            )}
 
             {/* 7. ARTISANAL STORYTELLING SHOWCASE */}
+            {isSectionEnabled(effectiveSections, "story") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center text-left">
                 {/* Left Card + Model Photo */}
@@ -656,6 +673,7 @@ export default function LuxeJewelsTemplate({
                 </div>
               </div>
             </section>
+            )}
           </div>
         )}
 

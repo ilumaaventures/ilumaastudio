@@ -91,7 +91,7 @@ export default function StarlingFooter() {
             </Link>
             <p className="text-xs text-[#FAF6F0]/70 leading-relaxed font-serif max-w-sm">
               {business?.description ||
-                "We chronicle old tales through heirloom keepsakes, handmade botanical formulations, and custom poetry. Each artifact is crafted by local residents and dedicated makers."}
+                "Thank you for choosing heirloom over ordinary, and becoming a patron of thoughtful craftsmanship and timeless keepsakes"}
             </p>
           </div>
 

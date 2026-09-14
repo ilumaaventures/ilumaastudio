@@ -30,6 +30,7 @@ import toast from "react-hot-toast";
 import { isOutOfStock } from "../../../utils/stockUtils";
 import CartDrawer from "../../common/CartDrawer";
 import { getProductImage } from "../../../utils/productImage";
+import { isSectionEnabled, getSectionContent } from "../../utils/sectionHelper";
 
 // Import modular sub-components
 import Navbar from "./Navbar";
@@ -46,7 +47,10 @@ export default function GlowBeautyTemplate({
   offers = [],
   reviews = [],
   customization = {},
+  sections = [],
 }) {
+  const effectiveSections =
+    sections && sections.length > 0 ? sections : customization?.sections || [];
   // Navigation: "home" | "catalog" | "offers" | "product-detail"
   const [activePage, setActivePage] = useState("home");
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -358,6 +362,7 @@ export default function GlowBeautyTemplate({
         {activePage === "home" && (
           <>
             {/* ================= HERO SECTION (REFERENCE MATCH) ================= */}
+            {isSectionEnabled(effectiveSections, "hero") && (
             <section className="relative overflow-hidden bg-[#F6F4F0] pt-12 pb-16 md:pt-20 md:pb-24 border-b border-[#E8E2D9]">
               {/* Subtle background glow */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-[#F2ECE4] to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
@@ -368,15 +373,15 @@ export default function GlowBeautyTemplate({
                   <div className="lg:col-span-6 space-y-6 text-left">
                     <div className="space-y-1">
                       <span className="font-serif italic text-2xl sm:text-3xl text-stone-500 font-normal tracking-wide block">
-                        New Season
+                        {getSectionContent(effectiveSections, "hero")?.badge || "New Season"}
                       </span>
                       <h1 className="text-4xl sm:text-6xl font-serif font-black tracking-tight text-[#2B2824] leading-[1.1]">
-                        Pure Botanical Skincare.
+                        {getSectionContent(effectiveSections, "hero")?.title || "Pure Botanical Skincare."}
                       </h1>
                     </div>
 
                     <p className="text-sm sm:text-base text-stone-600 leading-relaxed max-w-lg">
-                      Cold-pressed plant lipids, restorative ceramides, and multi-depth hydration designed to strengthen your skin barrier naturally.
+                      {getSectionContent(effectiveSections, "hero")?.subtitle || "Cold-pressed plant lipids, restorative ceramides, and multi-depth hydration designed to strengthen your skin barrier naturally."}
                     </p>
 
                     <div className="flex flex-wrap gap-4 pt-2">
@@ -473,12 +478,14 @@ export default function GlowBeautyTemplate({
                 </div>
               </div>
             </section>
+            )}
 
             {/* ================= TRENDING PRODUCTS SECTION (REFERENCE MATCH) ================= */}
+            {isSectionEnabled(effectiveSections, "trending_products") && (
             <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 text-center">
               <div className="space-y-4">
                 <h2 className="text-3xl sm:text-4xl font-serif font-black text-[#2B2824]">
-                  Trending Products
+                  {getSectionContent(effectiveSections, "trending_products")?.title || "Trending Products"}
                 </h2>
 
                 {/* Sub-tabs with dot indicator */}
@@ -554,8 +561,10 @@ export default function GlowBeautyTemplate({
                 </button>
               </div>
             </section>
+            )}
 
             {/* ================= DUAL EDITORIAL PROMO BANNERS (REFERENCE MATCH) ================= */}
+            {isSectionEnabled(effectiveSections, "editorial_banners") && (
             <section className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Banner 1: LANEIGE / Make Up Is An Art */}
@@ -635,8 +644,10 @@ export default function GlowBeautyTemplate({
                 </div>
               </div>
             </section>
+            )}
 
             {/* ================= INTERACTIVE BEFORE & AFTER SKIN BENEFITS SECTION (REFERENCE MATCH) ================= */}
+            {isSectionEnabled(effectiveSections, "before_after") && (
             <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-left">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                 {/* Left Column: Draggable Real-Time Before & After Comparison Slider */}
@@ -864,8 +875,10 @@ export default function GlowBeautyTemplate({
                 </div>
               </div>
             </section>
+            )}
 
             {/* ================= WINTER BODY CARE & BOTANICAL INGREDIENTS DIAGRAM (REFERENCE MATCH) ================= */}
+            {isSectionEnabled(effectiveSections, "botanical_ingredients") && (
             <section className="py-20 bg-[#FAF0EE] border-t border-[#EBDCD8] relative overflow-hidden text-left">
               {/* Decorative delicate botanical vector outlines in background */}
               <div className="absolute left-8 top-10 w-48 h-48 opacity-15 pointer-events-none">
@@ -1022,6 +1035,7 @@ export default function GlowBeautyTemplate({
                 </div>
               </div>
             </section>
+            )}
           </>
         )}
 

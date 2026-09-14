@@ -34,7 +34,7 @@ export default function ProductCard({
   const wishlistItems = useSelector((s) => s.wishlist?.items || []);
   const compareItems = useSelector((s) => s.compare?.items || []);
   const cartItems = useSelector(
-    (s) => s.cart?.cartItems || s.cart?.items || []
+    (s) => s.cart?.cartItems || s.cart?.items || [],
   );
 
   const [copiedLink, setCopiedLink] = useState(false);
@@ -45,7 +45,7 @@ export default function ProductCard({
 
   // Check compare state
   const isCompared = compareItems.some(
-    (i) => String(i.id || i._id) === String(prodId)
+    (i) => String(i.id || i._id) === String(prodId),
   );
 
   // Check wishlist state
@@ -118,20 +118,21 @@ export default function ProductCard({
     product.discountPercent !== undefined
       ? Number(product.discountPercent)
       : displayOriginalPrice && displayOriginalPrice > displayPrice
-      ? Math.round(
-          ((displayOriginalPrice - displayPrice) / displayOriginalPrice) * 100
-        )
-      : 0;
+        ? Math.round(
+            ((displayOriginalPrice - displayPrice) / displayOriginalPrice) *
+              100,
+          )
+        : 0;
 
   // Normalize Rating and Reviews
-  const ratingValue = Number(
-    product.rating || product.ratings || 4.8
-  ).toFixed(1);
+  const ratingValue = Number(product.rating || product.ratings || 4.8).toFixed(
+    1,
+  );
   const reviewsCount = Array.isArray(product.reviews)
     ? product.reviews.length
     : typeof product.reviews === "number"
-    ? product.reviews
-    : product.numReviews || product.reviewsCount || 124;
+      ? product.reviews
+      : product.numReviews || product.reviewsCount || 124;
 
   // Stock status
   const inStock = (() => {
@@ -154,12 +155,12 @@ export default function ProductCard({
       product.inventory?.stockQuantity !== undefined
         ? Number(product.inventory.stockQuantity)
         : product.stockQuantity !== undefined
-        ? Number(product.stockQuantity)
-        : product.stock !== undefined
-        ? Number(product.stock)
-        : product.countInStock !== undefined
-        ? Number(product.countInStock)
-        : 1;
+          ? Number(product.stockQuantity)
+          : product.stock !== undefined
+            ? Number(product.stock)
+            : product.countInStock !== undefined
+              ? Number(product.countInStock)
+              : 1;
     return s > 0;
   })();
 
@@ -185,7 +186,7 @@ export default function ProductCard({
         category: categoryName,
         rating: ratingValue,
         inStock,
-      })
+      }),
     );
     if (isWished) {
       toast.success("Removed from Wishlist");
@@ -265,10 +266,10 @@ export default function ProductCard({
       product.category?.tax !== null
         ? Number(product.category.tax)
         : product.categoryTax !== undefined && product.categoryTax !== null
-        ? Number(product.categoryTax)
-        : product.tax !== undefined && product.tax !== null
-        ? Number(product.tax)
-        : 0;
+          ? Number(product.categoryTax)
+          : product.tax !== undefined && product.tax !== null
+            ? Number(product.tax)
+            : 0;
 
     dispatch(
       addToCart({
@@ -286,7 +287,7 @@ export default function ProductCard({
           selectedOptions: defaultVariant ? defaultVariant.optionValues : null,
         },
         quantity: 1,
-      })
+      }),
     );
 
     toast.success(`${productName} added to cart! 🛍️`);
@@ -326,7 +327,11 @@ export default function ProductCard({
 
     const lower = String(badgeRaw).toLowerCase();
 
-    if (lower.includes("best") || lower.includes("seller") || lower.includes("hot")) {
+    if (
+      lower.includes("best") ||
+      lower.includes("seller") ||
+      lower.includes("hot")
+    ) {
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold text-white bg-[#FF6B00] shadow-xs">
           <Sparkles size={10} className="shrink-0" />
@@ -335,7 +340,11 @@ export default function ProductCard({
       );
     }
 
-    if (lower.includes("trend") || lower.includes("feature") || lower.includes("new")) {
+    if (
+      lower.includes("trend") ||
+      lower.includes("feature") ||
+      lower.includes("new")
+    ) {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold text-white bg-[#2563EB] shadow-xs">
           <span>Trending</span>
@@ -375,9 +384,7 @@ export default function ProductCard({
       ========================================================== */}
       <div className="relative aspect-[4/3] sm:aspect-square w-full rounded-xl overflow-hidden bg-slate-50 border border-slate-100/90 select-none">
         {/* Top-Left Category / Status Badge */}
-        <div className="absolute left-2.5 top-2.5 z-20">
-          {renderBadge()}
-        </div>
+        <div className="absolute left-2.5 top-2.5 z-20">{renderBadge()}</div>
 
         {/* Top-Right Circular White Wishlist Button */}
         {showWishlist && (
@@ -430,17 +437,6 @@ export default function ProductCard({
       <div className="flex flex-1 flex-col pt-3 space-y-1">
         {/* Brand & Category Row: [Icon Brand | CATEGORY] */}
         <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium truncate">
-          <div className="w-4 h-4 rounded-full bg-amber-100 border border-amber-200/80 flex items-center justify-center shrink-0 overflow-hidden">
-            {product.business?.logo ? (
-              <img
-                src={product.business.logo}
-                alt=""
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-[9px]">🌸</span>
-            )}
-          </div>
           <span className="font-semibold text-slate-700 truncate max-w-[120px]">
             {businessName}
           </span>
@@ -456,9 +452,9 @@ export default function ProductCard({
         </h3>
 
         {/* Short Subtitle / Description */}
-        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed min-h-[34px]">
+        {/* <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed min-h-[34px]">
           {subtitleText}
-        </p>
+        </p> */}
 
         {/* Rating Row: ⭐ 4.8 (210 reviews) */}
         <div className="flex items-center gap-1.5 pt-0.5">
@@ -466,7 +462,9 @@ export default function ProductCard({
             size={13}
             className="fill-amber-400 text-amber-400 shrink-0 stroke-amber-400"
           />
-          <span className="text-xs font-bold text-slate-800">{ratingValue}</span>
+          <span className="text-xs font-bold text-slate-800">
+            {ratingValue}
+          </span>
           <span className="text-xs text-slate-400 font-normal">
             ({reviewsCount} reviews)
           </span>
@@ -556,7 +554,7 @@ export default function ProductCard({
                 rating: ratingValue,
                 reviewsCount: reviewsCount,
                 inStock,
-              })
+              }),
             );
           }}
           title={isCompared ? "Remove from comparison" : "Add to comparison"}

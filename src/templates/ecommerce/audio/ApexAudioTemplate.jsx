@@ -11,6 +11,7 @@ import { isOutOfStock } from "../../../utils/stockUtils";
 import CartDrawer from "../../common/CartDrawer";
 import CouponPromoTicker from "../../common/CouponPromoTicker";
 import { Heart, X, ShoppingBag } from "lucide-react";
+import { isSectionEnabled, getSectionContent } from "../../utils/sectionHelper";
 
 // Sub-components
 import Navbar from "./Navbar";
@@ -33,7 +34,9 @@ export default function ApexAudioTemplate({
   coupons = [],
   offers = [],
   customization = {},
+  sections = [],
 }) {
+  const effectiveSections = sections && sections.length > 0 ? sections : customization?.sections || [];
   const [activePage, setActivePage] = useState("home"); // "home" | "product-detail"
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeCategory, setActiveCategory] = useState("all");
@@ -175,7 +178,9 @@ export default function ApexAudioTemplate({
   return (
     <div className="w-full min-h-screen bg-white text-[#121212] font-sans antialiased selection:bg-black selection:text-white">
       {/* Dynamic Store Coupon Bar */}
-      <CouponPromoTicker coupons={coupons} theme="dark" />
+      {isSectionEnabled(effectiveSections, "announcement") && (
+        <CouponPromoTicker coupons={coupons} theme="dark" />
+      )}
 
       {/* Top Navbar */}
       <Navbar
@@ -277,95 +282,120 @@ export default function ApexAudioTemplate({
           /* Exact Visual Flow Matching Reference Images 1 & 2 */
           <>
             {/* 1. Hero Macro Banner with 3-Dot Pagination */}
-            <HeroMacroBanner
-              slides={activeHeroSlides}
-              onSelectCategory={(cat) => setActiveCategory(cat)}
-            />
+            {isSectionEnabled(effectiveSections, "hero") && (
+              <HeroMacroBanner
+                slides={activeHeroSlides}
+                onSelectCategory={(cat) => setActiveCategory(cat)}
+              />
+            )}
 
             {/* 2. "SHOP BY CATEGORIES" Asymmetric Grid */}
-            <CategoryTiles
-              categories={rawCategories}
-              onSelectCategory={(cat) => {
-                setActiveCategory(cat);
-                const el = document.getElementById(`section-${cat}`);
-                if (el) el.scrollIntoView({ behavior: "smooth" });
-              }}
-            />
+            {isSectionEnabled(effectiveSections, "categories") && (
+              <CategoryTiles
+                categories={rawCategories}
+                onSelectCategory={(cat) => {
+                  setActiveCategory(cat);
+                  const el = document.getElementById(`section-${cat}`);
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }}
+              />
+            )}
 
             {/* 3. HEADPHONES Section (8 Models from Reference Image 1) */}
-            <ProductGridSection
-              id="section-headphones"
-              title="HEADPHONES"
-              products={headphonesList}
-              currency={currency}
-              wishlistIds={wishlistIds}
-              onToggleWishlist={handleToggleWishlist}
-              onAddToCart={handleAddToCart}
-              onSelectProduct={handleSelectProduct}
-              onViewAll={() => setActiveCategory("headphones")}
-            />
+            {isSectionEnabled(effectiveSections, "headphones") && (
+              <ProductGridSection
+                id="section-headphones"
+                title={getSectionContent(effectiveSections, "headphones")?.title || "HEADPHONES"}
+                products={headphonesList}
+                currency={currency}
+                wishlistIds={wishlistIds}
+                onToggleWishlist={handleToggleWishlist}
+                onAddToCart={handleAddToCart}
+                onSelectProduct={handleSelectProduct}
+                onViewAll={() => setActiveCategory("headphones")}
+              />
+            )}
 
             {/* 4. Feature Card 1: "MW08 - A leap forward" */}
-            <EditorialPromoCard
-              title={audioDemoData.editorialSections.mw08Leap.title}
-              description={audioDemoData.editorialSections.mw08Leap.description}
-              buttonText={audioDemoData.editorialSections.mw08Leap.buttonText}
-              image={audioDemoData.editorialSections.mw08Leap.image}
-              imageAlt={audioDemoData.editorialSections.mw08Leap.imageAlt}
-              onPrimaryClick={() => {
-                const p = rawProducts.find((item) => item._id === "prod-ep-05");
-                if (p) handleSelectProduct(p);
-                else setActiveCategory("earphones");
-              }}
-            />
+            {isSectionEnabled(effectiveSections, "editorial_promo_1") && (() => {
+              const promo1 = getSectionContent(effectiveSections, "editorial_promo_1") || {};
+              return (
+              <EditorialPromoCard
+                title={promo1.title || audioDemoData.editorialSections.mw08Leap.title}
+                description={promo1.description || audioDemoData.editorialSections.mw08Leap.description}
+                buttonText={promo1.buttonText || audioDemoData.editorialSections.mw08Leap.buttonText}
+                image={promo1.image || audioDemoData.editorialSections.mw08Leap.image}
+                imageAlt={audioDemoData.editorialSections.mw08Leap.imageAlt}
+                onPrimaryClick={() => {
+                  const p = rawProducts.find((item) => item._id === "prod-ep-05");
+                  if (p) handleSelectProduct(p);
+                  else setActiveCategory("earphones");
+                }}
+              />
+              );
+            })()}
 
             {/* 5. EARPHONES Section (8 Models from Reference Image 2) */}
-            <ProductGridSection
-              id="section-earphones"
-              title="EARPHONES"
-              products={earphonesList}
-              currency={currency}
-              wishlistIds={wishlistIds}
-              onToggleWishlist={handleToggleWishlist}
-              onAddToCart={handleAddToCart}
-              onSelectProduct={handleSelectProduct}
-              onViewAll={() => setActiveCategory("earphones")}
-            />
+            {isSectionEnabled(effectiveSections, "earphones") && (
+              <ProductGridSection
+                id="section-earphones"
+                title={getSectionContent(effectiveSections, "earphones")?.title || "EARPHONES"}
+                products={earphonesList}
+                currency={currency}
+                wishlistIds={wishlistIds}
+                onToggleWishlist={handleToggleWishlist}
+                onAddToCart={handleAddToCart}
+                onSelectProduct={handleSelectProduct}
+                onViewAll={() => setActiveCategory("earphones")}
+              />
+            )}
 
             {/* 6. Feature Card 2: "MG20 Gaming (Galactic White)" with Dual Buttons */}
-            <EditorialPromoCard
-              title={audioDemoData.editorialSections.mg20Gaming.title}
-              description={audioDemoData.editorialSections.mg20Gaming.description}
-              primaryButtonText={audioDemoData.editorialSections.mg20Gaming.primaryButtonText}
-              secondaryButtonText={audioDemoData.editorialSections.mg20Gaming.secondaryButtonText}
-              image={audioDemoData.editorialSections.mg20Gaming.image}
-              imageAlt={audioDemoData.editorialSections.mg20Gaming.imageAlt}
-              hasDots={true}
-              onPrimaryClick={() => {
-                const p = rawProducts.find((item) => item._id === "prod-hp-08");
-                if (p) handleAddToCart(p, 1);
-              }}
-              onSecondaryClick={() => {
-                const p = rawProducts.find((item) => item._id === "prod-hp-08");
-                if (p) handleSelectProduct(p);
-              }}
-            />
+            {isSectionEnabled(effectiveSections, "editorial_promo_2") && (() => {
+              const promo2 = getSectionContent(effectiveSections, "editorial_promo_2") || {};
+              return (
+              <EditorialPromoCard
+                title={promo2.title || audioDemoData.editorialSections.mg20Gaming.title}
+                description={promo2.description || audioDemoData.editorialSections.mg20Gaming.description}
+                primaryButtonText={promo2.buttonText || audioDemoData.editorialSections.mg20Gaming.primaryButtonText}
+                secondaryButtonText={audioDemoData.editorialSections.mg20Gaming.secondaryButtonText}
+                image={promo2.image || audioDemoData.editorialSections.mg20Gaming.image}
+                imageAlt={audioDemoData.editorialSections.mg20Gaming.imageAlt}
+                hasDots={true}
+                onPrimaryClick={() => {
+                  const p = rawProducts.find((item) => item._id === "prod-hp-08");
+                  if (p) handleAddToCart(p, 1);
+                }}
+                onSecondaryClick={() => {
+                  const p = rawProducts.find((item) => item._id === "prod-hp-08");
+                  if (p) handleSelectProduct(p);
+                }}
+              />
+              );
+            })()}
 
             {/* 7. CUSTOMER REVIEWS Section (Oliver Brown Review) */}
-            <CustomerReviews reviews={audioDemoData.customerReviews} />
+            {isSectionEnabled(effectiveSections, "reviews") && (
+              <CustomerReviews reviews={audioDemoData.customerReviews} />
+            )}
 
             {/* 8. Feature Card 3: "Superior design and craftmanship" */}
-            <EditorialPromoCard
-              title={audioDemoData.editorialSections.superiorCraft.title}
-              description={audioDemoData.editorialSections.superiorCraft.description}
-              buttonText={audioDemoData.editorialSections.superiorCraft.buttonText}
-              image={audioDemoData.editorialSections.superiorCraft.image}
-              imageAlt={audioDemoData.editorialSections.superiorCraft.imageAlt}
-              onPrimaryClick={() => {
-                setActiveCategory("all");
-                window.scrollTo({ top: 400, behavior: "smooth" });
-              }}
-            />
+            {isSectionEnabled(effectiveSections, "editorial_promo_3") && (() => {
+              const promo3 = getSectionContent(effectiveSections, "editorial_promo_3") || {};
+              return (
+              <EditorialPromoCard
+                title={promo3.title || audioDemoData.editorialSections.superiorCraft.title}
+                description={promo3.description || audioDemoData.editorialSections.superiorCraft.description}
+                buttonText={promo3.buttonText || audioDemoData.editorialSections.superiorCraft.buttonText}
+                image={promo3.image || audioDemoData.editorialSections.superiorCraft.image}
+                imageAlt={audioDemoData.editorialSections.superiorCraft.imageAlt}
+                onPrimaryClick={() => {
+                  setActiveCategory("all");
+                  window.scrollTo({ top: 400, behavior: "smooth" });
+                }}
+              />
+              );
+            })()}
           </>
         )}
       </main>

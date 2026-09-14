@@ -28,6 +28,7 @@ import toast from "react-hot-toast";
 import { isOutOfStock } from "../../../utils/stockUtils";
 import CartDrawer from "../../common/CartDrawer";
 import { getProductImage } from "../../../utils/productImage";
+import { isSectionEnabled, getSectionContent } from "../../utils/sectionHelper";
 
 import Navbar from "./Navbar";
 import Footer from "./Footer";
@@ -42,7 +43,10 @@ export default function CasaLivingTemplate({
   offers = [],
   reviews = [],
   customization = {},
+  sections = [],
 }) {
+  const effectiveSections =
+    sections && sections.length > 0 ? sections : customization?.sections || [];
   // Navigation: "home" | "catalog" | "product-detail"
   const [activePage, setActivePage] = useState("home");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -346,12 +350,13 @@ export default function CasaLivingTemplate({
         {activePage === "home" && (
           <div className="space-y-16 sm:space-y-24">
             {/* 1. HERO SECTION (Dark Slat Wood) */}
+            {isSectionEnabled(effectiveSections, "hero") && (
             <section className="relative min-h-[520px] lg:min-h-[640px] flex items-center justify-center text-center overflow-hidden">
               {/* Background with Dark Acoustic Wood Slats Image & Mood Light */}
               <div
                 className="absolute inset-0 bg-cover bg-center"
                 style={{
-                  backgroundImage: `url('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1600&auto=format&fit=crop&q=80')`,
+                  backgroundImage: `url('${getSectionContent(effectiveSections, "hero")?.bgImage || "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1600&auto=format&fit=crop&q=80"}')`,
                 }}
               >
                 <div className="absolute inset-0 bg-stone-950/70 backdrop-blur-[1px]" />
@@ -362,12 +367,12 @@ export default function CasaLivingTemplate({
                 {/* Pill Badge */}
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-medium tracking-wide">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#A07855]" />
-                  <span>Modern Living Starts Here</span>
+                  <span>{getSectionContent(effectiveSections, "hero")?.badge || "Modern Living Starts Here"}</span>
                 </div>
 
                 {/* Hero Title */}
                 <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold font-serif text-white tracking-tight leading-[1.15] max-w-3xl mx-auto">
-                  Crafted Furniture For Every Beautiful Home
+                  {getSectionContent(effectiveSections, "hero")?.title || "Crafted Furniture For Every Beautiful Home"}
                 </h1>
 
                 {/* CTA Button */}
@@ -388,8 +393,10 @@ export default function CasaLivingTemplate({
                 </div>
               </div>
             </section>
+            )}
 
             {/* 2. EXPLORE FURNITURE CATEGORIES */}
+            {isSectionEnabled(effectiveSections, "categories") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F7F5F2] border border-stone-200 text-stone-600 text-xs font-medium">
@@ -397,7 +404,7 @@ export default function CasaLivingTemplate({
                   <span>Shop By Category</span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-bold font-serif text-stone-900 tracking-tight">
-                  Explore Furniture Categories
+                  {getSectionContent(effectiveSections, "categories")?.title || "Explore Furniture Categories"}
                 </h2>
               </div>
 
@@ -441,8 +448,10 @@ export default function CasaLivingTemplate({
                 ))}
               </div>
             </section>
+            )}
 
             {/* 3. DUAL PROMOTIONAL FLASH BANNERS */}
+            {isSectionEnabled(effectiveSections, "flash_deals") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Banner 1: Limited Time Flash Sale */}
@@ -510,8 +519,10 @@ export default function CasaLivingTemplate({
                 </div>
               </div>
             </section>
+            )}
 
             {/* 4. DISCOVER OUR NEWEST ARRIVALS GRID */}
+            {isSectionEnabled(effectiveSections, "featured_products") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 text-left">
               {/* Header with Subtext */}
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-stone-200 pb-6">
@@ -521,7 +532,7 @@ export default function CasaLivingTemplate({
                     <span>Top Rated Product</span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-bold font-serif text-stone-900">
-                    Discover Our Newest Arrivals
+                    {getSectionContent(effectiveSections, "featured_products")?.title || "Discover Our Newest Arrivals"}
                   </h2>
                 </div>
                 <p className="text-xs text-stone-500 max-w-md leading-relaxed">
@@ -563,8 +574,10 @@ export default function CasaLivingTemplate({
                 </button>
               </div>
             </section>
+            )}
 
             {/* 5. MASONRY ASYMMETRICAL CATEGORY SHOWCASE GRID */}
+            {isSectionEnabled(effectiveSections, "category_masonry") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 text-left">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* Big Card on Left: Upholstered Storage Beds */}
@@ -711,14 +724,16 @@ export default function CasaLivingTemplate({
                 </div>
               </div>
             </section>
+            )}
 
             {/* 6. FEATURE SPOTLIGHT: LUXURY TV CABINETS */}
+            {isSectionEnabled(effectiveSections, "specs_highlight") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="bg-[#F7F5F2] rounded-3xl p-8 sm:p-12 border border-stone-200/80 shadow-xs grid grid-cols-1 lg:grid-cols-12 gap-8 items-center text-left">
                 {/* Left Specs */}
                 <div className="lg:col-span-6 space-y-6">
                   <h3 className="text-2xl sm:text-3xl font-bold font-serif text-stone-900">
-                    Luxury TV Cabinets Crafted With Elegance
+                    {getSectionContent(effectiveSections, "specs_highlight")?.title || "Luxury TV Cabinets Crafted With Elegance"}
                   </h3>
 
                   <div className="grid grid-cols-2 gap-4 pt-2">
@@ -760,8 +775,10 @@ export default function CasaLivingTemplate({
                 </div>
               </div>
             </section>
+            )}
 
             {/* 7. DARK COUNTDOWN FLASH DEAL SECTION */}
+            {isSectionEnabled(effectiveSections, "countdown_deal") && (
             <section className="bg-[#18181B] text-white py-16 sm:py-24">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center text-left">
@@ -769,11 +786,11 @@ export default function CasaLivingTemplate({
                   <div className="lg:col-span-6 space-y-6">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-medium">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#A07855]" />
-                      <span>Flat Discount</span>
+                      <span>{getSectionContent(effectiveSections, "countdown_deal")?.discount || "Flat Discount"}</span>
                     </div>
 
                     <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-serif tracking-tight leading-tight">
-                      Discover Amazing Flat Furniture Discounts Today
+                      {getSectionContent(effectiveSections, "countdown_deal")?.title || "Discover Amazing Flat Furniture Discounts Today"}
                     </h2>
 
                     <p className="text-xs sm:text-sm text-stone-400 leading-relaxed max-w-lg">
@@ -875,8 +892,10 @@ export default function CasaLivingTemplate({
                 </div>
               </div>
             </section>
+            )}
 
             {/* 8. MODERN LIVING INSPIRATIONS LOOKBOOK */}
+            {isSectionEnabled(effectiveSections, "lookbook") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 text-center pb-8">
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F7F5F2] border border-stone-200 text-stone-600 text-xs font-medium">
@@ -884,7 +903,7 @@ export default function CasaLivingTemplate({
                   <span>Design Stories</span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-bold font-serif text-stone-900">
-                  Modern Living Inspirations
+                  {getSectionContent(effectiveSections, "lookbook")?.title || "Modern Living Inspirations"}
                 </h2>
               </div>
 
@@ -936,6 +955,7 @@ export default function CasaLivingTemplate({
                 ))}
               </div>
             </section>
+            )}
           </div>
         )}
 

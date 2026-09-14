@@ -3,13 +3,16 @@ import { Dumbbell, Flame, Trophy, Calendar, ArrowRight } from "lucide-react";
 import TemplateHeader from "../../common/TemplateHeader";
 import TemplateFooter from "../../common/TemplateFooter";
 import BookingModal from "../../common/BookingModal";
+import { isSectionEnabled, getSectionContent } from "../../utils/sectionHelper";
 
 export default function IronPulseFitnessTemplate({
   business = {},
   services = [],
   reviews = [],
   customization = {},
+  sections = [],
 }) {
+  const effectiveSections = sections && sections.length > 0 ? sections : customization?.sections || [];
   const [bookingOpen, setBookingOpen] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
 
@@ -27,6 +30,10 @@ export default function IronPulseFitnessTemplate({
     setBookingOpen(true);
   };
 
+  const announcementContent = getSectionContent(effectiveSections, "announcement");
+  const heroContent = getSectionContent(effectiveSections, "hero") || {};
+  const srvContent = getSectionContent(effectiveSections, "services") || {};
+
   return (
     <div
       className="min-h-screen flex flex-col font-sans"
@@ -38,57 +45,65 @@ export default function IronPulseFitnessTemplate({
         isService={true}
         themeColors={themeColors}
         announcementText={
-          customization.customContent?.announcement ||
-          "🔥 CLAIM YOUR 7-DAY ALL-ACCESS PASS • COMPLIMENTARY 3D BODY COMPOSITION SCAN"
+          isSectionEnabled(effectiveSections, "announcement")
+            ? (announcementContent?.text ||
+                customization.customContent?.announcement ||
+                "🔥 CLAIM YOUR 7-DAY ALL-ACCESS PASS • COMPLIMENTARY 3D BODY COMPOSITION SCAN")
+            : null
         }
       />
 
       <main className="flex-1">
-        <section className="py-20 md:py-28 border-b border-zinc-800">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            <div className="lg:col-span-7 space-y-6">
-              <span className="text-xs font-black uppercase tracking-widest text-red-500 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">
-                High-Performance Training & Hypertrophy
-              </span>
-              <h1 className="text-4xl sm:text-6xl font-black uppercase tracking-tight text-white leading-tight">
-                {customization.heroHeadline || "Forge Unstoppable Strength & Grit."}
-              </h1>
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-lg">
-                {customization.heroSubtitle ||
-                  "Olympic lifting platforms, high-octane functional Hyrox conditioning, infrared muscle recovery, and elite personalized programming."}
-              </p>
-              <div className="pt-2">
-                <button
-                  onClick={() => handleBook()}
-                  className="px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition flex items-center gap-2 cursor-pointer"
-                >
-                  <Calendar size={15} />
-                  <span>Claim Your Free Trial Pass</span>
-                </button>
+        {isSectionEnabled(effectiveSections, "hero") && (
+          <section className="py-20 md:py-28 border-b border-zinc-800">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+              <div className="lg:col-span-7 space-y-6">
+                <span className="text-xs font-black uppercase tracking-widest text-red-500 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">
+                  {heroContent.badge || "High-Performance Training & Hypertrophy"}
+                </span>
+                <h1 className="text-4xl sm:text-6xl font-black uppercase tracking-tight text-white leading-tight">
+                  {heroContent.title || customization.heroHeadline || "Forge Unstoppable Strength & Grit."}
+                </h1>
+                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-lg">
+                  {heroContent.subtitle ||
+                    customization.heroSubtitle ||
+                    "Olympic lifting platforms, high-octane functional Hyrox conditioning, infrared muscle recovery, and elite personalized programming."}
+                </p>
+                <div className="pt-2">
+                  <button
+                    onClick={() => handleBook()}
+                    className="px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition flex items-center gap-2 cursor-pointer"
+                  >
+                    <Calendar size={15} />
+                    <span>{heroContent.ctaText || "Claim Your Free Trial Pass"}</span>
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="lg:col-span-5">
-              <div className="aspect-4/3 rounded-3xl overflow-hidden shadow-2xl border border-zinc-800 bg-zinc-900">
-                <img
-                  src={
-                    customization.heroBanner ||
-                    "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&auto=format&fit=crop&q=80"
-                  }
-                  alt="Gym Workout"
-                  className="w-full h-full object-cover"
-                />
+              <div className="lg:col-span-5">
+                <div className="aspect-4/3 rounded-3xl overflow-hidden shadow-2xl border border-zinc-800 bg-zinc-900">
+                  <img
+                    src={
+                      heroContent.image ||
+                      customization.heroBanner ||
+                      "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&auto=format&fit=crop&q=80"
+                    }
+                    alt="Gym Workout"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Programs */}
-        <section id="services" className="py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-black uppercase tracking-wider text-white text-center mb-10">
-              Training Programs & Coaching
-            </h2>
+        {isSectionEnabled(effectiveSections, "services") && (
+          <section id="services" className="py-16">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <h2 className="text-3xl font-black uppercase tracking-wider text-white text-center mb-10">
+                {srvContent.title || "Training Programs & Coaching"}
+              </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               {services.map((srv) => (
                 <div
@@ -130,6 +145,7 @@ export default function IronPulseFitnessTemplate({
             </div>
           </div>
         </section>
+        )}
       </main>
 
       <BookingModal

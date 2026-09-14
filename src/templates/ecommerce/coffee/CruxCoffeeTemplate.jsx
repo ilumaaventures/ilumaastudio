@@ -11,6 +11,7 @@ import { isOutOfStock } from "../../../utils/stockUtils";
 import CartDrawer from "../../common/CartDrawer";
 import CouponPromoTicker from "../../common/CouponPromoTicker";
 import { Heart, X, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
+import { isSectionEnabled, getSectionContent } from "../../utils/sectionHelper";
 
 // Sub-components
 import Navbar from "./Navbar";
@@ -34,7 +35,9 @@ export default function CruxCoffeeTemplate({
   coupons = [],
   offers = [],
   customization = {},
+  sections = [],
 }) {
+  const effectiveSections = sections && sections.length > 0 ? sections : customization?.sections || [];
   const [activePage, setActivePage] = useState("home"); // "home" | "product-detail"
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeCategory, setActiveCategory] = useState("all");
@@ -202,7 +205,9 @@ export default function CruxCoffeeTemplate({
   return (
     <div className="w-full min-h-screen bg-[#FAF7F2] text-[#2E1B13] font-sans antialiased selection:bg-amber-900 selection:text-white">
       {/* Dynamic Store Coupon Bar */}
-      <CouponPromoTicker coupons={coupons} theme="light" />
+      {isSectionEnabled(effectiveSections, "announcement") && (
+        <CouponPromoTicker coupons={coupons} theme="light" />
+      )}
 
       {/* Top Navbar */}
       <Navbar
@@ -304,100 +309,129 @@ export default function CruxCoffeeTemplate({
           /* Default Flow (Matching Reference Image 1 & 2 Layout Exactly) */
           <>
             {/* 1. Hero Banner with 3-Dash Pagination */}
-            <HeroCarousel
-              slides={activeHeroSlides}
-              onSelectCategory={(cat) => setActiveCategory(cat)}
-            />
+            {isSectionEnabled(effectiveSections, "hero") && (
+              <HeroCarousel
+                slides={activeHeroSlides}
+                onSelectCategory={(cat) => setActiveCategory(cat)}
+              />
+            )}
 
             {/* 2. "Good Coffee with a Greater Purpose" & 3 Featured Collections */}
-            <FeaturedCollections
-              business={rawBusiness}
-              categories={rawCategories}
-              onSelectCategory={(cat) => setActiveCategory(cat)}
-            />
+            {isSectionEnabled(effectiveSections, "featured_collections") && (
+              <FeaturedCollections
+                business={rawBusiness}
+                categories={rawCategories}
+                onSelectCategory={(cat) => setActiveCategory(cat)}
+              />
+            )}
 
             {/* 3. Split Editorial Card 1: "Our Small Batch Coffee" (Image Left, Content Right) */}
-            <EditorialSplitCard
-              title={coffeeDemoData.editorialSections.smallBatch.title}
-              description={coffeeDemoData.editorialSections.smallBatch.description}
-              buttonText={coffeeDemoData.editorialSections.smallBatch.buttonText}
-              image={coffeeDemoData.editorialSections.smallBatch.image}
-              imageAlt="Small Batch Coffee Beans"
-              reversed={false}
-              onButtonClick={() => setActiveCategory("coffee-beans")}
-            />
+            {isSectionEnabled(effectiveSections, "editorial_split_1") && (() => {
+              const edit1 = getSectionContent(effectiveSections, "editorial_split_1") || {};
+              return (
+              <EditorialSplitCard
+                title={edit1.title || coffeeDemoData.editorialSections.smallBatch.title}
+                description={edit1.description || coffeeDemoData.editorialSections.smallBatch.description}
+                buttonText={edit1.buttonText || coffeeDemoData.editorialSections.smallBatch.buttonText}
+                image={edit1.image || coffeeDemoData.editorialSections.smallBatch.image}
+                imageAlt="Small Batch Coffee Beans"
+                reversed={false}
+                onButtonClick={() => setActiveCategory("coffee-beans")}
+              />
+              );
+            })()}
 
             {/* 4. Section 1: Coffee Beans */}
-            <ProductSection
-              title="Coffee Beans"
-              products={coffeeBeansProducts}
-              currency={currency}
-              wishlistIds={wishlistIds}
-              onToggleWishlist={handleToggleWishlist}
-              onAddToCart={handleAddToCart}
-              onSelectProduct={handleSelectProduct}
-            />
+            {isSectionEnabled(effectiveSections, "coffee_beans") && (
+              <ProductSection
+                title={getSectionContent(effectiveSections, "coffee_beans")?.title || "Coffee Beans"}
+                products={coffeeBeansProducts}
+                currency={currency}
+                wishlistIds={wishlistIds}
+                onToggleWishlist={handleToggleWishlist}
+                onAddToCart={handleAddToCart}
+                onSelectProduct={handleSelectProduct}
+              />
+            )}
 
             {/* 5. Section 2: Instant Coffee */}
-            <ProductSection
-              title="Instant Coffee"
-              products={instantCoffeeProducts}
-              currency={currency}
-              wishlistIds={wishlistIds}
-              onToggleWishlist={handleToggleWishlist}
-              onAddToCart={handleAddToCart}
-              onSelectProduct={handleSelectProduct}
-            />
+            {isSectionEnabled(effectiveSections, "instant_coffee") && (
+              <ProductSection
+                title={getSectionContent(effectiveSections, "instant_coffee")?.title || "Instant Coffee"}
+                products={instantCoffeeProducts}
+                currency={currency}
+                wishlistIds={wishlistIds}
+                onToggleWishlist={handleToggleWishlist}
+                onAddToCart={handleAddToCart}
+                onSelectProduct={handleSelectProduct}
+              />
+            )}
 
             {/* 6. Split Editorial Card 2: "Coffee first. Schemes later" (Content Left, Image Right Chemex) */}
-            <EditorialSplitCard
-              title={coffeeDemoData.editorialSections.coffeeFirst.title}
-              description={coffeeDemoData.editorialSections.coffeeFirst.description}
-              buttonText={coffeeDemoData.editorialSections.coffeeFirst.buttonText}
-              image={coffeeDemoData.editorialSections.coffeeFirst.image}
-              imageAlt="Barista Pour Over Chemex"
-              reversed={true}
-              onButtonClick={() => setActiveCategory("international-brews")}
-            />
+            {isSectionEnabled(effectiveSections, "editorial_split_2") && (() => {
+              const edit2 = getSectionContent(effectiveSections, "editorial_split_2") || {};
+              return (
+              <EditorialSplitCard
+                title={edit2.title || coffeeDemoData.editorialSections.coffeeFirst.title}
+                description={edit2.description || coffeeDemoData.editorialSections.coffeeFirst.description}
+                buttonText={edit2.buttonText || coffeeDemoData.editorialSections.coffeeFirst.buttonText}
+                image={edit2.image || coffeeDemoData.editorialSections.coffeeFirst.image}
+                imageAlt="Barista Pour Over Chemex"
+                reversed={true}
+                onButtonClick={() => setActiveCategory("international-brews")}
+              />
+              );
+            })()}
 
             {/* 7. Section 3: International Brews */}
-            <ProductSection
-              title="International Brews"
-              products={internationalBrewsProducts}
-              currency={currency}
-              wishlistIds={wishlistIds}
-              onToggleWishlist={handleToggleWishlist}
-              onAddToCart={handleAddToCart}
-              onSelectProduct={handleSelectProduct}
-            />
+            {isSectionEnabled(effectiveSections, "international_brews") && (
+              <ProductSection
+                title={getSectionContent(effectiveSections, "international_brews")?.title || "International Brews"}
+                products={internationalBrewsProducts}
+                currency={currency}
+                wishlistIds={wishlistIds}
+                onToggleWishlist={handleToggleWishlist}
+                onAddToCart={handleAddToCart}
+                onSelectProduct={handleSelectProduct}
+              />
+            )}
 
             {/* 8. Section 4: Coffee Accessories */}
-            <ProductSection
-              title="Coffee Accessories"
-              products={coffeeAccessoriesProducts}
-              currency={currency}
-              wishlistIds={wishlistIds}
-              onToggleWishlist={handleToggleWishlist}
-              onAddToCart={handleAddToCart}
-              onSelectProduct={handleSelectProduct}
-            />
+            {isSectionEnabled(effectiveSections, "coffee_accessories") && (
+              <ProductSection
+                title={getSectionContent(effectiveSections, "coffee_accessories")?.title || "Coffee Accessories"}
+                products={coffeeAccessoriesProducts}
+                currency={currency}
+                wishlistIds={wishlistIds}
+                onToggleWishlist={handleToggleWishlist}
+                onAddToCart={handleAddToCart}
+                onSelectProduct={handleSelectProduct}
+              />
+            )}
 
             {/* 9. Section 5: What our customers are saying */}
-            <TestimonialsSection
-              testimonials={coffeeDemoData.testimonials}
-            />
+            {isSectionEnabled(effectiveSections, "testimonials") && (
+              <TestimonialsSection
+                testimonials={coffeeDemoData.testimonials}
+              />
+            )}
 
             {/* 10. Section 6: Full-Width Bottom Hero Banner "COFFEE FOR EVERYONE" */}
-            <BottomHeroBanner
-              title={coffeeDemoData.bottomBanner.title}
-              description={coffeeDemoData.bottomBanner.description}
-              buttonText={coffeeDemoData.bottomBanner.buttonText}
-              bgImage={coffeeDemoData.bottomBanner.bgImage}
-              onButtonClick={() => {
-                setActiveCategory("all");
-                window.scrollTo({ top: 500, behavior: "smooth" });
-              }}
-            />
+            {isSectionEnabled(effectiveSections, "bottom_hero_banner") && (() => {
+              const botBanner = getSectionContent(effectiveSections, "bottom_hero_banner") || {};
+              return (
+              <BottomHeroBanner
+                title={botBanner.title || coffeeDemoData.bottomBanner.title}
+                description={botBanner.description || coffeeDemoData.bottomBanner.description}
+                buttonText={botBanner.buttonText || coffeeDemoData.bottomBanner.buttonText}
+                bgImage={botBanner.bgImage || coffeeDemoData.bottomBanner.bgImage}
+                onButtonClick={() => {
+                  setActiveCategory("all");
+                  window.scrollTo({ top: 500, behavior: "smooth" });
+                }}
+              />
+              );
+            })()}
           </>
         )}
       </main>

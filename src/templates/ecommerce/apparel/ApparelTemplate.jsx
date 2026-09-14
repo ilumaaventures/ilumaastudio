@@ -12,6 +12,7 @@ import CartDrawer from "../../common/CartDrawer";
 import CouponPromoTicker from "../../common/CouponPromoTicker";
 import { getProductImage } from "../../../utils/productImage";
 import { Heart, X, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
+import { isSectionEnabled, getSectionContent } from "../../utils/sectionHelper";
 
 // Subcomponents
 import Navbar from "./Navbar";
@@ -29,7 +30,9 @@ export default function ApparelTemplate({
   coupons = [],
   offers = [],
   customization = {},
+  sections = [],
 }) {
+  const effectiveSections = sections && sections.length > 0 ? sections : customization?.sections || [];
   // Navigation State: "home" | "product-detail"
   const [activePage, setActivePage] = useState("home");
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -179,7 +182,9 @@ export default function ApparelTemplate({
   return (
     <div className="min-h-screen flex flex-col font-sans bg-[#FFFFFF] text-stone-900 antialiased selection:bg-[#8B5A2B]/15 selection:text-stone-900">
       {/* ================= 0. PROMO TICKER ================= */}
-      <CouponPromoTicker coupons={coupons} theme="light" />
+      {isSectionEnabled(effectiveSections, "announcement") && (
+        <CouponPromoTicker coupons={coupons} theme="light" />
+      )}
 
       {/* ================= 1. NAVBAR ================= */}
       <Navbar
@@ -249,65 +254,75 @@ export default function ApparelTemplate({
             ) : (
               <>
                 {/* 1. TRIPLE EDITORIAL HERO BANNERS */}
-                <HeroBanners
-                  banners={banners}
-                  onSelectCategory={(cat) => {
-                    setActiveCategory(cat);
-                    window.scrollTo({ top: 500, behavior: "smooth" });
-                  }}
-                />
+                {isSectionEnabled(effectiveSections, "hero") && (
+                  <HeroBanners
+                    banners={banners}
+                    onSelectCategory={(cat) => {
+                      setActiveCategory(cat);
+                      window.scrollTo({ top: 500, behavior: "smooth" });
+                    }}
+                  />
+                )}
 
                 {/* 2. ALL CATEGORIES HORIZONTAL STRIP */}
-                <CategoryStrip
-                  categories={categories}
-                  activeCategory={activeCategory}
-                  onSelectCategory={(cat) => {
-                    setActiveCategory(cat);
-                    window.scrollTo({ top: 550, behavior: "smooth" });
-                  }}
-                  onViewAll={() => {
-                    setActiveCategory("all");
-                    window.scrollTo({ top: 550, behavior: "smooth" });
-                  }}
-                />
+                {isSectionEnabled(effectiveSections, "categories") && (
+                  <CategoryStrip
+                    categories={categories}
+                    activeCategory={activeCategory}
+                    onSelectCategory={(cat) => {
+                      setActiveCategory(cat);
+                      window.scrollTo({ top: 550, behavior: "smooth" });
+                    }}
+                    onViewAll={() => {
+                      setActiveCategory("all");
+                      window.scrollTo({ top: 550, behavior: "smooth" });
+                    }}
+                  />
+                )}
 
                 {/* 3. JACKETS SECTION (10 ITEMS) */}
-                <ProductSection
-                  title="Jackets"
-                  products={jacketProducts}
-                  onSelectProduct={handleSelectProduct}
-                  onAddToCart={handleAddToCart}
-                  onToggleWishlist={handleToggleWishlist}
-                  wishlistIds={wishlistIds}
-                  currency={currency}
-                />
+                {isSectionEnabled(effectiveSections, "jackets") && (
+                  <ProductSection
+                    title={getSectionContent(effectiveSections, "jackets")?.title || "Jackets"}
+                    products={jacketProducts}
+                    onSelectProduct={handleSelectProduct}
+                    onAddToCart={handleAddToCart}
+                    onToggleWishlist={handleToggleWishlist}
+                    wishlistIds={wishlistIds}
+                    currency={currency}
+                  />
+                )}
 
                 {/* 4. SHIRT SECTION (10 ITEMS) */}
-                <ProductSection
-                  title="Shirt"
-                  products={shirtProducts}
-                  onSelectProduct={handleSelectProduct}
-                  onAddToCart={handleAddToCart}
-                  onToggleWishlist={handleToggleWishlist}
-                  wishlistIds={wishlistIds}
-                  currency={currency}
-                />
+                {isSectionEnabled(effectiveSections, "shirt") && (
+                  <ProductSection
+                    title={getSectionContent(effectiveSections, "shirt")?.title || "Shirt"}
+                    products={shirtProducts}
+                    onSelectProduct={handleSelectProduct}
+                    onAddToCart={handleAddToCart}
+                    onToggleWishlist={handleToggleWishlist}
+                    wishlistIds={wishlistIds}
+                    currency={currency}
+                  />
+                )}
 
                 {/* 5. SWEATER SECTION (5 ITEMS) */}
-                <ProductSection
-                  title="Sweater"
-                  products={sweaterProducts}
-                  onSelectProduct={handleSelectProduct}
-                  onAddToCart={handleAddToCart}
-                  onToggleWishlist={handleToggleWishlist}
-                  wishlistIds={wishlistIds}
-                  currency={currency}
-                />
+                {isSectionEnabled(effectiveSections, "sweater") && (
+                  <ProductSection
+                    title={getSectionContent(effectiveSections, "sweater")?.title || "Sweater"}
+                    products={sweaterProducts}
+                    onSelectProduct={handleSelectProduct}
+                    onAddToCart={handleAddToCart}
+                    onToggleWishlist={handleToggleWishlist}
+                    wishlistIds={wishlistIds}
+                    currency={currency}
+                  />
+                )}
 
                 {/* 6. FRAGRANCE SECTION (IF PRESENT) */}
-                {fragranceProducts.length > 0 && (
+                {isSectionEnabled(effectiveSections, "fragrance") && fragranceProducts.length > 0 && (
                   <ProductSection
-                    title="Fragrance"
+                    title={getSectionContent(effectiveSections, "fragrance")?.title || "Fragrance"}
                     products={fragranceProducts}
                     onSelectProduct={handleSelectProduct}
                     onAddToCart={handleAddToCart}

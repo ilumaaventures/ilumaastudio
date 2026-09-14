@@ -12,6 +12,7 @@ import CartDrawer from "../../common/CartDrawer";
 import CouponPromoTicker from "../../common/CouponPromoTicker";
 import { getProductImage } from "../../../utils/productImage";
 import { Heart, X, Trash2, ShoppingBag } from "lucide-react";
+import { isSectionEnabled, getSectionContent } from "../../utils/sectionHelper";
 
 // Sub-components
 import Navbar from "./Navbar";
@@ -32,7 +33,9 @@ export default function EthnicCoutureTemplate({
   coupons = [],
   offers = [],
   customization = {},
+  sections = [],
 }) {
+  const effectiveSections = sections && sections.length > 0 ? sections : customization?.sections || [];
   // Navigation State: "home" | "product-detail"
   const [activePage, setActivePage] = useState("home");
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -173,7 +176,9 @@ export default function EthnicCoutureTemplate({
   return (
     <div className="min-h-screen flex flex-col font-sans bg-[#FFFFFF] text-stone-900 antialiased selection:bg-black selection:text-white">
       {/* ================= 0. PROMO TICKER ================= */}
-      <CouponPromoTicker coupons={coupons} theme="light" />
+      {isSectionEnabled(effectiveSections, "announcement") && (
+        <CouponPromoTicker coupons={coupons} theme="light" />
+      )}
 
       {/* ================= 1. NAVBAR ================= */}
       <Navbar
@@ -257,95 +262,105 @@ export default function EthnicCoutureTemplate({
               /* FULL SCREENSHOT REPLICATION HOME VIEW */
               <>
                 {/* 1. HERO CAROUSEL WITH 3 DASHES */}
-                <HeroCarousel
-                  slides={activeHeroSlides}
-                  onSelectCategory={(cat) => {
-                    setActiveCategory(cat);
-                    window.scrollTo({ top: 700, behavior: "smooth" });
-                  }}
-                />
+                {isSectionEnabled(effectiveSections, "hero") && (
+                  <HeroCarousel
+                    slides={activeHeroSlides}
+                    onSelectCategory={(cat) => {
+                      setActiveCategory(cat);
+                      window.scrollTo({ top: 700, behavior: "smooth" });
+                    }}
+                  />
+                )}
 
                 {/* 2. TOP CATEGORIES 3x2 GRID WITH VIEW ALL BUTTON */}
-                <TopCategoriesGrid
-                  categories={rawCategories}
-                  onSelectCategory={(cat) => {
-                    setActiveCategory(cat);
-                    window.scrollTo({ top: 800, behavior: "smooth" });
-                  }}
-                  onViewAll={() => {
-                    setActiveCategory("all");
-                    window.scrollTo({ top: 800, behavior: "smooth" });
-                  }}
-                />
+                {isSectionEnabled(effectiveSections, "categories") && (
+                  <TopCategoriesGrid
+                    categories={rawCategories}
+                    onSelectCategory={(cat) => {
+                      setActiveCategory(cat);
+                      window.scrollTo({ top: 800, behavior: "smooth" });
+                    }}
+                    onViewAll={() => {
+                      setActiveCategory("all");
+                      window.scrollTo({ top: 800, behavior: "smooth" });
+                    }}
+                  />
+                )}
 
                 {/* 3. JUMPSUITS SECTION (MATCHING SCREENSHOT) */}
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-left">
-                  <div className="pb-4">
-                    <h2 className="text-base sm:text-lg font-bold text-stone-900 tracking-tight">
-                      Jumpsuits
-                    </h2>
-                  </div>
+                {isSectionEnabled(effectiveSections, "jumpsuits") && (
+                  <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-left">
+                    <div className="pb-4">
+                      <h2 className="text-base sm:text-lg font-bold text-stone-900 tracking-tight">
+                        {getSectionContent(effectiveSections, "jumpsuits")?.title || "Jumpsuits"}
+                      </h2>
+                    </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
-                    {jumpsuitProducts.map((item) => (
-                      <ProductCard
-                        key={item._id}
-                        product={item}
-                        onSelectProduct={handleSelectProduct}
-                        onAddToCart={handleAddToCart}
-                        onToggleWishlist={handleToggleWishlist}
-                        isWishlisted={wishlistIds.includes(item._id)}
-                        currency={currency}
-                      />
-                    ))}
-                  </div>
-                </section>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
+                      {jumpsuitProducts.map((item) => (
+                        <ProductCard
+                          key={item._id}
+                          product={item}
+                          onSelectProduct={handleSelectProduct}
+                          onAddToCart={handleAddToCart}
+                          onToggleWishlist={handleToggleWishlist}
+                          isWishlisted={wishlistIds.includes(item._id)}
+                          currency={currency}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
 
                 {/* 4. DRESSES SECTION WITH "BUY 3 GET 1" (MATCHING SCREENSHOT) */}
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-left">
-                  <div className="pb-4">
-                    <h2 className="text-base sm:text-lg font-bold text-stone-900 tracking-tight">
-                      Dresses
-                    </h2>
-                  </div>
+                {isSectionEnabled(effectiveSections, "dresses") && (
+                  <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-left">
+                    <div className="pb-4">
+                      <h2 className="text-base sm:text-lg font-bold text-stone-900 tracking-tight">
+                        {getSectionContent(effectiveSections, "dresses")?.title || "Dresses"}
+                      </h2>
+                    </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
-                    {dressProducts.map((item) => (
-                      <ProductCard
-                        key={item._id}
-                        product={item}
-                        onSelectProduct={handleSelectProduct}
-                        onAddToCart={handleAddToCart}
-                        onToggleWishlist={handleToggleWishlist}
-                        isWishlisted={wishlistIds.includes(item._id)}
-                        currency={currency}
-                      />
-                    ))}
-                  </div>
-                </section>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
+                      {dressProducts.map((item) => (
+                        <ProductCard
+                          key={item._id}
+                          product={item}
+                          onSelectProduct={handleSelectProduct}
+                          onAddToCart={handleAddToCart}
+                          onToggleWishlist={handleToggleWishlist}
+                          isWishlisted={wishlistIds.includes(item._id)}
+                          currency={currency}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
 
                 {/* 5. MODERN LOOK SECTION (MATCHING SCREENSHOT) */}
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-left">
-                  <div className="pb-4">
-                    <h2 className="text-base sm:text-lg font-bold text-stone-900 tracking-tight">
-                      Modern Look
-                    </h2>
-                  </div>
+                {isSectionEnabled(effectiveSections, "modern_look") && (
+                  <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-left">
+                    <div className="pb-4">
+                      <h2 className="text-base sm:text-lg font-bold text-stone-900 tracking-tight">
+                        {getSectionContent(effectiveSections, "modern_look")?.title || "Modern Look"}
+                      </h2>
+                    </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
-                    {modernLookProducts.map((item) => (
-                      <ProductCard
-                        key={item._id}
-                        product={item}
-                        onSelectProduct={handleSelectProduct}
-                        onAddToCart={handleAddToCart}
-                        onToggleWishlist={handleToggleWishlist}
-                        isWishlisted={wishlistIds.includes(item._id)}
-                        currency={currency}
-                      />
-                    ))}
-                  </div>
-                </section>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
+                      {modernLookProducts.map((item) => (
+                        <ProductCard
+                          key={item._id}
+                          product={item}
+                          onSelectProduct={handleSelectProduct}
+                          onAddToCart={handleAddToCart}
+                          onToggleWishlist={handleToggleWishlist}
+                          isWishlisted={wishlistIds.includes(item._id)}
+                          currency={currency}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
               </>
             )}
           </div>

@@ -63,6 +63,25 @@ function StoreAnnouncementBar() {
   );
 }
 
+const normalizeCatalogItem = (item) => {
+  if (!item || typeof item !== "object") return item;
+  const catName =
+    typeof item.category === "object" && item.category !== null
+      ? item.category.name || item.category.title || ""
+      : typeof item.category === "string" && !/^[0-9a-fA-F]{24}$/.test(item.category)
+        ? item.category
+        : item.categoryName || "";
+
+  const resolvedCat = catName || "General";
+
+  return {
+    ...item,
+    category: resolvedCat,
+    categoryName: resolvedCat,
+    categoryObj: typeof item.category === "object" && item.category !== null ? item.category : { name: resolvedCat },
+  };
+};
+
 export default function StoreLayout() {
   const { businessName } = useParams();
   const [business, setBusiness] = useState(null);
@@ -103,8 +122,8 @@ export default function StoreLayout() {
           setStorefront(data.storefront || null);
           setTemplate(data.template || null);
           setHasTemplate(Boolean(data.hasTemplate && data.template));
-          setProducts(Array.isArray(data.products) ? data.products : []);
-          setServices(Array.isArray(data.services) ? data.services : []);
+          setProducts(Array.isArray(data.products) ? data.products.map(normalizeCatalogItem) : []);
+          setServices(Array.isArray(data.services) ? data.services.map(normalizeCatalogItem) : []);
           setCategories(Array.isArray(data.categories) ? data.categories : []);
           setBanners(Array.isArray(data.banners) ? data.banners : []);
           setReviews(Array.isArray(data.reviews) ? data.reviews : []);
@@ -296,9 +315,16 @@ export default function StoreLayout() {
   const normalizedKey = (resolvedTemplateKey || "").toLowerCase().trim();
   const templateMeta = templateRegistry[normalizedKey] || templateRegistry["freshmart"];
 
+  const resolvedSections =
+    storefront?.sections ||
+    storefront?.customization?.sections ||
+    template?.supportedSections ||
+    [];
+
   const storeCustomization = {
     ...(templateMeta?.defaultTheme || {}),
     ...(storefront?.customization || template?.customization || {}),
+    sections: resolvedSections,
   };
 
   return (
@@ -311,6 +337,11 @@ export default function StoreLayout() {
             name: business?.businessName || business?.name,
             address: formatAddress(business?.address || business?.registered_business_address),
           },
+          storefront: {
+            ...storefront,
+            sections: resolvedSections,
+          },
+          sections: resolvedSections,
           products: products || [],
           services: services || [],
           categories: categories || [],

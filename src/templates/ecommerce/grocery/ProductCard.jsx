@@ -112,7 +112,9 @@ function ProductCard({
     productText.includes("organic");
 
   const category =
-    product.category || "Fresh Harvest";
+    typeof product.category === "object" && product.category !== null
+      ? product.category.name || product.category.title || "Fresh Harvest"
+      : product.category || "Fresh Harvest";
 
   const unit =
     product.unit || "1 pack";

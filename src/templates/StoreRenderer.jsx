@@ -51,6 +51,14 @@ export default function StoreRenderer({ templateKey = "freshmart", data = {}, is
 
   const TemplateComponent = entry.component;
 
+  // Resolve sections hierarchy (backend resolved sections, storefront sections, customization sections, or entry defaults)
+  const resolvedSections =
+    data.sections ||
+    data.storefront?.sections ||
+    data.customization?.sections ||
+    entry.supportedSections ||
+    [];
+
   // Merge default theme with real business customizations
   const mergedCustomization = {
     ...(entry.defaultTheme || {}),
@@ -67,7 +75,7 @@ export default function StoreRenderer({ templateKey = "freshmart", data = {}, is
     heroSubtitle: data.customization?.heroSubtitle || data.business?.heroSubtitle || "",
     heroBanner: data.customization?.heroBanner || data.business?.heroBanner || "",
     customContent: data.customization?.customContent || {},
-    sections: data.customization?.sections || entry.supportedSections || [],
+    sections: resolvedSections,
   };
 
   const rawBiz = data.business || entry.demoData?.business || {};
@@ -79,20 +87,44 @@ export default function StoreRenderer({ templateKey = "freshmart", data = {}, is
   const rawProds = data.products?.length ? data.products : entry.demoData?.products || [];
   const sanitizedProducts = rawProds.map((p) => {
     const defaultImg = typeof p.image === "string" && p.image ? p.image : undefined;
+    const catName =
+      typeof p.category === "object" && p.category !== null
+        ? p.category.name || p.category.title || ""
+        : typeof p.category === "string" && !/^[0-9a-fA-F]{24}$/.test(p.category)
+          ? p.category
+          : p.categoryName || "";
+
+    const resolvedCat = catName || "General";
+
     return {
       ...p,
       image: getProductImage(p, defaultImg),
       images: getAllProductImages(p),
+      category: resolvedCat,
+      categoryName: resolvedCat,
+      categoryObj: typeof p.category === "object" && p.category !== null ? p.category : { name: resolvedCat },
     };
   });
 
   const rawServices = data.services?.length ? data.services : entry.demoData?.services || [];
   const sanitizedServices = rawServices.map((s) => {
     const defaultImg = typeof s.image === "string" && s.image ? s.image : undefined;
+    const catName =
+      typeof s.category === "object" && s.category !== null
+        ? s.category.name || s.category.title || ""
+        : typeof s.category === "string" && !/^[0-9a-fA-F]{24}$/.test(s.category)
+          ? s.category
+          : s.categoryName || "";
+
+    const resolvedCat = catName || "General";
+
     return {
       ...s,
       image: getProductImage(s, defaultImg),
       images: getAllProductImages(s),
+      category: resolvedCat,
+      categoryName: resolvedCat,
+      categoryObj: typeof s.category === "object" && s.category !== null ? s.category : { name: resolvedCat },
     };
   });
 
@@ -127,6 +159,7 @@ export default function StoreRenderer({ templateKey = "freshmart", data = {}, is
       reviews={data.reviews?.length ? data.reviews : entry.demoData?.reviews || []}
       settings={data.settings || {}}
       customization={mergedCustomization}
+      sections={resolvedSections}
       isPreview={isPreview}
     />
   );

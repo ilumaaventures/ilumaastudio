@@ -35,8 +35,7 @@ export default function StarlingAbout() {
             </p>
             <p className="mt-5 text-[12px] font-light leading-[1.85] text-text-body">
               Every Starling Tales piece is thoughtfully created using
-              chemical-free fibres, soothing tones, and understated accents.
-              Wonderfully durable, easy to care for, and made to last, every
+              chemical-free fibres, soothing tones. Wonderfully durable every
               stitch is placed with intention. We are obsessive about detail,
               and proudly so. The way our toys sit perfectly in little hands,
               the expression that speaks a thousand words, the comfort of

@@ -20,6 +20,7 @@ import toast from "react-hot-toast";
 import { isOutOfStock } from "../../../utils/stockUtils";
 import CartDrawer from "../../common/CartDrawer";
 import { getProductImage } from "../../../utils/productImage";
+import { isSectionEnabled, getSectionContent } from "../../utils/sectionHelper";
 
 // Import modular sub-components
 import Navbar from "./Navbar";
@@ -35,7 +36,10 @@ export default function BookStoreTemplate({
   offers = [],
   reviews = [],
   customization = {},
+  sections = [],
 }) {
+  const effectiveSections =
+    sections && sections.length > 0 ? sections : customization?.sections || [];
   // Navigation: "home" | "catalog" | "product-detail"
   const [activePage, setActivePage] = useState("home");
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -277,6 +281,7 @@ export default function BookStoreTemplate({
         {activePage === "home" && (
           <div className="space-y-12">
             {/* ================= HERO PANORAMIC BANNER (REFERENCE MATCH) ================= */}
+            {isSectionEnabled(effectiveSections, "hero") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
               <div className="relative rounded-none overflow-hidden bg-[#102B2E] border-b-2 border-[#BE8043] shadow-md">
                 {/* Subtle textured grid canvas background */}
@@ -310,7 +315,7 @@ export default function BookStoreTemplate({
                   <div className="flex flex-col items-center justify-center px-4 sm:px-8">
                     <div className="px-6 py-2.5 sm:px-8 sm:py-3 rounded-full border border-white/70 backdrop-blur-xs flex items-center justify-center shadow-lg">
                       <span className="text-white font-serif font-black tracking-[0.25em] text-sm sm:text-lg uppercase">
-                        ENIGMA
+                        {getSectionContent(effectiveSections, "hero")?.emblemText || "ENIGMA"}
                       </span>
                     </div>
                   </div>
@@ -334,11 +339,13 @@ export default function BookStoreTemplate({
                 </div>
               </div>
             </section>
+            )}
 
             {/* ================= SECTION TITLE: DIGITAL PRODUCTS ================= */}
+            {isSectionEnabled(effectiveSections, "digital_products") && (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 text-left">
               <h2 className="text-lg sm:text-xl font-normal text-[#111827]">
-                Digital Products
+                {getSectionContent(effectiveSections, "digital_products")?.title || "Digital Products"}
               </h2>
 
               {/* ================= 3-COLUMN PRODUCT CARDS GRID ================= */}
@@ -368,6 +375,7 @@ export default function BookStoreTemplate({
                 </button>
               </div>
             </section>
+            )}
           </div>
         )}
 

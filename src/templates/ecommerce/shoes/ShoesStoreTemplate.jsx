@@ -27,6 +27,7 @@ import toast from "react-hot-toast";
 import { isOutOfStock } from "../../../utils/stockUtils";
 import CartDrawer from "../../common/CartDrawer";
 import { getProductImage } from "../../../utils/productImage";
+import { isSectionEnabled, getSectionContent } from "../../utils/sectionHelper";
 
 // Import modular sub-components
 import Navbar from "./Navbar";
@@ -43,7 +44,9 @@ export default function ShoesStoreTemplate({
   offers = [],
   reviews = [],
   customization = {},
+  sections = [],
 }) {
+  const effectiveSections = sections && sections.length > 0 ? sections : customization?.sections || [];
   // Navigation: "home" | "catalog" | "product-detail" | "offers"
   const [activePage, setActivePage] = useState("home");
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -394,6 +397,9 @@ export default function ShoesStoreTemplate({
         {activePage === "home" && (
           <div className="space-y-12 sm:space-y-16">
             {/* ================= HERO SNEAKER BANNER ================= */}
+            {isSectionEnabled(effectiveSections, "hero") && (() => {
+              const heroContent = getSectionContent(effectiveSections, "hero") || {};
+              return (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
               <div className="relative rounded-3xl bg-gradient-to-r from-zinc-950 via-slate-900 to-black text-white p-8 sm:p-14 overflow-hidden shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8">
                 {/* Background Sport Graphic Watermark */}
@@ -404,18 +410,22 @@ export default function ShoesStoreTemplate({
                 {/* Left Hero Copy */}
                 <div className="space-y-5 z-10 max-w-lg text-left">
                   <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-600/20 text-red-400 border border-red-500/30 text-xs font-black uppercase tracking-wider">
-                    <Sparkles size={13} /> Limited Drop Release
+                    <Sparkles size={13} /> {heroContent.badge || "Limited Drop Release"}
                   </span>
 
                   <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-none uppercase">
-                    Air Jordan 1 <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-rose-400 to-amber-300">
-                      Chicago Retro
-                    </span>
+                    {heroContent.title ? heroContent.title : (
+                      <>
+                        Air Jordan 1 <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-rose-400 to-amber-300">
+                          Chicago Retro
+                        </span>
+                      </>
+                    )}
                   </h1>
 
                   <p className="text-xs sm:text-sm text-slate-300 max-w-sm leading-relaxed">
-                    Crafted with cracked vintage leather collar, encapsulated Air sole propulsion, and museum-grade collector certification.
+                    {heroContent.description || "Crafted with cracked vintage leather collar, encapsulated Air sole propulsion, and museum-grade collector certification."}
                   </p>
 
                   <div className="flex items-center gap-4 pt-2">
@@ -424,7 +434,7 @@ export default function ShoesStoreTemplate({
                         SPECIAL PRICE
                       </span>
                       <span className="text-2xl sm:text-3xl font-black text-white">
-                        $299.99
+                        {heroContent.price || "$299.99"}
                       </span>
                     </div>
 
@@ -435,7 +445,7 @@ export default function ShoesStoreTemplate({
                       }}
                       className="px-8 py-3.5 bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-wider rounded-xl transition cursor-pointer shadow-lg shadow-red-600/40 active:scale-98"
                     >
-                      ORDER NOW
+                      {heroContent.ctaText || "ORDER NOW"}
                     </button>
                   </div>
                 </div>
@@ -443,22 +453,27 @@ export default function ShoesStoreTemplate({
                 {/* Right Angled Sneaker Visual */}
                 <div className="relative z-10 w-full md:w-96 h-56 sm:h-72 flex items-center justify-center">
                   <img
-                    src="https://images.unsplash.com/photo-1556906781-9a412961c28c?w=900&auto=format&fit=crop&q=80"
+                    src={heroContent.image || "https://images.unsplash.com/photo-1556906781-9a412961c28c?w=900&auto=format&fit=crop&q=80"}
                     alt="Hero Jordan Chicago"
                     className="max-h-full w-auto object-contain filter drop-shadow-[0_25px_30px_rgba(0,0,0,0.8)] -rotate-12 hover:rotate-0 transition-transform duration-700 ease-out"
                   />
                 </div>
               </div>
             </section>
+              );
+            })()}
 
             {/* ================= SECTION 1: WINTER COLLECTIONS ================= */}
+            {isSectionEnabled(effectiveSections, "winter_collections") && (() => {
+              const winterContent = getSectionContent(effectiveSections, "winter_collections") || {};
+              return (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
               <div className="text-center space-y-1">
                 <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                  Winter Collections
+                  {winterContent.title || "Winter Collections"}
                 </h2>
                 <p className="text-xs text-slate-400">
-                  Cardigan helvetica erresha, portland celiao truffaut
+                  {winterContent.description || "Cardigan helvetica erresha, portland celiao truffaut"}
                 </p>
               </div>
 
@@ -479,15 +494,20 @@ export default function ShoesStoreTemplate({
                 ))}
               </div>
             </section>
+              );
+            })()}
 
             {/* ================= DUAL PROMO VOUCHER STRIP (Reference Image 1) ================= */}
+            {isSectionEnabled(effectiveSections, "voucher_strip") && (() => {
+              const voucherContent = getSectionContent(effectiveSections, "voucher_strip") || {};
+              return (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Left Card: First Purchase Voucher */}
                 <div className="p-4 sm:p-5 rounded-2xl border-2 border-dashed border-red-300 bg-red-50/40 flex items-center justify-between gap-4 text-left">
                   <div className="space-y-1">
                     <h4 className="text-xs sm:text-sm font-bold text-red-900">
-                      Super discount for your first purchase
+                      {voucherContent.firstPurchaseTitle || "Super discount for your first purchase"}
                     </h4>
                     <p className="text-[11px] text-slate-500">
                       Use discount code in checkout page.
@@ -495,12 +515,13 @@ export default function ShoesStoreTemplate({
                   </div>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText("FIRST 250");
-                      toast.success("Coupon 'FIRST 250' copied!");
+                      const code = voucherContent.firstPurchaseCode || "FIRST 250";
+                      navigator.clipboard.writeText(code);
+                      toast.success(`Coupon '${code}' copied!`);
                     }}
                     className="px-3.5 py-1.5 bg-red-500 hover:bg-red-600 text-white font-black text-xs uppercase tracking-wider rounded-lg shadow-sm cursor-pointer shrink-0"
                   >
-                    FIRST 250
+                    {voucherContent.firstPurchaseCode || "FIRST 250"}
                   </button>
                 </div>
 
@@ -508,7 +529,7 @@ export default function ShoesStoreTemplate({
                 <div className="p-4 sm:p-5 rounded-2xl border-2 border-dashed border-blue-300 bg-blue-50/40 flex items-center justify-between gap-4 text-left">
                   <div className="space-y-1">
                     <h4 className="text-xs sm:text-sm font-bold text-blue-950">
-                      2nd shopping surprise campaign!
+                      {voucherContent.surpriseTitle || "2nd shopping surprise campaign!"}
                     </h4>
                     <p className="text-[11px] text-slate-500">
                       Exclusive rewards on seasonal member drops.
@@ -521,17 +542,22 @@ export default function ShoesStoreTemplate({
                     }}
                     className="px-3.5 py-1.5 bg-[#1E3A8A] hover:bg-blue-800 text-white font-black text-xs uppercase tracking-wider rounded-lg shadow-sm cursor-pointer shrink-0"
                   >
-                    Check Products ›
+                    {voucherContent.surpriseCta || "Check Products ›"}
                   </button>
                 </div>
               </div>
             </section>
+              );
+            })()}
 
             {/* ================= SECTION 2: FEATURED PRODUCTS ================= */}
+            {isSectionEnabled(effectiveSections, "featured_products_grid") && (() => {
+              const featContent = getSectionContent(effectiveSections, "featured_products_grid") || {};
+              return (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
               <div className="flex items-end justify-between border-b border-slate-100 pb-3">
                 <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                  Featured Products
+                  {featContent.title || "Featured Products"}
                 </h3>
                 <button
                   onClick={() => {
@@ -562,21 +588,26 @@ export default function ShoesStoreTemplate({
                 ))}
               </div>
             </section>
+              );
+            })()}
 
             {/* ================= SECTION 3: 3 DYNAMIC TREND BANNERS (Reference Image 1) ================= */}
+            {isSectionEnabled(effectiveSections, "trend_banners") && (() => {
+              const trendContent = getSectionContent(effectiveSections, "trend_banners") || {};
+              return (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-5 text-left">
                 {/* Large Left Banner (7 cols): 2023 New Styles */}
                 <div className="md:col-span-7 rounded-3xl bg-slate-100 p-6 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xs relative overflow-hidden group">
                   <div className="space-y-2 z-10 max-w-xs">
                     <span className="px-2 py-0.5 rounded bg-black text-white text-[9px] font-black uppercase tracking-wider">
-                      NIKE DUNK
+                      {trendContent.banner1Category || "NIKE DUNK"}
                     </span>
                     <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                      2023 New Styles
+                      {trendContent.banner1Title || "2023 New Styles"}
                     </h3>
                     <p className="text-xs text-slate-500 leading-relaxed">
-                      Join the trend of poster colors.
+                      {trendContent.banner1Description || "Join the trend of poster colors."}
                     </p>
                     <button
                       onClick={() => {
@@ -607,7 +638,7 @@ export default function ShoesStoreTemplate({
                         FREE METCON
                       </span>
                       <h4 className="text-base sm:text-lg font-black text-slate-900">
-                        Blue Sport Trends
+                        {trendContent.banner2Title || "Blue Sport Trends"}
                       </h4>
                       <button
                         onClick={() => {
@@ -635,7 +666,7 @@ export default function ShoesStoreTemplate({
                         NIKE CITY
                       </span>
                       <h4 className="text-base sm:text-lg font-black text-slate-900">
-                        Pink Teen Shoes
+                        {trendContent.banner3Title || "Pink Teen Shoes"}
                       </h4>
                       <button
                         onClick={() => {
@@ -658,8 +689,13 @@ export default function ShoesStoreTemplate({
                 </div>
               </div>
             </section>
+              );
+            })()}
 
             {/* ================= SECTION 4: 4 TRUST PILLARS (Reference Image 1) ================= */}
+            {isSectionEnabled(effectiveSections, "trust_pillars") && (() => {
+              const pillarContent = getSectionContent(effectiveSections, "trust_pillars") || {};
+              return (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-y border-slate-100 py-8">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                 <div className="space-y-2">
@@ -667,7 +703,7 @@ export default function ShoesStoreTemplate({
                     <Tag size={18} />
                   </div>
                   <h4 className="text-xs font-black text-slate-900 uppercase">
-                    Amazing Value Every Day
+                    {pillarContent.pillar1Title || "Amazing Value Every Day"}
                   </h4>
                   <p className="text-[11px] text-slate-400 max-w-[180px] mx-auto">
                     Items prices that fit your budget, true prices for everyone
@@ -679,7 +715,7 @@ export default function ShoesStoreTemplate({
                     <ShieldCheck size={18} />
                   </div>
                   <h4 className="text-xs font-black text-slate-900 uppercase">
-                    Successful Customer Service
+                    {pillarContent.pillar2Title || "Successful Customer Service"}
                   </h4>
                   <p className="text-[11px] text-slate-400 max-w-[180px] mx-auto">
                     We work with a focus on 100% customer satisfaction
@@ -691,7 +727,7 @@ export default function ShoesStoreTemplate({
                     <CreditCard size={18} />
                   </div>
                   <h4 className="text-xs font-black text-slate-900 uppercase">
-                    All Payment Methods
+                    {pillarContent.pillar3Title || "All Payment Methods"}
                   </h4>
                   <p className="text-[11px] text-slate-400 max-w-[180px] mx-auto">
                     Don't bother with payment details, verified secure gate
@@ -703,7 +739,7 @@ export default function ShoesStoreTemplate({
                     <Truck size={18} />
                   </div>
                   <h4 className="text-xs font-black text-slate-900 uppercase">
-                    Completely Free Shipping
+                    {pillarContent.pillar4Title || "Completely Free Shipping"}
                   </h4>
                   <p className="text-[11px] text-slate-400 max-w-[180px] mx-auto">
                     We'll handle the shipping, don't think about details
@@ -711,12 +747,17 @@ export default function ShoesStoreTemplate({
                 </div>
               </div>
             </section>
+              );
+            })()}
 
             {/* ================= SECTION 5: THIS MONTH'S BEST SELLERS (Reference Image 1) ================= */}
+            {isSectionEnabled(effectiveSections, "best_sellers") && (() => {
+              const bestContent = getSectionContent(effectiveSections, "best_sellers") || {};
+              return (
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
               <div className="text-center space-y-2">
                 <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                  This Month's Best Sellers
+                  {bestContent.title || "This Month's Best Sellers"}
                 </h3>
 
                 {/* Category Tabs: Women | Men | Children | Sales */}
@@ -754,6 +795,8 @@ export default function ShoesStoreTemplate({
                 ))}
               </div>
             </section>
+              );
+            })()}
           </div>
         )}
 
