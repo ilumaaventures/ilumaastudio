@@ -285,7 +285,7 @@ export default function GiftHamper() {
                   to={`${storeHomePath}/gift-hampers`}
                   className="inline-flex items-center gap-2.5 px-7 py-3.5 bg-[#2C3E35] hover:bg-[#1E2B25] text-white text-[11px] font-bold tracking-[0.2em] uppercase rounded-full transition-all duration-200 shadow-md group"
                 >
-                  <span>Explore All Hampers</span>
+                  <span>Create your own hamper from our wide range of products</span>
                   <MoveRight
                     size={14}
                     className="transition-transform group-hover:translate-x-1"

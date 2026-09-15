@@ -368,7 +368,10 @@ export default function StarlingTalesProduct() {
       </div>
 
       {/* Main Section */}
-      <main className="py-16 px-6 max-w-7xl mx-auto space-y-12">
+      <main
+        className="py-16 px-6 max-w-7xl mx-auto space-y-12"
+        id="productheader"
+      >
         <div className="text-center space-y-3.5">
           <h1 className="text-4xl font-display font-semibold text-text-dark">
             The Nursery Collection
