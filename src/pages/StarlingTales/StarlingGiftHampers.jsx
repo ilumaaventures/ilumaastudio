@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import {
   Sparkles,
@@ -207,6 +207,7 @@ const LOCAL_DEFAULT_HAMPERS = [
 
 export default function StarlingGiftHampers() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const {
     products: apiProducts,
     categories,
@@ -374,9 +375,10 @@ export default function StarlingGiftHampers() {
   // Redux Cart Mapping
   const mappedCart = useMemo(() => {
     return cartItems.map((item) => ({
-      productId: item._id,
-      sku: item._id,
-      variantLabel: "Standard",
+      ...item,
+      productId: item._id || item.id,
+      sku: item.sku || item._id || item.id,
+      variantLabel: item.variantLabel || item.selectedOptions || "Standard",
       quantity: item.quantity,
     }));
   }, [cartItems]);
@@ -460,20 +462,24 @@ export default function StarlingGiftHampers() {
   };
 
   const handleUpdateQty = (productId, sku, newQty) => {
+    const targetId = productId || sku;
     if (newQty <= 0) {
-      dispatch(removeFromCart({ productId: sku }));
+      dispatch(removeFromCart(targetId));
+      toast.success("Item removed from cart");
     } else {
-      dispatch(updateCartQuantity({ productId: sku, quantity: newQty }));
+      dispatch(updateCartQuantity({ productId: targetId, quantity: newQty }));
     }
   };
 
   const handleRemoveFromCart = (productId, sku) => {
-    dispatch(removeFromCart({ productId: sku }));
+    const targetId = productId || sku;
+    dispatch(removeFromCart(targetId));
+    toast.success("Item removed from cart");
   };
 
   const handleCheckout = () => {
     setCartOpen(false);
-    toast.success("Proceeding to checkout!");
+    navigate("/cart");
   };
 
   return (

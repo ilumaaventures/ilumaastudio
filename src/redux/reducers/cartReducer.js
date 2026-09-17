@@ -211,8 +211,15 @@ export const addToCart = createAsyncThunk(
 export const removeFromCart = createAsyncThunk(
   "cart/removeFromCart",
   async (productId, { getState, rejectWithValue }) => {
+    const rawId =
+      typeof productId === "object" && productId !== null
+        ? productId.productId || productId._id || productId.id || productId.sku || productId.cartItemId
+        : productId;
+    const strId = String(rawId ?? "").trim();
+
     try {
-      const response = await cartService.removeFromCart(productId);
+      if (!strId) throw new Error("Missing product ID");
+      const response = await cartService.removeFromCart(strId);
       const mapped = mapDbCartToRedux(response.items);
       try {
         localStorage.setItem("cartItems", JSON.stringify(mapped));
@@ -222,9 +229,17 @@ export const removeFromCart = createAsyncThunk(
       console.warn("Backend removeFromCart error, falling back to local:", error);
       const { cart } = getState();
       const currentItems = Array.isArray(cart.cartItems)
-        ? cart.cartItems.filter(
-            (i) => i._id !== productId && i.id !== productId && i.itemKey !== productId && i.cartItemId !== productId
-          )
+        ? cart.cartItems.filter((i) => {
+            const iId = String(i._id ?? "").trim();
+            const id = String(i.id ?? "").trim();
+            const iKey = String(i.itemKey ?? "").trim();
+            const iCartId = String(i.cartItemId ?? "").trim();
+            const iSku = String(i.sku ?? "").trim();
+            const isTarget =
+              (strId && (iId === strId || id === strId || iKey === strId || iCartId === strId || iSku === strId)) ||
+              (rawId !== undefined && rawId !== null && (i._id === rawId || i.id === rawId || i.sku === rawId));
+            return !isTarget;
+          })
         : [];
       try {
         localStorage.setItem("cartItems", JSON.stringify(currentItems));
@@ -236,9 +251,45 @@ export const removeFromCart = createAsyncThunk(
 
 export const updateCartQuantity = createAsyncThunk(
   "cart/updateCartQuantity",
-  async ({ productId, quantity }, { getState, rejectWithValue }) => {
+  async (payload, { getState, rejectWithValue }) => {
+    const prodArg =
+      typeof payload === "object" && payload !== null
+        ? payload.productId ?? payload._id ?? payload.id ?? payload.sku
+        : payload;
+    const rawId =
+      typeof prodArg === "object" && prodArg !== null
+        ? prodArg.productId || prodArg._id || prodArg.id || prodArg.sku || prodArg.cartItemId
+        : prodArg;
+    const strId = String(rawId ?? "").trim();
+    const quantity = Number(typeof payload === "object" && payload !== null ? payload.quantity : 1);
+
+    if (quantity <= 0) {
+      try {
+        if (strId) await cartService.removeFromCart(strId);
+      } catch (_) {}
+      const { cart } = getState();
+      const currentItems = Array.isArray(cart.cartItems)
+        ? cart.cartItems.filter((i) => {
+            const iId = String(i._id ?? "").trim();
+            const id = String(i.id ?? "").trim();
+            const iKey = String(i.itemKey ?? "").trim();
+            const iCartId = String(i.cartItemId ?? "").trim();
+            const iSku = String(i.sku ?? "").trim();
+            const isTarget =
+              (strId && (iId === strId || id === strId || iKey === strId || iCartId === strId || iSku === strId)) ||
+              (rawId !== undefined && rawId !== null && (i._id === rawId || i.id === rawId || i.sku === rawId));
+            return !isTarget;
+          })
+        : [];
+      try {
+        localStorage.setItem("cartItems", JSON.stringify(currentItems));
+      } catch (_) {}
+      return currentItems;
+    }
+
     try {
-      const response = await cartService.updateCartQuantity(productId, quantity);
+      if (!strId) throw new Error("Missing product ID");
+      const response = await cartService.updateCartQuantity(strId, quantity);
       const mapped = mapDbCartToRedux(response.items);
       try {
         localStorage.setItem("cartItems", JSON.stringify(mapped));
@@ -248,11 +299,17 @@ export const updateCartQuantity = createAsyncThunk(
       console.warn("Backend updateCartQuantity error, falling back to local:", error);
       const { cart } = getState();
       const currentItems = Array.isArray(cart.cartItems)
-        ? cart.cartItems.map((i) =>
-            i._id === productId || i.id === productId || i.itemKey === productId || i.cartItemId === productId
-              ? { ...i, quantity: Math.max(1, quantity) }
-              : i
-          )
+        ? cart.cartItems.map((i) => {
+            const iId = String(i._id ?? "").trim();
+            const id = String(i.id ?? "").trim();
+            const iKey = String(i.itemKey ?? "").trim();
+            const iCartId = String(i.cartItemId ?? "").trim();
+            const iSku = String(i.sku ?? "").trim();
+            const isMatch =
+              (strId && (iId === strId || id === strId || iKey === strId || iCartId === strId || iSku === strId)) ||
+              (rawId !== undefined && rawId !== null && (i._id === rawId || i.id === rawId || i.sku === rawId));
+            return isMatch ? { ...i, quantity: Math.max(1, quantity) } : i;
+          })
         : [];
       try {
         localStorage.setItem("cartItems", JSON.stringify(currentItems));

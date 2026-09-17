@@ -255,9 +255,10 @@ export default function StarlingCollection() {
   // Map Redux cart items to what CartDrawer expects
   const mappedCart = useMemo(() => {
     return cartItems.map((item) => ({
+      ...item,
       productId: item._id || item.id,
-      sku: item._id || item.id,
-      variantLabel: "Standard",
+      sku: item.sku || item._id || item.id,
+      variantLabel: item.variantLabel || item.selectedOptions || "Standard",
       quantity: item.quantity,
     }));
   }, [cartItems]);
@@ -311,13 +312,14 @@ export default function StarlingCollection() {
   };
 
   const handleUpdateQty = (productId, sku, newQty) => {
+    const targetId = productId || sku;
     if (newQty < 1) {
-      handleRemoveFromCart(productId, sku);
+      handleRemoveFromCart(targetId, sku);
       return;
     }
     const origProduct =
-      rawProducts.find((p) => (p._id || p.id) === productId) ||
-      mappedProducts.find((p) => p.id === productId)?.rawProduct;
+      rawProducts.find((p) => String(p._id || p.id) === String(targetId)) ||
+      mappedProducts.find((p) => String(p.id) === String(targetId))?.rawProduct;
 
     const availableStock = origProduct
       ? origProduct.inventory?.stockQuantity !== undefined
@@ -339,15 +341,16 @@ export default function StarlingCollection() {
     }
     dispatch(
       updateCartQuantity({
-        productId: productId,
-        _id: productId,
+        productId: targetId,
+        _id: targetId,
         quantity: newQty,
       }),
     );
   };
 
   const handleRemoveFromCart = (productId, sku) => {
-    dispatch(removeFromCart(productId));
+    const targetId = productId || sku;
+    dispatch(removeFromCart(targetId));
     toast.success("Item removed from cart.");
   };
 
