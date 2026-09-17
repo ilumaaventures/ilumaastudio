@@ -40,7 +40,8 @@ const BASKET_OPTIONS = [
   {
     id: "basket-woven",
     name: "Heirloom Woven Rope Basket",
-    subtitle: "Organic cotton rope basket with handles. Everyday nursery storage.",
+    subtitle:
+      "Organic cotton rope basket with handles. Everyday nursery storage.",
     price: 0,
     capacity: 6,
     dimensions: "32cm × 24cm × 16cm",
@@ -50,7 +51,8 @@ const BASKET_OPTIONS = [
   {
     id: "basket-wooden",
     name: "Artisanal Pinewood Keepsake Trunk",
-    subtitle: "Solid pine wood with antique brass latch for milestone memories.",
+    subtitle:
+      "Solid pine wood with antique brass latch for milestone memories.",
     price: 0,
     capacity: 8,
     dimensions: "36cm × 26cm × 18cm",
@@ -82,17 +84,21 @@ const BASKET_OPTIONS = [
 export default function CreateOwnHamper() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { products: apiProducts, storeHomePath: contextHomePath, business } = useStore();
+  const {
+    products: apiProducts,
+    storeHomePath: contextHomePath,
+    business,
+  } = useStore();
 
   const storeHomePath =
     contextHomePath ||
     (business?.subdomain
       ? `/${encodeURIComponent(business.subdomain)}`
       : business?.slug
-      ? `/${encodeURIComponent(business.slug)}`
-      : business?.businessName
-      ? `/${encodeURIComponent(business.businessName)}`
-      : "");
+        ? `/${encodeURIComponent(business.slug)}`
+        : business?.businessName
+          ? `/${encodeURIComponent(business.businessName)}`
+          : "");
 
   // Builder State: Direct & Simple
   const [selectedBasket, setSelectedBasket] = useState(BASKET_OPTIONS[0]);
@@ -106,7 +112,7 @@ export default function CreateOwnHamper() {
   const [recipientName, setRecipientName] = useState("");
   const [senderName, setSenderName] = useState("");
   const [cardMessage, setCardMessage] = useState(
-    "Welcome to the world, precious little one! May your days be filled with wonder and love."
+    "Welcome to the world, precious little one! May your days be filled with wonder and love.",
   );
 
   // Cart Drawer
@@ -115,7 +121,9 @@ export default function CreateOwnHamper() {
   // Filter Nursery Collection Products directly
   const nurseryProducts = useMemo(() => {
     const rawList =
-      Array.isArray(apiProducts) && apiProducts.length > 0 ? apiProducts : PRODUCTS || [];
+      Array.isArray(apiProducts) && apiProducts.length > 0
+        ? apiProducts
+        : PRODUCTS || [];
 
     return rawList
       .filter((p) => {
@@ -128,7 +136,9 @@ export default function CreateOwnHamper() {
         ).toLowerCase();
 
         const name = (p.name || "").toLowerCase();
-        const tags = Array.isArray(p.tags) ? p.tags.map((t) => String(t).toLowerCase()) : [];
+        const tags = Array.isArray(p.tags)
+          ? p.tags.map((t) => String(t).toLowerCase())
+          : [];
 
         // Exclude pre-made hampers
         const isPreMadeHamper =
@@ -158,7 +168,11 @@ export default function CreateOwnHamper() {
         ).toLowerCase();
 
         let groupCat = "Nursery Essentials";
-        if (rawCat.includes("doll") || rawCat.includes("toy") || rawCat.includes("companion")) {
+        if (
+          rawCat.includes("doll") ||
+          rawCat.includes("toy") ||
+          rawCat.includes("companion")
+        ) {
           groupCat = "Plush & Companions";
         } else if (
           rawCat.includes("swaddle") ||
@@ -181,7 +195,9 @@ export default function CreateOwnHamper() {
           name: p.name,
           tagline:
             p.tagline ||
-            (p.description ? p.description.split(".")[0] + "." : "Handcrafted nursery keepsake."),
+            (p.description
+              ? p.description.split(".")[0] + "."
+              : "Handcrafted nursery keepsake."),
           price: Number(p.price) || 1499,
           image: img,
           groupCategory: groupCat,
@@ -189,11 +205,17 @@ export default function CreateOwnHamper() {
       });
   }, [apiProducts]);
 
-  const categories = ["All", "Plush & Companions", "Swaddles & Quilts", "Storage & Decor"];
+  const categories = [
+    "All",
+    "Plush & Companions",
+    "Swaddles & Quilts",
+    "Storage & Decor",
+  ];
 
   const filteredProducts = useMemo(() => {
     return nurseryProducts.filter((p) => {
-      const matchesCat = selectedCategory === "All" || p.groupCategory === selectedCategory;
+      const matchesCat =
+        selectedCategory === "All" || p.groupCategory === selectedCategory;
       const matchesSearch =
         searchQuery.trim() === "" ||
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -212,7 +234,10 @@ export default function CreateOwnHamper() {
   const remainingSlots = Math.max(0, maxCapacity - totalItemCount);
 
   const itemsCost = useMemo(() => {
-    return selectedItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+    return selectedItems.reduce(
+      (acc, item) => acc + item.product.price * item.quantity,
+      0,
+    );
   }, [selectedItems]);
 
   const grandTotal = itemsCost;
@@ -220,9 +245,12 @@ export default function CreateOwnHamper() {
   // Add / Decrease / Remove items
   const handleAddItem = (product) => {
     if (isFull) {
-      toast.error(`Your ${selectedBasket.name} can hold up to ${maxCapacity} items.`, {
-        icon: "🧺",
-      });
+      toast.error(
+        `Your ${selectedBasket.name} can hold up to ${maxCapacity} items.`,
+        {
+          icon: "🧺",
+        },
+      );
       return;
     }
 
@@ -230,13 +258,16 @@ export default function CreateOwnHamper() {
       const existing = prev.find((i) => i.product.id === product.id);
       if (existing) {
         return prev.map((i) =>
-          i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i,
         );
       }
       return [...prev, { product, quantity: 1 }];
     });
 
-    toast.success(`Added ${product.name} to hamper!`, { icon: "✨", duration: 1500 });
+    toast.success(`Added ${product.name} to hamper!`, {
+      icon: "✨",
+      duration: 1500,
+    });
   };
 
   const handleDecreaseItem = (productId) => {
@@ -247,7 +278,7 @@ export default function CreateOwnHamper() {
         return prev.filter((i) => i.product.id !== productId);
       }
       return prev.map((i) =>
-        i.product.id === productId ? { ...i, quantity: i.quantity - 1 } : i
+        i.product.id === productId ? { ...i, quantity: i.quantity - 1 } : i,
       );
     });
   };
@@ -260,9 +291,12 @@ export default function CreateOwnHamper() {
   // One-click Create Hamper Order action (adds real single products with hamper metadata)
   const handleCreateOrder = async (goToCheckout = false) => {
     if (selectedItems.length === 0) {
-      toast.error("Please select at least 1 nursery product to create your hamper!", {
-        icon: "🧺",
-      });
+      toast.error(
+        "Please select at least 1 nursery product to create your hamper!",
+        {
+          icon: "🧺",
+        },
+      );
       return;
     }
 
@@ -298,7 +332,7 @@ export default function CreateOwnHamper() {
             hamperNote: cardMessage || "",
           },
           quantity: item.quantity,
-        })
+        }),
       );
     }
 
@@ -319,7 +353,9 @@ export default function CreateOwnHamper() {
       {/* Top Banner Notice */}
       <div className="bg-[#2C3E35] text-[#FAF7F2] text-[11px] tracking-[0.2em] uppercase py-2.5 text-center font-medium px-4 flex items-center justify-center gap-2">
         <Sparkles size={13} className="text-[#C5A880]" />
-        <span>Select Nursery Treasures & Create Your Hamper Order in Minutes</span>
+        <span>
+          Select Nursery Treasures & Create Your Hamper Order in Minutes
+        </span>
       </div>
 
       {/* Header Section */}
@@ -339,8 +375,9 @@ export default function CreateOwnHamper() {
           </h1>
 
           <p className="text-[14px] sm:text-[15px] font-light text-[#5B5B5B] max-w-xl mx-auto leading-relaxed">
-            Choose your favourite nursery treasures below. We’ll beautifully wrap them in our signature
-            keepsake basket with a complimentary handwritten card and wax seal.
+            Choose your favourite nursery treasures below. We’ll beautifully
+            wrap them in our signature keepsake basket with a complimentary
+            handwritten card and wax seal.
           </p>
         </div>
       </header>
@@ -350,107 +387,11 @@ export default function CreateOwnHamper() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* ================= LEFT: NURSERY PRODUCTS COLLECTION (8 COLS) ================= */}
           <div className="lg:col-span-8 space-y-6">
-            {/* Filter and Search Bar */}
-            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E8DFC8] shadow-2xs space-y-3">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                {/* Category Pills */}
-                <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
-                  {categories.map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setSelectedCategory(cat)}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-150 cursor-pointer ${
-                        selectedCategory === cat
-                          ? "bg-[#2C3E35] text-white shadow-xs"
-                          : "bg-[#FAF7F2] text-[#5B5B5B] border border-[#EAE3D2] hover:border-[#C5A880]"
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Instant Search */}
-                <div className="relative w-full sm:w-60 shrink-0">
-                  <input
-                    type="text"
-                    placeholder="Search nursery items..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-8 pr-3 py-1.5 rounded-full bg-[#FAF7F2] border border-[#EAE3D2] text-xs text-[#2C3E35] focus:outline-none focus:border-[#2C3E35] placeholder:text-[#9E9589]"
-                  />
-                  <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#9E9589]" />
-                </div>
-              </div>
-
-              {/* Basket Capacity Indicator */}
-              <div className="pt-2 border-t border-[#EAE3D2]/70 flex items-center justify-between text-xs">
-                <span className="text-[#5B5B5B] inline-flex items-center gap-1.5 font-medium">
-                  <Package size={13} className="text-[#C5A880]" />
-                  Packaging: <strong>{selectedBasket?.name}</strong>
-                  <button
-                    type="button"
-                    onClick={() => setShowBasketSelector(!showBasketSelector)}
-                    className="text-[#2C3E35] underline ml-1 cursor-pointer font-normal hover:text-[#1E2B25]"
-                  >
-                    {showBasketSelector ? "Hide Options" : "Change Basket"}
-                  </button>
-                </span>
-                <span className={`font-bold ${isFull ? "text-amber-700" : "text-[#2C3E35]"}`}>
-                  {totalItemCount} of {maxCapacity} items selected
-                </span>
-              </div>
-
-              {/* Collapsible Basket Selector */}
-              {showBasketSelector && (
-                <div className="pt-3 border-t border-[#EAE3D2] grid grid-cols-1 sm:grid-cols-2 gap-3 animate-fadeIn">
-                  {BASKET_OPTIONS.map((basket) => {
-                    const isSelected = selectedBasket?.id === basket.id;
-                    return (
-                      <div
-                        key={basket.id}
-                        onClick={() => {
-                          setSelectedBasket(basket);
-                          setShowBasketSelector(false);
-                          toast.success(`Selected ${basket.name}!`, { icon: "🧺" });
-                        }}
-                        className={`p-3 rounded-xl border-2 flex items-center gap-3 cursor-pointer transition-all ${
-                          isSelected
-                            ? "border-[#2C3E35] bg-[#FAF8F5] shadow-xs"
-                            : "border-[#EAE3D2] bg-white hover:border-[#C5A880]"
-                        }`}
-                      >
-                        <img
-                          src={basket.image}
-                          alt={basket.name}
-                          className="w-12 h-12 rounded-lg object-cover border border-[#EAE3D2]"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-display text-xs font-semibold text-[#2C3E35] truncate">
-                              {basket.name}
-                            </h4>
-                            <span className="font-bold text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-                              Included Packaging
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-[#7A695B] truncate mt-0.5">
-                            Holds up to {basket.capacity} items • {basket.badge}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
             {/* Products Grid */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="font-display text-lg font-normal text-[#2C3E35]">
-                  Select Items from Nursery Collection ({filteredProducts.length})
+                  Select Items from Nursery Collection
                 </h2>
                 <span className="text-xs text-[#7A695B] font-light">
                   Click "+ Add to Hamper" on any product
@@ -476,7 +417,9 @@ export default function CreateOwnHamper() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredProducts.map((prod) => {
-                    const inHamper = selectedItems.find((i) => i.product.id === prod.id);
+                    const inHamper = selectedItems.find(
+                      (i) => i.product.id === prod.id,
+                    );
                     const qty = inHamper ? inHamper.quantity : 0;
 
                     return (
@@ -552,71 +495,13 @@ export default function CreateOwnHamper() {
                               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#2C3E35] hover:bg-[#1E2B25] disabled:opacity-40 text-white text-[11px] font-bold rounded-full transition-all duration-150 shadow-2xs cursor-pointer"
                             >
                               <Plus size={12} strokeWidth={3} />
-                              <span>Add to Hamper</span>
+                              <span>Add to Hamper Bag</span>
                             </button>
                           )}
                         </div>
                       </div>
                     );
                   })}
-                </div>
-              )}
-            </div>
-
-            {/* Optional Gift Message & Personalisation Card */}
-            <div className="bg-white rounded-2xl p-5 border border-[#E8DFC8] shadow-2xs space-y-3">
-              <button
-                type="button"
-                onClick={() => setShowNoteOptions(!showNoteOptions)}
-                className="w-full flex items-center justify-between text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#2C3E35]">
-                  <Feather size={14} className="text-[#C5A880]" />
-                  <span>Complimentary Gift Card & Calligraphy Note (Optional)</span>
-                </div>
-                {showNoteOptions ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </button>
-
-              {showNoteOptions && (
-                <div className="pt-3 border-t border-[#EAE3D2] space-y-3 animate-fadeIn">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-bold text-[#2C3E35] mb-1">
-                        To (Recipient Name)
-                      </label>
-                      <input
-                        type="text"
-                        value={recipientName}
-                        onChange={(e) => setRecipientName(e.target.value)}
-                        placeholder="e.g. Baby Aarav & Parents"
-                        className="w-full px-3 py-2 border border-[#E2D8C3] rounded-xl text-xs text-[#2C3E35] focus:outline-none focus:border-[#2C3E35]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-[#2C3E35] mb-1">
-                        From (Sender Name)
-                      </label>
-                      <input
-                        type="text"
-                        value={senderName}
-                        onChange={(e) => setSenderName(e.target.value)}
-                        placeholder="e.g. Priya & Rohan"
-                        className="w-full px-3 py-2 border border-[#E2D8C3] rounded-xl text-xs text-[#2C3E35] focus:outline-none focus:border-[#2C3E35]"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-[#2C3E35] mb-1">
-                      Handwritten Message
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={cardMessage}
-                      onChange={(e) => setCardMessage(e.target.value)}
-                      placeholder="Write your greeting..."
-                      className="w-full px-3 py-2 border border-[#E2D8C3] rounded-xl text-xs font-serif italic text-[#2C3E35] focus:outline-none focus:border-[#2C3E35]"
-                    />
-                  </div>
                 </div>
               )}
             </div>
@@ -632,7 +517,9 @@ export default function CreateOwnHamper() {
                     Your Hamper Order
                   </h3>
                   <p className="text-[11px] text-[#6B5E51] font-light">
-                    {totalItemCount === 0 ? "Select items to begin" : `${totalItemCount} items selected`}
+                    {totalItemCount === 0
+                      ? "Select items to begin"
+                      : `${totalItemCount} items selected`}
                   </p>
                 </div>
                 <span className="px-2.5 py-0.5 rounded-full bg-[#FAF6F0] text-[10px] font-bold text-[#7A695B] border border-[#E2D8C3] uppercase tracking-wider">
@@ -668,7 +555,9 @@ export default function CreateOwnHamper() {
                       className={`h-full transition-all duration-300 ${
                         isFull ? "bg-amber-600" : "bg-[#2C3E35]"
                       }`}
-                      style={{ width: `${Math.min(100, (totalItemCount / maxCapacity) * 100)}%` }}
+                      style={{
+                        width: `${Math.min(100, (totalItemCount / maxCapacity) * 100)}%`,
+                      }}
                     />
                   </div>
                 </div>
@@ -706,7 +595,9 @@ export default function CreateOwnHamper() {
                         className="flex items-center justify-between text-xs p-2 rounded-xl bg-[#FAF7F2] border border-[#EAE3D2]/70"
                       >
                         <div className="flex items-center gap-2 truncate pr-2">
-                          <span className="font-bold text-[#2C3E35] shrink-0">{item.quantity}×</span>
+                          <span className="font-bold text-[#2C3E35] shrink-0">
+                            {item.quantity}×
+                          </span>
                           <span className="truncate text-[#2C3E35] font-medium">
                             {item.product.name}
                           </span>
@@ -740,7 +631,9 @@ export default function CreateOwnHamper() {
                 </div>
                 <div className="flex justify-between text-[#5B5B5B]">
                   <span>Nursery Treasures ({totalItemCount})</span>
-                  <span className="font-medium text-[#2C3E35]">{formatPrice(itemsCost)}</span>
+                  <span className="font-medium text-[#2C3E35]">
+                    {formatPrice(itemsCost)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-[#5B5B5B]">
                   <span>Gift Card & Wax Seal</span>
@@ -813,7 +706,10 @@ export default function CreateOwnHamper() {
       </div>
 
       {/* Cart Drawer */}
-      <CartDrawer isOpen={cartDrawerOpen} onClose={() => setCartDrawerOpen(false)} />
+      <CartDrawer
+        isOpen={cartDrawerOpen}
+        onClose={() => setCartDrawerOpen(false)}
+      />
     </div>
   );
 }
