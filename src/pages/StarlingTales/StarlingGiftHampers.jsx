@@ -207,17 +207,22 @@ const LOCAL_DEFAULT_HAMPERS = [
 
 export default function StarlingGiftHampers() {
   const dispatch = useDispatch();
-  const { products: apiProducts, categories, storeHomePath: contextHomePath, business } = useStore();
+  const {
+    products: apiProducts,
+    categories,
+    storeHomePath: contextHomePath,
+    business,
+  } = useStore();
 
   const storeHomePath =
     contextHomePath ||
     (business?.subdomain
       ? `/${encodeURIComponent(business.subdomain)}`
       : business?.slug
-      ? `/${encodeURIComponent(business.slug)}`
-      : business?.businessName
-      ? `/${encodeURIComponent(business.businessName)}`
-      : "");
+        ? `/${encodeURIComponent(business.slug)}`
+        : business?.businessName
+          ? `/${encodeURIComponent(business.businessName)}`
+          : "");
 
   const cartItems = useSelector((s) => s.cart?.cartItems || []);
   const wishlistItems = useSelector((s) => s.wishlist?.items || []);
@@ -328,24 +333,24 @@ export default function StarlingGiftHampers() {
           includedItems: p.includedItems?.length
             ? p.includedItems
             : [
-              "Handcrafted Companion Toy",
-              "Organic Cotton Muslin Textile",
-              "Woven Keepsake Storage Basket",
-              "Calligraphy Card & Wax Seal",
-            ],
+                "Handcrafted Companion Toy",
+                "Organic Cotton Muslin Textile",
+                "Woven Keepsake Storage Basket",
+                "Calligraphy Card & Wax Seal",
+              ],
           details: p.details?.length
             ? p.details
             : [
-              "100% GOTS Certified Organic Cotton",
-              "Safety certified & hypoallergenic",
-              "Reusable heirloom container",
-            ],
+                "100% GOTS Certified Organic Cotton",
+                "Safety certified & hypoallergenic",
+                "Reusable heirloom container",
+              ],
           tags: p.tags || ["hamper", "gift"],
           variants: p.variants?.length
             ? p.variants.map((v, i) => ({
-              label: v.label || v.name || `Option ${i + 1}`,
-              sku: v.sku || `${p._id}-${i}`,
-            }))
+                label: v.label || v.name || `Option ${i + 1}`,
+                sku: v.sku || `${p._id}-${i}`,
+              }))
             : [{ label: "Standard Set", sku: p._id }],
         };
       });
@@ -384,8 +389,8 @@ export default function StarlingGiftHampers() {
       typeof productOrId === "object" && productOrId !== null
         ? productOrId
         : hampersList.find(
-          (h) => h.id === productOrId || h._id === productOrId,
-        );
+            (h) => h.id === productOrId || h._id === productOrId,
+          );
 
     if (!product) return;
 
@@ -408,13 +413,13 @@ export default function StarlingGiftHampers() {
 
     // Check if adding exceeds available stock
     const existingItem = cartItems.find(
-      (item) => item._id === (product.id || product._id)
+      (item) => item._id === (product.id || product._id),
     );
     const currentQtyInCart = existingItem?.quantity || 0;
 
     if (currentQtyInCart + qty > availableStock) {
       toast.error(
-        `Only ${availableStock} units available for "${product.name}". You already have ${currentQtyInCart} in your bag.`
+        `Only ${availableStock} units available for "${product.name}". You already have ${currentQtyInCart} in your bag.`,
       );
       return;
     }
@@ -475,12 +480,14 @@ export default function StarlingGiftHampers() {
     <div className="min-h-screen bg-cream text-text-dark font-sans selection:bg-blue-light selection:text-blue-soft relative overflow-x-hidden">
       {/* Top Banner Notice */}
       <div className="bg-text-dark text-cream text-[11px] tracking-[0.2em] uppercase py-2.5 text-center font-medium px-4 flex items-center justify-center gap-2">
-        <Sparkles size={13} className="text-gold" />
         <span>Free shipping on all heirloom keepsakes over ₹5,000</span>
       </div>
 
       {/* Hero Header Section */}
-      <div id="hamperheader" className="bg-gradient-to-b from-[#F7F3EB] via-cream to-cream px-6 pt-10 pb-12 text-center border-b border-[#E8DFC8]/40">
+      <div
+        id="hamperheader"
+        className="bg-gradient-to-b from-[#F7F3EB] via-cream to-cream px-6 pt-10 pb-12 text-center border-b border-[#E8DFC8]/40"
+      >
         <div className="max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#E8DFC8] text-[11px] font-bold tracking-[0.24em] uppercase text-text-dark shadow-2xs">
             <Gift size={13} className="text-gold" />
@@ -507,9 +514,14 @@ export default function StarlingGiftHampers() {
               to={`${storeHomePath}/create-hamper`}
               className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-white border border-[#E2D8C3] hover:border-[#2C3E35] text-xs font-semibold text-[#2C3E35] shadow-xs hover:shadow-md transition-all duration-200 group"
             >
-              <Sparkles size={14} className="text-[#C5A880]" />
-              <span>Prefer to curate your own? <strong>Design a Custom Hamper with Nursery Treasures</strong></span>
-              <ArrowRight size={14} className="transition-transform group-hover:translate-x-1 text-[#2C3E35]" />
+              <span>
+                Prefer to curate your own?{" "}
+                <strong>Design a Custom Hamper with Nursery Treasures</strong>
+              </span>
+              <ArrowRight
+                size={14}
+                className="transition-transform group-hover:translate-x-1 text-[#2C3E35]"
+              />
             </Link>
           </div>
         </div>
@@ -541,8 +553,9 @@ export default function StarlingGiftHampers() {
                   className="mx-auto max-w-6xl rounded-3xl sm:rounded-[36px] overflow-hidden border border-[#E8DFC8] bg-white shadow-[0_8px_30px_rgba(44,62,53,0.06)] transition-all duration-300 hover:shadow-[0_16px_40px_rgba(44,62,53,0.1)]"
                 >
                   <div
-                    className={`grid md:grid-cols-12 ${reverse ? "md:[&>div:first-child]:order-2" : ""
-                      }`}
+                    className={`grid md:grid-cols-12 ${
+                      reverse ? "md:[&>div:first-child]:order-2" : ""
+                    }`}
                   >
                     {/* ================= FULL IMAGE SHOWCASE COLUMN (6 cols) ================= */}
                     <div className="md:col-span-6 relative min-h-[380px] sm:min-h-[460px] md:min-h-[520px] bg-gradient-to-br from-[#FAF7F2] via-[#F5EFE6] to-[#EAE2D2] flex flex-col items-center justify-center p-6 sm:p-8 overflow-hidden group">
@@ -619,10 +632,11 @@ export default function StarlingGiftHampers() {
                                   [hamper.id]: thumb,
                                 }));
                               }}
-                              className={`w-9 h-9 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${currentActiveImg === thumb
-                                ? "border-[#2C3E35] scale-110 shadow-xs ring-1 ring-[#2C3E35]"
-                                : "border-transparent opacity-60 hover:opacity-100"
-                                }`}
+                              className={`w-9 h-9 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
+                                currentActiveImg === thumb
+                                  ? "border-[#2C3E35] scale-110 shadow-xs ring-1 ring-[#2C3E35]"
+                                  : "border-transparent opacity-60 hover:opacity-100"
+                              }`}
                             >
                               <img
                                 src={thumb}
@@ -636,7 +650,6 @@ export default function StarlingGiftHampers() {
 
                       {/* Bottom-left label */}
                       <div className="absolute bottom-5 left-5 z-10 hidden sm:flex items-center gap-1.5 bg-[#2C3E35]/90 text-cream text-[9.5px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full backdrop-blur-xs">
-                        <Sparkles size={11} className="text-gold" />
                         <span>Artisan Hamper</span>
                       </div>
                     </div>
@@ -663,7 +676,6 @@ export default function StarlingGiftHampers() {
                         <p className="text-[13.5px] font-light leading-[1.8] text-[#5B5B5B]">
                           {hamper.description || hamper.tagline}
                         </p>
-
 
                         {/* Price + Reviews Block */}
                         <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-[#E8DFC8]/70">
@@ -736,7 +748,23 @@ export default function StarlingGiftHampers() {
         )}
       </div>
 
+      {/* QUICK VIEW DRAWER MODAL */}
 
+      <div className="pt-2 flex justify-center pb-12">
+        <Link
+          to={`${storeHomePath}/create-hamper`}
+          className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-white border border-[#E2D8C3] hover:border-[#2C3E35] text-xs font-semibold text-[#2C3E35] shadow-xs hover:shadow-md transition-all duration-200 group"
+        >
+          <span>
+            Prefer to curate your own?{" "}
+            <strong>Design a Custom Hamper with Nursery Treasures</strong>
+          </span>
+          <ArrowRight
+            size={14}
+            className="transition-transform group-hover:translate-x-1 text-[#2C3E35]"
+          />
+        </Link>
+      </div>
 
       {/* FULLSCREEN IMAGE LIGHTBOX MODAL */}
       {previewModalImage && (
