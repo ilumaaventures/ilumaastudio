@@ -53,6 +53,14 @@ const mapDbCartToRedux = (dbItems) => {
       image: typeof prodImg === "object" ? prodImg.url : prodImg,
       stock: effectiveStock,
       quantity: item.quantity || 1,
+      isHamperItem: Boolean(item.isHamperItem),
+      isPackaging: Boolean(item.isPackaging),
+      hamperId: item.hamperId || null,
+      hamperName: item.hamperName || null,
+      hamperBasket: item.hamperBasket || null,
+      hamperRecipient: item.hamperRecipient || null,
+      hamperSender: item.hamperSender || null,
+      hamperNote: item.hamperNote || null,
     };
   });
 };
@@ -115,6 +123,14 @@ export const addToCart = createAsyncThunk(
         selectedOptions: product.selectedOptions || product.selectedVariant || null,
         variantSku: product.variantSku || product.sku || null,
         variantId: product.variantId || null,
+        isHamperItem: Boolean(product.isHamperItem),
+        isPackaging: Boolean(product.isPackaging),
+        hamperId: product.hamperId || null,
+        hamperName: product.hamperName || null,
+        hamperBasket: product.hamperBasket || null,
+        hamperRecipient: product.hamperRecipient || null,
+        hamperSender: product.hamperSender || null,
+        hamperNote: product.hamperNote || null,
         product: {
           _id: prodId,
           name: product.name || product.title,
@@ -131,10 +147,17 @@ export const addToCart = createAsyncThunk(
     } catch (error) {
       console.warn("Backend addToCart error, using resilient fallback:", error);
       const currentItems = Array.isArray(cart.cartItems) ? [...cart.cartItems] : [];
-      const itemKey = product.itemKey || `${prodId}-${product.selectedVariant || product.variantId || product.selectedSize || ""}`;
-      const existingIdx = currentItems.findIndex(
-        (i) => (i.itemKey && i.itemKey === itemKey) || i._id === prodId || i.id === prodId
-      );
+      const itemKey =
+        product.itemKey ||
+        (product.hamperId
+          ? `${prodId}-${product.hamperId}`
+          : `${prodId}-${product.selectedVariant || product.variantId || product.selectedSize || ""}`);
+      const existingIdx = currentItems.findIndex((i) => {
+        if (product.hamperId || i.hamperId) {
+          return i.hamperId === product.hamperId && (i._id === prodId || i.id === prodId);
+        }
+        return (i.itemKey && i.itemKey === itemKey) || i._id === prodId || i.id === prodId;
+      });
 
       const effectiveStock =
         product.stockQuantity !== undefined
@@ -165,6 +188,14 @@ export const addToCart = createAsyncThunk(
           variantId: product.variantId || null,
           stock: effectiveStock,
           quantity: Number(quantity || 1),
+          isHamperItem: Boolean(product.isHamperItem),
+          isPackaging: Boolean(product.isPackaging),
+          hamperId: product.hamperId || null,
+          hamperName: product.hamperName || null,
+          hamperBasket: product.hamperBasket || null,
+          hamperRecipient: product.hamperRecipient || null,
+          hamperSender: product.hamperSender || null,
+          hamperNote: product.hamperNote || null,
         });
       }
 

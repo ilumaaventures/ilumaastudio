@@ -59,6 +59,7 @@ function Cart() {
   const [createdOrder, setCreatedOrder] = useState(null);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cod"); // 'cod' | 'razorpay'
+  const [orderNotes, setOrderNotes] = useState("");
 
   // Coupon states
   const [couponCodeInput, setCouponCodeInput] = useState("");
@@ -362,7 +363,19 @@ function Cart() {
     }
   }, [isAuthenticated, user?.phone, user?.name]);
 
-  // Handle selecting an existing saved address
+  // Auto-populate orderNotes from hamper calligraphy greeting if available
+  useEffect(() => {
+    if (!orderNotes) {
+      const hamperItem = cartItems.find((it) => it.hamperNote || it.hamperRecipient);
+      if (hamperItem) {
+        const parts = [];
+        if (hamperItem.hamperRecipient) parts.push(`To: ${hamperItem.hamperRecipient}`);
+        if (hamperItem.hamperSender) parts.push(`From: ${hamperItem.hamperSender}`);
+        if (hamperItem.hamperNote) parts.push(`"${hamperItem.hamperNote}"`);
+        setOrderNotes(parts.join(" | "));
+      }
+    }
+  }, [cartItems]);
   const handleSelectSavedAddress = (addrId) => {
     setSelectedAddressId(addrId);
     if (addrId === "new") {
@@ -706,8 +719,18 @@ function Cart() {
       const orderPayload = {
         items: cartItems.map((item) => ({
           product: item._id || item.product,
+          name: item.name || "Product Item",
+          image: item.image || "",
           quantity: item.quantity,
           price: item.price,
+          isHamperItem: Boolean(item.isHamperItem),
+          isPackaging: Boolean(item.isPackaging),
+          hamperId: item.hamperId || null,
+          hamperName: item.hamperName || null,
+          hamperBasket: item.hamperBasket || null,
+          hamperRecipient: item.hamperRecipient || null,
+          hamperSender: item.hamperSender || null,
+          hamperNote: item.hamperNote || null,
         })),
         shippingAddress: {
           fullName: shippingAddress.fullName || user?.name || "Customer",
@@ -726,6 +749,8 @@ function Cart() {
         taxPrice: tax,
         couponCode: appliedCouponCode || undefined,
         totalPrice: total,
+        orderNotes: orderNotes.trim() || cartItems.find((it) => it.hamperNote)?.hamperNote || "",
+        notes: orderNotes.trim() || cartItems.find((it) => it.hamperNote)?.hamperNote || "",
       };
 
       if (paymentMethod === "cod") {
@@ -1046,180 +1071,349 @@ function Cart() {
 
             <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
               {/* Cart Items List */}
-              <div className="lg:col-span-2 space-y-4">
-                {cartItems.map((item) => {
-                  const valStatus = pincodeValidation.results[item._id];
-                  const isItemAvailable = valStatus
-                    ? valStatus.available
-                    : true;
-                  const itemImg =
-                    item.image ||
-                    item.images?.[0]?.url ||
-                    (typeof item.images?.[0] === "string"
-                      ? item.images[0]
-                      : "");
-                  const itemStock =
-                    item.stock !== undefined
-                      ? Number(item.stock)
-                      : item.countInStock !== undefined
-                        ? Number(item.countInStock)
-                        : 99;
-                  const itemTaxRate = getItemTaxRate(item);
-                  const itemTaxAmt = Math.round(
-                    (item.price || 0) *
-                      (item.quantity || 1) *
-                      (itemTaxRate / 100),
-                  );
+              <div className="lg:col-span-2 space-y-4">                {(() => {
+                  const hamperGroups = {};
+                  const standaloneItems = [];
 
-                  return (
-                    <div
-                      key={item._id}
-                      className={`bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-2xs border transition-all hover:border-slate-300 ${
-                        !isItemAvailable && shippingAddress.zip?.length === 6
-                          ? "border-rose-300 bg-rose-50/20"
-                          : "border-slate-200/80"
-                      }`}
-                    >
-                      <div className="flex gap-3.5 sm:gap-5">
-                        {/* Product Thumbnail */}
-                        <div className="relative shrink-0">
-                          <img
-                            src={itemImg}
-                            alt={item.name}
-                            className="w-20 h-24 sm:w-28 sm:h-32 object-cover rounded-xl sm:rounded-2xl bg-slate-100 border border-slate-100 shadow-2xs"
-                          />
-                          {itemStock <= 5 && itemStock > 0 && (
-                            <span className="absolute bottom-1 left-1 right-1 bg-amber-500/90 text-white text-[9px] font-bold py-0.5 rounded text-center backdrop-blur-xs">
-                              Only {itemStock} left
-                            </span>
-                          )}
-                        </div>
+                  cartItems.forEach((item) => {
+                    if (item.isHamperItem || item.hamperId) {
+                      const hId = item.hamperId || "hamper-default";
+                      if (!hamperGroups[hId]) {
+                        hamperGroups[hId] = {
+                          id: hId,
+                          name: item.hamperName || "Custom Gift Hamper",
+                          basket: item.hamperBasket || "",
+                          recipient: item.hamperRecipient || "",
+                          sender: item.hamperSender || "",
+                          note: item.hamperNote || "",
+                          items: [],
+                        };
+                      }
+                      hamperGroups[hId].items.push(item);
+                    } else {
+                      standaloneItems.push(item);
+                    }
+                  });
 
-                        {/* Product Details & Actions */}
-                        <div className="flex-1 min-w-0 flex flex-col justify-between">
-                          <div>
-                            {/* Header tags & delete button */}
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex flex-wrap items-center gap-1.5">
-                                {item.category && (
-                                  <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-[#2563eb] px-2 py-0.5 rounded-md border border-blue-100">
-                                    {typeof item.category === "object"
-                                      ? item.category.name
-                                      : item.category}
-                                  </span>
-                                )}
-                                {/* Pincode Availability Status */}
-                                {shippingAddress.zip?.length === 6 &&
-                                  (validatingPincode ? (
-                                    <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
-                                      <RefreshCw
-                                        size={10}
-                                        className="animate-spin"
-                                      />{" "}
-                                      Checking...
-                                    </span>
-                                  ) : isItemAvailable ? (
-                                    <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
-                                      <CheckCircle2 size={11} /> Serviceable
-                                    </span>
-                                  ) : (
-                                    <span className="text-[10px] bg-rose-50 text-rose-600 border border-rose-200 px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
-                                      <XCircle size={11} /> Not Deliverable
-                                    </span>
-                                  ))}
-                              </div>
+                  const removeEntireHamper = (hId) => {
+                    const itemsToRemove = cartItems.filter(
+                      (it) => (it.hamperId || "hamper-default") === hId,
+                    );
+                    itemsToRemove.forEach((it) => removeItem(it._id));
+                    toast.success("Removed entire hamper from cart");
+                  };
 
-                              {/* Remove button */}
-                              <button
-                                onClick={() => removeItem(item._id)}
-                                className="text-slate-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 transition cursor-pointer shrink-0"
-                                title="Remove item"
-                                aria-label="Remove item"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
+                  const renderItemCard = (item, isInsideHamper = false) => {
+                    const valStatus = pincodeValidation.results[item._id];
+                    const isItemAvailable = valStatus
+                      ? valStatus.available
+                      : true;
+                    const itemImg =
+                      item.image ||
+                      item.images?.[0]?.url ||
+                      (typeof item.images?.[0] === "string"
+                        ? item.images[0]
+                        : "");
+                    const itemStock =
+                      item.stock !== undefined
+                        ? Number(item.stock)
+                        : item.countInStock !== undefined
+                          ? Number(item.countInStock)
+                          : 99;
+                    const itemTaxRate = getItemTaxRate(item);
+                    const itemTaxAmt = Math.round(
+                      (item.price || 0) *
+                        (item.quantity || 1) *
+                        (itemTaxRate / 100),
+                    );
 
-                            {/* Title & Variant */}
-                            <h3 className="font-bold text-xs sm:text-sm text-slate-900 mt-1.5 line-clamp-2 leading-snug">
-                              {item.name}
-                            </h3>
-                            {item.variantLabel && (
-                              <p className="text-[11px] text-slate-500 mt-0.5">
-                                Variant:{" "}
-                                <span className="font-semibold text-slate-700">
-                                  {item.variantLabel}
-                                </span>
-                              </p>
+                    return (
+                      <div
+                        key={item._id}
+                        className={`bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-2xs border transition-all hover:border-slate-300 ${
+                          !isItemAvailable && shippingAddress.zip?.length === 6
+                            ? "border-rose-300 bg-rose-50/20"
+                            : isInsideHamper
+                              ? "border-amber-100"
+                              : "border-slate-200/80"
+                        }`}
+                      >
+                        <div className="flex gap-3.5 sm:gap-5">
+                          {/* Product Thumbnail */}
+                          <div className="relative shrink-0">
+                            <img
+                              src={itemImg}
+                              alt={item.name}
+                              className="w-20 h-24 sm:w-28 sm:h-32 object-cover rounded-xl sm:rounded-2xl bg-slate-100 border border-slate-100 shadow-2xs"
+                            />
+                            {itemStock <= 5 && itemStock > 0 && (
+                              <span className="absolute bottom-1 left-1 right-1 bg-amber-500/90 text-white text-[9px] font-bold py-0.5 rounded text-center backdrop-blur-xs">
+                                Only {itemStock} left
+                              </span>
                             )}
-
-                            {/* Unit Price & Tax */}
-                            <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                              <span className="text-sm sm:text-base font-black text-slate-900">
-                                ₹{item.price}
-                              </span>
-                              <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                                Tax ({itemTaxRate}% GST): +₹{itemTaxAmt}
-                              </span>
-                            </div>
                           </div>
 
-                          {/* Bottom Stepper & Total */}
-                          <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100">
-                            {/* Stepper */}
-                            <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
-                              <button
-                                onClick={() =>
-                                  item.quantity > 1 &&
-                                  updateQuantity(item._id, item.quantity - 1)
-                                }
-                                className="w-8 h-8 flex items-center justify-center hover:bg-slate-200 text-slate-700 transition cursor-pointer"
-                                aria-label="Decrease quantity"
-                              >
-                                <Minus size={13} />
-                              </button>
+                          {/* Product Details & Actions */}
+                          <div className="flex-1 min-w-0 flex flex-col justify-between">
+                            <div>
+                              {/* Header tags & delete button */}
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  {item.isPackaging && (
+                                    <span className="text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200 px-2 py-0.5 rounded-md">
+                                      Keepsake Packaging
+                                    </span>
+                                  )}
+                                  {item.isHamperItem && !item.isPackaging && (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-md">
+                                      Hamper Item
+                                    </span>
+                                  )}
+                                  {!item.isHamperItem && item.category && (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-[#2563eb] px-2 py-0.5 rounded-md border border-blue-100">
+                                      {typeof item.category === "object"
+                                        ? item.category.name
+                                        : item.category}
+                                    </span>
+                                  )}
+                                  {/* Pincode Availability Status */}
+                                  {shippingAddress.zip?.length === 6 &&
+                                    (validatingPincode ? (
+                                      <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
+                                        <RefreshCw
+                                          size={10}
+                                          className="animate-spin"
+                                        />{" "}
+                                        Checking...
+                                      </span>
+                                    ) : isItemAvailable ? (
+                                      <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
+                                        <CheckCircle2 size={11} /> Serviceable
+                                      </span>
+                                    ) : (
+                                      <span className="text-[10px] bg-rose-50 text-rose-600 border border-rose-200 px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
+                                        <XCircle size={11} /> Not Deliverable
+                                      </span>
+                                    ))}
+                                </div>
 
-                              <span className="px-2.5 text-xs font-black text-slate-900 min-w-[28px] text-center">
-                                {item.quantity}
-                              </span>
+                                {/* Remove button */}
+                                <button
+                                  onClick={() => removeItem(item._id)}
+                                  className="text-slate-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 transition cursor-pointer shrink-0"
+                                  title="Remove item"
+                                  aria-label="Remove item"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
 
-                              <button
-                                onClick={() => {
-                                  if (item.quantity < itemStock) {
-                                    updateQuantity(item._id, item.quantity + 1);
-                                  } else {
-                                    toast.error(
-                                      `Only ${itemStock} unit(s) available in stock.`,
-                                    );
-                                  }
-                                }}
-                                className={`w-8 h-8 flex items-center justify-center hover:bg-slate-200 text-slate-700 transition ${
-                                  item.quantity >= itemStock
-                                    ? "opacity-40 cursor-not-allowed"
-                                    : "cursor-pointer"
-                                }`}
-                                disabled={item.quantity >= itemStock}
-                                aria-label="Increase quantity"
-                              >
-                                <Plus size={13} />
-                              </button>
+                              {/* Title & Variant */}
+                              <h3 className="font-bold text-xs sm:text-sm text-slate-900 mt-1.5 line-clamp-2 leading-snug">
+                                {item.name}
+                              </h3>
+                              {item.variantLabel && (
+                                <p className="text-[11px] text-slate-500 mt-0.5">
+                                  Variant:{" "}
+                                  <span className="font-semibold text-slate-700">
+                                    {item.variantLabel}
+                                  </span>
+                                </p>
+                              )}
+
+                              {/* Unit Price & Tax */}
+                              <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                                <span className="text-sm sm:text-base font-black text-slate-900">
+                                  ₹{item.price}
+                                </span>
+                                {item.originalPrice &&
+                                  item.originalPrice > item.price && (
+                                    <span className="text-xs text-slate-400 line-through">
+                                      ₹{item.originalPrice}
+                                    </span>
+                                  )}
+                                <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                                  Tax ({itemTaxRate}% GST): +₹{itemTaxAmt}
+                                </span>
+                              </div>
                             </div>
 
-                            {/* Item Subtotal */}
-                            <div className="text-right">
-                              <span className="text-[10px] text-slate-400 block font-medium">
-                                Subtotal
-                              </span>
-                              <span className="text-xs sm:text-sm font-black text-slate-900">
-                                ₹{item.price * item.quantity}
-                              </span>
+                            {/* Bottom Stepper & Total */}
+                            <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100">
+                              {/* Stepper */}
+                              <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+                                <button
+                                  onClick={() =>
+                                    item.quantity > 1 &&
+                                    updateQuantity(item._id, item.quantity - 1)
+                                  }
+                                  className="w-8 h-8 flex items-center justify-center hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                                  aria-label="Decrease quantity"
+                                >
+                                  <Minus size={13} />
+                                </button>
+
+                                <span className="px-2.5 text-xs font-black text-slate-900 min-w-[28px] text-center">
+                                  {item.quantity}
+                                </span>
+
+                                <button
+                                  onClick={() => {
+                                    if (item.quantity < itemStock) {
+                                      updateQuantity(
+                                        item._id,
+                                        item.quantity + 1,
+                                      );
+                                    } else {
+                                      toast.error(
+                                        `Only ${itemStock} unit(s) available in stock.`,
+                                      );
+                                    }
+                                  }}
+                                  className={`w-8 h-8 flex items-center justify-center hover:bg-slate-200 text-slate-700 transition ${
+                                    item.quantity >= itemStock
+                                      ? "opacity-40 cursor-not-allowed"
+                                      : "cursor-pointer"
+                                  }`}
+                                  disabled={item.quantity >= itemStock}
+                                  aria-label="Increase quantity"
+                                >
+                                  <Plus size={13} />
+                                </button>
+                              </div>
+
+                              {/* Item Subtotal */}
+                              <div className="text-right">
+                                <span className="text-[10px] text-slate-400 block font-medium">
+                                  Subtotal
+                                </span>
+                                <span className="text-xs sm:text-sm font-black text-slate-900">
+                                  ₹{item.price * item.quantity}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
+                    );
+                  };
+
+                  return (
+                    <div className="space-y-6">
+                      {/* Hampers Section */}
+                      {Object.values(hamperGroups).map((hamper) => {
+                        const hamperSubtotal = hamper.items.reduce(
+                          (acc, it) =>
+                            acc + (it.price || 0) * (it.quantity || 1),
+                          0,
+                        );
+
+                        return (
+                          <div
+                            key={hamper.id}
+                            className="bg-amber-50/40 border-2 border-amber-200/80 rounded-3xl p-4 sm:p-6 space-y-4 shadow-xs"
+                          >
+                            {/* Hamper Header Banner */}
+                            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-amber-200">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-amber-600 text-white flex items-center justify-center font-bold shadow-xs text-lg">
+                                  🎁
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h3 className="font-extrabold text-amber-950 text-base">
+                                      {hamper.name}
+                                    </h3>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-300">
+                                      {hamper.items.length} component items
+                                    </span>
+                                  </div>
+                                  {hamper.basket && (
+                                    <p className="text-xs text-amber-800 font-medium mt-0.5">
+                                      Keepsake Basket:{" "}
+                                      <strong className="text-amber-950">
+                                        {hamper.basket}
+                                      </strong>
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-4">
+                                <div className="text-right">
+                                  <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">
+                                    Hamper Subtotal
+                                  </span>
+                                  <span className="font-black text-amber-950 text-base sm:text-lg">
+                                    ₹{hamperSubtotal.toLocaleString("en-IN")}
+                                  </span>
+                                </div>
+                                <button
+                                  onClick={() => removeEntireHamper(hamper.id)}
+                                  className="text-xs text-rose-600 hover:text-rose-700 font-bold px-3 py-1.5 rounded-xl border border-rose-200 hover:bg-rose-50 transition cursor-pointer"
+                                  title="Remove entire hamper"
+                                >
+                                  Remove Hamper
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Calligraphy Greeting Card */}
+                            {(hamper.recipient ||
+                              hamper.sender ||
+                              hamper.note) && (
+                              <div className="p-3.5 rounded-2xl bg-white/80 border border-amber-200/70 text-xs text-amber-950 space-y-1">
+                                <div className="flex items-center justify-between text-[11px] font-bold text-amber-900 border-b border-amber-100 pb-1">
+                                  <span>✍️ Complimentary Greeting Note</span>
+                                  <div className="flex gap-3">
+                                    {hamper.recipient && (
+                                      <span>
+                                        To: <strong>{hamper.recipient}</strong>
+                                      </span>
+                                    )}
+                                    {hamper.sender && (
+                                      <span>
+                                        From: <strong>{hamper.sender}</strong>
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                {hamper.note && (
+                                  <p className="italic font-serif text-amber-900 pt-1 text-[11px]">
+                                    "{hamper.note}"
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Hamper Items */}
+                            <div className="space-y-3">
+                              {hamper.items.map((it) =>
+                                renderItemCard(it, true),
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {/* Standalone Items */}
+                      {standaloneItems.length > 0 && (
+                        <div className="space-y-4">
+                          {Object.keys(hamperGroups).length > 0 && (
+                            <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 pt-2">
+                              <span>
+                                Standard Products ({standaloneItems.length})
+                              </span>
+                            </h4>
+                          )}
+                          {standaloneItems.map((it) =>
+                            renderItemCard(it, false),
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
-                })}
+                })()}
 
                 {/* Option to add other products or browse store */}
                 <div className="bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-blue-50/60 border border-blue-100 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
@@ -1655,6 +1849,23 @@ function Cart() {
                         placeholder="e.g. 110001"
                       />
                     </div>
+                  </div>
+
+                  {/* Order Notes / Special Instructions / Hamper Greeting Message */}
+                  <div className="pt-4 border-t border-slate-100 space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700">
+                      Order Notes & Gift Instructions (Optional)
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={orderNotes}
+                      onChange={(e) => setOrderNotes(e.target.value)}
+                      placeholder="Add personalized gift message, calligraphy note, or special delivery instructions..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs outline-none focus:bg-white focus:border-[#2563eb] text-slate-800 resize-none font-medium"
+                    />
+                    <p className="text-[10px] text-slate-400">
+                      This note will be printed on the invoice and displayed directly in the merchant & admin fulfillment dashboard.
+                    </p>
                   </div>
 
                   {/* Payment Options */}

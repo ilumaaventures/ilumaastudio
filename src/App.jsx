@@ -55,6 +55,7 @@ import {
   StoreAboutDispatcher,
   StoreContactDispatcher,
   StoreGiftHampersDispatcher,
+  StoreCreateHamperDispatcher,
   StorePoliciesDispatcher,
 } from "./pages/Store/dispatchers/StoreDispatchers";
 import ScrollToTop from "./Components/ScrollToTop";
@@ -82,6 +83,7 @@ import TemplatePreviewPage from "./pages/TemplatePreview/TemplatePreviewPage";
 import SlugStorefrontPage from "./pages/Store/SlugStorefrontPage";
 import { fetchCart } from "./redux/reducers/cartReducer";
 import { fetchWishlist } from "./redux/reducers/wishlistReducer";
+import { getTenantSubdomain } from "./utils/tenant";
 
 function App() {
   const dispatch = useDispatch();
@@ -149,64 +151,117 @@ function App() {
     );
   }
 
+  const tenantSub = getTenantSubdomain();
+  const isTenant = Boolean(tenantSub);
+
   return (
     <BrowserRouter>
       <ScrollToTop />
 
       <Routes>
-        <Route element={<PublicLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/products" element={<Product />} />
-          <Route path="/products/:id" element={<ProductDetails />} />
-          <Route path="/compare" element={<ComparePage />} />
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/services/:id" element={<ServiceDetails />} />
-          <Route path="/booking-success" element={<BookingSuccessPage />} />
-          <Route path="/categories" element={<Category />} />
-          <Route path="/offers" element={<Offers />} />
-          <Route path="/flash-deals" element={<FlashDeals />} />
-          <Route path="/help" element={<HelpCenter />} />
-          <Route path="/help-center" element={<HelpCenter />} />
-          <Route path="/track-order" element={<TrackOrder />} />
-          <Route path="/track-order/:id" element={<TrackOrder />} />
-          <Route path="/store-template" element={<StoreTemplate />} />
-          {/* Legal, Support, Shipping & Policies Routes */}
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<TermsOfService />} />
-          <Route path="/terms-of-service" element={<TermsOfService />} />
-          <Route path="/terms-and-conditions" element={<TermsOfService />} />
-          <Route path="/contact" element={<ContactUs />} />
-          <Route path="/contact-us" element={<ContactUs />} />
-          <Route path="/shipping" element={<ShippingInfo />} />
-          <Route path="/shipping-info" element={<ShippingInfo />} />
-          <Route path="/shipping-policy" element={<ShippingInfo />} />
-          <Route path="/returns" element={<RefundReturnPolicy />} />
-          <Route path="/refund-policy" element={<RefundReturnPolicy />} />
-          <Route path="/return-policy" element={<RefundReturnPolicy />} />
-          <Route path="/cancellation" element={<RefundReturnPolicy />} />
-          <Route path="/policies" element={<BusinessPoliciesPage />} />
-          <Route path="/business-policies" element={<BusinessPoliciesPage />} />
-
-          {/* Protected Routes */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/my-bookings" element={<MyBookingsPage />} />
+        {/* Tenant Subdomain Branch: Root is the Business Storefront */}
+        {isTenant ? (
+          <Route path="/" element={<StoreLayout />}>
+            <Route index element={<StoreHomeDispatcher />} />
+            <Route path="products" element={<StoreProductsDispatcher />} />
+            <Route
+              path="product/:id"
+              element={<StoreProductDetailsDispatcher />}
+            />
+            <Route
+              path="products/:id"
+              element={<StoreProductDetailsDispatcher />}
+            />
+            <Route path="about" element={<StoreAboutDispatcher />} />
+            <Route path="contact" element={<StoreContactDispatcher />} />
+            <Route
+              path="gift-hampers"
+              element={<StoreGiftHampersDispatcher />}
+            />
+            <Route
+              path="gifthampers"
+              element={<StoreGiftHampersDispatcher />}
+            />
+            <Route path="hampers" element={<StoreGiftHampersDispatcher />} />
+            <Route
+              path="create-hamper"
+              element={<StoreCreateHamperDispatcher />}
+            />
+            <Route
+              path="custom-hamper"
+              element={<StoreCreateHamperDispatcher />}
+            />
+            <Route path="policies" element={<StorePoliciesDispatcher />} />
+            <Route path="returns" element={<StorePoliciesDispatcher />} />
+            <Route path="exchanges" element={<StorePoliciesDispatcher />} />
+            <Route path="refunds" element={<StorePoliciesDispatcher />} />
+            <Route
+              path="shipping-policy"
+              element={<StorePoliciesDispatcher />}
+            />
+            <Route path="cart" element={<Cart />} />
+            <Route path="wishlist" element={<Wishlist />} />
+            <Route path="compare" element={<ComparePage />} />
           </Route>
+        ) : (
+          /* Marketplace Branch: Root is the Public Marketplace Home */
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/products" element={<Product />} />
+            <Route path="/products/:id" element={<ProductDetails />} />
+            <Route path="/compare" element={<ComparePage />} />
+            <Route path="/shop" element={<Shop />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/services/:id" element={<ServiceDetails />} />
+            <Route path="/booking-success" element={<BookingSuccessPage />} />
+            <Route path="/categories" element={<Category />} />
+            <Route path="/offers" element={<Offers />} />
+            <Route path="/flash-deals" element={<FlashDeals />} />
+            <Route path="/help" element={<HelpCenter />} />
+            <Route path="/help-center" element={<HelpCenter />} />
+            <Route path="/track-order" element={<TrackOrder />} />
+            <Route path="/track-order/:id" element={<TrackOrder />} />
+            <Route path="/store-template" element={<StoreTemplate />} />
+            {/* Legal, Support, Shipping & Policies Routes */}
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/terms-and-conditions" element={<TermsOfService />} />
+            <Route path="/contact" element={<ContactUs />} />
+            <Route path="/contact-us" element={<ContactUs />} />
+            <Route path="/shipping" element={<ShippingInfo />} />
+            <Route path="/shipping-info" element={<ShippingInfo />} />
+            <Route path="/shipping-policy" element={<ShippingInfo />} />
+            <Route path="/returns" element={<RefundReturnPolicy />} />
+            <Route path="/refund-policy" element={<RefundReturnPolicy />} />
+            <Route path="/return-policy" element={<RefundReturnPolicy />} />
+            <Route path="/cancellation" element={<RefundReturnPolicy />} />
+            <Route path="/policies" element={<BusinessPoliciesPage />} />
+            <Route
+              path="/business-policies"
+              element={<BusinessPoliciesPage />}
+            />
 
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/wishlist" element={<Wishlist />} />
-          <Route
-            path="/businessRegistration"
-            element={<BusinessRegistration />}
-          />
-          <Route path="/business-pricing" element={<BusinessPricing />} />
-          <Route path="/store" element={<BusinessStoreListing />} />
-          <Route path="/productlisting" element={<ProductListing />} />
-          <Route path="/servicelisting" element={<ServiceListing />} />
-        </Route>
+            {/* Protected Routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/my-bookings" element={<MyBookingsPage />} />
+            </Route>
+
+            <Route
+              path="/businessRegistration"
+              element={<BusinessRegistration />}
+            />
+            <Route path="/business-pricing" element={<BusinessPricing />} />
+            <Route path="/store" element={<BusinessStoreListing />} />
+            <Route path="/productlisting" element={<ProductListing />} />
+            <Route path="/servicelisting" element={<ServiceListing />} />
+          </Route>
+        )}
 
         {/* Non-authenticated routes guard */}
         <Route element={<AuthRedirectRoute />}>
@@ -235,11 +290,21 @@ function App() {
           <Route path="gift-hampers" element={<StoreGiftHampersDispatcher />} />
           <Route path="gifthampers" element={<StoreGiftHampersDispatcher />} />
           <Route path="hampers" element={<StoreGiftHampersDispatcher />} />
+          <Route
+            path="create-hamper"
+            element={<StoreCreateHamperDispatcher />}
+          />
+          <Route
+            path="custom-hamper"
+            element={<StoreCreateHamperDispatcher />}
+          />
           <Route path="policies" element={<StorePoliciesDispatcher />} />
           <Route path="returns" element={<StorePoliciesDispatcher />} />
           <Route path="exchanges" element={<StorePoliciesDispatcher />} />
           <Route path="refunds" element={<StorePoliciesDispatcher />} />
           <Route path="shipping-policy" element={<StorePoliciesDispatcher />} />
+          <Route path="cart" element={<Cart />} />
+          <Route path="wishlist" element={<Wishlist />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -50,7 +50,12 @@ const Login = () => {
       toast.success("Welcome back!");
       navigate(redirectTo, { replace: true });
     } catch (error) {
-      toast.error(error.response?.data?.message || "Invalid credentials");
+      const errorMsg =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Invalid credentials";
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

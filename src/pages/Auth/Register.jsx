@@ -89,7 +89,12 @@ const Register = () => {
       startOtpTimer();
       toast.success(res?.message || `OTP sent to ${formData.email}`);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to send OTP");
+      const errorMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Failed to send OTP";
+      toast.error(errorMsg);
     } finally {
       setSendingOTP(false);
     }
@@ -102,11 +107,16 @@ const Register = () => {
     }
     try {
       setVerifyingOTP(true);
-      await verifyOTPApi(formData.email.trim(), otp.trim());
+      const res = await verifyOTPApi(formData.email.trim(), otp.trim());
       setEmailVerified(true);
-      toast.success("Email verified successfully!");
+      toast.success(res?.message || "Email verified successfully!");
     } catch (err) {
-      toast.error(err.response?.data?.message || "Invalid or expired OTP");
+      const errorMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Invalid or expired OTP";
+      toast.error(errorMsg);
     } finally {
       setVerifyingOTP(false);
     }
@@ -172,7 +182,7 @@ const Register = () => {
 
     try {
       setIsSubmitting(true);
-      await dispatch(
+      const res = await dispatch(
         registerUser({
           name: formData.name.trim(),
           email: formData.email.trim(),
@@ -181,10 +191,15 @@ const Register = () => {
           referralCode: formData.referralCode.trim().toUpperCase(),
         }),
       );
-      toast.success("Registration Successful!");
+      toast.success(res?.message || "Registration Successful!");
       navigate(searchParams.get("redirect") || "/");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Registration failed");
+      const errorMsg =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Registration failed";
+      toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
     }

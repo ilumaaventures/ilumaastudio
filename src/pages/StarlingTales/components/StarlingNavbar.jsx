@@ -101,10 +101,11 @@ export default function StarlingNavbar() {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${scrolled
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        scrolled
           ? "bg-[#FCFAF7]/95 backdrop-blur-md shadow-md border-b border-[#C5A880]/20"
           : "bg-[#FCFAF7] border-b border-[#C5A880]/10"
-        }`}
+      }`}
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
         <div className="h-20 flex items-center justify-between gap-6">
@@ -139,8 +140,9 @@ export default function StarlingNavbar() {
                   key={link.name}
                   to={link.path}
                   onClick={(e) => handleLinkClick(e, link.path)}
-                  className={`font-serif text-xs lg:text-sm tracking-wider font-semibold transition-all duration-300 relative py-1 hover:text-[#C5A880] ${active ? "text-[#C5A880]" : "text-[#2C3E35]"
-                    }`}
+                  className={`font-serif text-xs lg:text-sm tracking-wider font-semibold transition-all duration-300 relative py-1 hover:text-[#C5A880] ${
+                    active ? "text-[#C5A880]" : "text-[#2C3E35]"
+                  }`}
                 >
                   <span>{link.name}</span>
                   {active && (
@@ -213,8 +215,11 @@ export default function StarlingNavbar() {
                     setMobileMenu(false);
                     handleLinkClick(e, link.path);
                   }}
-                  className={`font-serif text-base font-bold transition-colors ${active ? "text-[#C5A880]" : "text-[#2C3E35] hover:text-[#C5A880]"
-                    }`}
+                  className={`font-serif text-base font-bold transition-colors ${
+                    active
+                      ? "text-[#C5A880]"
+                      : "text-[#2C3E35] hover:text-[#C5A880]"
+                  }`}
                 >
                   {link.name}
                 </Link>

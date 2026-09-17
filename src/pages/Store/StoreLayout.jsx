@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, Outlet, Link } from "react-router-dom";
 import baseApi from "../../api/baseApi";
+import * as storeApi from "../../api/storeApi";
 import Navbar from "../../Components/store/Navbar";
 import Footer from "../../Components/store/Footer";
 import { Store, AlertTriangle, ArrowLeft, ArrowRight, X, AlertCircle, LayoutTemplate } from "lucide-react";
@@ -9,6 +10,7 @@ import { StoreContext, useStore } from "./StoreContext";
 import templateRegistry from "../../templates/registry";
 import StoreRenderer from "../../templates/StoreRenderer";
 import formatAddress from "../../utils/formatAddress";
+import { getTenantSubdomain } from "../../utils/tenant";
 
 export { StoreContext, useStore };
 
@@ -83,7 +85,10 @@ const normalizeCatalogItem = (item) => {
 };
 
 export default function StoreLayout() {
-  const { businessName } = useParams();
+  const { businessName: paramBusinessName } = useParams();
+  const tenantSubdomain = getTenantSubdomain();
+  const businessName = paramBusinessName || tenantSubdomain || "";
+
   const [business, setBusiness] = useState(null);
   const [slugInfo, setSlugInfo] = useState(null);
   const [hasTemplate, setHasTemplate] = useState(true);
@@ -99,23 +104,72 @@ export default function StoreLayout() {
   const [reviews, setReviews] = useState([]);
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isProductsLoading, setIsProductsLoading] = useState(false);
   const [error, setError] = useState("");
   const [storeNotFound, setStoreNotFound] = useState(false);
 
-  useEffect(() => {
-    const fetchStoreData = async () => {
-      if (!businessName) return;
-      const decodedName = decodeURIComponent(businessName).trim();
+  const fetchStoreData = useCallback(async () => {
+    // If neither path param nor host subdomain is detected, mark not found
+    if (!businessName) {
+      setStoreNotFound(true);
+      setLoading(false);
+      return;
+    }
+    const decodedName = decodeURIComponent(businessName).trim();
+
+    const RESERVED_STORE_NAMES = [
+      "cart",
+      "wishlist",
+      "checkout",
+      "shop",
+      "login",
+      "register",
+      "products",
+      "categories",
+      "services",
+      "about",
+      "contact",
+      "compare",
+      "help",
+      "offers",
+    ];
+    if (RESERVED_STORE_NAMES.includes(decodedName.toLowerCase())) {
+      setStoreNotFound(true);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+      setStoreNotFound(false);
+
+      // Phase 1: Modular Store Bootstrap (Store Details + Storefront Config)
+      let storeDetails = null;
+      let storeConfig = null;
 
       try {
-        setLoading(true);
-        setError("");
-        setStoreNotFound(false);
+        const [detailsRes, configRes] = await Promise.all([
+          storeApi.fetchStoreDetails(decodedName),
+          storeApi.fetchStoreConfig(decodedName).catch(() => null),
+        ]);
+        storeDetails = detailsRes;
+        storeConfig = configRes;
+      } catch (bootErr) {
+        console.warn("Direct modular bootstrap failed, checking fallback:", bootErr);
+        if (bootErr.response?.status === 404) {
+          setStoreNotFound(true);
+          setLoading(false);
+          return;
+        } else if (bootErr.response?.status === 403) {
+          setError(bootErr.response?.data?.message || "Storefront is disabled or inaccessible.");
+          setLoading(false);
+          return;
+        }
 
-        // Single unified storefront API call returning all business catalog, template, and settings
+        // Fallback to legacy composite endpoint if modular endpoints are unreachable
         const sfRes = await baseApi.get(`/storefronts/${encodeURIComponent(decodedName)}`);
-
-        if (sfRes.data && sfRes.data.success && sfRes.data.data) {
+        if (sfRes.data?.success && sfRes.data?.data) {
           const data = sfRes.data.data;
           setBusiness(data.business);
           setSlugInfo(data.slugInfo || null);
@@ -129,34 +183,95 @@ export default function StoreLayout() {
           setReviews(Array.isArray(data.reviews) ? data.reviews : []);
           setPolicies(Array.isArray(data.policies) ? data.policies : []);
           setCoupons(Array.isArray(data.coupons) ? data.coupons : []);
-        } else {
-          setStoreNotFound(true);
+          setLoading(false);
+          return;
         }
-      } catch (err) {
-        console.error("Error loading storefront:", err);
-        if (err.response?.status === 404) {
-          setStoreNotFound(true);
-        } else if (err.response?.status === 403) {
-          setError(err.response?.data?.message || "Storefront is disabled or inaccessible.");
-        } else {
-          // If unified storefront endpoint 404s, try fallback check
-          try {
-            const fallbackRes = await baseApi.get(`/public/store/${encodeURIComponent(decodedName)}`);
-            if (fallbackRes.data) {
-              setBusiness(fallbackRes.data);
-              setHasTemplate(false); // Do not assign default template
-              setLoading(false);
-              return;
-            }
-          } catch (_) {}
-          setError(err.response?.data?.message || "Failed to load storefront data");
-        }
-      } finally {
-        setLoading(false);
       }
-    };
 
+      if (!storeDetails) {
+        setStoreNotFound(true);
+        setLoading(false);
+        return;
+      }
+
+      // Assign Bootstrap State
+      setBusiness(storeDetails);
+      setSlugInfo(storeConfig?.slugInfo || storeDetails?.slugInfo || null);
+      setStorefront(storeConfig?.storefront || null);
+      setTemplate(storeConfig?.template || null);
+      setHasTemplate(Boolean(storeConfig?.hasTemplate));
+
+      // Phase 2: Dedicated Feature-Specific Parallel Fetching
+      const [prodsRes, catsRes, servsRes, bannersRes, reviewsRes, policiesRes, couponsRes] =
+        await Promise.all([
+          storeApi.fetchStoreProducts(decodedName).catch(() => []),
+          storeApi.fetchStoreCategories(decodedName).catch(() => []),
+          storeApi.fetchStoreServices(decodedName).catch(() => []),
+          storeApi.fetchStoreBanners(decodedName).catch(() => []),
+          storeApi.fetchStoreReviews(decodedName).catch(() => []),
+          storeApi.fetchStorePolicies(decodedName).catch(() => []),
+          storeApi.fetchStoreCoupons(decodedName).catch(() => []),
+        ]);
+
+      const rawProds = Array.isArray(prodsRes) ? prodsRes : prodsRes?.products || [];
+      const rawCats = Array.isArray(catsRes) ? catsRes : catsRes?.categories || [];
+      const rawServs = Array.isArray(servsRes) ? servsRes : servsRes?.services || [];
+      const rawBanners = Array.isArray(bannersRes) ? bannersRes : bannersRes?.banners || [];
+      const rawReviews = Array.isArray(reviewsRes) ? reviewsRes : reviewsRes?.reviews || [];
+      const rawPolicies = Array.isArray(policiesRes) ? policiesRes : policiesRes?.policies || [];
+      const rawCoupons = Array.isArray(couponsRes) ? couponsRes : couponsRes?.coupons || [];
+
+      setProducts(rawProds.map(normalizeCatalogItem));
+      setCategories(rawCats);
+      setServices(rawServs.map(normalizeCatalogItem));
+      setBanners(rawBanners);
+      setReviews(rawReviews);
+      setPolicies(rawPolicies);
+      setCoupons(rawCoupons);
+    } catch (err) {
+      console.error("Error loading storefront:", err);
+      if (err.response?.status === 404) {
+        setStoreNotFound(true);
+      } else if (err.response?.status === 403) {
+        setError(err.response?.data?.message || "Storefront is disabled or inaccessible.");
+      } else {
+        setError(err.response?.data?.message || "Failed to load storefront data");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [businessName]);
+
+  useEffect(() => {
     fetchStoreData();
+  }, [fetchStoreData]);
+
+  // Feature refetch handlers
+  const refetchProducts = useCallback(async (params = {}) => {
+    if (!businessName) return;
+    const decodedName = decodeURIComponent(businessName).trim();
+    try {
+      setIsProductsLoading(true);
+      const res = await storeApi.fetchStoreProducts(decodedName, params);
+      const list = Array.isArray(res) ? res : res?.products || [];
+      setProducts(list.map(normalizeCatalogItem));
+    } catch (err) {
+      console.warn("Failed to refetch products:", err);
+    } finally {
+      setIsProductsLoading(false);
+    }
+  }, [businessName]);
+
+  const refetchReviews = useCallback(async () => {
+    if (!businessName) return;
+    const decodedName = decodeURIComponent(businessName).trim();
+    try {
+      const res = await storeApi.fetchStoreReviews(decodedName);
+      const list = Array.isArray(res) ? res : res?.reviews || [];
+      setReviews(list);
+    } catch (err) {
+      console.warn("Failed to refetch reviews:", err);
+    }
   }, [businessName]);
 
   // Loading State
@@ -236,27 +351,39 @@ export default function StoreLayout() {
     normalizedName === "starlingtales" ||
     Boolean(customStoresRegistry[normalizedName]);
 
+  const isSubdomainMode = Boolean(tenantSubdomain && !paramBusinessName);
+  const storeSlug = businessName || business?.subdomain || business?.slug || business?.businessName || "";
+  const storeHomePath = isSubdomainMode ? "" : (storeSlug ? `/${encodeURIComponent(storeSlug)}` : "");
+
+  const contextValue = {
+    business,
+    products,
+    services,
+    categories,
+    vendors,
+    banners,
+    slides,
+    policies,
+    reviews,
+    coupons,
+    template,
+    storefront,
+    slugInfo,
+    storeSlug,
+    storeHomePath,
+    loading,
+    isProductsLoading,
+    refetchProducts,
+    refetchReviews,
+    refetchStore: fetchStoreData,
+  };
+
   if (isGifterOrStarling) {
     const CustomNavbar = customStoresRegistry[normalizedName]?.Navbar;
     const CustomFooter = customStoresRegistry[normalizedName]?.Footer;
-    const storeSlug = businessName || business?.subdomain || business?.slug || business?.businessName || "";
-    const storeHomePath = storeSlug ? `/${encodeURIComponent(storeSlug)}` : "";
 
     return (
-      <StoreContext.Provider
-        value={{
-          business,
-          products,
-          categories,
-          vendors,
-          banners,
-          slides,
-          policies,
-          template,
-          storeSlug,
-          storeHomePath,
-        }}
-      >
+      <StoreContext.Provider value={contextValue}>
         <div className="min-h-screen flex flex-col font-sans">
           <StoreAnnouncementBar />
           {CustomNavbar ? <CustomNavbar /> : <Navbar />}
@@ -328,30 +455,32 @@ export default function StoreLayout() {
   };
 
   return (
-    <div className="min-h-screen w-full font-sans">
-      <StoreRenderer
-        templateKey={templateMeta.key}
-        data={{
-          business: {
-            ...business,
-            name: business?.businessName || business?.name,
-            address: formatAddress(business?.address || business?.registered_business_address),
-          },
-          storefront: {
-            ...storefront,
+    <StoreContext.Provider value={contextValue}>
+      <div className="min-h-screen w-full font-sans">
+        <StoreRenderer
+          templateKey={templateMeta.key}
+          data={{
+            business: {
+              ...business,
+              name: business?.businessName || business?.name,
+              address: formatAddress(business?.address || business?.registered_business_address),
+            },
+            storefront: {
+              ...storefront,
+              sections: resolvedSections,
+            },
             sections: resolvedSections,
-          },
-          sections: resolvedSections,
-          products: products || [],
-          services: services || [],
-          categories: categories || [],
-          banners: banners || [],
-          reviews: reviews || [],
-          policies: policies || [],
-          coupons: coupons || [],
-          customization: storeCustomization,
-        }}
-      />
-    </div>
+            products: products || [],
+            services: services || [],
+            categories: categories || [],
+            banners: banners || [],
+            reviews: reviews || [],
+            policies: policies || [],
+            coupons: coupons || [],
+            customization: storeCustomization,
+          }}
+        />
+      </div>
+    </StoreContext.Provider>
   );
 }

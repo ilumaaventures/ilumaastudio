@@ -214,7 +214,16 @@ export default function GiftHamper() {
             {/* Editorial Paragraph */}
             <div className="space-y-3.5 text-[13.5px] sm:text-[14px] leading-[1.8] text-[#5B5B5B] font-light">
               <p>
-                It’s the little details that turn a gift into something truly thoughtful – beautiful wrapping and a note that says just how much they mean to you. Make every present feel special with our gift boxes and bags, whether you’re handing it over in person or sending it straight to their door. Every hamper is thoughtfully curated and presented - a complete gifting experience for new arrivals, birthdays, and milestone moments. We combine our most-loved hand-stitched companions, soft organic muslin textiles, and safe keepsakes into harmonious sets designed to delight both parents and little ones.
+                It’s the little details that turn a gift into something truly
+                thoughtful – beautiful wrapping and a note that says just how
+                much they mean to you. Make every present feel special with our
+                gift boxes and bags, whether you’re handing it over in person or
+                sending it straight to their door. Every hamper is thoughtfully
+                curated and presented - a complete gifting experience for new
+                arrivals, birthdays, and milestone moments. We combine our
+                most-loved hand-stitched companions, soft organic muslin
+                textiles, and safe keepsakes into harmonious sets designed to
+                delight both parents and little ones.
               </p>
             </div>
 
@@ -223,13 +232,15 @@ export default function GiftHamper() {
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#8AA4B4] mt-2 shrink-0" />
                 <span>
-                  Pick from our wide range of handcrafted treasures and create a hamper that’s uniquely yours.
+                  Pick from our wide range of handcrafted treasures and create a
+                  hamper that’s uniquely yours.
                 </span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#8AA4B4] mt-2 shrink-0" />
                 <span>
-                  Curate it, personalise it, and make every gift truly special. Custom embroidery & name personalisation available.
+                  Curate it, personalise it, and make every gift truly special.
+                  Custom embroidery & name personalisation available.
                 </span>
               </li>
             </ul>
@@ -248,16 +259,18 @@ export default function GiftHamper() {
                       key={h.id}
                       type="button"
                       onClick={() => setActiveHamperIndex(idx)}
-                      className={`flex flex-col items-center text-center group cursor-pointer transition-all duration-200 outline-none ${isSelected
-                        ? "scale-[1.04]"
-                        : "hover:scale-[1.02] opacity-75 hover:opacity-100"
-                        }`}
+                      className={`flex flex-col items-center text-center group cursor-pointer transition-all duration-200 outline-none ${
+                        isSelected
+                          ? "scale-[1.04]"
+                          : "hover:scale-[1.02] opacity-75 hover:opacity-100"
+                      }`}
                     >
                       <div
-                        className={`w-full aspect-[4/3] rounded-xl overflow-hidden border-2 bg-white shadow-2xs transition-all ${isSelected
-                          ? "border-[#2C3E35] ring-2 ring-[#2C3E35]/20 shadow-sm"
-                          : "border-transparent hover:border-[#D0AE86]"
-                          }`}
+                        className={`w-full aspect-[4/3] rounded-xl overflow-hidden border-2 bg-white shadow-2xs transition-all ${
+                          isSelected
+                            ? "border-[#2C3E35] ring-2 ring-[#2C3E35]/20 shadow-sm"
+                            : "border-transparent hover:border-[#D0AE86]"
+                        }`}
                       >
                         <img
                           src={h.image}
@@ -277,15 +290,17 @@ export default function GiftHamper() {
                 How to build your hamper—
               </h4>
               <p className="text-xs sm:text-[13px] text-[#5B5B5B] font-light leading-relaxed">
-                Browse the site and add the items you’d like to gift to your shopping bag. We will pack them in a gift box with message card for you to write your personal greetings.
+                Browse the site and add the items you’d like to gift to your
+                shopping bag. We will pack them in a gift box with message card
+                for you to write your personal greetings.
               </p>
               {/* CTA Button */}
               <div className="pt-2">
                 <Link
-                  to={`${storeHomePath}/gift-hampers`}
+                  to={`${storeHomePath}/create-hamper`}
                   className="inline-flex items-center gap-2.5 px-7 py-3.5 bg-[#2C3E35] hover:bg-[#1E2B25] text-white text-[11px] font-bold tracking-[0.2em] uppercase rounded-full transition-all duration-200 shadow-md group"
                 >
-                  <span>Create your own hamper from our wide range of products</span>
+                  <span>Create your own hamper</span>
                   <MoveRight
                     size={14}
                     className="transition-transform group-hover:translate-x-1"

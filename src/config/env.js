@@ -61,6 +61,9 @@ export const RESERVED_SUBDOMAINS = [
   "studio",
   "dashboard",
   "superadmin",
+  "cart",
+  "wishlist",
+  "compare",
 ];
 
 export const getStorefrontUrl = (slug, slugType = "path", customDomain = null) => {

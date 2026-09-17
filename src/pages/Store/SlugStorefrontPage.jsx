@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import baseApi from "../../api/baseApi";
+import * as storeApi from "../../api/storeApi";
 import StoreRenderer from "../../templates/StoreRenderer";
 import { Store, AlertTriangle, ArrowLeft } from "lucide-react";
 
@@ -20,48 +21,65 @@ export default function SlugStorefrontPage() {
         setLoading(true);
         setError("");
 
-        // Call our unified multi-template storefront endpoint
-        const res = await baseApi.get(`/storefronts/${encodeURIComponent(slug)}`);
-        if (res.data && res.data.success) {
-          setStoreData(res.data.data);
-        } else {
-          setError("Failed to load storefront data.");
-        }
-      } catch (err) {
-        console.error("Error loading storefront:", err);
-        // Fallback: try existing path endpoint /public/store/:name
-        try {
-          const fallbackRes = await baseApi.get(`/public/store/${encodeURIComponent(slug)}`);
-          if (fallbackRes.data) {
-            const biz = fallbackRes.data;
-            const [prodsRes, servsRes, catsRes] = await Promise.all([
-              baseApi.get(`/public/store/${encodeURIComponent(slug)}/products`).catch(() => ({ data: [] })),
-              baseApi.get(`/public/store/${encodeURIComponent(slug)}/services`).catch(() => ({ data: [] })),
-              baseApi.get(`/public/store/${encodeURIComponent(slug)}/categories`).catch(() => ({ data: [] })),
-            ]);
+        let biz = null;
+        let config = null;
 
-            setStoreData({
-              business: {
-                _id: biz._id,
-                name: biz.businessName,
-                businessName: biz.businessName,
-                slug: biz.subdomain || biz.slug || slug,
-                logo: biz.logo,
-                description: biz.description,
-              },
-              storefront: {
-                templateKey: biz.customTemplateKey || "freshmart",
-              },
-              products: Array.isArray(prodsRes.data) ? prodsRes.data : [],
-              services: Array.isArray(servsRes.data) ? servsRes.data : [],
-              categories: Array.isArray(catsRes.data) ? catsRes.data : [],
-            });
+        try {
+          const [bizRes, configRes] = await Promise.all([
+            storeApi.fetchStoreDetails(slug),
+            storeApi.fetchStoreConfig(slug).catch(() => null),
+          ]);
+          biz = bizRes;
+          config = configRes;
+        } catch (bootErr) {
+          // Fallback to legacy composite endpoint
+          const res = await baseApi.get(`/storefronts/${encodeURIComponent(slug)}`);
+          if (res.data && res.data.success) {
+            setStoreData(res.data.data);
+            setLoading(false);
             return;
           }
-        } catch (fallbackErr) {
-          // Both failed
+          throw bootErr;
         }
 
+        if (!biz) {
+          setError("Failed to load storefront data.");
+          setLoading(false);
+          return;
+        }
+
+        const [prodsRes, catsRes, servsRes, bannersRes, reviewsRes, policiesRes, couponsRes] =
+          await Promise.all([
+            storeApi.fetchStoreProducts(slug).catch(() => []),
+            storeApi.fetchStoreCategories(slug).catch(() => []),
+            storeApi.fetchStoreServices(slug).catch(() => []),
+            storeApi.fetchStoreBanners(slug).catch(() => []),
+            storeApi.fetchStoreReviews(slug).catch(() => []),
+            storeApi.fetchStorePolicies(slug).catch(() => []),
+            storeApi.fetchStoreCoupons(slug).catch(() => []),
+          ]);
+
+        setStoreData({
+          business: {
+            ...biz,
+            name: biz.businessName || biz.name,
+            address: biz.address || "",
+          },
+          storefront: config?.storefront || {
+            templateKey: biz.customTemplateKey || "freshmart",
+          },
+          template: config?.template || null,
+          sections: config?.storefront?.sections || [],
+          products: Array.isArray(prodsRes) ? prodsRes : prodsRes?.products || [],
+          services: Array.isArray(servsRes) ? servsRes : servsRes?.services || [],
+          categories: Array.isArray(catsRes) ? catsRes : catsRes?.categories || [],
+          banners: Array.isArray(bannersRes) ? bannersRes : bannersRes?.banners || [],
+          reviews: Array.isArray(reviewsRes) ? reviewsRes : reviewsRes?.reviews || [],
+          policies: Array.isArray(policiesRes) ? policiesRes : policiesRes?.policies || [],
+          coupons: Array.isArray(couponsRes) ? couponsRes : couponsRes?.coupons || [],
+        });
+      } catch (err) {
+        console.error("Error loading storefront:", err);
         setError(err.response?.data?.message || "Storefront not found or unavailable.");
       } finally {
         setLoading(false);

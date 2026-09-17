@@ -68,5 +68,6 @@ export const StoreProductDetailsDispatcher = createDispatcher(DefaultStoreProduc
 export const StoreAboutDispatcher = createDispatcher(DefaultStoreAbout, "StoreAbout");
 export const StoreContactDispatcher = createDispatcher(DefaultStoreContact, "StoreContact");
 export const StoreGiftHampersDispatcher = createDispatcher(DefaultStoreProducts, "StoreGiftHampers");
+export const StoreCreateHamperDispatcher = createDispatcher(DefaultStoreProducts, "StoreCreateHamper");
 export const StorePoliciesDispatcher = createDispatcher(BusinessPoliciesPage, "StorePolicies");
 

@@ -47,8 +47,8 @@ function ForgotPassword() {
           setLoading(false);
           return;
         }
-        await forgotPassword(formData.email.trim());
-        toast.success("Verification code sent to your email!");
+        const res = await forgotPassword(formData.email.trim());
+        toast.success(res?.message || "Verification code sent to your email!");
         setStep(2);
       } else if (step === 2) {
         if (!formData.otp) {
@@ -60,7 +60,7 @@ function ForgotPassword() {
         if (res?.resetToken) {
           setResetToken(res.resetToken);
         }
-        toast.success("OTP Verified Successfully!");
+        toast.success(res?.message || "OTP Verified Successfully!");
         setStep(3);
       } else {
         if (formData.password.length < 6) {
@@ -73,17 +73,20 @@ function ForgotPassword() {
           setLoading(false);
           return;
         }
-        await resetPassword(
+        const res = await resetPassword(
           resetToken || formData.email.trim(),
           formData.password,
         );
-        toast.success("Password reset successfully!");
+        toast.success(res?.message || "Password reset successfully!");
         setSuccess(true);
       }
     } catch (err) {
-      toast.error(
-        err.response?.data?.message || "Operation failed. Please try again.",
-      );
+      const errorMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Operation failed. Please try again.";
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

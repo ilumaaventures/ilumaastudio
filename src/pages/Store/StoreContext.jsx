@@ -4,13 +4,24 @@ import { useParams } from "react-router-dom";
 export const StoreContext = createContext({
   business: null,
   products: [],
+  services: [],
   categories: [],
   vendors: [],
   banners: [],
   slides: [],
+  reviews: [],
+  policies: [],
+  coupons: [],
   template: null,
+  storefront: null,
+  slugInfo: null,
   storeSlug: "",
   storeHomePath: "",
+  loading: true,
+  isProductsLoading: false,
+  refetchProducts: () => {},
+  refetchReviews: () => {},
+  refetchStore: () => {},
 });
 
 export const useStore = () => {
@@ -55,17 +66,28 @@ export const useStore = () => {
     return {
       business: null,
       products: [],
+      services: [],
       categories: [],
       vendors: [],
       banners: [],
       slides: [],
+      reviews: [],
+      policies: [],
+      coupons: [],
       heroBanners: [],
       promoBanners: [],
       offerBanners: [],
       announcementBanners: [],
       template: null,
+      storefront: null,
+      slugInfo: null,
       storeSlug,
       storeHomePath,
+      loading: false,
+      isProductsLoading: false,
+      refetchProducts: () => {},
+      refetchReviews: () => {},
+      refetchStore: () => {},
     };
   }
 

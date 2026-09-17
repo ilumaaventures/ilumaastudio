@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import {
   Sparkles,
@@ -12,6 +13,7 @@ import {
   X,
   Truck,
   ShieldCheck,
+  ArrowRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -205,7 +207,17 @@ const LOCAL_DEFAULT_HAMPERS = [
 
 export default function StarlingGiftHampers() {
   const dispatch = useDispatch();
-  const { products: apiProducts, categories } = useStore();
+  const { products: apiProducts, categories, storeHomePath: contextHomePath, business } = useStore();
+
+  const storeHomePath =
+    contextHomePath ||
+    (business?.subdomain
+      ? `/${encodeURIComponent(business.subdomain)}`
+      : business?.slug
+      ? `/${encodeURIComponent(business.slug)}`
+      : business?.businessName
+      ? `/${encodeURIComponent(business.businessName)}`
+      : "");
 
   const cartItems = useSelector((s) => s.cart?.cartItems || []);
   const wishlistItems = useSelector((s) => s.wishlist?.items || []);
@@ -488,6 +500,18 @@ export default function StarlingGiftHampers() {
             seals, and hand-calligraphed cards for every unforgettable
             celebration.
           </p>
+
+          {/* Custom Hamper CTA Pill */}
+          <div className="pt-2">
+            <Link
+              to={`${storeHomePath}/create-hamper`}
+              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-white border border-[#E2D8C3] hover:border-[#2C3E35] text-xs font-semibold text-[#2C3E35] shadow-xs hover:shadow-md transition-all duration-200 group"
+            >
+              <Sparkles size={14} className="text-[#C5A880]" />
+              <span>Prefer to curate your own? <strong>Design a Custom Hamper with Nursery Treasures</strong></span>
+              <ArrowRight size={14} className="transition-transform group-hover:translate-x-1 text-[#2C3E35]" />
+            </Link>
+          </div>
         </div>
       </div>
 

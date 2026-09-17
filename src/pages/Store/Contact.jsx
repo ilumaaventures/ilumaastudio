@@ -11,6 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import * as storeApi from "../../api/storeApi";
 
 export default function Contact() {
   const { business, template, theme: layoutTheme } = useStore();
@@ -40,14 +41,27 @@ export default function Contact() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    setTimeout(() => {
+    try {
+      if (business?._id) {
+        await storeApi.submitStoreInquiry({
+          name: formData.name,
+          email: formData.email,
+          phone: "0000000000",
+          subject: formData.subject || `Inquiry for ${business.businessName || "Store"}`,
+          message: formData.message,
+          businessId: business._id,
+        }).catch(() => null);
+      }
       toast.success("Thank you for reaching out! We'll get back to you shortly.");
       setFormData({ name: "", email: "", subject: "", message: "" });
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to submit message. Please try again.");
+    } finally {
       setSubmitting(false);
-    }, 800);
+    }
   };
 
   return (

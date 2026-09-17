@@ -23,6 +23,8 @@ import {
   MessageSquare,
 } from "lucide-react";
 import baseApi from "../../api/baseApi";
+import * as storeApi from "../../api/storeApi";
+import { getTenantSubdomain } from "../../utils/tenant";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../redux/reducers/cartReducer";
 import { toggleWishlist } from "../../redux/reducers/wishlistReducer";
@@ -30,9 +32,12 @@ import toast from "react-hot-toast";
 import { useStore } from "./StoreContext";
 
 export default function ProductDetails() {
-  const { businessName, id } = useParams();
+  const { businessName: paramBusinessName, id } = useParams();
+  const tenantSub = getTenantSubdomain();
+  const businessName = paramBusinessName || tenantSub || "";
+
   const { storeHomePath, template, theme: layoutTheme } = useStore();
-  const basePath = storeHomePath || `/${encodeURIComponent(businessName || "")}`;
+  const basePath = storeHomePath || (businessName ? `/${encodeURIComponent(businessName)}` : "");
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -63,10 +68,8 @@ export default function ProductDetails() {
       try {
         setLoading(true);
         setError("");
-        const response = await baseApi.get(
-          `/public/store/${encodeURIComponent(businessName)}/product/${id}`
-        );
-        const prodData = response.data?.product || response.data?.data || response.data;
+        const res = await storeApi.fetchStoreProductById(businessName, id);
+        const prodData = res?.product || res?.data || res;
         setProduct(prodData);
         setSelectedImageIdx(0);
 
@@ -93,7 +96,7 @@ export default function ProductDetails() {
       }
     };
 
-    if (id && businessName) {
+    if (id) {
       fetchProductDetails();
     }
   }, [id, businessName]);

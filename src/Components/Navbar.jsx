@@ -494,9 +494,10 @@ function Navbar() {
             ) : (
               displayCategories.map((cat, idx) => {
                 const catName = cat.name || cat.title;
+                const catId = cat._id || cat.id || idx;
                 const targetPath = isService
-                  ? `/services?category=${encodeURIComponent(catName)}`
-                  : `/shop?category=${encodeURIComponent(catName)}&businessCategory=${encodeURIComponent(selectedBusinessCategory)}`;
+                  ? `/services?category=${encodeURIComponent(catId)}&businessCategory=${encodeURIComponent(selectedBusinessCategory)}`
+                  : `/shop?category=${encodeURIComponent(catId)}`;
 
                 return (
                   <button
