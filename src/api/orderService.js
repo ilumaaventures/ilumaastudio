@@ -15,41 +15,6 @@ export const getOrderDetails = async (id) => {
   return response.data;
 };
 
-export const getVendorOrders = async (params = {}) => {
-  const response = await baseApi.get("/orders/vendor", { params });
-  return response.data;
-};
-
-export const getVendorOrderDetails = async (id) => {
-  const response = await baseApi.get(`/orders/vendor/${id}`);
-  return response.data;
-};
-
-export const updateVendorItemStatus = async (itemId, status) => {
-  const response = await baseApi.patch(`/orders/item/${itemId}/status`, { status });
-  return response.data;
-};
-
-export const getAdminOrders = async (params = {}) => {
-  const response = await baseApi.get("/orders/admin", { params });
-  return response.data;
-};
-
-export const getAdminOrderDetails = async (id) => {
-  const response = await baseApi.get(`/orders/admin/${id}`);
-  return response.data;
-};
-
-export const getSuperAdminOrders = async (params = {}) => {
-  const response = await baseApi.get("/orders/all", { params });
-  return response.data;
-};
-
-export const updateSuperAdminOrder = async (id, updateData) => {
-  const response = await baseApi.patch(`/orders/${id}`, updateData);
-  return response.data;
-};
-
 export const requestItemReturn = async (itemId, reason, requestType = "Return", notes = "") => {
   const response = await baseApi.post(`/orders/item/${itemId}/return`, { reason, requestType, notes });
   return response.data;
@@ -60,7 +25,25 @@ export const cancelOrder = async (orderId, reason = "") => {
   return response.data;
 };
 
-export const processItemReturn = async (itemId, action, notes) => {
-  const response = await baseApi.patch(`/orders/item/${itemId}/return`, { action, notes });
+export const downloadOrderInvoicePdf = async (orderId) => {
+  const response = await baseApi.get(`/orders/${orderId}/invoice`, {
+    responseType: "blob",
+  });
   return response.data;
 };
+
+export const downloadAndSaveInvoice = async (orderId, invoiceNumber = "") => {
+  const blob = await downloadOrderInvoicePdf(orderId);
+  const blobUrl = window.URL.createObjectURL(
+    new Blob([blob], { type: "application/pdf" }),
+  );
+  const fileName = `Tax-Invoice-${invoiceNumber || orderId}.pdf`;
+  const link = document.createElement("a");
+  link.href = blobUrl;
+  link.setAttribute("download", fileName);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(blobUrl);
+};
+

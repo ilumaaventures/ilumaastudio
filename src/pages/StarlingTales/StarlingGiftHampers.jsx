@@ -434,6 +434,9 @@ export default function StarlingGiftHampers() {
           price: product.price,
           images: [{ url: product.image }],
           stock: availableStock,
+          source: "store",
+          storeName: "Starling Tales",
+          storeSlug: "starlingtales",
         },
         quantity: qty,
       }),
@@ -507,12 +510,6 @@ export default function StarlingGiftHampers() {
           <h1 className="font-display text-[38px] sm:text-[48px] lg:text-[54px] leading-[1.1] text-text-dark font-normal">
             Bespoke Gift Hampers
           </h1>
-
-          <p className="text-[14.5px] sm:text-[15px] font-light leading-[1.8] text-text-body max-w-2xl mx-auto">
-            Thoughtfully packaged with delicate tissue, pressed botanical wax
-            seals, and hand-calligraphed cards for every unforgettable
-            celebration.
-          </p>
 
           {/* Custom Hamper CTA Pill */}
           <div className="pt-2">

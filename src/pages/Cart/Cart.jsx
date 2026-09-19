@@ -25,6 +25,11 @@ import {
   ChevronRight,
   PackagePlus,
   Store,
+  FileText,
+  Download,
+  Printer,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   removeFromCart,
@@ -655,14 +660,25 @@ function Cart() {
     0,
   );
 
+  // CompareAtPrice savings
+  const productSavings = cartItems.reduce((acc, item) => {
+    const comparePrice = Number(item.compareAtPrice) || 0;
+    const currentPrice = Number(item.price) || 0;
+    if (comparePrice > currentPrice) {
+      return acc + (comparePrice - currentPrice) * (item.quantity || 1);
+    }
+    return acc;
+  }, 0);
+
   const tax = cartItems.reduce((acc, item) => {
     const itemSubtotal = (item.price || 0) * (item.quantity || 1);
     const rate = getItemTaxRate(item);
     return acc + Math.round(itemSubtotal * (rate / 100));
   }, 0);
 
-  const platformFee = cartItems.length > 0 ? 0 : 0;
+  const platformFee = 0;
   const shipping = subtotal >= 5000 || subtotal === 0 ? 0 : 99;
+  const taxableAmount = Math.max(0, subtotal - discountAmount + shipping);
   const total = Math.max(
     0,
     subtotal + tax + platformFee + shipping - discountAmount,
@@ -731,6 +747,9 @@ function Cart() {
           hamperRecipient: item.hamperRecipient || null,
           hamperSender: item.hamperSender || null,
           hamperNote: item.hamperNote || null,
+          source: item.source || (item.storeName ? "store" : "studio"),
+          storeName: item.storeName || null,
+          storeSlug: item.storeSlug || null,
         })),
         shippingAddress: {
           fullName: shippingAddress.fullName || user?.name || "Customer",
@@ -1169,6 +1188,17 @@ function Cart() {
                                       Hamper Item
                                     </span>
                                   )}
+                                  {item.source === "store" ? (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                      <Store size={10} />
+                                      {item.storeName ? `Store: ${item.storeName}` : "Store"}
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                      <ShoppingBag size={10} />
+                                      Studio
+                                    </span>
+                                  )}
                                   {!item.isHamperItem && item.category && (
                                     <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-[#2563eb] px-2 py-0.5 rounded-md border border-blue-100">
                                       {typeof item.category === "object"
@@ -1487,29 +1517,38 @@ function Cart() {
                     </div>
                   </div>
 
-                  {/* Price Breakdown */}
+                  {/* Detailed Price Breakdown */}
                   <div className="space-y-2.5 text-xs text-slate-600 border-b border-slate-100 pb-4">
-                    <div className="flex justify-between">
-                      <span>Subtotal</span>
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">Items Subtotal</span>
                       <span className="font-bold text-slate-900">
-                        ₹{subtotal}
+                        ₹{subtotal.toLocaleString("en-IN")}
                       </span>
                     </div>
 
-                    <div className="flex justify-between">
-                      <span>Category Tax (GST)</span>
-                      <span className="font-bold text-slate-900">₹{tax}</span>
-                    </div>
+                    {productSavings > 0 && (
+                      <div className="flex justify-between items-center text-emerald-600 font-semibold">
+                        <span>Product Discount (MRP Savings)</span>
+                        <span>-₹{productSavings.toLocaleString("en-IN")}</span>
+                      </div>
+                    )}
 
-                    <div className="flex justify-between">
-                      <span>Platform Fee</span>
-                      <span className="font-bold text-slate-900">
-                        ₹{platformFee}
-                      </span>
-                    </div>
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between items-center text-emerald-600 font-bold">
+                        <span>Coupon Discount ({appliedCouponCode})</span>
+                        <span>-₹{discountAmount.toLocaleString("en-IN")}</span>
+                      </div>
+                    )}
 
-                    <div className="flex justify-between">
-                      <span>Estimated Shipping</span>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="font-medium block">Shipping & Delivery</span>
+                        <span className="text-[10px] text-slate-400">
+                          {subtotal >= 5000
+                            ? "Free delivery applied"
+                            : "Standard delivery fee"}
+                        </span>
+                      </div>
                       <span className="font-bold text-slate-900">
                         {shipping === 0 ? (
                           <span className="text-emerald-600 font-black">
@@ -1521,12 +1560,24 @@ function Cart() {
                       </span>
                     </div>
 
-                    {discountAmount > 0 && (
-                      <div className="flex justify-between text-emerald-600 font-bold">
-                        <span>Discount ({appliedCouponCode})</span>
-                        <span>-₹{discountAmount}</span>
+                    <div className="flex justify-between items-center pt-1 border-t border-dashed border-slate-100">
+                      <span className="font-medium text-slate-500">Taxable Net Amount</span>
+                      <span className="font-semibold text-slate-700">
+                        ₹{taxableAmount.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="font-medium block">GST / Taxes</span>
+                        <span className="text-[10px] text-slate-400">
+                          Estimated CGST + SGST
+                        </span>
                       </div>
-                    )}
+                      <span className="font-bold text-slate-900">
+                        ₹{tax.toLocaleString("en-IN")}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Coupon Code Section */}
@@ -1980,9 +2031,24 @@ function Cart() {
                             <h4 className="font-bold text-xs text-slate-900 truncate">
                               {item.name}
                             </h4>
-                            <p className="text-[11px] text-slate-500">
-                              Qty: {item.quantity} × ₹{item.price}
-                            </p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <p className="text-[11px] text-slate-500">
+                                Qty: {item.quantity} × ₹{item.price}
+                              </p>
+                              <span
+                                className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                                  item.source === "store"
+                                    ? "bg-purple-50 text-purple-700 border border-purple-200"
+                                    : "bg-blue-50 text-blue-700 border border-blue-200"
+                                }`}
+                              >
+                                {item.source === "store"
+                                  ? item.storeName
+                                    ? `Store: ${item.storeName}`
+                                    : "Store"
+                                  : "Studio"}
+                              </span>
+                            </div>
                             {!isAvail && (
                               <p className="text-[10px] text-rose-600 font-bold">
                                 Not deliverable to {shippingAddress.zip}
@@ -1998,24 +2064,29 @@ function Cart() {
                   </div>
 
                   <div className="space-y-2 border-t border-slate-100 pt-3 text-xs text-slate-600">
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span>Subtotal</span>
                       <span className="font-bold text-slate-900">
-                        ₹{subtotal}
+                        ₹{subtotal.toLocaleString("en-IN")}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Category Tax (GST)</span>
-                      <span className="font-bold text-slate-900">₹{tax}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Platform Fee</span>
-                      <span className="font-bold text-slate-900">
-                        ₹{platformFee}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Shipping</span>
+
+                    {productSavings > 0 && (
+                      <div className="flex justify-between items-center text-emerald-600 font-semibold">
+                        <span>Product Discount</span>
+                        <span>-₹{productSavings.toLocaleString("en-IN")}</span>
+                      </div>
+                    )}
+
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between items-center text-emerald-600 font-bold">
+                        <span>Coupon Discount ({appliedCouponCode})</span>
+                        <span>-₹{discountAmount.toLocaleString("en-IN")}</span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center">
+                      <span>Shipping Fee</span>
                       <span className="font-bold text-slate-900">
                         {shipping === 0 ? (
                           <span className="text-emerald-600 font-bold">
@@ -2026,15 +2097,26 @@ function Cart() {
                         )}
                       </span>
                     </div>
-                    {discountAmount > 0 && (
-                      <div className="flex justify-between text-emerald-600 font-bold">
-                        <span>Discount ({appliedCouponCode})</span>
-                        <span>-₹{discountAmount}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-base font-black text-slate-900 border-t border-slate-100 pt-3">
-                      <span>Total Amount</span>
-                      <span className="text-[#2563eb]">₹{total}</span>
+
+                    <div className="flex justify-between items-center pt-1 border-t border-dashed border-slate-100">
+                      <span className="text-slate-500">Taxable Amount</span>
+                      <span className="font-semibold text-slate-700">
+                        ₹{taxableAmount.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span>GST / Taxes</span>
+                      <span className="font-bold text-slate-900">
+                        ₹{tax.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-baseline text-base font-black text-slate-900 border-t border-slate-200 pt-3">
+                      <span>Grand Total</span>
+                      <span className="text-xl text-[#2563eb]">
+                        ₹{total.toLocaleString("en-IN")}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -2044,68 +2126,73 @@ function Cart() {
         )}
 
         {step === "success" && createdOrder && (
-          <div className="max-w-2xl mx-auto bg-white rounded-3xl p-6 sm:p-12 shadow-sm border border-slate-200/80 text-center py-12 sm:py-16 space-y-6 animate-fade-in">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-xs">
-              <CheckCircle size={40} />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2">
-                Order Confirmed!
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
-                Thank you for your purchase. We have received your order and are
-                preparing your items for dispatch.
-              </p>
-            </div>
-
-            <div className="bg-slate-50 rounded-2xl p-5 sm:p-6 text-left space-y-3 text-xs border border-slate-100">
-              <div className="flex justify-between border-b border-slate-200/60 pb-2.5">
-                <span className="text-slate-500 font-medium">Order ID:</span>
-                <span className="font-mono font-black text-slate-900">
-                  {createdOrder._id || createdOrder.orderId}
-                </span>
-              </div>
-              <div className="flex justify-between border-b border-slate-200/60 pb-2.5">
-                <span className="text-slate-500 font-medium">
-                  Payment Status:
-                </span>
-                <span className="font-bold text-emerald-600">
-                  {createdOrder.paymentInfo?.status || "Pending"} (
-                  {createdOrder.paymentInfo?.type || "COD"})
-                </span>
-              </div>
-              <div className="flex justify-between border-b border-slate-200/60 pb-2.5">
-                <span className="text-slate-500 font-medium">
-                  Total Amount:
-                </span>
-                <span className="font-black text-slate-900 text-sm">
-                  ₹{createdOrder.totalPrice || createdOrder.totalAmount}
-                </span>
+          <div className="max-w-3xl mx-auto space-y-6 animate-fade-in py-6">
+            {/* Confirmation Banner */}
+            <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-200/80 text-center space-y-6">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-xs">
+                <CheckCircle size={42} />
               </div>
               <div>
-                <span className="text-[11px] text-slate-400 font-bold block mb-1 uppercase tracking-wider">
-                  Delivery Details:
-                </span>
-                <p className="font-bold text-slate-800">
-                  {createdOrder.shippingAddress?.fullName || user?.name}
-                </p>
-                <p className="text-slate-600 mt-0.5">
-                  {createdOrder.shippingAddress?.street},{" "}
-                  {createdOrder.shippingAddress?.city},{" "}
-                  {createdOrder.shippingAddress?.state} -{" "}
-                  {createdOrder.shippingAddress?.zip}
-                </p>
-                <p className="text-slate-500 mt-1">
-                  Phone: {createdOrder.shippingAddress?.phone}
+                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2">
+                  Order Confirmed!
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
+                  Thank you for shopping with us! Your order has been placed successfully.
                 </p>
               </div>
-            </div>
 
-            <Link to="/shop">
-              <button className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-8 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider transition shadow-sm cursor-pointer">
-                Continue Shopping
-              </button>
-            </Link>
+              {/* Quick Info Strip */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 rounded-2xl p-4 border border-slate-100 text-left">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Invoice No.
+                  </span>
+                  <span className="font-mono font-bold text-xs text-slate-900 mt-0.5 block truncate">
+                    {createdOrder.invoiceNumber ||
+                      `INV-${new Date(createdOrder.createdAt || Date.now()).getFullYear()}-${createdOrder._id?.toString().slice(-4).toUpperCase()}`}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Order ID
+                  </span>
+                  <span className="font-mono font-bold text-xs text-slate-900 mt-0.5 block truncate">
+                    ORD-{new Date(createdOrder.createdAt || Date.now()).getFullYear()}-{createdOrder._id?.toString().slice(-4).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Payment Status
+                  </span>
+                  <span className="font-bold text-xs text-emerald-600 mt-0.5 block">
+                    {createdOrder.paymentInfo?.status || "Paid"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Grand Total
+                  </span>
+                  <span className="font-black text-xs text-slate-900 mt-0.5 block">
+                    ₹{(createdOrder.totalPrice || createdOrder.totalAmount || total).toLocaleString("en-IN")}
+                  </span>
+                </div>
+              </div>
+
+              {/* Primary Actions */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                <Link to="/shop" className="w-full sm:w-auto">
+                  <button className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-8 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider transition shadow-sm cursor-pointer flex items-center justify-center gap-2">
+                    <PackagePlus size={16} />
+                    <span>Continue Shopping</span>
+                  </button>
+                </Link>
+                <Link to="/profile" className="w-full sm:w-auto">
+                  <button className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 px-6 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider transition border border-slate-200 flex items-center justify-center gap-2 cursor-pointer">
+                    <span>View My Orders</span>
+                  </button>
+                </Link>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -2114,4 +2201,5 @@ function Cart() {
 }
 
 export default Cart;
+
 

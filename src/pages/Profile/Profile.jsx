@@ -27,6 +27,7 @@ import {
   RefreshCw,
   Edit3,
   Truck,
+  Download,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
@@ -40,7 +41,12 @@ import {
   deleteAddress as apiDeleteAddress,
   setDefaultAddress as apiSetDefaultAddress,
 } from "../../api/profileService.js";
-import { getMyOrders, cancelOrder, requestItemReturn } from "../../api/orderService";
+import {
+  getMyOrders,
+  cancelOrder,
+  requestItemReturn,
+  downloadAndSaveInvoice,
+} from "../../api/orderService";
 import { getBookings } from "../../api/bookingService";
 import {
   getLoyaltyAccount,
@@ -279,6 +285,20 @@ export default function Profile() {
     loadAddressesData();
     fetchLoyaltyData();
   }, [user]);
+
+  const handleDownloadInvoice = async (ord) => {
+    try {
+      toast.loading("Generating Tax Invoice...", { id: "inv-dl" });
+      const invNum =
+        ord.invoiceNumber ||
+        `INV-${new Date(ord.createdAt || Date.now()).getFullYear()}-${ord._id?.toString().slice(-4).toUpperCase()}`;
+      await downloadAndSaveInvoice(ord._id, invNum);
+      toast.success("Tax Invoice downloaded!", { id: "inv-dl" });
+    } catch (err) {
+      console.error("Invoice download error:", err);
+      toast.error("Failed to download invoice.", { id: "inv-dl" });
+    }
+  };
 
   useEffect(() => {
     if (activeTab === "loyalty") {
@@ -921,6 +941,19 @@ export default function Profile() {
                                         <span className="inline-block text-[9px] font-black uppercase px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-600">
                                           Product Status: {itemStatus}
                                         </span>
+                                        <span
+                                          className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded ${
+                                            (item.source || ord.orderSource) === "store"
+                                              ? "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
+                                              : "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                                          }`}
+                                        >
+                                          {(item.source || ord.orderSource) === "store"
+                                            ? item.storeName
+                                              ? `Store: ${item.storeName}`
+                                              : "Added from Store"
+                                            : "Added from Studio"}
+                                        </span>
                                       </div>
                                       {isRequested && (
                                         <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
@@ -956,12 +989,21 @@ export default function Profile() {
 
                             <div className="flex flex-wrap items-center gap-2">
                               <Link
-                                to={`/track-order?id=${ord._id}`}
+                                to={`/order-tracking?orderId=${ord._id}`}
                                 className="px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5"
                               >
                                 <Truck size={14} />
                                 Track Order Status
                               </Link>
+
+                              <button
+                                onClick={() => handleDownloadInvoice(ord)}
+                                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-600 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                                title="Download Official Tax Invoice PDF"
+                              >
+                                <Download size={14} />
+                                Invoice
+                              </button>
 
                               {canCancel && (
                                 <button

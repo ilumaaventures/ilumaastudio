@@ -427,6 +427,7 @@ function ProductDetails() {
           image: selectedImage || displayProduct.images?.[0]?.url,
           category: displayProduct.category,
           categoryTax: typeof displayProduct.category === "object" ? (displayProduct.category?.tax ?? 0) : 0,
+          source: "studio",
           selectedVariant: activeVariant
             ? {
                 sku: activeVariant.sku,

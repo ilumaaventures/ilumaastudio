@@ -61,6 +61,9 @@ const mapDbCartToRedux = (dbItems) => {
       hamperRecipient: item.hamperRecipient || null,
       hamperSender: item.hamperSender || null,
       hamperNote: item.hamperNote || null,
+      source: item.source || prod.source || "studio",
+      storeName: item.storeName || prod.storeName || null,
+      storeSlug: item.storeSlug || prod.storeSlug || null,
     };
   });
 };
@@ -113,6 +116,32 @@ export const addToCart = createAsyncThunk(
         ? product.category?.name
         : product.category || "General";
 
+    const isStorePath =
+      typeof window !== "undefined" &&
+      (window.location.pathname.startsWith("/store") ||
+        (window.location.pathname !== "/" &&
+          !["/shop", "/cart", "/wishlist", "/login", "/register", "/about", "/contact", "/categories", "/profile", "/help", "/services", "/compare", "/flash-deals", "/offers"].some((p) =>
+            window.location.pathname.startsWith(p),
+          )));
+
+    const effectiveSource =
+      product.source ||
+      (product.storeName || product.storeSlug || isStorePath ? "store" : "studio");
+    const effectiveStoreName =
+      product.storeName ||
+      (effectiveSource === "store"
+        ? product.businessName ||
+          product.business?.businessName ||
+          product.business?.name ||
+          product.vendor?.storeName ||
+          "Store"
+        : null);
+    const effectiveStoreSlug =
+      product.storeSlug ||
+      (effectiveSource === "store"
+        ? product.slug || product.business?.slug || null
+        : null);
+
     try {
       const response = await cartService.addToCart(prodId, quantity, {
         name: product.name || product.title || "Product",
@@ -123,6 +152,9 @@ export const addToCart = createAsyncThunk(
         selectedOptions: product.selectedOptions || product.selectedVariant || null,
         variantSku: product.variantSku || product.sku || null,
         variantId: product.variantId || null,
+        source: effectiveSource,
+        storeName: effectiveStoreName,
+        storeSlug: effectiveStoreSlug,
         isHamperItem: Boolean(product.isHamperItem),
         isPackaging: Boolean(product.isPackaging),
         hamperId: product.hamperId || null,
@@ -172,6 +204,9 @@ export const addToCart = createAsyncThunk(
         currentItems[existingIdx] = {
           ...currentItems[existingIdx],
           quantity: (currentItems[existingIdx].quantity || 1) + Number(quantity || 1),
+          source: currentItems[existingIdx].source || effectiveSource,
+          storeName: currentItems[existingIdx].storeName || effectiveStoreName,
+          storeSlug: currentItems[existingIdx].storeSlug || effectiveStoreSlug,
         };
       } else {
         currentItems.push({
@@ -188,6 +223,9 @@ export const addToCart = createAsyncThunk(
           variantId: product.variantId || null,
           stock: effectiveStock,
           quantity: Number(quantity || 1),
+          source: effectiveSource,
+          storeName: effectiveStoreName,
+          storeSlug: effectiveStoreSlug,
           isHamperItem: Boolean(product.isHamperItem),
           isPackaging: Boolean(product.isPackaging),
           hamperId: product.hamperId || null,

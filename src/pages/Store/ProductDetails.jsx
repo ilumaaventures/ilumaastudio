@@ -166,6 +166,12 @@ export default function ProductDetails() {
       return;
     }
 
+    const storeDisplayName =
+      product.business?.businessName ||
+      product.business?.name ||
+      businessName ||
+      "Store";
+
     dispatch(
       addToCart({
         product: {
@@ -179,6 +185,9 @@ export default function ProductDetails() {
           variantSku: currentSku,
           variantId: selectedVariant ? selectedVariant._id : null,
           vendor: product.vendor || product.business,
+          source: "store",
+          storeName: storeDisplayName,
+          storeSlug: businessName || null,
         },
         quantity,
       })

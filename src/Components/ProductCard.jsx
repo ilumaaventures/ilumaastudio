@@ -271,6 +271,21 @@ export default function ProductCard({
             ? Number(product.tax)
             : 0;
 
+    const isStorePath =
+      typeof window !== "undefined" &&
+      (window.location.pathname.startsWith("/store") ||
+        (window.location.pathname !== "/" &&
+          !["/shop", "/cart", "/wishlist", "/login", "/register", "/about", "/contact", "/categories", "/profile", "/help", "/services", "/compare", "/flash-deals", "/offers"].some((p) =>
+            window.location.pathname.startsWith(p),
+          )));
+
+    const cardSource =
+      product.source || (isStorePath || product.storeName ? "store" : "studio");
+    const cardStoreName =
+      product.storeName ||
+      (cardSource === "store" ? businessName || "Store" : null);
+    const cardStoreSlug = product.storeSlug || null;
+
     dispatch(
       addToCart({
         product: {
@@ -285,6 +300,9 @@ export default function ProductCard({
           sku: product.sku || defaultVariant?.sku,
           variantId: defaultVariant ? defaultVariant._id : null,
           selectedOptions: defaultVariant ? defaultVariant.optionValues : null,
+          source: cardSource,
+          storeName: cardStoreName,
+          storeSlug: cardStoreSlug,
         },
         quantity: 1,
       }),

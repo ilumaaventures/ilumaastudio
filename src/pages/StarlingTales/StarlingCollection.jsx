@@ -299,7 +299,17 @@ export default function StarlingCollection() {
       return;
     }
 
-    dispatch(addToCart({ product: origProduct, quantity: qty }));
+    dispatch(
+      addToCart({
+        product: {
+          ...origProduct,
+          source: "store",
+          storeName: "Starling Tales",
+          storeSlug: "starlingtales",
+        },
+        quantity: qty,
+      }),
+    );
     const remaining = availableStock - (currentCartQty + qty);
     toast.success(
       `${origProduct.name} added to cart! ${
