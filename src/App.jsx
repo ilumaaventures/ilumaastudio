@@ -64,6 +64,7 @@ import BusinessStoreListing from "./pages/BusinessStore/BusinessStoreListing";
 import ProductListing from "./pages/Product/ProductListing";
 import ServiceListing from "./pages/Services/ServiceListing";
 import HelpCenter from "./pages/Help/HelpCenter";
+import CorporateGifting from "./pages/CorporateGifting/CorporateGifting";
 
 // Order Tracking Page
 import TrackOrder from "./pages/Order/TrackOrder";
@@ -249,6 +250,7 @@ function App() {
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/profile" element={<Profile />} />
+              <Route path="/corporate-gifting" element={<CorporateGifting />} />
               <Route path="/my-bookings" element={<MyBookingsPage />} />
             </Route>
 
