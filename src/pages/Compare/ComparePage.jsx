@@ -28,6 +28,11 @@ import {
   ShoppingCart,
   Search,
   Zap,
+  Tag,
+  Truck,
+  ArrowRight,
+  Clock,
+  Compass,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { getProductById } from "../../api/productService";
@@ -42,9 +47,10 @@ import {
 import CompareProductPickerModal from "../../Components/comparison/CompareProductPickerModal";
 
 // =========================================================================
-// REUSABLE & HIGH-PERFORMANCE ROW COMPONENT (Sticky Label + Aligned Columns)
+// REUSABLE & HIGH-PERFORMANCE SPEC ROW COMPONENT
 // =========================================================================
-const CompareRow = memo(function CompareRow({
+const CompareSpecRow = memo(function CompareSpecRow({
+  icon: Icon = null,
   label,
   sublabel = null,
   renderCell,
@@ -52,33 +58,44 @@ const CompareRow = memo(function CompareRow({
   isDifferent = false,
   isAlternate = false,
   hoveredCol = null,
+  onColHover = null,
 }) {
   return (
     <div
-      className={`flex items-stretch transition-colors min-w-max ${
+      className={`flex items-stretch transition-colors min-w-max border-b border-slate-100 ${
         isDifferent
-          ? "bg-blue-50/50 hover:bg-blue-50/80"
+          ? "bg-blue-50/40 hover:bg-blue-50/70"
           : isAlternate
             ? "bg-slate-50/50 hover:bg-slate-100/60"
             : "bg-white hover:bg-slate-50/60"
       }`}
     >
       {/* Sticky Left Label Column */}
-      <div className="w-[115px] sm:w-[170px] md:w-[210px] shrink-0 sticky left-0 z-10 px-2.5 sm:px-4 py-2.5 sm:py-3 bg-inherit backdrop-blur-md border-r border-slate-200/90 shadow-[3px_0_8px_-2px_rgba(0,0,0,0.06)] flex flex-col justify-center select-none">
-        <div className="flex items-center gap-1.5">
-          <span className="text-[11px] sm:text-xs font-bold text-slate-800 leading-tight">
-            {label}
-          </span>
-          {isDifferent && (
-            <span
-              className="w-1.5 h-1.5 rounded-full bg-[#2563eb] shrink-0"
-              title="Differs across products"
-            />
+      <div className="w-[140px] sm:w-[190px] md:w-[230px] shrink-0 sticky left-0 z-10 px-3 sm:px-5 py-3 sm:py-3.5 bg-inherit backdrop-blur-md border-r border-slate-200/90 shadow-[4px_0_12px_-3px_rgba(15,23,42,0.06)] flex items-center justify-between select-none">
+        <div className="flex items-center gap-2.5 min-w-0 pr-1">
+          {Icon && (
+            <div className="w-6 h-6 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+              <Icon size={12} />
+            </div>
           )}
+          <div className="min-w-0">
+            <span className="text-[11px] sm:text-xs font-bold text-slate-800 leading-tight block truncate">
+              {label}
+            </span>
+            {sublabel && (
+              <span className="text-[9px] sm:text-[10px] text-slate-400 leading-tight block truncate mt-0.5">
+                {sublabel}
+              </span>
+            )}
+          </div>
         </div>
-        {sublabel && (
-          <span className="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 leading-none">
-            {sublabel}
+
+        {isDifferent && (
+          <span
+            className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 shrink-0 shadow-2xs"
+            title="Values differ across selected products"
+          >
+            Differs
           </span>
         )}
       </div>
@@ -90,7 +107,9 @@ const CompareRow = memo(function CompareRow({
           return (
             <div
               key={colIdx}
-              className={`w-[155px] sm:w-[195px] md:w-[220px] shrink-0 px-2.5 sm:px-4 py-2.5 sm:py-3 text-[11px] sm:text-xs flex items-center border-r border-slate-100/80 transition-colors ${
+              onMouseEnter={() => onColHover && onColHover(colIdx)}
+              onMouseLeave={() => onColHover && onColHover(null)}
+              className={`w-[170px] sm:w-[210px] md:w-[240px] shrink-0 px-3 sm:px-5 py-3 sm:py-3.5 text-[11px] sm:text-xs flex items-center border-r border-slate-100/90 transition-colors ${
                 isHovered ? "bg-blue-50/40" : ""
               }`}
             >
@@ -140,7 +159,7 @@ export default function ComparePage() {
       .filter(Boolean);
   }, [searchParams]);
 
-  // Determine active product IDs (from URL if present, otherwise from Redux items)
+  // Determine active product IDs
   const activeProductIds = useMemo(() => {
     if (urlProductIds.length > 0) {
       return urlProductIds.slice(0, MAX_COMPARE_PRODUCTS);
@@ -229,7 +248,7 @@ export default function ComparePage() {
 
   const handleTableScroll = (direction) => {
     if (tableContainerRef.current) {
-      const amount = direction === "left" ? -220 : 220;
+      const amount = direction === "left" ? -240 : 240;
       tableContainerRef.current.scrollBy({ left: amount, behavior: "smooth" });
     }
   };
@@ -247,9 +266,7 @@ export default function ComparePage() {
     }
   }, [detailedProducts]);
 
-  // Dynamic active columns count:
-  // Shows existing products + ONE "+ Add Product" slot column if fewer than max!
-  // This eliminates empty ghost slots on mobile.
+  // Dynamic active columns count: shows existing products + 1 add slot if < 4
   const activeColsCount = useMemo(() => {
     const len = detailedProducts.length;
     if (len < MAX_COMPARE_PRODUCTS) {
@@ -275,6 +292,7 @@ export default function ComparePage() {
     dispatch(removeFromCompare(productId));
     const newIds = updated.map((p) => p._id || p.id);
     syncUrlParams(newIds);
+    toast.success("Product removed from comparison");
   };
 
   // Handle Clear All
@@ -282,6 +300,7 @@ export default function ComparePage() {
     setDetailedProducts([]);
     dispatch(clearCompare());
     syncUrlParams([]);
+    toast.success("Comparison cleared");
   };
 
   // Handle Add/Replace Product from Modal
@@ -485,7 +504,7 @@ export default function ComparePage() {
     return dynamicFeaturesList.filter((feat) => feat.toLowerCase().includes(q));
   }, [dynamicFeaturesList, specSearchQuery]);
 
-  // Pre-calculated differences map for ultra-fast rendering
+  // Pre-calculated differences map
   const differences = useMemo(() => {
     if (detailedProducts.length <= 1) return { details: {}, features: {} };
 
@@ -561,29 +580,53 @@ export default function ComparePage() {
     };
   }, [detailedProducts, dynamicDetailKeys, dynamicFeaturesList]);
 
+  // Count total differences
+  const totalDifferencesCount = useMemo(() => {
+    let count = 0;
+    if (differences.price) count++;
+    if (differences.rating) count++;
+    if (differences.stock) count++;
+    if (differences.brand) count++;
+    if (differences.category) count++;
+    if (differences.sku) count++;
+    if (differences.weight) count++;
+    if (differences.dimensions) count++;
+    if (differences.countryOfOrigin) count++;
+    if (differences.productType) count++;
+    Object.values(differences.details || {}).forEach((d) => {
+      if (d) count++;
+    });
+    Object.values(differences.features || {}).forEach((f) => {
+      if (f) count++;
+    });
+    return count;
+  }, [differences]);
+
   // -------------------------------------------------------------
   // RENDER: Loading Skeleton State
   // -------------------------------------------------------------
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#FAFAF9] py-6 sm:py-8 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center gap-3">
+      <main className="min-h-screen bg-[#F8FAFC] py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6">
+        <div className="flex items-center gap-2">
+          <div className="w-20 h-4 bg-slate-200 rounded animate-pulse" />
+          <span className="text-slate-300">/</span>
           <div className="w-24 h-4 bg-slate-200 rounded animate-pulse" />
         </div>
         <div className="space-y-2">
-          <div className="w-48 h-7 sm:h-8 bg-slate-200 rounded-xl animate-pulse" />
-          <div className="w-72 h-4 bg-slate-200 rounded animate-pulse" />
+          <div className="w-64 h-8 bg-slate-200 rounded-xl animate-pulse" />
+          <div className="w-96 h-4 bg-slate-200 rounded animate-pulse" />
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-3 sm:p-4 space-y-3 animate-pulse"
+              className="bg-white rounded-3xl border border-slate-200/80 p-4 space-y-4 animate-pulse shadow-xs"
             >
-              <div className="aspect-square bg-slate-100 rounded-xl sm:rounded-2xl" />
-              <div className="w-3/4 h-3.5 bg-slate-200 rounded" />
-              <div className="w-1/2 h-4 bg-slate-200 rounded" />
-              <div className="w-full h-8 sm:h-9 bg-slate-100 rounded-xl mt-3" />
+              <div className="aspect-square bg-slate-100 rounded-2xl" />
+              <div className="w-3/4 h-4 bg-slate-200 rounded" />
+              <div className="w-1/2 h-5 bg-slate-200 rounded" />
+              <div className="w-full h-10 bg-slate-100 rounded-xl mt-4" />
             </div>
           ))}
         </div>
@@ -596,27 +639,29 @@ export default function ComparePage() {
   // -------------------------------------------------------------
   if (loadError) {
     return (
-      <main className="min-h-screen bg-[#FAFAF9] flex items-center justify-center p-4 sm:p-6 text-center">
-        <div className="bg-white p-6 sm:p-10 rounded-3xl border border-slate-200 shadow-sm max-w-md w-full space-y-4">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mx-auto">
-            <AlertCircle size={30} />
+      <main className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4 sm:p-6 text-center">
+        <div className="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm max-w-md w-full space-y-5">
+          <div className="w-16 h-16 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto shadow-inner">
+            <AlertCircle size={32} />
           </div>
-          <h2 className="text-lg sm:text-xl font-black text-slate-900">
-            Unable to Load Comparison
-          </h2>
-          <p className="text-xs text-slate-500 leading-relaxed">{loadError}</p>
-          <div className="flex flex-col sm:flex-row gap-2 pt-2">
+          <div className="space-y-1.5">
+            <h2 className="text-lg sm:text-xl font-black text-slate-900">
+              Unable to Load Comparison
+            </h2>
+            <p className="text-xs text-slate-500 leading-relaxed">{loadError}</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
             <button
               type="button"
               onClick={() => fetchProductsData(activeProductIds)}
-              className="flex-1 bg-[#2563eb] text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-[#1d4ed8] transition cursor-pointer flex items-center justify-center gap-1.5"
+              className="flex-1 bg-[#2563eb] text-white px-5 py-3 rounded-xl text-xs font-bold hover:bg-[#1d4ed8] transition cursor-pointer flex items-center justify-center gap-2 shadow-sm"
             >
               <RefreshCw size={14} />
               <span>Retry</span>
             </button>
             <Link
               to="/shop"
-              className="flex-1 bg-slate-100 text-slate-700 px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-200 transition text-center"
+              className="flex-1 bg-slate-100 text-slate-700 px-5 py-3 rounded-xl text-xs font-bold hover:bg-slate-200 transition text-center"
             >
               Browse Products
             </Link>
@@ -631,33 +676,51 @@ export default function ComparePage() {
   // -------------------------------------------------------------
   if (detailedProducts.length === 0) {
     return (
-      <main className="min-h-screen bg-[#FAFAF9] py-12 sm:py-16 px-4 sm:px-6 flex items-center justify-center">
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-12 max-w-lg w-full text-center space-y-6">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-50 text-[#2563eb] flex items-center justify-center mx-auto shadow-inner">
-            <Scale size={32} strokeWidth={1.75} />
+      <main className="min-h-screen bg-[#F8FAFC] py-16 px-4 sm:px-6 flex items-center justify-center">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 sm:p-14 max-w-xl w-full text-center space-y-6">
+          <div className="w-20 h-20 rounded-3xl bg-blue-50 text-[#2563eb] border border-blue-100 flex items-center justify-center mx-auto shadow-xs">
+            <Scale size={36} strokeWidth={1.8} />
           </div>
 
-          <div className="space-y-2">
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              Compare Products
+          <div className="space-y-2.5">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider">
+              <Sparkles size={11} className="text-[#2563eb]" />
+              <span>Studio Comparison Suite</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Compare Products Side-by-Side
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-              Compare products side by side to evaluate features, technical
-              specifications, and prices to find the perfect choice.
-            </p>
-            <p className="text-xs font-semibold text-slate-400 pt-1">
-              You haven't selected any products to compare yet.
+            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed max-w-md mx-auto">
+              Evaluate technical specifications, real customer ratings, and live prices to make confident, well-informed purchase decisions.
             </p>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               to="/shop"
-              className="inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-7 py-3 rounded-2xl text-xs font-black transition-all shadow-md shadow-blue-500/25 active:scale-95"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-[#2563eb] text-white px-8 py-3.5 rounded-2xl text-xs font-bold transition-all shadow-sm active:scale-95"
             >
-              <Package size={16} />
-              <span>Browse Products</span>
+              <Package size={15} />
+              <span>Explore Product Catalog</span>
             </Link>
+          </div>
+
+          {/* Quick Categories Bar */}
+          <div className="pt-6 border-t border-slate-100">
+            <span className="text-[11px] font-bold text-slate-400 block mb-3 uppercase tracking-wider">
+              Popular Categories to Compare
+            </span>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {["Electronics", "Apparel", "Footwear", "Home Decor", "Beauty", "Gifting"].map((cat) => (
+                <Link
+                  key={cat}
+                  to={`/shop?category=${encodeURIComponent(cat)}`}
+                  className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-[#2563eb] border border-slate-200/80 text-[11px] font-medium text-slate-600 transition"
+                >
+                  {cat}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </main>
@@ -667,156 +730,169 @@ export default function ComparePage() {
   const isSingleProduct = detailedProducts.length === 1;
 
   return (
-    <main className="min-h-screen bg-[#FAFAF9] pb-24 font-sans text-slate-800">
+    <main className="min-h-screen bg-[#F8FAFC] pb-28 font-sans text-slate-800">
       {/* =========================================================
-          STICKY TOP ACTION BAR (Slim & Responsive)
+          PAGE TOP HEADER & BREADCRUMB
       ========================================================== */}
-      <header className="bg-white/95 border-b border-slate-200/80 sticky top-0 z-30 shadow-2xs backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-2">
-          {/* Left Title & Status */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <Link
-              to="/shop"
-              className="p-1.5 sm:p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
-              title="Back to Shop"
-            >
-              <ArrowLeft size={17} />
+      <section className="bg-white border-b border-slate-200/90 shadow-2xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6">
+          {/* Breadcrumb */}
+          <nav className="flex items-center gap-2 text-xs font-medium text-slate-400 mb-3">
+            <Link to="/" className="hover:text-slate-800 transition">
+              Home
             </Link>
+            <ChevronRight size={12} />
+            <Link to="/shop" className="hover:text-slate-800 transition">
+              Shop
+            </Link>
+            <ChevronRight size={12} />
+            <span className="text-slate-800 font-bold">Compare Products</span>
+          </nav>
+
+          {/* Title & Actions Bar */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <h1 className="text-xs sm:text-base font-black text-slate-900 tracking-tight">
-                  Compare
-                </h1>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-blue-50 text-[#2563eb] border border-blue-200">
-                  {detailedProducts.length}/{MAX_COMPARE_PRODUCTS}
+              <div className="flex items-center gap-2.5">
+                <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[#2563eb] text-[10px] font-bold uppercase tracking-wider">
+                  <Scale size={12} />
+                  <span>Comparison Matrix</span>
+                </span>
+                <span className="text-[11px] font-bold text-slate-400">
+                  {detailedProducts.length} of {MAX_COMPARE_PRODUCTS} slots filled
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 hidden md:block">
-                Side-by-side specifications & live pricing
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight mt-1.5">
+                Compare Products & Specifications
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
+                Side-by-side analysis, technical specifications, difference detection, and value metrics to help you select the best choice.
               </p>
             </div>
-          </div>
 
-          {/* Right Action Controls */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Quick Add Product Button */}
-            {detailedProducts.length < MAX_COMPARE_PRODUCTS && (
+            {/* Action Bar Pills */}
+            <div className="flex items-center flex-wrap gap-2 pt-1 lg:pt-0">
+              {/* Difference Mode Toggle Switch */}
               <button
                 type="button"
-                onClick={() => {
-                  setReplaceSlotIndex(null);
-                  setPickerOpen(true);
-                }}
-                className="px-2 sm:px-3 py-1.5 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-[#2563eb] text-[11px] sm:text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-2xs active:scale-95"
-              >
-                <Plus size={13} strokeWidth={2.5} />
-                <span className="hidden xs:inline">Add Product</span>
-              </button>
-            )}
-
-            {/* Difference Mode Toggle Switch */}
-            <label className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={showDifferencesOnly}
-                onChange={(e) => setShowDifferencesOnly(e.target.checked)}
-                className="sr-only"
-              />
-              <div
-                className={`w-6 h-3.5 sm:w-7 sm:h-4 rounded-full transition-colors relative flex items-center p-0.5 ${
-                  showDifferencesOnly ? "bg-[#2563eb]" : "bg-slate-300"
+                onClick={() => setShowDifferencesOnly(!showDifferencesOnly)}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition cursor-pointer select-none shadow-2xs ${
+                  showDifferencesOnly
+                    ? "bg-[#2563eb] text-white border-[#2563eb]"
+                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
                 }`}
               >
-                <div
-                  className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-white transition-transform ${
-                    showDifferencesOnly
-                      ? "translate-x-2.5 sm:translate-x-3"
-                      : "translate-x-0"
-                  }`}
-                />
-              </div>
-              <span className="text-[10px] sm:text-[11px] font-bold text-slate-700">
-                Differences
-              </span>
-            </label>
+                <SlidersHorizontal size={13} />
+                <span>
+                  {showDifferencesOnly
+                    ? "Showing Differences"
+                    : "Highlight Differences"}
+                </span>
+                {totalDifferencesCount > 0 && (
+                  <span
+                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                      showDifferencesOnly
+                        ? "bg-white/20 text-white"
+                        : "bg-blue-100 text-[#2563eb]"
+                    }`}
+                  >
+                    {totalDifferencesCount}
+                  </span>
+                )}
+              </button>
 
-            {/* Share */}
-            <button
-              type="button"
-              onClick={handleShare}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
-              title="Share comparison link"
-            >
-              <Share2 size={13} />
-              <span className="hidden sm:inline">Share</span>
-            </button>
+              {/* Add Product Button */}
+              {detailedProducts.length < MAX_COMPARE_PRODUCTS && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReplaceSlotIndex(null);
+                    setPickerOpen(true);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-[#2563eb] text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
+                >
+                  <Plus size={14} strokeWidth={2.5} />
+                  <span>Add Product</span>
+                </button>
+              )}
 
-            {/* Clear All */}
-            <button
-              type="button"
-              onClick={handleClearAll}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border border-rose-200 bg-rose-50/60 hover:bg-rose-100 text-rose-600 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
-              title="Clear all products"
-            >
-              <Trash2 size={13} />
-              <span className="hidden sm:inline">Clear</span>
-            </button>
+              {/* Share */}
+              <button
+                type="button"
+                onClick={handleShare}
+                className="p-2 sm:px-3 sm:py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                title="Share comparison link"
+              >
+                <Share2 size={13} />
+                <span className="hidden sm:inline">Share</span>
+              </button>
+
+              {/* Clear All */}
+              <button
+                type="button"
+                onClick={handleClearAll}
+                className="p-2 sm:px-3 sm:py-2 rounded-xl border border-rose-200/80 bg-rose-50/50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                title="Clear all products"
+              >
+                <Trash2 size={13} />
+                <span className="hidden sm:inline">Clear All</span>
+              </button>
+            </div>
           </div>
         </div>
-      </header>
+      </section>
 
-      <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 pt-4 space-y-4 sm:space-y-5">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-5 space-y-5">
         {/* =========================================================
-            CATEGORY COMPATIBILITY & SECTION QUICK-JUMP
+            CATEGORY COMPATIBILITY & NOTICE BANNERS
         ========================================================== */}
         {categoryCompatibility && (
           <div className="flex items-center justify-between flex-wrap gap-2 text-xs">
             <div className="flex items-center gap-2">
               {categoryCompatibility.isSameCategory ? (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px] sm:text-[11px]">
-                  <CheckCircle2 size={12} />
-                  Category: {categoryCompatibility.categories[0]}
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-[11px] shadow-2xs">
+                  <CheckCircle2 size={13} className="text-emerald-600" />
+                  Category: {categoryCompatibility.categories[0]} (Optimal Comparison)
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-medium text-[10px] sm:text-[11px]">
-                  <Info size={12} className="text-amber-600 shrink-0" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200 font-medium text-[11px] shadow-2xs">
+                  <Info size={13} className="text-amber-600 shrink-0" />
                   <span>
-                    Comparing: {categoryCompatibility.categories.join(", ")}
+                    Cross-Category Comparison: {categoryCompatibility.categories.join(", ")}
                   </span>
                 </span>
               )}
             </div>
 
-            {/* Section Quick Jump Filter Navigation */}
-            <div className="flex items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-0.5">
+            {/* In-Page Quick Jump Links */}
+            <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-0.5">
               <button
                 type="button"
                 onClick={() => scrollToSection("section-highlights")}
-                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-blue-300 hover:text-[#2563eb] text-slate-600 text-[10px] sm:text-[11px] font-bold cursor-pointer transition shrink-0 shadow-2xs"
+                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-blue-400 hover:text-[#2563eb] text-slate-600 text-[11px] font-bold cursor-pointer transition shrink-0 shadow-2xs"
               >
                 Highlights
               </button>
               <button
                 type="button"
                 onClick={() => scrollToSection("section-tech")}
-                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-blue-300 hover:text-[#2563eb] text-slate-600 text-[10px] sm:text-[11px] font-bold cursor-pointer transition shrink-0 shadow-2xs"
+                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-blue-400 hover:text-[#2563eb] text-slate-600 text-[11px] font-bold cursor-pointer transition shrink-0 shadow-2xs"
               >
-                Tech Specs
+                Physical Specs
               </button>
               {filteredDetailKeys.length > 0 && (
                 <button
                   type="button"
                   onClick={() => scrollToSection("section-specs")}
-                  className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-blue-300 hover:text-[#2563eb] text-slate-600 text-[10px] sm:text-[11px] font-bold cursor-pointer transition shrink-0 shadow-2xs"
+                  className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-blue-400 hover:text-[#2563eb] text-slate-600 text-[11px] font-bold cursor-pointer transition shrink-0 shadow-2xs"
                 >
-                  Details
+                  Technical Details
                 </button>
               )}
               {filteredFeaturesList.length > 0 && (
                 <button
                   type="button"
                   onClick={() => scrollToSection("section-features")}
-                  className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-blue-300 hover:text-[#2563eb] text-slate-600 text-[10px] sm:text-[11px] font-bold cursor-pointer transition shrink-0 shadow-2xs"
+                  className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-blue-400 hover:text-[#2563eb] text-slate-600 text-[11px] font-bold cursor-pointer transition shrink-0 shadow-2xs"
                 >
                   Features
                 </button>
@@ -824,9 +900,9 @@ export default function ComparePage() {
               <button
                 type="button"
                 onClick={() => scrollToSection("section-policies")}
-                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-blue-300 hover:text-[#2563eb] text-slate-600 text-[10px] sm:text-[11px] font-bold cursor-pointer transition shrink-0 shadow-2xs"
+                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-blue-400 hover:text-[#2563eb] text-slate-600 text-[11px] font-bold cursor-pointer transition shrink-0 shadow-2xs"
               >
-                Policies
+                Protection
               </button>
             </div>
           </div>
@@ -834,16 +910,17 @@ export default function ComparePage() {
 
         {/* Notice for 1 product */}
         {isSingleProduct && (
-          <div className="p-3 sm:p-4 rounded-2xl bg-amber-50 border border-amber-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-900">
-            <div className="flex items-center gap-2.5">
-              <Info size={17} className="text-amber-600 shrink-0" />
+          <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-900 shadow-2xs">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                <Info size={18} />
+              </div>
               <div>
                 <h4 className="text-xs font-black">
                   Add at least one more product to compare
                 </h4>
-                <p className="text-[11px] text-amber-700">
-                  Select another product to view differences and specifications
-                  side-by-side.
+                <p className="text-[11px] text-amber-800 leading-tight">
+                  Side-by-side technical specs, diff highlighting, and value analysis unlock when 2 or more products are added.
                 </p>
               </div>
             </div>
@@ -853,93 +930,289 @@ export default function ComparePage() {
                 setReplaceSlotIndex(null);
                 setPickerOpen(true);
               }}
-              className="bg-amber-600 hover:bg-amber-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95"
+              className="bg-amber-700 hover:bg-amber-800 text-white px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shrink-0 shadow-sm active:scale-95"
             >
               <Plus size={14} strokeWidth={2.5} />
-              <span>Add Second Product</span>
-            </button>
-          </div>
-        )}
-
-        {/* Difference Mode Active Banner */}
-        {showDifferencesOnly && (
-          <div className="p-2.5 sm:p-3 rounded-2xl bg-blue-50 border border-blue-200/80 flex items-center justify-between gap-2 text-xs text-[#2563eb]">
-            <div className="flex items-center gap-2">
-              <SlidersHorizontal size={14} />
-              <span className="font-semibold text-[11px] sm:text-xs">
-                Difference Mode: Showing only attributes that vary.
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowDifferencesOnly(false)}
-              className="text-[11px] font-black underline hover:text-blue-800 cursor-pointer shrink-0"
-            >
-              Show all
+              <span>Select Second Product</span>
             </button>
           </div>
         )}
 
         {/* =========================================================
-            RESPONSIVE COMPARISON MATRIX CONTAINER
+            INTELLIGENT DECISION CARDS / COMPARISON VERDICT
+            (Shown when 2+ products are being compared)
         ========================================================== */}
-        <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
-          {/* Quick Search & Scroll Navigation Header */}
-          <div className="p-2.5 sm:p-4 bg-slate-50/90 border-b border-slate-200/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+        {!isSingleProduct && (
+          <section className="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-blue-50 text-[#2563eb] flex items-center justify-center">
+                  <Award size={15} />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-black text-slate-900">
+                    Studio Comparison Verdict
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Automated smart recommendations based on rating, specs, and price-to-value ratio.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+              {/* Best Overall Card */}
+              {recommendations.bestOverall && (
+                <div className="rounded-2xl border border-purple-200 bg-gradient-to-br from-purple-50/50 via-white to-purple-50/20 p-4 flex flex-col justify-between space-y-3 relative overflow-hidden shadow-2xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700 font-black text-[10px] uppercase tracking-wider">
+                      <Award size={11} />
+                      <span>Best Overall</span>
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400">
+                      Top Performance
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-xl bg-white border border-purple-100 p-1 shrink-0 flex items-center justify-center overflow-hidden shadow-2xs">
+                      <img
+                        src={
+                          recommendations.bestOverall.images?.[0]?.url ||
+                          recommendations.bestOverall.images?.[0] ||
+                          recommendations.bestOverall.image?.url ||
+                          recommendations.bestOverall.image ||
+                          "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=260"
+                        }
+                        alt={recommendations.bestOverall.name}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4
+                        className="text-xs font-bold text-slate-900 truncate"
+                        title={recommendations.bestOverall.name}
+                      >
+                        {recommendations.bestOverall.name}
+                      </h4>
+                      <div className="flex items-baseline gap-1.5 mt-0.5">
+                        <span className="text-sm font-black text-slate-900">
+                          ₹{Number(recommendations.bestOverall.price || 0).toLocaleString()}
+                        </span>
+                        <span className="text-[11px] font-bold text-amber-500 flex items-center gap-0.5">
+                          <Star size={10} fill="currentColor" />
+                          <span>
+                            {Number(
+                              recommendations.bestOverall.rating ||
+                                recommendations.bestOverall.ratings ||
+                                4.5,
+                            ).toFixed(1)}
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) =>
+                      handleDirectAddToCart(recommendations.bestOverall, e)
+                    }
+                    className="w-full py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                  >
+                    <ShoppingCart size={12} />
+                    <span>Choose Best Overall</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Best Value Card */}
+              {recommendations.bestValue && (
+                <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50/50 via-white to-blue-50/20 p-4 flex flex-col justify-between space-y-3 relative overflow-hidden shadow-2xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-100 text-[#2563eb] font-black text-[10px] uppercase tracking-wider">
+                      <Zap size={11} />
+                      <span>Best Value</span>
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400">
+                      Highest Return
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-xl bg-white border border-blue-100 p-1 shrink-0 flex items-center justify-center overflow-hidden shadow-2xs">
+                      <img
+                        src={
+                          recommendations.bestValue.images?.[0]?.url ||
+                          recommendations.bestValue.images?.[0] ||
+                          recommendations.bestValue.image?.url ||
+                          recommendations.bestValue.image ||
+                          "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=260"
+                        }
+                        alt={recommendations.bestValue.name}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4
+                        className="text-xs font-bold text-slate-900 truncate"
+                        title={recommendations.bestValue.name}
+                      >
+                        {recommendations.bestValue.name}
+                      </h4>
+                      <div className="flex items-baseline gap-1.5 mt-0.5">
+                        <span className="text-sm font-black text-[#2563eb]">
+                          ₹{Number(recommendations.bestValue.price || 0).toLocaleString()}
+                        </span>
+                        <span className="text-[11px] font-bold text-amber-500 flex items-center gap-0.5">
+                          <Star size={10} fill="currentColor" />
+                          <span>
+                            {Number(
+                              recommendations.bestValue.rating ||
+                                recommendations.bestValue.ratings ||
+                                4.5,
+                            ).toFixed(1)}
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) =>
+                      handleDirectAddToCart(recommendations.bestValue, e)
+                    }
+                    className="w-full py-2 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                  >
+                    <ShoppingCart size={12} />
+                    <span>Choose Best Value</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Lowest Price Card */}
+              {recommendations.lowestPrice && (
+                <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50/50 via-white to-emerald-50/20 p-4 flex flex-col justify-between space-y-3 relative overflow-hidden shadow-2xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-black text-[10px] uppercase tracking-wider">
+                      <Tag size={11} />
+                      <span>Lowest Price</span>
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400">
+                      Budget Pick
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-xl bg-white border border-emerald-100 p-1 shrink-0 flex items-center justify-center overflow-hidden shadow-2xs">
+                      <img
+                        src={
+                          recommendations.lowestPrice.images?.[0]?.url ||
+                          recommendations.lowestPrice.images?.[0] ||
+                          recommendations.lowestPrice.image?.url ||
+                          recommendations.lowestPrice.image ||
+                          "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=260"
+                        }
+                        alt={recommendations.lowestPrice.name}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4
+                        className="text-xs font-bold text-slate-900 truncate"
+                        title={recommendations.lowestPrice.name}
+                      >
+                        {recommendations.lowestPrice.name}
+                      </h4>
+                      <div className="flex items-baseline gap-1.5 mt-0.5">
+                        <span className="text-sm font-black text-emerald-600">
+                          ₹{Number(recommendations.lowestPrice.price || 0).toLocaleString()}
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded">
+                          Lowest
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) =>
+                      handleDirectAddToCart(recommendations.lowestPrice, e)
+                    }
+                    className="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                  >
+                    <ShoppingCart size={12} />
+                    <span>Choose Lowest Price</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* =========================================================
+            COMPARISON MATRIX CANVAS
+        ========================================================== */}
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden">
+          {/* Search Specs & Scroll Controls Toolbar */}
+          <div className="p-3 sm:p-4 bg-slate-50/90 border-b border-slate-200/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            {/* Search Input */}
             <div className="relative flex-1 max-w-md">
               <Search
-                size={13}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                size={14}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
               />
               <input
                 type="text"
-                placeholder="Search specs (battery, weight, warranty...)"
+                placeholder="Search specs (material, warranty, weight, battery...)"
                 value={specSearchQuery}
                 onChange={(e) => setSpecSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-7 py-1.5 text-xs bg-white border border-slate-200 rounded-xl outline-none focus:border-[#2563eb] transition"
+                className="w-full pl-9 pr-8 py-2 text-xs bg-white border border-slate-200 rounded-xl outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 transition"
               />
               {specSearchQuery && (
                 <button
                   type="button"
                   onClick={() => setSpecSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
-                  <X size={12} />
+                  <X size={13} />
                 </button>
               )}
             </div>
 
-            {/* Scroll Navigation & Mobile Hint */}
-            <div className="flex items-center justify-between sm:justify-end gap-2">
-              <span className="text-[10px] text-slate-400 font-semibold md:hidden">
-                Swipe horizontally ↔
+            {/* Scroll Navigation Buttons & Hint */}
+            <div className="flex items-center justify-between sm:justify-end gap-2.5">
+              <span className="text-[11px] text-slate-400 font-medium md:hidden">
+                Swipe table horizontally ↔
               </span>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => handleTableScroll("left")}
                   disabled={!canScrollLeft}
-                  className="p-1 sm:p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-[#2563eb] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  className="p-1.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-[#2563eb] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs transition"
                   title="Scroll left"
                 >
-                  <ChevronLeft size={14} />
+                  <ChevronLeft size={16} />
                 </button>
                 <button
                   type="button"
                   onClick={() => handleTableScroll("right")}
                   disabled={!canScrollRight}
-                  className="p-1 sm:p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-[#2563eb] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  className="p-1.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-[#2563eb] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs transition"
                   title="Scroll right"
                 >
-                  <ChevronRight size={14} />
+                  <ChevronRight size={16} />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Horizontally Scrollable Table Canvas with Edge Shadows */}
+          {/* Horizontally Scrollable Table Canvas */}
           <div className="relative">
-            {/* Right Scroll Indicator Gradient for mobile */}
+            {/* Right Scroll Indicator Gradient for touch screens */}
             {canScrollRight && (
               <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-900/10 to-transparent pointer-events-none z-20" />
             )}
@@ -951,23 +1224,22 @@ export default function ComparePage() {
               <div className="min-w-max divide-y divide-slate-100">
                 {/* ===================================================
                     STICKY PRODUCT CARDS HEADER ROW
-                    (Sticks under top action bar on vertical scroll)
                 ==================================================== */}
-                <div className="flex items-stretch bg-slate-50/95 border-b border-slate-200/90 sticky top-[49px] sm:top-[53px] z-20 backdrop-blur-md min-w-max shadow-2xs">
+                <div className="flex items-stretch bg-slate-50/95 border-b border-slate-200/90 sticky top-0 z-20 backdrop-blur-md min-w-max shadow-2xs">
                   {/* Sticky Left Header Label */}
-                  <div className="w-[115px] sm:w-[170px] md:w-[210px] shrink-0 sticky left-0 z-30 p-2.5 sm:p-4 bg-slate-50/95 backdrop-blur-md border-r border-slate-200/90 shadow-[3px_0_8px_-2px_rgba(0,0,0,0.06)] flex flex-col justify-end">
-                    <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-slate-400">
-                      Product Summary
+                  <div className="w-[140px] sm:w-[190px] md:w-[230px] shrink-0 sticky left-0 z-30 p-3 sm:p-5 bg-slate-50/95 backdrop-blur-md border-r border-slate-200/90 shadow-[4px_0_12px_-3px_rgba(15,23,42,0.06)] flex flex-col justify-end">
+                    <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+                      Catalog Matrix
                     </span>
                     <h3 className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 leading-tight">
-                      Side-by-Side
+                      Selected Products
                     </h3>
-                    <p className="text-[9px] sm:text-[10px] text-slate-400 mt-1 hidden sm:block">
-                      Add to cart or replace below.
+                    <p className="text-[10px] text-slate-400 mt-1 hidden sm:block">
+                      Hover column to highlight specs.
                     </p>
                   </div>
 
-                  {/* Product Column Cards (Only active products + 1 add slot) */}
+                  {/* Product Cards Row */}
                   <div className="flex items-stretch flex-1">
                     {Array.from({ length: activeColsCount }).map((_, idx) => {
                       const prod = detailedProducts[idx];
@@ -991,13 +1263,21 @@ export default function ComparePage() {
                         ).toFixed(1);
                         const inStock =
                           prod.inStock !== false && !prod.isOutOfStock;
+                        const discount =
+                          prodOriginalPrice && prodOriginalPrice > prodPrice
+                            ? Math.round(
+                                ((prodOriginalPrice - prodPrice) /
+                                  prodOriginalPrice) *
+                                  100,
+                              )
+                            : 0;
 
                         return (
                           <div
                             key={prodId}
                             onMouseEnter={() => setHoveredCol(idx)}
                             onMouseLeave={() => setHoveredCol(null)}
-                            className={`w-[155px] sm:w-[195px] md:w-[220px] shrink-0 p-2 sm:p-3 flex flex-col justify-between transition-colors relative border-r border-slate-100 ${
+                            className={`w-[170px] sm:w-[210px] md:w-[240px] shrink-0 p-3 sm:p-4 flex flex-col justify-between transition-colors relative border-r border-slate-100 ${
                               isHoveredCol ? "bg-blue-50/30" : "bg-transparent"
                             }`}
                           >
@@ -1005,35 +1285,40 @@ export default function ComparePage() {
                             <button
                               type="button"
                               onClick={() => handleRemoveProduct(prodId)}
-                              className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-slate-200/80 hover:bg-rose-500 hover:text-white text-slate-500 flex items-center justify-center transition cursor-pointer z-10"
+                              className="absolute top-2 right-2 w-6 h-6 rounded-full bg-slate-200/70 hover:bg-rose-500 hover:text-white text-slate-600 flex items-center justify-center transition cursor-pointer z-10 shadow-2xs"
                               title="Remove product"
                               aria-label={`Remove ${prod.name}`}
                             >
-                              <X size={11} strokeWidth={2.5} />
+                              <X size={12} strokeWidth={2.5} />
                             </button>
 
-                            <div className="space-y-1.5 sm:space-y-2">
+                            <div className="space-y-2">
+                              {/* Slot Tag */}
+                              <div className="flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-slate-400">
+                                <span>Slot 0{idx + 1}</span>
+                              </div>
+
                               {/* Thumbnail */}
-                              <div className="aspect-square w-full rounded-xl bg-white border border-slate-200/80 p-1.5 sm:p-2 flex items-center justify-center overflow-hidden">
+                              <div className="aspect-square w-full rounded-2xl bg-white border border-slate-200/80 p-2.5 flex items-center justify-center overflow-hidden shadow-2xs group">
                                 <img
                                   src={prodImg}
                                   alt={prod.name}
                                   loading="lazy"
                                   decoding="async"
-                                  className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
+                                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                                 />
                               </div>
 
-                              {/* Name & Brand */}
+                              {/* Brand & Name */}
                               <div>
-                                <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 truncate block">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate block">
                                   {prod.brand ||
                                     prod.business?.businessName ||
                                     prod.vendor?.storeName ||
-                                    "Brand"}
+                                    "Studio Verified"}
                                 </span>
                                 <h4
-                                  className="text-[11px] sm:text-xs font-bold text-slate-900 line-clamp-2 h-7 sm:h-8 leading-3.5 sm:leading-4 mt-0.5"
+                                  className="text-xs sm:text-[13px] font-bold text-slate-900 line-clamp-2 h-8 leading-4 mt-0.5"
                                   title={prod.name}
                                 >
                                   {prod.name}
@@ -1041,10 +1326,10 @@ export default function ComparePage() {
                               </div>
 
                               {/* Rating */}
-                              <div className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-amber-500">
-                                <Star size={11} fill="currentColor" />
+                              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-500">
+                                <Star size={12} fill="currentColor" />
                                 <span>{prodRating}</span>
-                                <span className="text-slate-400 font-normal text-[9px] sm:text-[10px]">
+                                <span className="text-slate-400 font-normal text-[10px]">
                                   (
                                   {Array.isArray(prod.reviews)
                                     ? prod.reviews.length
@@ -1057,48 +1342,58 @@ export default function ComparePage() {
 
                               {/* Price */}
                               <div>
-                                <div className="flex items-baseline gap-1">
-                                  <span className="text-xs sm:text-sm font-black text-[#2563eb]">
+                                <div className="flex items-baseline gap-1.5 flex-wrap">
+                                  <span className="text-sm sm:text-base font-black text-slate-900">
                                     ₹{prodPrice.toLocaleString()}
                                   </span>
                                   {prodOriginalPrice &&
                                     prodOriginalPrice > prodPrice && (
-                                      <span className="text-[9px] text-slate-400 line-through">
+                                      <span className="text-[10px] text-slate-400 line-through">
                                         ₹{prodOriginalPrice.toLocaleString()}
                                       </span>
                                     )}
+                                  {discount > 0 && (
+                                    <span className="text-[9px] font-black text-emerald-700 bg-emerald-100 px-1 py-0.2 rounded">
+                                      {discount}% off
+                                    </span>
+                                  )}
                                 </div>
                                 <span
-                                  className={`inline-block mt-0.5 text-[8px] sm:text-[9px] font-black uppercase px-1.5 py-0.2 rounded-full ${
+                                  className={`inline-flex items-center gap-1 mt-1 text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${
                                     inStock
-                                      ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+                                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                       : "bg-slate-100 text-slate-500"
                                   }`}
                                 >
-                                  {inStock ? "In Stock" : "Sold Out"}
+                                  <span
+                                    className={`w-1.5 h-1.5 rounded-full ${
+                                      inStock ? "bg-emerald-500" : "bg-slate-400"
+                                    }`}
+                                  />
+                                  <span>{inStock ? "In Stock" : "Out of Stock"}</span>
                                 </span>
                               </div>
                             </div>
 
-                            {/* Direct Purchase Actions */}
-                            <div className="pt-2 mt-2 border-t border-slate-200/60 space-y-1 sm:space-y-1.5">
+                            {/* Direct Actions */}
+                            <div className="pt-3 mt-3 border-t border-slate-200/70 space-y-1.5">
                               <button
                                 type="button"
                                 onClick={(e) => handleDirectAddToCart(prod, e)}
                                 disabled={!inStock}
-                                className="w-full py-1.5 sm:py-2 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[11px] sm:text-xs font-black transition flex items-center justify-center gap-1 cursor-pointer shadow-2xs active:scale-95"
+                                className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-[#2563eb] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                               >
-                                <ShoppingCart size={11} />
+                                <ShoppingCart size={13} />
                                 <span>Add to Cart</span>
                               </button>
 
-                              <div className="grid grid-cols-2 gap-1">
+                              <div className="grid grid-cols-2 gap-1.5">
                                 <Link
                                   to={`/products/${prodId}`}
-                                  className="py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[9px] sm:text-[10px] font-bold transition flex items-center justify-center gap-1 cursor-pointer text-center"
+                                  className="py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold transition flex items-center justify-center gap-1 cursor-pointer text-center"
                                 >
                                   <span>Details</span>
-                                  <ExternalLink size={8} />
+                                  <ExternalLink size={9} />
                                 </Link>
                                 <button
                                   type="button"
@@ -1106,9 +1401,9 @@ export default function ComparePage() {
                                     setReplaceSlotIndex(idx);
                                     setPickerOpen(true);
                                   }}
-                                  className="py-1 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 text-[9px] sm:text-[10px] font-semibold transition cursor-pointer flex items-center justify-center gap-1"
+                                  className="py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-bold transition cursor-pointer flex items-center justify-center gap-1"
                                 >
-                                  <RotateCcw size={8} />
+                                  <RotateCcw size={9} />
                                   <span>Replace</span>
                                 </button>
                               </div>
@@ -1117,13 +1412,11 @@ export default function ComparePage() {
                         );
                       }
 
-                      {
-                        /* Single Add Next Product Slot */
-                      }
+                      // Empty Slot Card
                       return (
                         <div
                           key="add-next-slot"
-                          className="w-[155px] sm:w-[195px] md:w-[220px] shrink-0 p-2.5 sm:p-3 flex flex-col items-center justify-center border-r border-slate-100 bg-slate-50/40"
+                          className="w-[170px] sm:w-[210px] md:w-[240px] shrink-0 p-3 sm:p-4 flex flex-col items-center justify-center border-r border-slate-100 bg-slate-50/50"
                         >
                           <button
                             type="button"
@@ -1131,18 +1424,20 @@ export default function ComparePage() {
                               setReplaceSlotIndex(null);
                               setPickerOpen(true);
                             }}
-                            className="flex flex-col items-center gap-2 cursor-pointer p-3 sm:p-4 rounded-2xl border-2 border-dashed border-slate-200 hover:border-[#2563eb] w-full h-full justify-center transition-colors group active:scale-95"
+                            className="flex flex-col items-center gap-2.5 cursor-pointer p-4 rounded-2xl border-2 border-dashed border-slate-200 hover:border-[#2563eb] w-full h-full justify-center transition-colors group active:scale-95 bg-white/50"
                           >
-                            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-blue-50 group-hover:bg-[#2563eb] text-[#2563eb] group-hover:text-white flex items-center justify-center transition-colors shadow-2xs">
-                              <Plus size={15} strokeWidth={2.5} />
+                            <div className="w-10 h-10 rounded-2xl bg-blue-50 group-hover:bg-[#2563eb] text-[#2563eb] group-hover:text-white flex items-center justify-center transition-colors shadow-2xs">
+                              <Plus size={18} strokeWidth={2.5} />
                             </div>
-                            <span className="text-[11px] sm:text-xs font-bold text-slate-700 group-hover:text-[#2563eb] transition-colors text-center">
-                              Add Product
-                            </span>
-                            <span className="text-[9px] sm:text-[10px] text-slate-400">
-                              Slot {detailedProducts.length + 1} of{" "}
-                              {MAX_COMPARE_PRODUCTS}
-                            </span>
+                            <div className="text-center">
+                              <span className="text-xs font-bold text-slate-800 group-hover:text-[#2563eb] transition-colors block">
+                                Add Product
+                              </span>
+                              <span className="text-[10px] text-slate-400 mt-0.5 block">
+                                Slot {detailedProducts.length + 1} of{" "}
+                                {MAX_COMPARE_PRODUCTS}
+                              </span>
+                            </div>
                           </button>
                         </div>
                       );
@@ -1151,20 +1446,22 @@ export default function ComparePage() {
                 </div>
 
                 {/* ===================================================
-                    SECTION 1: KEY HIGHLIGHTS
+                    SECTION 1: KEY HIGHLIGHTS & PRICING
                 ==================================================== */}
                 <div id="section-highlights">
-                  <div className="px-3 sm:px-4 py-2 bg-slate-100/80 border-b border-slate-200 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                    <Sparkles size={12} className="text-[#2563eb]" />
-                    <span>Pricing & Highlights</span>
+                  <div className="px-4 py-2.5 bg-slate-100/90 border-b border-slate-200 text-[10px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                    <Sparkles size={13} className="text-[#2563eb]" />
+                    <span>Key Highlights & Pricing</span>
                   </div>
 
-                  {/* Price Row */}
+                  {/* Price */}
                   {(!showDifferencesOnly || differences.price) && (
-                    <CompareRow
-                      label="Price"
-                      sublabel="Base selling price"
+                    <CompareSpecRow
+                      icon={Tag}
+                      label="Selling Price"
+                      sublabel="Base retail price"
                       hoveredCol={hoveredCol}
+                      onColHover={setHoveredCol}
                       colCount={activeColsCount}
                       isDifferent={differences.price}
                       renderCell={(colIdx) => {
@@ -1174,18 +1471,18 @@ export default function ComparePage() {
                         const isLowest =
                           recommendations.lowestPrice?._id === (p._id || p.id);
                         return (
-                          <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span
                               className={
                                 isLowest
-                                  ? "text-emerald-600 font-black text-xs sm:text-sm"
+                                  ? "text-emerald-700 font-black text-xs sm:text-sm"
                                   : "text-slate-900 font-bold"
                               }
                             >
                               ₹{Number(p.price || 0).toLocaleString()}
                             </span>
                             {isLowest && !isSingleProduct && (
-                              <span className="text-[8px] sm:text-[9px] font-black bg-emerald-100 text-emerald-700 px-1.5 py-0.2 rounded">
+                              <span className="text-[9px] font-black bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded shadow-2xs">
                                 Lowest
                               </span>
                             )}
@@ -1195,12 +1492,14 @@ export default function ComparePage() {
                     />
                   )}
 
-                  {/* Rating Row */}
+                  {/* Rating */}
                   {(!showDifferencesOnly || differences.rating) && (
-                    <CompareRow
-                      label="Rating"
-                      sublabel="Customer score"
+                    <CompareSpecRow
+                      icon={Star}
+                      label="Customer Rating"
+                      sublabel="Verified review score"
                       hoveredCol={hoveredCol}
+                      onColHover={setHoveredCol}
                       colCount={activeColsCount}
                       isAlternate
                       isDifferent={differences.rating}
@@ -1213,16 +1512,16 @@ export default function ComparePage() {
                         return (
                           <div className="flex items-center gap-1 font-bold">
                             <Star
-                              size={11}
+                              size={12}
                               fill="currentColor"
                               className="text-amber-400"
                             />
-                            <span>
+                            <span className="text-slate-900">
                               {Number(p.rating || p.ratings || 4.5).toFixed(1)}
                             </span>
                             {isHighest && !isSingleProduct && (
-                              <span className="text-[8px] sm:text-[9px] font-black bg-purple-100 text-purple-700 px-1.5 py-0.2 rounded ml-1">
-                                Top
+                              <span className="text-[9px] font-black bg-purple-100 text-purple-700 px-1.5 py-0.2 rounded ml-1">
+                                Top Rated
                               </span>
                             )}
                           </div>
@@ -1231,12 +1530,14 @@ export default function ComparePage() {
                     />
                   )}
 
-                  {/* Availability Row */}
+                  {/* Availability */}
                   {(!showDifferencesOnly || differences.stock) && (
-                    <CompareRow
-                      label="Availability"
-                      sublabel="Stock status"
+                    <CompareSpecRow
+                      icon={Package}
+                      label="Stock Status"
+                      sublabel="Inventory availability"
                       hoveredCol={hoveredCol}
+                      onColHover={setHoveredCol}
                       colCount={activeColsCount}
                       isDifferent={differences.stock}
                       renderCell={(colIdx) => {
@@ -1246,18 +1547,18 @@ export default function ComparePage() {
                         const inStock = p.inStock !== false && !p.isOutOfStock;
                         return (
                           <span
-                            className={`font-semibold flex items-center gap-1 ${
-                              inStock ? "text-emerald-600" : "text-slate-400"
+                            className={`font-bold flex items-center gap-1.5 ${
+                              inStock ? "text-emerald-700" : "text-slate-400"
                             }`}
                           >
                             {inStock ? (
                               <>
-                                <CheckCircle2 size={12} />
+                                <CheckCircle2 size={13} className="text-emerald-600" />
                                 <span>In Stock</span>
                               </>
                             ) : (
                               <>
-                                <XCircle size={12} />
+                                <XCircle size={13} className="text-slate-400" />
                                 <span>Out of Stock</span>
                               </>
                             )}
@@ -1267,12 +1568,14 @@ export default function ComparePage() {
                     />
                   )}
 
-                  {/* Brand Row */}
+                  {/* Brand */}
                   {(!showDifferencesOnly || differences.brand) && (
-                    <CompareRow
+                    <CompareSpecRow
+                      icon={Award}
                       label="Brand / Store"
-                      sublabel="Seller identity"
+                      sublabel="Merchant identity"
                       hoveredCol={hoveredCol}
+                      onColHover={setHoveredCol}
                       colCount={activeColsCount}
                       isAlternate
                       isDifferent={differences.brand}
@@ -1292,12 +1595,14 @@ export default function ComparePage() {
                     />
                   )}
 
-                  {/* Category & Tax Row */}
+                  {/* Category & Tax */}
                   {(!showDifferencesOnly || differences.category) && (
-                    <CompareRow
+                    <CompareSpecRow
+                      icon={Layers}
                       label="Category & Tax"
-                      sublabel="GST applicable"
+                      sublabel="Classification & GST"
                       hoveredCol={hoveredCol}
+                      onColHover={setHoveredCol}
                       colCount={activeColsCount}
                       isDifferent={differences.category}
                       renderCell={(colIdx) => {
@@ -1318,7 +1623,7 @@ export default function ComparePage() {
                             <span className="font-bold text-slate-800 block">
                               {catName}
                             </span>
-                            <span className="text-[9px] sm:text-[10px] text-slate-400">
+                            <span className="text-[10px] text-slate-400">
                               {tax}% GST
                             </span>
                           </div>
@@ -1332,17 +1637,19 @@ export default function ComparePage() {
                     SECTION 2: PHYSICAL & TECHNICAL SPECS
                 ==================================================== */}
                 <div id="section-tech">
-                  <div className="px-3 sm:px-4 py-2 bg-slate-100/80 border-b border-slate-200 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                    <Package size={12} className="text-[#2563eb]" />
-                    <span>Physical & Technical Specs</span>
+                  <div className="px-4 py-2.5 bg-slate-100/90 border-b border-slate-200 text-[10px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                    <Package size={13} className="text-[#2563eb]" />
+                    <span>Physical Dimensions & Catalog Info</span>
                   </div>
 
                   {/* SKU */}
                   {(!showDifferencesOnly || differences.sku) && (
-                    <CompareRow
-                      label="SKU"
-                      sublabel="Stock identification"
+                    <CompareSpecRow
+                      icon={Tag}
+                      label="SKU / Identifier"
+                      sublabel="Catalog inventory code"
                       hoveredCol={hoveredCol}
+                      onColHover={setHoveredCol}
                       colCount={activeColsCount}
                       isDifferent={differences.sku}
                       renderCell={(colIdx) => {
@@ -1350,7 +1657,7 @@ export default function ComparePage() {
                         if (!p)
                           return <span className="text-slate-300">—</span>;
                         return (
-                          <span className="font-mono text-[10px] sm:text-[11px] text-slate-700 truncate">
+                          <span className="font-mono text-[11px] font-semibold text-slate-700 truncate">
                             {p.sku || "—"}
                           </span>
                         );
@@ -1360,10 +1667,12 @@ export default function ComparePage() {
 
                   {/* Weight */}
                   {(!showDifferencesOnly || differences.weight) && (
-                    <CompareRow
-                      label="Weight"
+                    <CompareSpecRow
+                      icon={Scale}
+                      label="Product Weight"
                       sublabel="Net item mass"
                       hoveredCol={hoveredCol}
+                      onColHover={setHoveredCol}
                       colCount={activeColsCount}
                       isAlternate
                       isDifferent={differences.weight}
@@ -1382,10 +1691,12 @@ export default function ComparePage() {
 
                   {/* Dimensions */}
                   {(!showDifferencesOnly || differences.dimensions) && (
-                    <CompareRow
+                    <CompareSpecRow
+                      icon={Compass}
                       label="Dimensions"
                       sublabel="L × W × H (cm)"
                       hoveredCol={hoveredCol}
+                      onColHover={setHoveredCol}
                       colCount={activeColsCount}
                       isDifferent={differences.dimensions}
                       renderCell={(colIdx) => {
@@ -1397,7 +1708,7 @@ export default function ComparePage() {
                             {p.dimensions?.length &&
                             p.dimensions?.width &&
                             p.dimensions?.height
-                              ? `${p.dimensions.length} × ${p.dimensions.width} × ${p.dimensions.height}`
+                              ? `${p.dimensions.length} × ${p.dimensions.width} × ${p.dimensions.height} cm`
                               : "—"}
                           </span>
                         );
@@ -1407,10 +1718,12 @@ export default function ComparePage() {
 
                   {/* Country of Origin */}
                   {(!showDifferencesOnly || differences.countryOfOrigin) && (
-                    <CompareRow
+                    <CompareSpecRow
+                      icon={ShieldCheck}
                       label="Country of Origin"
                       sublabel="Manufacturing country"
                       hoveredCol={hoveredCol}
+                      onColHover={setHoveredCol}
                       colCount={activeColsCount}
                       isAlternate
                       isDifferent={differences.countryOfOrigin}
@@ -1429,10 +1742,12 @@ export default function ComparePage() {
 
                   {/* Product Type */}
                   {(!showDifferencesOnly || differences.productType) && (
-                    <CompareRow
-                      label="Product Type"
-                      sublabel="Catalog class"
+                    <CompareSpecRow
+                      icon={Layers}
+                      label="Catalog Type"
+                      sublabel="Product classification"
                       hoveredCol={hoveredCol}
+                      onColHover={setHoveredCol}
                       colCount={activeColsCount}
                       isDifferent={differences.productType}
                       renderCell={(colIdx) => {
@@ -1454,9 +1769,14 @@ export default function ComparePage() {
                 ==================================================== */}
                 {filteredDetailKeys.length > 0 && (
                   <div id="section-specs">
-                    <div className="px-3 sm:px-4 py-2 bg-slate-100/80 border-b border-slate-200 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                      <Layers size={12} className="text-[#2563eb]" />
-                      <span>Specifications Matrix</span>
+                    <div className="px-4 py-2.5 bg-slate-100/90 border-b border-slate-200 text-[10px] font-black uppercase tracking-wider text-slate-700 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Layers size={13} className="text-[#2563eb]" />
+                        <span>Technical Specifications Matrix</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-bold">
+                        {filteredDetailKeys.length} specs
+                      </span>
                     </div>
 
                     {filteredDetailKeys.map((titleKey, dIdx) => {
@@ -1466,10 +1786,13 @@ export default function ComparePage() {
                       }
 
                       return (
-                        <CompareRow
+                        <CompareSpecRow
                           key={titleKey}
+                          icon={Layers}
                           label={titleKey}
+                          sublabel="Technical parameter"
                           hoveredCol={hoveredCol}
+                          onColHover={setHoveredCol}
                           colCount={activeColsCount}
                           isAlternate={dIdx % 2 === 1}
                           isDifferent={isDiff}
@@ -1502,9 +1825,14 @@ export default function ComparePage() {
                 ==================================================== */}
                 {filteredFeaturesList.length > 0 && (
                   <div id="section-features">
-                    <div className="px-3 sm:px-4 py-2 bg-slate-100/80 border-b border-slate-200 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                      <CheckCircle2 size={12} className="text-emerald-600" />
-                      <span>Features Checklist</span>
+                    <div className="px-4 py-2.5 bg-slate-100/90 border-b border-slate-200 text-[10px] font-black uppercase tracking-wider text-slate-700 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 size={13} className="text-emerald-600" />
+                        <span>Feature Checklist</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-bold">
+                        {filteredFeaturesList.length} features
+                      </span>
                     </div>
 
                     {filteredFeaturesList.map((featureText, fIdx) => {
@@ -1515,10 +1843,13 @@ export default function ComparePage() {
                       }
 
                       return (
-                        <CompareRow
+                        <CompareSpecRow
                           key={featureText}
+                          icon={Check}
                           label={featureText}
+                          sublabel="Feature capability"
                           hoveredCol={hoveredCol}
+                          onColHover={setHoveredCol}
                           colCount={activeColsCount}
                           isAlternate={fIdx % 2 === 1}
                           isDifferent={isDiff}
@@ -1538,12 +1869,14 @@ export default function ComparePage() {
                             return (
                               <div className="flex items-center">
                                 {hasFeature ? (
-                                  <span className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[11px] border border-emerald-200">
                                     <Check size={12} strokeWidth={2.5} />
+                                    <span>Included</span>
                                   </span>
                                 ) : (
-                                  <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+                                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 text-slate-400 font-medium text-[11px]">
                                     <X size={11} strokeWidth={2} />
+                                    <span>Not Specified</span>
                                   </span>
                                 )}
                               </div>
@@ -1559,56 +1892,65 @@ export default function ComparePage() {
                     SECTION 5: STORE POLICIES & PROTECTION
                 ==================================================== */}
                 <div id="section-policies">
-                  <div className="px-3 sm:px-4 py-2 bg-slate-100/80 border-b border-slate-200 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                    <ShieldCheck size={12} className="text-[#2563eb]" />
+                  <div className="px-4 py-2.5 bg-slate-100/90 border-b border-slate-200 text-[10px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                    <ShieldCheck size={13} className="text-[#2563eb]" />
                     <span>Store Policies & Buyer Protection</span>
                   </div>
 
-                  <CompareRow
-                    label="Fast Dispatch"
-                    sublabel="Warehouse handling"
+                  <CompareSpecRow
+                    icon={Truck}
+                    label="Dispatch Speed"
+                    sublabel="Warehouse processing"
                     hoveredCol={hoveredCol}
+                    onColHover={setHoveredCol}
                     colCount={activeColsCount}
                     renderCell={(colIdx) => {
                       const p = detailedProducts[colIdx];
                       if (!p) return <span className="text-slate-300">—</span>;
                       return (
-                        <span className="font-semibold text-slate-800">
-                          24-48h Dispatch
-                        </span>
+                        <div className="flex items-center gap-1.5 font-semibold text-slate-800">
+                          <Clock size={12} className="text-blue-600" />
+                          <span>24-48 Hours Express</span>
+                        </div>
                       );
                     }}
                   />
 
-                  <CompareRow
-                    label="Easy Returns"
-                    sublabel="Return guarantee"
+                  <CompareSpecRow
+                    icon={RotateCcw}
+                    label="Return Window"
+                    sublabel="Hassle-free replacement"
                     hoveredCol={hoveredCol}
+                    onColHover={setHoveredCol}
                     colCount={activeColsCount}
                     isAlternate
                     renderCell={(colIdx) => {
                       const p = detailedProducts[colIdx];
                       if (!p) return <span className="text-slate-300">—</span>;
                       return (
-                        <span className="font-semibold text-slate-800">
-                          7-Day Easy Return
-                        </span>
+                        <div className="flex items-center gap-1.5 font-semibold text-slate-800">
+                          <CheckCircle2 size={12} className="text-emerald-600" />
+                          <span>7-Day Easy Returns</span>
+                        </div>
                       );
                     }}
                   />
 
-                  <CompareRow
-                    label="Authenticity"
-                    sublabel="Genuine guarantee"
+                  <CompareSpecRow
+                    icon={ShieldCheck}
+                    label="Authenticity Guarantee"
+                    sublabel="Original merchant guarantee"
                     hoveredCol={hoveredCol}
+                    onColHover={setHoveredCol}
                     colCount={activeColsCount}
                     renderCell={(colIdx) => {
                       const p = detailedProducts[colIdx];
                       if (!p) return <span className="text-slate-300">—</span>;
                       return (
-                        <span className="font-semibold text-slate-800">
-                          100% Genuine
-                        </span>
+                        <div className="flex items-center gap-1.5 font-semibold text-slate-800">
+                          <ShieldCheck size={12} className="text-blue-600" />
+                          <span>100% Genuine Guarantee</span>
+                        </div>
                       );
                     }}
                   />
