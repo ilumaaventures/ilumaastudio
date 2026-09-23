@@ -426,7 +426,10 @@ function ProductDetails() {
           compareAtPrice: effectiveCompareAtPrice,
           image: selectedImage || displayProduct.images?.[0]?.url,
           category: displayProduct.category,
-          categoryTax: typeof displayProduct.category === "object" ? (displayProduct.category?.tax ?? 0) : 0,
+          categoryTax:
+            typeof displayProduct.category === "object"
+              ? (displayProduct.category?.tax ?? 0)
+              : 0,
           source: "studio",
           selectedVariant: activeVariant
             ? {
@@ -490,7 +493,7 @@ function ProductDetails() {
         badge:
           displayProduct.badge ||
           (displayProduct.isFlashDeal ? "Flash Deal" : null),
-      })
+      }),
     );
   };
 
@@ -685,12 +688,19 @@ function ProductDetails() {
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 mt-2">
                 <span className="text-xs font-semibold text-slate-600">
-                  Category Tax Rate ({typeof displayProduct.category === "object" ? displayProduct.category?.name : displayProduct.category || "Category"}):
+                  Category Tax Rate (
+                  {typeof displayProduct.category === "object"
+                    ? displayProduct.category?.name
+                    : displayProduct.category || "Category"}
+                  ):
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-[#2563eb] border border-blue-200/80 font-black text-xs">
-                  {typeof displayProduct.category === "object" && displayProduct.category?.tax !== undefined && displayProduct.category?.tax !== null
+                  {typeof displayProduct.category === "object" &&
+                  displayProduct.category?.tax !== undefined &&
+                  displayProduct.category?.tax !== null
                     ? `${displayProduct.category.tax}% GST`
-                    : displayProduct.categoryTax !== undefined && displayProduct.categoryTax !== null
+                    : displayProduct.categoryTax !== undefined &&
+                        displayProduct.categoryTax !== null
                       ? `${displayProduct.categoryTax}% GST`
                       : "0% GST"}
                 </span>
@@ -804,7 +814,11 @@ function ProductDetails() {
             >
               {isCompared ? (
                 <>
-                  <Check size={16} className="text-[#2563eb]" strokeWidth={2.5} />
+                  <Check
+                    size={16}
+                    className="text-[#2563eb]"
+                    strokeWidth={2.5}
+                  />
                   <span>✓ Added to Compare</span>
                 </>
               ) : (
@@ -814,51 +828,6 @@ function ProductDetails() {
                 </>
               )}
             </button>
-
-            {/* Business Policy Summary Highlights Bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center gap-2">
-                <Truck size={18} className="text-[#2563eb] shrink-0" />
-                <div>
-                  <h4 className="text-[11px] font-black text-slate-900">
-                    Fast Shipping
-                  </h4>
-                  <p className="text-[9px] text-slate-500">3-5 Days Delivery</p>
-                </div>
-              </div>
-
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center gap-2">
-                <RotateCcw size={18} className="text-[#2563eb] shrink-0" />
-                <div>
-                  <h4 className="text-[11px] font-black text-slate-900">
-                    7 Days Return
-                  </h4>
-                  <p className="text-[9px] text-slate-500">Easy Replacement</p>
-                </div>
-              </div>
-
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center gap-2">
-                <ShieldCheck size={18} className="text-[#2563eb] shrink-0" />
-                <div>
-                  <h4 className="text-[11px] font-black text-slate-900">
-                    100% Quality
-                  </h4>
-                  <p className="text-[9px] text-slate-500">
-                    Authentic Certified
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center gap-2">
-                <Lock size={18} className="text-[#2563eb] shrink-0" />
-                <div>
-                  <h4 className="text-[11px] font-black text-slate-900">
-                    Secure Pay
-                  </h4>
-                  <p className="text-[9px] text-slate-500">256-bit Encrypted</p>
-                </div>
-              </div>
-            </div>
 
             {/* Delivery Pincode Availability Check */}
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">

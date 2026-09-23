@@ -1,41 +1,40 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Sparkles,
   Flame,
-  Tag,
   Copy,
   Check,
   ArrowRight,
-  Clock,
-  Gift,
-  ShieldCheck,
-  Percent,
+  Clock3,
+  Tag,
   ChevronRight,
-  ExternalLink,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { getPublicOffers, getPublicCoupons } from "../../../api/offerService";
 
 export default function PromotionalShowcase() {
-  const navigate = useNavigate();
   const [offers, setOffers] = useState([]);
   const [activeOfferIndex, setActiveOfferIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [copiedCode, setCopiedCode] = useState(null);
 
-  // Live Countdown State
   const [timeLeft, setTimeLeft] = useState({
-    hours: 8,
-    minutes: 45,
-    seconds: 30,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
   });
 
+  /* ------------------------------------------------------------
+   * FETCH REAL OFFERS + COUPONS
+   * ------------------------------------------------------------ */
   useEffect(() => {
     let isMounted = true;
+
     const fetchOffers = async () => {
       try {
         setLoading(true);
+
         const [offersRes, couponsRes] = await Promise.all([
           getPublicOffers({ platform: "E-Commerce" }).catch(() => []),
           getPublicCoupons().catch(() => []),
@@ -44,45 +43,53 @@ export default function PromotionalShowcase() {
         const offerList = Array.isArray(offersRes)
           ? offersRes
           : offersRes?.offers || offersRes?.data || [];
+
         const couponList = Array.isArray(couponsRes)
           ? couponsRes
           : couponsRes?.coupons || couponsRes?.data || [];
 
-        // Build enriched real offers list
-        const realOffers = offerList.map((o) => {
-          // Match associated coupon if available
+        const realOffers = offerList.map((offer) => {
           const linkedCoupon =
-            o.associatedCoupon ||
+            offer.associatedCoupon ||
             couponList.find(
-              (c) =>
-                c.associatedOffer?._id === o._id ||
-                c.associatedOffer === o._id ||
-                (o.code && c.code && o.code.toUpperCase() === c.code.toUpperCase())
+              (coupon) =>
+                coupon.associatedOffer?._id === offer._id ||
+                coupon.associatedOffer === offer._id ||
+                (offer.code &&
+                  coupon.code &&
+                  offer.code.toUpperCase() === coupon.code.toUpperCase()),
             );
 
-          const promoCode = linkedCoupon?.code || o.code || null;
-          const discountAmt =
-            linkedCoupon?.discountAmount ||
-            o.discountAmount ||
-            (o.headline?.match(/\d+%/)?.[0] ? parseInt(o.headline) : null);
+          const promoCode = linkedCoupon?.code || offer.code || null;
+
+          const discountFromHeadline =
+            offer.headline?.match(/(\d+(?:\.\d+)?)\s*%/);
+
+          const discountAmount =
+            linkedCoupon?.discountAmount ??
+            offer.discountAmount ??
+            (discountFromHeadline ? Number(discountFromHeadline[1]) : null);
+
           const discountType =
-            linkedCoupon?.discountType || o.discountType || "percentage";
+            linkedCoupon?.discountType || offer.discountType || "percentage";
 
           return {
-            ...o,
+            ...offer,
             code: promoCode,
-            discountAmount: discountAmt,
-            discountType: discountType,
-            expiryDate: o.expiryDate || linkedCoupon?.expiryDate || null,
-            minOrderAmount: linkedCoupon?.minOrderAmount || o.minOrderAmount || 0,
+            discountAmount,
+            discountType,
+            expiryDate: offer.expiryDate || linkedCoupon?.expiryDate || null,
+            minOrderAmount:
+              linkedCoupon?.minOrderAmount ?? offer.minOrderAmount ?? 0,
           };
         });
 
         if (isMounted) {
           setOffers(realOffers);
         }
-      } catch (err) {
-        console.error("Failed to load real promotional showcase offers:", err);
+      } catch (error) {
+        console.error("Failed to load promotional offers:", error);
+
         if (isMounted) {
           setOffers([]);
         }
@@ -94,6 +101,7 @@ export default function PromotionalShowcase() {
     };
 
     fetchOffers();
+
     return () => {
       isMounted = false;
     };
@@ -101,247 +109,344 @@ export default function PromotionalShowcase() {
 
   const activeOffer = offers[activeOfferIndex] || null;
 
-  // Real countdown timer calculation
+  /* ------------------------------------------------------------
+   * COUNTDOWN
+   * ------------------------------------------------------------ */
   useEffect(() => {
-    if (!activeOffer) return;
+    if (!activeOffer?.expiryDate) {
+      setTimeLeft({
+        hours: 0,
+        minutes: 0,
+        seconds: 0,
+      });
 
-    const targetDate = activeOffer.expiryDate;
-    const targetTimestamp = targetDate ? new Date(targetDate).getTime() : null;
+      return;
+    }
+
+    const targetTimestamp = new Date(activeOffer.expiryDate).getTime();
+
+    if (!targetTimestamp || Number.isNaN(targetTimestamp)) {
+      return;
+    }
 
     const updateTimer = () => {
-      if (targetTimestamp && !isNaN(targetTimestamp) && targetTimestamp > Date.now()) {
-        const diff = targetTimestamp - Date.now();
-        const hrs = Math.floor(diff / (1000 * 60 * 60));
-        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const secs = Math.floor((diff % (1000 * 60)) / 1000);
-        setTimeLeft({ hours: hrs, minutes: mins, seconds: secs });
-      } else {
-        // Active ticking countdown
-        setTimeLeft((prev) => {
-          let sec = prev.seconds - 1;
-          let min = prev.minutes;
-          let hr = prev.hours;
-          if (sec < 0) {
-            sec = 59;
-            min -= 1;
-          }
-          if (min < 0) {
-            min = 59;
-            hr -= 1;
-          }
-          if (hr < 0) {
-            hr = 23;
-          }
-          return { hours: hr, minutes: min, seconds: sec };
+      const diff = targetTimestamp - Date.now();
+
+      if (diff <= 0) {
+        setTimeLeft({
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
         });
+        return;
       }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      setTimeLeft({
+        hours,
+        minutes,
+        seconds,
+      });
     };
 
     updateTimer();
+
     const interval = setInterval(updateTimer, 1000);
+
     return () => clearInterval(interval);
   }, [activeOffer]);
 
-  const handleCopy = (code, e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
+  /* ------------------------------------------------------------
+   * COPY COUPON
+   * ------------------------------------------------------------ */
+  const handleCopy = async (code, event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
     }
+
     if (!code) return;
 
-    navigator.clipboard?.writeText(code);
-    setCopiedCode(code);
-    toast.success(`Coupon code '${code}' copied to clipboard! 🛍️`);
-    setTimeout(() => setCopiedCode(null), 3000);
+    try {
+      await navigator.clipboard?.writeText(code);
+
+      setCopiedCode(code);
+
+      toast.success(`Coupon code "${code}" copied!`);
+
+      setTimeout(() => {
+        setCopiedCode(null);
+      }, 2500);
+    } catch (error) {
+      toast.error("Unable to copy coupon code");
+    }
   };
 
-  // If loading, show sleek banner shimmer
+  /* ------------------------------------------------------------
+   * LOADING
+   * ------------------------------------------------------------ */
   if (loading) {
     return (
-      <section className="bg-gradient-to-b from-slate-50 via-white to-slate-50 border-b border-slate-200/70 py-6 font-sans">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rounded-3xl bg-slate-900 border border-slate-800 p-8 sm:p-12 h-80 shimmer-placeholder" />
+      <section className="bg-white py-8 sm:py-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="relative h-[330px] overflow-hidden rounded-[28px] border border-slate-200 bg-slate-50">
+            <div className="absolute inset-0 animate-pulse">
+              <div className="absolute left-8 top-10 h-4 w-28 rounded-full bg-slate-200" />
+
+              <div className="absolute left-8 top-24 h-12 w-2/5 rounded-xl bg-slate-200" />
+
+              <div className="absolute left-8 top-40 h-4 w-1/3 rounded-full bg-slate-200" />
+
+              <div className="absolute bottom-12 left-8 h-12 w-40 rounded-xl bg-slate-200" />
+
+              <div className="absolute right-8 top-8 h-[270px] w-[330px] rounded-[24px] bg-slate-200" />
+            </div>
+          </div>
         </div>
       </section>
     );
   }
 
-  // If no real marketing offers exist, don't show mock content
+  /* ------------------------------------------------------------
+   * NO REAL OFFER
+   * ------------------------------------------------------------ */
   if (!activeOffer) {
     return null;
   }
 
-  // Extract display values from active real offer
-  const promoCode = activeOffer.code || "SAVE20";
-  const displayTitle = activeOffer.title || "Special Promotional Offer";
+  /* ------------------------------------------------------------
+   * DISPLAY VALUES
+   * ------------------------------------------------------------ */
+  const promoCode = activeOffer.code;
+
+  const displayTitle = activeOffer.title || "Special Store Offer";
+
   const displayHeadline =
     activeOffer.headline ||
     (activeOffer.discountAmount
-      ? `Flat ${activeOffer.discountAmount}% Off`
-      : "Exclusive Storewide Savings");
+      ? activeOffer.discountType === "percentage"
+        ? `${activeOffer.discountAmount}% off`
+        : `₹${activeOffer.discountAmount} off`
+      : "Exclusive savings");
+
   const displayDescription =
     activeOffer.desc ||
     activeOffer.description ||
-    "Limited time markdown across curated collections and partner merchant stores.";
+    "Discover curated collections and enjoy an exclusive limited-time offer.";
+
   const displayDiscountBadge = activeOffer.discountAmount
     ? activeOffer.discountType === "percentage"
-      ? `${activeOffer.discountAmount}% OFF`
-      : `₹${activeOffer.discountAmount} OFF`
-    : activeOffer.headline || "SPECIAL DEAL";
+      ? `${activeOffer.discountAmount}%`
+      : `₹${activeOffer.discountAmount}`
+    : "DEAL";
+
+  const hasCountdown =
+    Boolean(activeOffer.expiryDate) &&
+    (timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0);
 
   return (
-    <section className="bg-gradient-to-b from-slate-50 via-white to-slate-50 border-b border-slate-200/70 font-sans relative overflow-hidden py-6 sm:py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-10">
-        {/* ================= HERO FLASH PROMOTIONAL BANNER ================= */}
-        <div className="relative rounded-3xl bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-white p-6 sm:p-10 lg:p-12 overflow-hidden shadow-xl border border-slate-800/90">
-          {/* Kinetic Ambient Lighting */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-10 w-72 h-72 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
+    <section className="relative overflow-hidden bg-[#fafbfc] py-7 sm:py-10 lg:py-12">
+      {/* Soft background decoration */}
+      <div className="pointer-events-none absolute -left-32 top-20 h-72 w-72 rounded-full bg-blue-100/40 blur-3xl" />
 
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            {/* Left Col: Real Offer Details & Countdown */}
-            <div className="lg:col-span-8 space-y-5">
-              {/* Badge & Live Countdown */}
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-md">
-                  <Flame size={14} className="fill-slate-950" />
-                  <span>{activeOffer.platform || "Platform"} Privilege Deal</span>
+      <div className="pointer-events-none absolute -right-32 bottom-0 h-80 w-80 rounded-full bg-violet-100/40 blur-3xl" />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* ======================================================
+            PREMIUM LIGHT PROMOTIONAL HERO
+        ====================================================== */}
+        <div className="group relative overflow-hidden rounded-[28px] border border-slate-200/80 bg-white shadow-[0_18px_60px_-30px_rgba(15,23,42,0.25)]">
+          {/* Soft top gradient */}
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_85%_20%,rgba(99,102,241,0.08),transparent_35%),radial-gradient(circle_at_20%_100%,rgba(59,130,246,0.06),transparent_35%)]" />
+
+          <div className="relative grid min-h-[340px] grid-cols-1 lg:grid-cols-12">
+            {/* ==================================================
+                LEFT CONTENT
+            ================================================== */}
+            <div className="flex flex-col justify-center px-6 py-9 sm:px-10 sm:py-11 lg:col-span-7 lg:px-14 lg:py-12">
+              {/* Top meta */}
+              <div className="mb-5 flex flex-wrap items-center gap-2.5">
+                <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-blue-700">
+                  <Sparkles size={13} />
+
+                  <span>{activeOffer.platform || "E-Commerce"} Offer</span>
                 </div>
 
-                <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-md px-3.5 py-1 rounded-full border border-slate-700 text-xs font-mono text-zinc-300">
-                  <Clock size={13} className="text-amber-400 mr-0.5" />
-                  <span>Ends in:</span>
-                  <span className="font-bold text-white tracking-wider">
-                    {String(timeLeft.hours).padStart(2, "0")}h :{" "}
-                    {String(timeLeft.minutes).padStart(2, "0")}m :{" "}
-                    {String(timeLeft.seconds).padStart(2, "0")}s
-                  </span>
-                </div>
+                {hasCountdown && (
+                  <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[10px] font-semibold text-slate-600">
+                    <Clock3 size={13} />
 
-                {/* Offer Switcher if Multiple Real Offers Exist */}
+                    <span>
+                      Ends in{" "}
+                      <span className="font-bold text-slate-900">
+                        {String(timeLeft.hours).padStart(2, "0")}:
+                        {String(timeLeft.minutes).padStart(2, "0")}:
+                        {String(timeLeft.seconds).padStart(2, "0")}
+                      </span>
+                    </span>
+                  </div>
+                )}
+
+                {/* Offer dots */}
                 {offers.length > 1 && (
-                  <div className="flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-full border border-white/15">
-                    {offers.map((_, i) => (
+                  <div className="ml-auto flex items-center gap-1.5">
+                    {offers.map((_, index) => (
                       <button
-                        key={i}
-                        onClick={() => setActiveOfferIndex(i)}
-                        className={`h-2 rounded-full transition-all cursor-pointer ${
-                          i === activeOfferIndex
-                            ? "w-5 bg-amber-400"
-                            : "w-2 bg-white/40 hover:bg-white/70"
+                        key={index}
+                        type="button"
+                        onClick={() => setActiveOfferIndex(index)}
+                        aria-label={`Show offer ${index + 1}`}
+                        className={`h-1.5 rounded-full transition-all ${
+                          index === activeOfferIndex
+                            ? "w-6 bg-slate-900"
+                            : "w-1.5 bg-slate-300 hover:bg-slate-400"
                         }`}
-                        aria-label={`Show offer ${i + 1}`}
                       />
                     ))}
                   </div>
                 )}
               </div>
 
-              {/* Real Offer Headline & Subtitle */}
-              <div className="space-y-2">
-                <h3 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
-                  {displayTitle} —{" "}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400">
+              {/* Heading */}
+              <div className="max-w-2xl">
+                <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                  Curated savings
+                </p>
+
+                <h2 className="text-3xl font-bold leading-[1.08] tracking-[-0.035em] text-slate-950 sm:text-4xl lg:text-[48px]">
+                  {displayTitle}
+                  <span className="block bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
                     {displayHeadline}
                   </span>
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-300 max-w-xl font-normal leading-relaxed">
+                </h2>
+
+                <p className="mt-4 max-w-xl text-sm leading-6 text-slate-500 sm:text-[15px]">
                   {displayDescription}
                 </p>
               </div>
 
-              {/* Coupon Code Pill + Action CTAs */}
-              <div className="flex flex-wrap items-center gap-4 pt-2">
-                {/* 1-Click Code Copier */}
-                {promoCode ? (
-                  <div className="flex items-center bg-black/60 backdrop-blur-md p-1.5 pl-4 rounded-2xl border border-amber-400/40 shadow-inner">
-                    <div className="mr-3 font-mono">
-                      <span className="text-[9px] text-zinc-400 block uppercase font-bold">
-                        Use Promo Code
-                      </span>
-                      <span className="text-sm font-black text-amber-400 tracking-wider">
-                        {promoCode}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => handleCopy(promoCode, e)}
-                      className="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition cursor-pointer flex items-center gap-1 active:scale-95 shadow-2xs"
-                    >
-                      {copiedCode === promoCode ? (
-                        <>
-                          <Check size={14} />
-                          <span>Copied!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy size={14} />
-                          <span>Copy</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                ) : null}
-
+              {/* CTA AREA */}
+              <div className="mt-7 flex flex-wrap items-center gap-3">
                 <Link
                   to="/shop"
-                  className="px-6 py-3.5 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-extrabold text-xs uppercase tracking-wider transition-all shadow-lg flex items-center gap-2 group"
+                  className="group/btn inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3.5 text-xs font-bold text-white shadow-[0_8px_20px_-8px_rgba(15,23,42,0.45)] transition-all hover:-translate-y-0.5 hover:bg-slate-800"
                 >
-                  <span>Explore Qualifying Items</span>
+                  <span>Explore Collection</span>
+
                   <ArrowRight
                     size={15}
-                    className="group-hover:translate-x-1 transition-transform"
+                    className="transition-transform group-hover/btn:translate-x-1"
                   />
                 </Link>
 
+                {promoCode && (
+                  <button
+                    type="button"
+                    onClick={(event) => handleCopy(promoCode, event)}
+                    className="group/code inline-flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition-all hover:border-blue-200 hover:bg-blue-50/50"
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-blue-600 shadow-sm">
+                      {copiedCode === promoCode ? (
+                        <Check size={15} />
+                      ) : (
+                        <Tag size={15} />
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                        {copiedCode === promoCode ? "Copied" : "Use code"}
+                      </p>
+
+                      <p className="font-mono text-xs font-bold tracking-wider text-slate-800">
+                        {promoCode}
+                      </p>
+                    </div>
+
+                    <Copy
+                      size={13}
+                      className="ml-1 text-slate-400 transition-colors group-hover/code:text-blue-600"
+                    />
+                  </button>
+                )}
+
                 <Link
                   to="/offers"
-                  className="text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1 underline underline-offset-4 decoration-slate-600 transition"
+                  className="inline-flex items-center gap-1 px-2 py-3 text-xs font-semibold text-slate-500 transition hover:text-slate-950"
                 >
-                  <span>View All Offers</span>
-                  <ChevronRight size={13} />
+                  View all offers
+                  <ChevronRight size={14} />
                 </Link>
               </div>
             </div>
 
-            {/* Right Col: Verified Benefit Stamp or Visual Banner */}
-            <div className="lg:col-span-4 flex justify-center lg:justify-end">
-              <div className="relative w-64 sm:w-72 aspect-square rounded-3xl bg-gradient-to-br from-indigo-900/60 to-slate-900/80 border border-slate-700/80 p-6 flex flex-col justify-between shadow-2xl backdrop-blur-md overflow-hidden">
-                {activeOffer.image && (
-                  <div className="absolute inset-0 z-0 opacity-20 pointer-events-none">
-                    <img
-                      src={activeOffer.image}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
+            {/* ==================================================
+                RIGHT VISUAL
+            ================================================== */}
+            <div className="relative min-h-[270px] overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50/60 to-indigo-50/70 lg:col-span-5 lg:min-h-full">
+              {/* Decorative circles */}
+              <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full border border-white/80 bg-white/30" />
+
+              <div className="absolute -bottom-24 -left-20 h-64 w-64 rounded-full border border-white/70 bg-white/30" />
+
+              {/* Image */}
+              {activeOffer.image ? (
+                <div className="absolute inset-5 overflow-hidden rounded-[22px] border border-white/80 bg-white shadow-[0_20px_50px_-25px_rgba(15,23,42,0.35)]">
+                  <img
+                    src={activeOffer.image}
+                    alt={displayTitle}
+                    className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.025]"
+                  />
+
+                  {/* Image overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/25 via-transparent to-transparent" />
+                </div>
+              ) : (
+                <div className="absolute inset-5 flex items-center justify-center rounded-[22px] border border-white/80 bg-white shadow-sm">
+                  <Sparkles
+                    size={46}
+                    strokeWidth={1.3}
+                    className="text-blue-500/40"
+                  />
+                </div>
+              )}
+
+              {/* Floating discount card */}
+              <div className="absolute bottom-7 right-7 z-20 min-w-[125px] rounded-2xl border border-white/90 bg-white/90 p-3.5 shadow-[0_16px_35px_-15px_rgba(15,23,42,0.3)] backdrop-blur-xl">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                    Special offer
+                  </span>
+
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                    <Flame size={12} fill="currentColor" />
                   </div>
-                )}
-
-                <div className="relative z-10 flex items-center justify-between text-xs font-mono">
-                  <span className="bg-amber-400/20 text-amber-300 px-2.5 py-0.5 rounded-md font-bold text-[10px] border border-amber-400/30">
-                    VERIFIED BENEFIT
-                  </span>
-                  <Sparkles size={16} className="text-amber-400" />
                 </div>
 
-                <div className="relative z-10 space-y-1 text-center py-4">
-                  <span className="text-4xl sm:text-5xl font-black text-white font-mono block">
-                    {displayDiscountBadge}
-                  </span>
-                  <span className="text-xs font-bold text-amber-300 uppercase tracking-wider block">
-                    Instant Cart Deduction
-                  </span>
-                  <p className="text-[11px] text-slate-400 pt-1">
-                    {activeOffer.minOrderAmount > 0
-                      ? `Min spend ₹${activeOffer.minOrderAmount}`
-                      : "Valid on all qualifying Studio collections"}
-                  </p>
+                <div className="text-2xl font-black tracking-tight text-slate-950">
+                  {displayDiscountBadge}
+                  {activeOffer.discountType === "percentage" &&
+                    activeOffer.discountAmount && (
+                      <span className="ml-1 text-sm font-bold">OFF</span>
+                    )}
                 </div>
 
-                <div className="relative z-10 pt-3 border-t border-slate-700/80 flex items-center justify-between text-[11px] text-slate-400">
-                  <span>⚡ Verified Active</span>
-                  <span className="text-emerald-400 font-bold">Live Now</span>
-                </div>
+                <p className="mt-1 text-[10px] leading-4 text-slate-500">
+                  {activeOffer.minOrderAmount > 0
+                    ? `Min. order ₹${activeOffer.minOrderAmount}`
+                    : "On qualifying products"}
+                </p>
+              </div>
+
+              {/* Verified label */}
+              <div className="absolute left-8 top-8 z-20 inline-flex items-center gap-1.5 rounded-full border border-white/90 bg-white/85 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-slate-600 shadow-sm backdrop-blur-md">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Live offer
               </div>
             </div>
           </div>

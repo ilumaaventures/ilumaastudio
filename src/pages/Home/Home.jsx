@@ -68,22 +68,19 @@ function Home() {
       <FlashDeals />
 
       {/* AI Personal Assistant, Weather Card & Our Services 4 Cards */}
-      <MarketplaceHub />
-
-      {/* Promotional Banners from Generic Banner System */}
-      <BannerSection bannerType="promotion" />
+      {/* <MarketplaceHub /> */}
 
       {/* Best Selling Products Section */}
       <BestSellingProducts />
+      <BannerSection bannerType="promotion" />
+      {/* New Arrivals Section */}
+      <NewArrivalsSection />
       <MegaSaleBanner
         title="Craving Something Delicious?"
         description="Order your favorite meals and get up to 50% off on selected restaurants."
         imageUrl="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80"
         linkUrl="/shop"
       />
-      {/* New Arrivals Section */}
-      <NewArrivalsSection />
-
       {/* Popular Local Shops */}
       <TopBrands />
       <MegaSaleBanner
