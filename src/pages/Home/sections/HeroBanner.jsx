@@ -141,7 +141,7 @@ export default function HeroBanner() {
           businessCategory: "E-Commerce",
           listedOn: "superadmin",
         });
-      } catch (_) {}
+      } catch (_) { }
 
       const bannerData = bRes?.banners || bRes?.data || [];
 
@@ -538,9 +538,9 @@ export default function HeroBanner() {
         >
           <div className="w-full max-w-[1440px] mx-auto flex items-center">
             <div className="max-w-[680px] text-white my-auto">
-            {/* Small category label */}
-            <div
-              className="
+              {/* Small category label */}
+              <div
+                className="
                 flex
                 items-center
                 gap-2.5
@@ -551,17 +551,17 @@ export default function HeroBanner() {
                 uppercase
                 tracking-[0.2em]
               "
-            >
-              <span className="w-8 h-[2px] bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 rounded-full" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-purple-200 to-pink-300">
-                Curated Collection
-              </span>
-            </div>
+              >
+                <span className="w-8 h-[2px] bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 rounded-full" />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-purple-200 to-pink-300">
+                  Curated Collection
+                </span>
+              </div>
 
-            {/* Heading (Colorful Gradient Highlights) */}
-            {activeSlide.title && (
-              <h1
-                className="
+              {/* Heading (Colorful Gradient Highlights) */}
+              {activeSlide.title && (
+                <h1
+                  className="
                   text-[32px]
                   sm:text-[42px]
                   md:text-[50px]
@@ -573,15 +573,15 @@ export default function HeroBanner() {
                   max-w-[680px]
                   drop-shadow-[0_5px_20px_rgba(0,0,0,0.30)]
                 "
-              >
-                {renderColorfulStudioTitle(activeSlide.title)}
-              </h1>
-            )}
+                >
+                  {renderColorfulStudioTitle(activeSlide.title)}
+                </h1>
+              )}
 
-            {/* Subtitle (Luminous Gradient) */}
-            {activeSlide.subtitle && (
-              <p
-                className="
+              {/* Subtitle (Luminous Gradient) */}
+              {activeSlide.subtitle && (
+                <p
+                  className="
                   mt-5
                   max-w-[580px]
                   text-sm
@@ -597,20 +597,20 @@ export default function HeroBanner() {
                   font-medium
                   drop-shadow-[0_2px_10px_rgba(0,0,0,0.25)]
                 "
-              >
-                {activeSlide.subtitle}
-              </p>
-            )}
+                >
+                  {activeSlide.subtitle}
+                </p>
+              )}
 
-            {/* CTA (Colorful Gradient Button) */}
-            <div className="mt-7 flex items-center gap-4 flex-wrap">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleBannerClick(activeSlide);
-                }}
-                className="
+              {/* CTA (Colorful Gradient Button) */}
+              <div className="mt-7 flex items-center gap-4 flex-wrap">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleBannerClick(activeSlide);
+                  }}
+                  className="
                   group/cta
                   inline-flex
                   items-center
@@ -633,22 +633,22 @@ export default function HeroBanner() {
                   transition-all
                   duration-300
                 "
-              >
-                <span>{activeSlide.buttonText || "EXPLORE NOW"}</span>
-                <ArrowRight
-                  size={16}
-                  className="
+                >
+                  <span>{activeSlide.buttonText || "EXPLORE NOW"}</span>
+                  <ArrowRight
+                    size={16}
+                    className="
                     transition-transform
                     duration-300
                     group-hover/cta:translate-x-1
                   "
-                />
-              </button>
+                  />
+                </button>
 
-              {/* Secondary info */}
+                {/* Secondary info */}
 
-              <div
-                className="
+                <div
+                  className="
                   hidden
                   sm:flex
                   items-center
@@ -657,14 +657,14 @@ export default function HeroBanner() {
                   font-medium
                   text-white/75
                 "
-              >
-                <ShieldCheck size={16} className="text-white" />
-                Premium quality
+                >
+                  <ShieldCheck size={16} className="text-white" />
+                  Premium quality
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
         {slides.length > 1 && (
           <>

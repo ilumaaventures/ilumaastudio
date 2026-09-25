@@ -95,6 +95,14 @@ function Navbar() {
     setSelectedBusinessCategory(newBCat);
     if (isServiceCategory(newBCat)) {
       navigate("/services");
+    } else if (
+      newBCat === "other" ||
+      newBCat === "other" ||
+      newBCat === "Other" ||
+      newBCat === "OTHER" ||
+      newBCat === "OTHER"
+    ) {
+      navigate("/store");
     } else {
       navigate("/shop");
     }
