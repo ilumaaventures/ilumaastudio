@@ -11,114 +11,6 @@ import {
 import { getActiveFlashDeals } from "../../../api/flashDealService";
 import ProductCard from "../../../Components/ProductCard";
 
-// ============================================================
-// CURATED FALLBACK DEALS (WHEN DB HAS NO ACTIVE SCHEDULED CAMPAIGN)
-// ============================================================
-const FALLBACK_FLASH_DEALS = [
-  {
-    _id: "flash_curated_1",
-    name: "Wireless Active Noise-Cancelling Headphones Pro",
-    category: { name: "Electronics & Audio" },
-    originalPrice: 4999,
-    dealPrice: 2299,
-    savings: 2700,
-    discountPercentage: 54,
-    dealQuantity: 50,
-    soldQuantity: 38,
-    remainingQuantity: 12,
-    images: [
-      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
-    ],
-    rating: 4.8,
-    reviewsCount: 342,
-  },
-  {
-    _id: "flash_curated_2",
-    name: "Minimalist Chronograph Luxury Steel Watch",
-    category: { name: "Accessories & Watches" },
-    originalPrice: 3499,
-    dealPrice: 1699,
-    savings: 1800,
-    discountPercentage: 51,
-    dealQuantity: 40,
-    soldQuantity: 31,
-    remainingQuantity: 9,
-    images: [
-      "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80",
-    ],
-    rating: 4.9,
-    reviewsCount: 218,
-  },
-  {
-    _id: "flash_curated_3",
-    name: "Smart Ambient Mood Light & Wireless Fast Charger",
-    category: { name: "Home & Lifestyle" },
-    originalPrice: 2499,
-    dealPrice: 1199,
-    savings: 1300,
-    discountPercentage: 52,
-    dealQuantity: 60,
-    soldQuantity: 49,
-    remainingQuantity: 11,
-    images: [
-      "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=600&q=80",
-    ],
-    rating: 4.7,
-    reviewsCount: 189,
-  },
-  {
-    _id: "flash_curated_4",
-    name: "Premium Handcrafted Artisan Ceramic Coffee Mug Set",
-    category: { name: "Kitchen & Dining" },
-    originalPrice: 1899,
-    dealPrice: 899,
-    savings: 1000,
-    discountPercentage: 53,
-    dealQuantity: 35,
-    soldQuantity: 28,
-    remainingQuantity: 7,
-    images: [
-      "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80",
-    ],
-    rating: 4.8,
-    reviewsCount: 156,
-  },
-  {
-    _id: "flash_curated_5",
-    name: "Ergonomic Memory Foam Travel & Office Lumbar Support",
-    category: { name: "Health & Comfort" },
-    originalPrice: 2199,
-    dealPrice: 999,
-    savings: 1200,
-    discountPercentage: 55,
-    dealQuantity: 45,
-    soldQuantity: 36,
-    remainingQuantity: 9,
-    images: [
-      "https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?auto=format&fit=crop&w=600&q=80",
-    ],
-    rating: 4.6,
-    reviewsCount: 94,
-  },
-  {
-    _id: "flash_curated_6",
-    name: "Ultra-Fast Compact 65W GaN Travel Charger Hub",
-    category: { name: "Tech Accessories" },
-    originalPrice: 2999,
-    dealPrice: 1399,
-    savings: 1600,
-    discountPercentage: 53,
-    dealQuantity: 70,
-    soldQuantity: 58,
-    remainingQuantity: 12,
-    images: [
-      "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=600&q=80",
-    ],
-    rating: 4.9,
-    reviewsCount: 412,
-  },
-];
-
 export default function FlashDeals() {
   const sliderRef = useRef(null);
 
@@ -129,26 +21,18 @@ export default function FlashDeals() {
 
   // Live Timer State
   const [timeLeft, setTimeLeft] = useState({
-    hours: 2,
-    minutes: 48,
-    seconds: 15,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
   });
 
-  // Calculate live countdown timer
+  // Calculate live countdown timer from backend campaignEndDate
   useEffect(() => {
-    let targetTime = campaignEndDate
-      ? new Date(campaignEndDate).getTime()
-      : null;
-
-    if (!targetTime) {
-      const now = new Date();
-      now.setHours(now.getHours() + 4);
-      now.setMinutes(45);
-      targetTime = now.getTime();
-    }
+    if (!campaignEndDate) return;
 
     const updateTimer = () => {
       const now = new Date().getTime();
+      const targetTime = new Date(campaignEndDate).getTime();
       const diff = targetTime - now;
 
       if (diff > 0) {
@@ -166,7 +50,7 @@ export default function FlashDeals() {
     return () => clearInterval(interval);
   }, [campaignEndDate]);
 
-  // Fetch active flash deals from backend API
+  // Fetch active flash deals exclusively from backend API
   useEffect(() => {
     let isMounted = true;
 
@@ -180,36 +64,36 @@ export default function FlashDeals() {
 
         if (activeCampaigns.length > 0) {
           const firstCampaign = activeCampaigns[0];
-          setCampaignEndDate(firstCampaign.endDate);
+          setCampaignEndDate(firstCampaign.endDate || null);
           setActiveDealTitle(firstCampaign.title || "Limited Time Flash Sale");
 
           const allProducts = [];
           for (const camp of activeCampaigns) {
             if (Array.isArray(camp.products)) {
               for (const p of camp.products) {
-                allProducts.push({
-                  ...p,
-                  campaignTitle: camp.title,
-                  campaignEndDate: camp.endDate,
-                });
+                if (p && (p._id || p.id)) {
+                  allProducts.push({
+                    ...p,
+                    campaignTitle: camp.title,
+                    campaignEndDate: camp.endDate,
+                  });
+                }
               }
             }
           }
 
-          if (allProducts.length > 0) {
-            setDeals(allProducts);
-            return;
-          }
+          setDeals(allProducts);
+        } else {
+          setDeals([]);
+          setCampaignEndDate(null);
+          setActiveDealTitle("");
         }
-
-        // Curated fallback if DB has no active flash campaigns currently scheduled
-        setDeals(FALLBACK_FLASH_DEALS);
-        setActiveDealTitle("Lightning Drops & Steals");
       } catch (err) {
-        console.warn("Flash deals API fetch error, using curated fallback:", err);
+        console.error("Flash deals API fetch error:", err);
         if (isMounted) {
-          setDeals(FALLBACK_FLASH_DEALS);
-          setActiveDealTitle("Lightning Drops & Steals");
+          setDeals([]);
+          setCampaignEndDate(null);
+          setActiveDealTitle("");
         }
       } finally {
         if (isMounted) {
@@ -239,25 +123,21 @@ export default function FlashDeals() {
 
   const formatNumber = (num) => String(num).padStart(2, "0");
 
-  // Maximum discount calculation across active deals
+  // Maximum discount calculation across active backend deals
   const maxDiscount = useMemo(() => {
-    if (!deals.length) return 60;
-    return Math.max(...deals.map((d) => d.discountPercentage || 50));
+    if (!deals.length) return 0;
+    return Math.max(...deals.map((d) => d.discountPercentage || 0));
   }, [deals]);
 
-  if (loading) {
-    return (
-      <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto my-6">
-        <div className="h-80 w-full rounded-3xl bg-slate-100 animate-pulse border border-slate-200" />
-      </section>
-    );
+  // ONLY show this section when in flash deal have more than 0 product from backend
+  if (loading || !deals || deals.length === 0) {
+    return null;
   }
 
   return (
     <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto my-6 font-sans">
       {/* ============================================================
           MAIN EVENT CONTAINER WITH PRESTIGIOUS BORDER & FRAMING
-          (Amazon / Flipkart / Blinkit / Zepto inspired architecture)
       ============================================================ */}
       <div
         className="
@@ -317,28 +197,30 @@ export default function FlashDeals() {
                   <span>FLASH DEAL OF THE HOUR</span>
                 </span>
 
-                <span
-                  className="
-                    inline-flex
-                    items-center
-                    gap-1
-                    rounded-full
-                    bg-amber-50
-                    dark:bg-amber-950/30
-                    border
-                    border-amber-200/80
-                    dark:border-amber-800/50
-                    px-2.5
-                    py-0.5
-                    text-[10px]
-                    font-bold
-                    text-amber-700
-                    dark:text-amber-400
-                  "
-                >
-                  <Zap size={11} className="fill-amber-500 text-amber-500" />
-                  <span>UP TO {maxDiscount}% OFF</span>
-                </span>
+                {maxDiscount > 0 && (
+                  <span
+                    className="
+                      inline-flex
+                      items-center
+                      gap-1
+                      rounded-full
+                      bg-amber-50
+                      dark:bg-amber-950/30
+                      border
+                      border-amber-200/80
+                      dark:border-amber-800/50
+                      px-2.5
+                      py-0.5
+                      text-[10px]
+                      font-bold
+                      text-amber-700
+                      dark:text-amber-400
+                    "
+                  >
+                    <Zap size={11} className="fill-amber-500 text-amber-500" />
+                    <span>UP TO {maxDiscount}% OFF</span>
+                  </span>
+                )}
               </div>
 
               <div className="flex items-baseline gap-3 flex-wrap">
@@ -353,60 +235,62 @@ export default function FlashDeals() {
 
             {/* Right Header: Countdown Timer & Controls */}
             <div className="flex items-center justify-between lg:justify-end gap-3 flex-wrap">
-              {/* Amazon / Zepto Style Digit Flip Box Timer */}
-              <div
-                className="
-                  flex
-                  items-center
-                  gap-2
-                  bg-slate-900
-                  dark:bg-slate-950
-                  text-white
-                  px-3.5
-                  py-2
-                  rounded-2xl
-                  border
-                  border-slate-800
-                  shadow-inner
-                "
-              >
-                <div className="flex items-center gap-1.5 pr-2 border-r border-slate-700/80">
-                  <Clock size={14} className="text-amber-400 animate-pulse" />
-                  <span className="text-[10px] font-black tracking-widest uppercase text-slate-300">
-                    ENDS IN
-                  </span>
+              {/* Digit Flip Box Timer (Only when campaignEndDate exists) */}
+              {campaignEndDate && (
+                <div
+                  className="
+                    flex
+                    items-center
+                    gap-2
+                    bg-slate-900
+                    dark:bg-slate-950
+                    text-white
+                    px-3.5
+                    py-2
+                    rounded-2xl
+                    border
+                    border-slate-800
+                    shadow-inner
+                  "
+                >
+                  <div className="flex items-center gap-1.5 pr-2 border-r border-slate-700/80">
+                    <Clock size={14} className="text-amber-400 animate-pulse" />
+                    <span className="text-[10px] font-black tracking-widest uppercase text-slate-300">
+                      ENDS IN
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 font-mono text-xs font-black">
+                    {/* Hours */}
+                    <div className="flex flex-col items-center">
+                      <span className="bg-slate-800 px-2 py-0.5 rounded-md min-w-[28px] text-center text-amber-300">
+                        {formatNumber(timeLeft.hours)}
+                      </span>
+                      <span className="text-[8px] text-slate-400 font-sans mt-0.5">HRS</span>
+                    </div>
+
+                    <span className="text-amber-400 font-bold -mt-2.5">:</span>
+
+                    {/* Minutes */}
+                    <div className="flex flex-col items-center">
+                      <span className="bg-slate-800 px-2 py-0.5 rounded-md min-w-[28px] text-center text-amber-300">
+                        {formatNumber(timeLeft.minutes)}
+                      </span>
+                      <span className="text-[8px] text-slate-400 font-sans mt-0.5">MIN</span>
+                    </div>
+
+                    <span className="text-amber-400 font-bold -mt-2.5">:</span>
+
+                    {/* Seconds */}
+                    <div className="flex flex-col items-center">
+                      <span className="bg-rose-600 px-2 py-0.5 rounded-md min-w-[28px] text-center text-white shadow-sm animate-[pulse_1.5s_infinite]">
+                        {formatNumber(timeLeft.seconds)}
+                      </span>
+                      <span className="text-[8px] text-rose-300 font-sans mt-0.5 font-bold">SEC</span>
+                    </div>
+                  </div>
                 </div>
-
-                <div className="flex items-center gap-1.5 font-mono text-xs font-black">
-                  {/* Hours */}
-                  <div className="flex flex-col items-center">
-                    <span className="bg-slate-800 px-2 py-0.5 rounded-md min-w-[28px] text-center text-amber-300">
-                      {formatNumber(timeLeft.hours)}
-                    </span>
-                    <span className="text-[8px] text-slate-400 font-sans mt-0.5">HRS</span>
-                  </div>
-
-                  <span className="text-amber-400 font-bold -mt-2.5">:</span>
-
-                  {/* Minutes */}
-                  <div className="flex flex-col items-center">
-                    <span className="bg-slate-800 px-2 py-0.5 rounded-md min-w-[28px] text-center text-amber-300">
-                      {formatNumber(timeLeft.minutes)}
-                    </span>
-                    <span className="text-[8px] text-slate-400 font-sans mt-0.5">MIN</span>
-                  </div>
-
-                  <span className="text-amber-400 font-bold -mt-2.5">:</span>
-
-                  {/* Seconds */}
-                  <div className="flex flex-col items-center">
-                    <span className="bg-rose-600 px-2 py-0.5 rounded-md min-w-[28px] text-center text-white shadow-sm animate-[pulse_1.5s_infinite]">
-                      {formatNumber(timeLeft.seconds)}
-                    </span>
-                    <span className="text-[8px] text-rose-300 font-sans mt-0.5 font-bold">SEC</span>
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* Slider Arrows & See All CTA */}
               <div className="flex items-center gap-2">
@@ -509,7 +393,7 @@ export default function FlashDeals() {
 
         {/* ============================================================
             HORIZONTAL DEAL SHELF USING STANDARD PRODUCTCARD UI
-            (Matches New Arrivals, Best Sellers, and other marketplace sections)
+            (Exclusively maps backend active flash deal products)
         ============================================================ */}
         <div className="p-4 sm:p-6 lg:p-7">
           <div
@@ -536,21 +420,29 @@ export default function FlashDeals() {
                 item.originalPrice || (dealPrice > 0 ? Math.round(dealPrice * 1.5) : dealPrice)
               );
               const discount =
-                item.discountPercentage ||
-                (originalPrice > dealPrice
+                item.discountPercentage !== undefined && item.discountPercentage !== null
+                  ? Number(item.discountPercentage)
+                  : originalPrice > dealPrice
                   ? Math.round(((originalPrice - dealPrice) / originalPrice) * 100)
-                  : 45);
+                  : 0;
+
+              const isItemInStock =
+                item.remainingQuantity !== undefined
+                  ? item.remainingQuantity > 0
+                  : item.inStock !== undefined
+                  ? Boolean(item.inStock)
+                  : true;
 
               const formattedProduct = {
                 ...item,
                 _id: prodId,
                 id: prodId,
-                name: item.name || "Exclusive Flash Deal",
+                name: item.name || "Flash Deal Product",
                 price: dealPrice,
                 originalPrice: originalPrice > dealPrice ? originalPrice : null,
                 discountPercent: discount,
-                badge: `${discount}% OFF`,
-                inStock: true,
+                badge: discount > 0 ? `${discount}% OFF` : undefined,
+                inStock: isItemInStock,
                 images: item.images,
                 category: item.category,
                 business: item.business || { businessName: "Verified Store" },
