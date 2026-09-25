@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  Zap,
   Flame,
   Tag,
   Copy,
@@ -30,399 +29,844 @@ export default function BannerSection({
   const storeHomePath = storeCtx?.storeHomePath || "";
 
   const { isAuthenticated, user } = useSelector((s) => s.auth || {});
+  const navigate = useNavigate();
 
-  // Initial seed from store context to avoid empty flash
+  /* -------------------------------------------------------
+     CONTEXT BANNERS (WHEN INSIDE A SHOP)
+  ------------------------------------------------------- */
   const contextBanners = useMemo(() => {
     const all = Array.isArray(storeCtx?.banners) ? storeCtx.banners : [];
     if (!all.length) return [];
+
     if (bannerType === "flashSale") {
       return all.filter((b) => b.type === "flashSale" || b.type === "promotion");
     }
+
     if (bannerType === "promotion") {
       return all.filter(
         (b) =>
           b.type === "promotion" ||
           b.type === "flashSale" ||
-          b.type === "occasion",
+          b.type === "occasion"
       );
     }
+
     if (bannerType && bannerType !== "All") {
       return all.filter((b) => b.type === bannerType);
     }
+
     return all.filter((b) => b.type !== "hero");
   }, [storeCtx?.banners, bannerType]);
 
+  /* -------------------------------------------------------
+     STATE
+  ------------------------------------------------------- */
   const [banners, setBanners] = useState(contextBanners);
   const [loading, setLoading] = useState(!contextBanners.length);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [direction, setDirection] = useState("right");
+  const [direction, setDirection] = useState("next");
   const [copiedCoupon, setCopiedCoupon] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const navigate = useNavigate();
 
+  // Touch Swipe State
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  /* -------------------------------------------------------
+     SYNC CONTEXT
+  ------------------------------------------------------- */
   useEffect(() => {
     if (contextBanners.length > 0) {
       setBanners(contextBanners);
       setLoading(false);
+      setCurrentIndex(0);
     }
   }, [contextBanners]);
 
+  /* -------------------------------------------------------
+     FETCH BANNERS DIRECTLY FROM PUBLIC BANNER API
+  ------------------------------------------------------- */
   useEffect(() => {
-    let isMounted = true;
-    const fetchTypeBanners = async () => {
+    // If context banners already provided by store context, keep them
+    if (contextBanners.length > 0) return;
+
+    let mounted = true;
+
+    const fetchBanners = async () => {
       try {
+        setLoading(true);
+
         const queryParams = {
-          type: bannerType,
+          type: bannerType === "All" ? undefined : bannerType,
         };
+
         if (activeBusinessId) {
           queryParams.businessId = activeBusinessId;
         } else {
+          // Query studio promotional banners
           queryParams.businessCategory = "E-Commerce";
-          queryParams.listedOn = "superadmin";
+          queryParams.listedOn = "studio";
         }
 
         const res = await getPublicBanners(queryParams);
         const list = res?.banners || res?.data || [];
-        if (isMounted && Array.isArray(list) && list.length > 0) {
-          setBanners(list);
-        } else if (isMounted && (!banners || banners.length === 0)) {
-          // Fallback high-converting default promotion banner
-          setBanners([
-            {
-              _id: "default_promo_1",
-              title: "Handcrafted Luxury & Curated Specials",
-              subtitle: "LIMITED TIME PRIVILEGE",
-              description:
-                "Discover exclusive deals up to 40% off across verified artisanal stores and lifestyle essentials.",
-              couponCode: "ILUMAA40",
-              buttonText: "EXPLORE COLLECTION",
-              targetUrl: "/shop",
-              image:
-                "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?auto=format&fit=crop&w=1200&q=80",
-            },
-          ]);
+
+        if (mounted && Array.isArray(list) && list.length > 0) {
+          // Strictly filter for:
+          // 1. Banner display type is promotional (or requested type)
+          // 2. Allowed to be listed on main website studio and superadmin
+          const filtered = list.filter((b) => {
+            const matchesType =
+              bannerType === "All" ||
+              b.type === bannerType ||
+              (bannerType === "promotion" &&
+                (b.type === "promotion" || b.type === "flashSale"));
+
+            if (!matchesType) return false;
+
+            if (!activeBusinessId) {
+              if (b.listedOn && Array.isArray(b.listedOn) && b.listedOn.length > 0) {
+                const allowed = b.listedOn.some((loc) =>
+                  ["studio", "superadmin", "mainpage", "all"].includes(
+                    String(loc).toLowerCase()
+                  )
+                );
+                if (!allowed) return false;
+              }
+            }
+
+            return true;
+          });
+
+          if (filtered.length > 0) {
+            setBanners(filtered);
+            setCurrentIndex(0);
+            return;
+          }
         }
-      } catch (err) {
-        console.warn(`Failed to fetch banners for type ${bannerType}:`, err);
-        if (isMounted && (!banners || banners.length === 0)) {
+
+        // Professional curated fallback if database has no promotional banners yet
+        if (mounted) {
           setBanners([
             {
               _id: "default_promo_1",
-              title: "Handcrafted Luxury & Curated Specials",
-              subtitle: "LIMITED TIME PRIVILEGE",
+              type: "promotion",
+              title: "Curated Essentials, Made to Impress",
+              subtitle: "FEATURED COLLECTION",
               description:
-                "Discover exclusive deals up to 40% off across verified artisanal stores and lifestyle essentials.",
-              couponCode: "ILUMAA40",
-              buttonText: "EXPLORE COLLECTION",
+                "Discover thoughtful gifts, premium essentials and handpicked collections from verified brands.",
+              couponCode: "ILUMAA15",
+              buttonText: "Explore Collection",
+              targetType: "shop",
               targetUrl: "/shop",
               image:
-                "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?auto=format&fit=crop&w=1200&q=80",
+                "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?auto=format&fit=crop&w=1800&q=85",
+            },
+            {
+              _id: "default_promo_2",
+              type: "promotion",
+              title: "Studio Highlights & Exclusive Privileges",
+              subtitle: "MEMBER SPECIAL",
+              description:
+                "Enjoy guaranteed authentic products, effortless express delivery and direct brand discounts.",
+              couponCode: "STUDIO20",
+              buttonText: "Shop Collection",
+              targetType: "shop",
+              targetUrl: "/shop",
+              image:
+                "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1800&q=85",
             },
           ]);
+          setCurrentIndex(0);
+        }
+      } catch (error) {
+        console.warn(`Failed to fetch ${bannerType} banners:`, error);
+        if (mounted) {
+          setBanners([
+            {
+              _id: "default_promo_1",
+              type: "promotion",
+              title: "Curated Essentials, Made to Impress",
+              subtitle: "FEATURED COLLECTION",
+              description:
+                "Discover thoughtful gifts, premium essentials and handpicked collections from verified brands.",
+              couponCode: "ILUMAA15",
+              buttonText: "Explore Collection",
+              targetType: "shop",
+              targetUrl: "/shop",
+              image:
+                "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?auto=format&fit=crop&w=1800&q=85",
+            },
+          ]);
+          setCurrentIndex(0);
         }
       } finally {
-        if (isMounted) setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchTypeBanners();
+    fetchBanners();
 
     return () => {
-      isMounted = false;
+      mounted = false;
     };
-  }, [bannerType, activeBusinessId]);
+  }, [bannerType, activeBusinessId, contextBanners.length]);
 
-  // Auto-carousel timer
+  /* -------------------------------------------------------
+     CAROUSEL CONTROLS
+  ------------------------------------------------------- */
+  const handleNext = useCallback(
+    (e) => {
+      e?.stopPropagation();
+      if (banners.length <= 1) return;
+      setDirection("next");
+      setCurrentIndex((prev) => (prev + 1) % banners.length);
+    },
+    [banners.length]
+  );
+
+  const handlePrev = useCallback(
+    (e) => {
+      e?.stopPropagation();
+      if (banners.length <= 1) return;
+      setDirection("prev");
+      setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length);
+    },
+    [banners.length]
+  );
+
+  /* -------------------------------------------------------
+     AUTO PLAY
+  ------------------------------------------------------- */
   useEffect(() => {
     if (banners.length <= 1 || isPaused) return;
 
     const timer = setInterval(() => {
-      setDirection("right");
-      setCurrentIndex((prev) => (prev + 1) % banners.length);
+      handleNext();
     }, autoPlayInterval);
 
     return () => clearInterval(timer);
-  }, [banners.length, autoPlayInterval, isPaused]);
+  }, [banners.length, autoPlayInterval, isPaused, handleNext]);
 
-  if (loading || banners.length === 0) return null;
+  /* -------------------------------------------------------
+     TOUCH SUPPORT
+  ------------------------------------------------------- */
+  const handleTouchStart = (e) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
 
-  const handleBannerClick = (b) => {
-    const targetType = b.targetType || "shop";
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (distance > 45) {
+      handleNext();
+    } else if (distance < -45) {
+      handlePrev();
+    }
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
+  /* -------------------------------------------------------
+     NAVIGATION
+  ------------------------------------------------------- */
+  const handleBannerClick = (banner) => {
+    if (!banner) return;
+    const targetType = banner.targetType || "shop";
     const targetId =
-      typeof b.targetId === "object" ? b.targetId?._id : b.targetId;
+      typeof banner.targetId === "object" ? banner.targetId?._id : banner.targetId;
+
     const prefix = storeHomePath || "";
 
     if (targetType === "product" && targetId) {
-      navigate(
-        prefix ? `${prefix}/product/${targetId}` : `/product/${targetId}`,
-      );
-    } else if (targetType === "category" && targetId) {
+      navigate(prefix ? `${prefix}/product/${targetId}` : `/product/${targetId}`);
+      return;
+    }
+
+    if (targetType === "category" && targetId) {
       navigate(
         prefix
           ? `${prefix}/products?category=${targetId}`
-          : `/shop?category=${targetId}`,
+          : `/shop?category=${targetId}`
       );
-    } else if (targetType === "collection" && targetId) {
+      return;
+    }
+
+    if (targetType === "collection" && targetId) {
       navigate(
         prefix
           ? `${prefix}/products?collection=${targetId}`
-          : `/shop?collection=${targetId}`,
+          : `/shop?collection=${targetId}`
       );
-    } else if (targetType === "occasion" && targetId) {
+      return;
+    }
+
+    if (targetType === "occasion" && targetId) {
       navigate(
         prefix
           ? `${prefix}/products?occasion=${targetId}`
-          : `/shop?occasion=${targetId}`,
+          : `/shop?occasion=${targetId}`
       );
-    } else if (targetType === "flashSale" && targetId) {
+      return;
+    }
+
+    if (targetType === "flashSale" && targetId) {
       navigate(
         prefix
           ? `${prefix}/products?flashSale=${targetId}`
-          : `/shop?flashSale=${targetId}`,
+          : `/shop?flashSale=${targetId}`
       );
-    } else if (targetType === "external" && b.targetUrl) {
-      window.open(b.targetUrl, "_blank", "noopener,noreferrer");
-    } else if (b.targetUrl) {
-      if (b.targetUrl.startsWith("http")) {
-        window.open(b.targetUrl, "_blank", "noopener,noreferrer");
-      } else {
-        navigate(b.targetUrl);
-      }
-    } else {
-      navigate(prefix ? `${prefix}/products` : "/shop");
+      return;
     }
+
+    if (targetType === "external" && banner.targetUrl) {
+      window.open(banner.targetUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    if (banner.targetUrl) {
+      if (banner.targetUrl.startsWith("http")) {
+        window.open(banner.targetUrl, "_blank", "noopener,noreferrer");
+      } else {
+        navigate(banner.targetUrl);
+      }
+      return;
+    }
+
+    navigate(prefix ? `${prefix}/products` : "/shop");
   };
 
+  /* -------------------------------------------------------
+     CURRENT BANNER & COUPON
+  ------------------------------------------------------- */
   const currentBanner = banners[currentIndex] || banners[0];
-  const hasImage = Boolean(currentBanner?.image || currentBanner?.mobileImage);
   const isFlashSale =
     bannerType === "flashSale" || currentBanner?.type === "flashSale";
 
   const couponCode =
     currentBanner?.couponCode ||
     currentBanner?.code ||
-    (isFlashSale ? "FLASH50" : "STUDIO15");
+    (isFlashSale ? "FLASH50" : "ILUMAA15");
 
-  const handleCopyCoupon = (e) => {
+  const handleCopyCoupon = async (e) => {
     e.stopPropagation();
-    navigator.clipboard?.writeText(couponCode);
-    setCopiedCoupon(true);
-    toast.success(`Coupon code "${couponCode}" copied to clipboard!`);
-    setTimeout(() => setCopiedCoupon(false), 2500);
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(couponCode);
+      }
+      setCopiedCoupon(true);
+      toast.success(`Coupon "${couponCode}" copied!`);
+      setTimeout(() => setCopiedCoupon(false), 2200);
+    } catch {
+      toast.error("Unable to copy coupon");
+    }
   };
 
-  const handleNext = () => {
-    setDirection("right");
-    setCurrentIndex((prev) => (prev + 1) % banners.length);
-  };
+  if (loading || !banners.length || !currentBanner) {
+    return null;
+  }
 
-  const handlePrev = () => {
-    setDirection("left");
-    setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length);
-  };
+  const hasImage = Boolean(currentBanner.image || currentBanner.mobileImage);
 
   return (
     <section
-      className={`py-4 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto font-sans ${className}`}
+      className={`w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-5 font-sans ${className}`}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
-      <div
-        className={`relative rounded-[28px] sm:rounded-[32px] overflow-hidden shadow-[0_16px_45px_rgba(15,23,42,0.12)] text-white p-6 sm:p-9 lg:p-11 border transition-all duration-300 ${
-          isFlashSale
-            ? "bg-gradient-to-r from-[#1c120c] via-[#2a170e] to-[#120a06] border-amber-500/30"
-            : "bg-gradient-to-r from-slate-950 via-[#0e1726] to-[#090d16] border-slate-800/80"
-        }`}
-      >
-        {/* Subtle Ambient Radial Lighting */}
+      <div className="max-w-7xl mx-auto">
         <div
-          className={`absolute -top-28 -right-28 w-96 h-96 rounded-full blur-[100px] pointer-events-none ${
-            isFlashSale ? "bg-amber-500/15" : "bg-blue-600/15"
-          }`}
-        />
-        <div
-          className={`absolute -bottom-28 -left-28 w-80 h-80 rounded-full blur-[90px] pointer-events-none ${
-            isFlashSale ? "bg-orange-500/10" : "bg-purple-600/10"
-          }`}
-        />
-
-        {/* Background Image with Crisp Contrast Gradient */}
-        {hasImage && (
-          <picture className="absolute inset-0 w-full h-full pointer-events-none">
-            {currentBanner.mobileImage && (
-              <source
-                media="(max-width: 640px)"
-                srcSet={currentBanner.mobileImage}
+          onClick={() => handleBannerClick(currentBanner)}
+          className="
+            group
+            relative
+            h-[270px]
+            sm:h-[300px]
+            lg:h-[320px]
+            overflow-hidden
+            rounded-[24px]
+            sm:rounded-[28px]
+            bg-slate-100
+            shadow-[0_12px_40px_rgba(15,23,42,0.08)]
+            hover:shadow-[0_18px_45px_rgba(37,99,235,0.12)]
+            border border-slate-200/80
+            cursor-pointer
+            transition-all
+            duration-300
+          "
+        >
+          {/* ------------------------------------------------
+              FULL IMAGE
+          ------------------------------------------------ */}
+          {hasImage && (
+            <picture className="absolute inset-0">
+              {currentBanner.mobileImage && (
+                <source
+                  media="(max-width: 640px)"
+                  srcSet={currentBanner.mobileImage}
+                />
+              )}
+              <img
+                key={currentBanner._id || currentIndex}
+                src={currentBanner.image}
+                alt={currentBanner.title || "Promotional Banner"}
+                className={`
+                  absolute
+                  inset-0
+                  w-full
+                  h-full
+                  object-cover
+                  transition-all
+                  duration-700
+                  ease-out
+                  ${
+                    direction === "next"
+                      ? "animate-[bannerNext_0.65s_ease-out]"
+                      : "animate-[bannerPrev_0.65s_ease-out]"
+                  }
+                `}
               />
-            )}
-            <img
-              src={currentBanner.image}
-              alt={currentBanner.title || "Promotion Banner"}
-              className="w-full h-full object-cover opacity-25 scale-105 transition-transform duration-700"
-            />
-          </picture>
-        )}
+            </picture>
+          )}
 
-        {hasImage && (
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 via-[55%] to-transparent pointer-events-none" />
-        )}
+          {/* ------------------------------------------------
+              READABILITY OVERLAY (WHITE / NAVY THEME)
+          ------------------------------------------------ */}
+          <div
+            className="
+              absolute
+              inset-0
+              bg-gradient-to-r
+              from-white/95
+              via-white/75
+              via-[45%]
+              to-transparent
+              pointer-events-none
+            "
+          />
 
-        {/* Customer Interaction & Login Notification Bar */}
-        <div className="relative z-10 mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
-          <div className="flex items-center gap-2.5">
-            {isAuthenticated ? (
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold shadow-xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>
-                  Welcome, {user?.name || "Member"}! Exclusive member savings active
-                </span>
-              </div>
-            ) : (
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-bold shadow-xs">
-                <Gift size={13} className="text-blue-400" />
-                <span>Sign in to unlock an extra 15% welcome discount</span>
-              </div>
-            )}
+          {/* ------------------------------------------------
+              TOP BADGES ROW
+          ------------------------------------------------ */}
+          <div
+            className="
+              absolute
+              top-4
+              left-4
+              sm:top-5
+              sm:left-6
+              z-20
+              flex
+              items-center
+              gap-2
+            "
+          >
+            <div
+              className="
+                inline-flex
+                items-center
+                gap-1.5
+                rounded-full
+                border
+                border-blue-200
+                bg-blue-50/90
+                backdrop-blur-md
+                px-3
+                py-1
+                text-[10px]
+                sm:text-[11px]
+                font-extrabold
+                tracking-wider
+                uppercase
+                text-blue-700
+                shadow-sm
+              "
+            >
+              {isFlashSale ? (
+                <Flame size={12} className="text-orange-600 fill-orange-500" />
+              ) : (
+                <Sparkles size={12} className="text-blue-600" />
+              )}
+              <span>
+                {currentBanner.subtitle ||
+                  (isFlashSale ? "FLASH SALE" : "PROMOTIONAL HIGHLIGHT")}
+              </span>
+            </div>
           </div>
 
-          {/* Customer Action: Login Prompt or Coupon Code */}
-          <div className="flex items-center gap-2">
+          {/* ------------------------------------------------
+              TOP-RIGHT MEMBER / COUPON ACTIONS
+          ------------------------------------------------ */}
+          <div
+            className="
+              absolute
+              top-4
+              right-4
+              sm:top-5
+              sm:right-6
+              z-20
+              hidden
+              sm:flex
+              items-center
+              gap-2
+            "
+          >
             {!isAuthenticated && (
               <Link
                 to="/login"
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-bold transition-all shadow-xs"
+                onClick={(e) => e.stopPropagation()}
+                className="
+                  inline-flex
+                  items-center
+                  gap-1.5
+                  rounded-full
+                  bg-white/90
+                  backdrop-blur-md
+                  border
+                  border-slate-200
+                  px-3
+                  py-1.5
+                  text-[11px]
+                  font-semibold
+                  text-slate-700
+                  shadow-sm
+                  hover:bg-white
+                  hover:text-blue-600
+                  transition
+                "
               >
                 <User size={12} />
-                <span>Sign In</span>
+                Sign in
               </Link>
             )}
 
-            {/* Click to Copy Coupon Code */}
             <button
               type="button"
               onClick={handleCopyCoupon}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 hover:bg-amber-400/30 border border-amber-400/40 text-amber-300 text-xs font-mono font-bold tracking-wider transition-all cursor-pointer shadow-xs"
+              className="
+                inline-flex
+                items-center
+                gap-1.5
+                rounded-full
+                bg-white/95
+                backdrop-blur-md
+                border
+                border-slate-200
+                px-3
+                py-1.5
+                text-[10px]
+                sm:text-[11px]
+                font-bold
+                text-slate-800
+                shadow-sm
+                hover:border-blue-300
+                hover:bg-blue-50/60
+                transition
+                cursor-pointer
+              "
               title="Click to copy coupon code"
             >
-              <Tag size={12} />
-              <span>{couponCode}</span>
+              <Tag size={12} className="text-blue-600" />
+              <span className="font-mono tracking-wide">{couponCode}</span>
               {copiedCoupon ? (
-                <Check size={12} className="text-emerald-400" />
+                <Check size={12} className="text-emerald-500" />
               ) : (
-                <Copy size={11} className="opacity-70" />
+                <Copy size={11} className="text-slate-400" />
               )}
             </button>
           </div>
-        </div>
 
-        {/* Banner Main Row Content */}
-        <div
-          key={currentBanner._id || currentIndex}
-          className={`relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 transition-all duration-500 ${
-            direction === "right" ? "animate-fadeInRight" : "animate-fadeInLeft"
-          }`}
-        >
-          {/* Left Text details */}
-          <div className="space-y-3.5 max-w-2xl">
-            <div className="flex flex-wrap items-center gap-2">
-              {isFlashSale ? (
-                <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-black uppercase tracking-wider text-amber-300 bg-amber-500/20 border border-amber-500/30 px-3 py-1 rounded-full shadow-xs">
-                  <Flame size={13} className="text-amber-400 animate-pulse" />
-                  {currentBanner.subtitle || "FLASH SALE SPECIAL"}
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-black uppercase tracking-wider text-blue-300 bg-blue-500/20 border border-blue-500/30 px-3 py-1 rounded-full shadow-xs">
-                  <Sparkles size={13} className="text-blue-400" />
-                  {currentBanner.subtitle || "FEATURED CURATION"}
-                </span>
-              )}
-
-              <span className="text-[11px] text-slate-300 font-semibold flex items-center gap-1">
-                <ShieldCheck size={12} className="text-emerald-400" />
-                Verified Genuine Stores
-              </span>
-            </div>
-
-            <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-tight tracking-tight">
-              {currentBanner.title}
-            </h3>
-
-            {currentBanner.description && (
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium line-clamp-2 max-w-xl">
-                {currentBanner.description}
-              </p>
-            )}
-          </div>
-
-          {/* Right Action CTAs */}
-          <div className="shrink-0 flex items-center gap-3 pt-2 lg:pt-0">
-            <button
-              type="button"
-              onClick={() => handleBannerClick(currentBanner)}
-              className={`px-7 py-3.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all duration-300 cursor-pointer inline-flex items-center gap-2.5 shadow-xl hover:scale-[1.03] active:scale-[0.98] ${
-                isFlashSale
-                  ? "bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 shadow-amber-500/25"
-                  : "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-blue-500/30"
-              }`}
+          {/* ------------------------------------------------
+              FLOATING CONTENT PANEL
+          ------------------------------------------------ */}
+          <div
+            key={currentBanner._id || currentIndex}
+            className="
+              absolute
+              z-20
+              left-4
+              bottom-4
+              sm:left-6
+              sm:bottom-6
+              lg:left-8
+              lg:bottom-7
+              w-[calc(100%-32px)]
+              sm:w-[440px]
+              lg:w-[480px]
+              max-w-[calc(100%-32px)]
+              animate-[contentReveal_0.5s_ease-out]
+            "
+          >
+            <div
+              className="
+                rounded-[20px]
+                sm:rounded-[22px]
+                bg-white/92
+                backdrop-blur-xl
+                border
+                border-white/80
+                shadow-[0_12px_40px_rgba(15,23,42,0.12)]
+                px-4
+                py-3.5
+                sm:px-5
+                sm:py-4.5
+              "
             >
-              <span>{currentBanner.buttonText || (isFlashSale ? "CLAIM OFFER" : "SHOP NOW")}</span>
-              <ArrowRight size={15} />
-            </button>
+              {/* Trust Tag */}
+              <div className="flex items-center justify-between gap-3 mb-1.5">
+                <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-slate-500">
+                  <ShieldCheck size={13} className="text-blue-600" />
+                  <span>Curated & Verified</span>
+                </div>
+                {isAuthenticated && (
+                  <span className="text-[10px] font-bold text-emerald-600">
+                    Member privilege active
+                  </span>
+                )}
+              </div>
 
-            {!isAuthenticated && (
-              <Link
-                to="/register"
-                className="hidden sm:inline-flex items-center gap-2 px-5 py-3.5 rounded-xl text-xs font-bold text-slate-200 bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md transition-all shadow-xs"
+              {/* Title */}
+              <h3
+                className="
+                  text-lg
+                  sm:text-xl
+                  lg:text-[22px]
+                  font-black
+                  tracking-tight
+                  leading-snug
+                  text-slate-900
+                  line-clamp-2
+                "
               >
-                <span>Join Free</span>
-              </Link>
-            )}
-          </div>
-        </div>
+                {currentBanner.title}
+              </h3>
 
-        {/* Carousel Pagination Dots & Nav Arrows */}
-        {banners.length > 1 && (
-          <div className="flex items-center justify-between pt-5 mt-5 border-t border-white/10 z-10 relative">
-            <div className="flex items-center gap-1.5">
-              {banners.map((_, idx) => (
+              {/* Description */}
+              {currentBanner.description && (
+                <p
+                  className="
+                    mt-1
+                    text-[11px]
+                    sm:text-xs
+                    leading-relaxed
+                    text-slate-600
+                    line-clamp-2
+                    max-w-[400px]
+                  "
+                >
+                  {currentBanner.description}
+                </p>
+              )}
+
+              {/* Action Button */}
+              <div className="flex items-center gap-3 mt-3">
                 <button
-                  key={idx}
-                  onClick={() => setCurrentIndex(idx)}
-                  className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                    idx === currentIndex
-                      ? isFlashSale
-                        ? "w-7 bg-amber-400"
-                        : "w-7 bg-blue-400"
-                      : "w-2 bg-white/30 hover:bg-white/60"
-                  }`}
-                  aria-label={`Banner ${idx + 1}`}
-                />
-              ))}
-            </div>
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleBannerClick(currentBanner);
+                  }}
+                  className="
+                    inline-flex
+                    items-center
+                    justify-center
+                    gap-2
+                    px-4
+                    sm:px-5
+                    py-2
+                    sm:py-2.5
+                    rounded-xl
+                    text-xs
+                    font-extrabold
+                    text-white
+                    bg-blue-600
+                    hover:bg-blue-700
+                    shadow-sm
+                    hover:shadow-md
+                    transition-all
+                    duration-200
+                    hover:-translate-y-0.5
+                    active:scale-95
+                  "
+                >
+                  <span>{currentBanner.buttonText || "Explore Collection"}</span>
+                  <ArrowRight size={14} />
+                </button>
 
-            <div className="flex items-center gap-2">
+                <div className="hidden sm:flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
+                  <Gift size={13} className="text-slate-400" />
+                  Direct Brand Offers
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ------------------------------------------------
+              CAROUSEL NAVIGATION ARROWS & DOTS (WHEN > 1 BANNER)
+          ------------------------------------------------ */}
+          {banners.length > 1 && (
+            <>
+              {/* Left Arrow */}
               <button
                 type="button"
                 onClick={handlePrev}
-                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer"
-                title="Previous Banner"
                 aria-label="Previous Banner"
+                className="
+                  absolute
+                  left-3
+                  top-1/2
+                  -translate-y-1/2
+                  z-30
+                  hidden
+                  sm:flex
+                  items-center
+                  justify-center
+                  w-9
+                  h-9
+                  rounded-full
+                  bg-white/80
+                  hover:bg-white
+                  text-slate-700
+                  hover:text-blue-600
+                  border
+                  border-slate-200
+                  shadow-md
+                  backdrop-blur-sm
+                  transition-all
+                  duration-200
+                  hover:scale-105
+                  active:scale-95
+                "
               >
-                <ChevronLeft size={16} />
+                <ChevronLeft size={18} />
               </button>
+
+              {/* Right Arrow */}
               <button
                 type="button"
                 onClick={handleNext}
-                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer"
-                title="Next Banner"
                 aria-label="Next Banner"
+                className="
+                  absolute
+                  right-3
+                  top-1/2
+                  -translate-y-1/2
+                  z-30
+                  hidden
+                  sm:flex
+                  items-center
+                  justify-center
+                  w-9
+                  h-9
+                  rounded-full
+                  bg-white/80
+                  hover:bg-white
+                  text-slate-700
+                  hover:text-blue-600
+                  border
+                  border-slate-200
+                  shadow-md
+                  backdrop-blur-sm
+                  transition-all
+                  duration-200
+                  hover:scale-105
+                  active:scale-95
+                "
               >
-                <ChevronRight size={16} />
+                <ChevronRight size={18} />
               </button>
-            </div>
-          </div>
-        )}
+
+              {/* Pagination Dots */}
+              <div
+                className="
+                  absolute
+                  bottom-3.5
+                  right-4
+                  sm:right-6
+                  z-30
+                  flex
+                  items-center
+                  gap-1.5
+                  bg-black/20
+                  backdrop-blur-md
+                  px-2.5
+                  py-1
+                  rounded-full
+                "
+              >
+                {banners.map((_, dotIdx) => (
+                  <button
+                    key={dotIdx}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDirection(dotIdx > currentIndex ? "next" : "prev");
+                      setCurrentIndex(dotIdx);
+                    }}
+                    aria-label={`Go to slide ${dotIdx + 1}`}
+                    className={`
+                      h-1.5
+                      rounded-full
+                      transition-all
+                      duration-300
+                      ${
+                        dotIdx === currentIndex
+                          ? "w-5 bg-white shadow-sm"
+                          : "w-1.5 bg-white/50 hover:bg-white/80"
+                      }
+                    `}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
+
+      {/* ---------------------------------------------------
+          CUSTOM ANIMATIONS
+      --------------------------------------------------- */}
+      <style>{`
+        @keyframes contentReveal {
+          0% {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes bannerNext {
+          0% {
+            opacity: 0.7;
+            transform: scale(1.02) translateX(12px);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) translateX(0);
+          }
+        }
+        @keyframes bannerPrev {
+          0% {
+            opacity: 0.7;
+            transform: scale(1.02) translateX(-12px);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) translateX(0);
+          }
+        }
+      `}</style>
     </section>
   );
 }

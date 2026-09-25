@@ -19,11 +19,11 @@ import baseApi from "../../../api/baseApi";
 const DEFAULT_HERO_SLIDES = [
   {
     _id: "default-slide-1",
-    badge: "EXCLUSIVE COLLECTION",
-    title: "Luxury Artisanal Living & Designer Gifts",
+    badge: "THE ILUMAA EXPERIENCE",
+    title: "Discover exceptional brands.\nCurated for modern living.",
     subtitle:
-      "Handcrafted gourmet hampers, bespoke audio, and timeless home decor curated for connoisseurs.",
-    buttonText: "EXPLORE STUDIO",
+      "Explore authenticated collections across tech, home, and lifestyle essentials from premier verified stores.",
+    buttonText: "EXPLORE COLLECTIONS",
     targetType: "shop",
     targetUrl: "/shop",
     image:
@@ -33,11 +33,11 @@ const DEFAULT_HERO_SLIDES = [
   },
   {
     _id: "default-slide-2",
-    badge: "LIMITED EDITION",
-    title: "Curated Celebration & Festive Hampers",
+    badge: "PREMIUM LIVING & ESSENTIALS",
+    title: "Crafted with purpose.\nDesigned for you.",
     subtitle:
-      "Custom brass engravings, wax seals, and royal confectionery for life's milestone moments.",
-    buttonText: "SHOP HAMPERS",
+      "Shop certified quality goods, artisan creations, and everyday upgrades with dependable express delivery.",
+    buttonText: "START SHOPPING",
     targetType: "shop",
     targetUrl: "/shop",
     image:
@@ -47,13 +47,13 @@ const DEFAULT_HERO_SLIDES = [
   },
   {
     _id: "default-slide-3",
-    badge: "FLASH PRIVILEGE",
-    title: "Premium Audio & Electronics",
+    badge: "AUTHENTIC & VERIFIED",
+    title: "Iconic standards.\nEffortless discovery.",
     subtitle:
-      "Immersive acoustic sound, minimalist engineering, and official warranty on flagship models.",
-    buttonText: "VIEW DEALS",
+      "A seamless destination uniting verified stores, transparent pricing, and effortless checkout.",
+    buttonText: "DISCOVER BRANDS",
     targetType: "shop",
-    targetUrl: "/shop",
+    targetUrl: "/store",
     image:
       "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1800&q=85",
     mobileImage:
@@ -67,44 +67,47 @@ const DEFAULT_HERO_SLIDES = [
 
 function renderColorfulStudioTitle(title) {
   if (!title) return null;
+
+  if (title.includes("\n")) {
+    const lines = title.split("\n");
+    return (
+      <>
+        <span className="block text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.4)]">
+          {lines[0]}
+        </span>
+        <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-100 via-sky-200 to-blue-400 drop-shadow-[0_4px_22px_rgba(37,99,235,0.25)]">
+          {lines.slice(1).join(" ")}
+        </span>
+      </>
+    );
+  }
+
   if (title.includes("&")) {
     const parts = title.split("&");
     return (
       <>
-        <span>{parts[0]}&</span>{" "}
-        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#60A5FA] via-[#C084FC] to-[#F472B6] drop-shadow-[0_4px_25px_rgba(192,132,252,0.4)]">
+        <span className="text-white">{parts[0]}&</span>{" "}
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-100 via-sky-200 to-blue-400">
           {parts.slice(1).join("&")}
         </span>
       </>
     );
   }
-  if (title.includes(",")) {
-    const parts = title.split(",");
+
+  if (title.includes(".")) {
+    const parts = title.split(".");
     return (
       <>
-        <span>{parts[0]},</span>{" "}
-        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#60A5FA] via-[#C084FC] to-[#F472B6] drop-shadow-[0_4px_25px_rgba(192,132,252,0.4)]">
-          {parts.slice(1).join(",")}
+        <span className="text-white">{parts[0]}.</span>{" "}
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-100 via-sky-200 to-blue-400">
+          {parts.slice(1).join(".")}
         </span>
       </>
     );
   }
-  const words = title.split(" ");
-  if (words.length > 2) {
-    const splitIndex = Math.ceil(words.length / 2);
-    const firstHalf = words.slice(0, splitIndex).join(" ");
-    const secondHalf = words.slice(splitIndex).join(" ");
-    return (
-      <>
-        <span>{firstHalf}</span>{" "}
-        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#60A5FA] via-[#C084FC] to-[#F472B6] drop-shadow-[0_4px_25px_rgba(192,132,252,0.4)]">
-          {secondHalf}
-        </span>
-      </>
-    );
-  }
+
   return (
-    <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-[#93C5FD] to-[#C084FC]">
+    <span className="text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.4)]">
       {title}
     </span>
   );
@@ -552,57 +555,52 @@ export default function HeroBanner() {
                 tracking-[0.2em]
               "
               >
-                <span className="w-8 h-[2px] bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 rounded-full" />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-purple-200 to-pink-300">
-                  Curated Collection
+                <span className="w-6 h-[2px] bg-blue-400 rounded-full" />
+                <span className="text-blue-200 font-bold tracking-[0.2em]">
+                  {activeSlide.badge || "THE ILUMAA EXPERIENCE"}
                 </span>
               </div>
 
-              {/* Heading (Colorful Gradient Highlights) */}
+              {/* Heading (Crisp Typography) */}
               {activeSlide.title && (
                 <h1
                   className="
                   text-[32px]
                   sm:text-[42px]
-                  md:text-[50px]
-                  lg:text-[60px]
-                  xl:text-[66px]
-                  leading-[0.98]
-                  tracking-[-0.045em]
+                  md:text-[48px]
+                  lg:text-[56px]
+                  xl:text-[62px]
+                  leading-[1.04]
+                  tracking-[-0.035em]
                   font-extrabold
                   max-w-[680px]
-                  drop-shadow-[0_5px_20px_rgba(0,0,0,0.30)]
+                  drop-shadow-[0_4px_24px_rgba(0,0,0,0.50)]
                 "
                 >
                   {renderColorfulStudioTitle(activeSlide.title)}
                 </h1>
               )}
 
-              {/* Subtitle (Luminous Gradient) */}
+              {/* Subtitle (Crisp Slate/White) */}
               {activeSlide.subtitle && (
                 <p
                   className="
-                  mt-5
-                  max-w-[580px]
-                  text-sm
-                  sm:text-base
-                  lg:text-[17px]
-                  leading-7
-                  text-transparent
-                  bg-clip-text
-                  bg-gradient-to-r
-                  from-slate-100
-                  via-blue-50
-                  to-purple-100
-                  font-medium
-                  drop-shadow-[0_2px_10px_rgba(0,0,0,0.25)]
+                  mt-4
+                  max-w-[560px]
+                  text-xs
+                  sm:text-sm
+                  md:text-base
+                  leading-relaxed
+                  text-slate-200/90
+                  font-normal
+                  drop-shadow-[0_2px_12px_rgba(0,0,0,0.35)]
                 "
                 >
                   {activeSlide.subtitle}
                 </p>
               )}
 
-              {/* CTA (Colorful Gradient Button) */}
+              {/* CTA (Premium Navy/Blue Button) */}
               <div className="mt-7 flex items-center gap-4 flex-wrap">
                 <button
                   type="button"
@@ -619,19 +617,21 @@ export default function HeroBanner() {
                   sm:px-7
                   py-3.5
                   rounded-xl
-                  bg-gradient-to-r
-                  from-blue-600
-                  via-indigo-600
-                  to-purple-600
+                  bg-blue-600
+                  hover:bg-blue-700
+                  active:bg-blue-800
                   text-white
                   text-xs
                   sm:text-sm
                   font-bold
-                  shadow-[0_10px_35px_rgba(79,70,229,0.35)]
-                  hover:shadow-[0_15px_40px_rgba(79,70,229,0.55)]
+                  tracking-wide
+                  shadow-[0_10px_30px_rgba(37,99,235,0.40)]
+                  hover:shadow-[0_14px_36px_rgba(37,99,235,0.55)]
                   hover:scale-[1.02]
+                  active:scale-[0.98]
                   transition-all
-                  duration-300
+                  duration-200
+                  cursor-pointer
                 "
                 >
                   <span>{activeSlide.buttonText || "EXPLORE NOW"}</span>

@@ -76,18 +76,20 @@ function Home() {
       {/* New Arrivals Section */}
       <NewArrivalsSection />
       <MegaSaleBanner
-        title="Craving Something Delicious?"
-        description="Order your favorite meals and get up to 50% off on selected restaurants."
-        imageUrl="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80"
-        linkUrl="/shop"
+        bannerIndex={0}
+        fallbackTitle="Curated Essentials for Modern Living"
+        fallbackDescription="Explore handpicked products from verified brands with effortless checkout and dependable delivery."
+        fallbackImageUrl="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80"
+        fallbackLinkUrl="/shop"
       />
       {/* Popular Local Shops */}
       <TopBrands />
       <MegaSaleBanner
-        title="Find Your Next Favorite 🛒"
-        description="Shop trending products, fresh arrivals and everyday essentials — all curated in one place."
-        imageUrl="https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&w=400&q=80"
-        linkUrl="/shop"
+        bannerIndex={1}
+        fallbackTitle="Premium Brands & Exclusive Studio Collections"
+        fallbackDescription="Discover authenticated lifestyle collections, direct-from-brand discounts, and member-exclusive perks."
+        fallbackImageUrl="https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&w=800&q=80"
+        fallbackLinkUrl="/shop"
       />
       {/* Recommended For You */}
       <RecommendedForYou />
