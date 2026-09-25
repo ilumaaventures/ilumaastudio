@@ -59,7 +59,10 @@ export default function StarlingNavbar() {
   const navLinks = [
     { name: "HOME", path: `${cleanHome}` },
     { name: "ABOUT US", path: `${cleanHome}#about-us` },
-    { name: "NURSERY COLLECTION", path: `${cleanHome}/products` },
+    {
+      name: "TENDER BEGINNINGS COLLECTION",
+      path: `${cleanHome}/products`,
+    },
     { name: "GIFT HAMPERS", path: `${cleanHome}/gift-hampers` },
   ];
 

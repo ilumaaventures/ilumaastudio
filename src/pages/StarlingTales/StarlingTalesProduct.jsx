@@ -387,7 +387,7 @@ export default function StarlingTalesProduct() {
       >
         <div className="text-center space-y-3.5">
           <h1 className="text-4xl font-display font-semibold text-text-dark">
-            The Nursery Collection
+            The Nursery Collection 
           </h1>
           <div
             className="flex w-full max-w-[190px] items-center gap-3 text-blue-soft mx-auto"
