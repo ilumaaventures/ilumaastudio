@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Clock,
   Zap,
@@ -7,18 +7,9 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowRight,
-  Heart,
-  ShoppingCart,
-  Star,
-  ShieldCheck,
-  Check,
-  Sparkles,
 } from "lucide-react";
-import { useSelector, useDispatch } from "react-redux";
-import { addToCart } from "../../../redux/reducers/cartReducer";
-import { toggleWishlist } from "../../../redux/reducers/wishlistReducer";
 import { getActiveFlashDeals } from "../../../api/flashDealService";
-import toast from "react-hot-toast";
+import ProductCard from "../../../Components/ProductCard";
 
 // ============================================================
 // CURATED FALLBACK DEALS (WHEN DB HAS NO ACTIVE SCHEDULED CAMPAIGN)
@@ -129,20 +120,12 @@ const FALLBACK_FLASH_DEALS = [
 ];
 
 export default function FlashDeals() {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
   const sliderRef = useRef(null);
-
-  const wishlistItems = useSelector((s) => s.wishlist?.items || []);
-  const cartItems = useSelector(
-    (s) => s.cart?.cartItems || s.cart?.items || [],
-  );
 
   const [deals, setDeals] = useState([]);
   const [activeDealTitle, setActiveDealTitle] = useState("");
   const [campaignEndDate, setCampaignEndDate] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [addedItems, setAddedItems] = useState({});
 
   // Live Timer State
   const [timeLeft, setTimeLeft] = useState({
@@ -153,7 +136,6 @@ export default function FlashDeals() {
 
   // Calculate live countdown timer
   useEffect(() => {
-    // If no campaign end date from API, create a rolling 8-hour target
     let targetTime = campaignEndDate
       ? new Date(campaignEndDate).getTime()
       : null;
@@ -220,14 +202,11 @@ export default function FlashDeals() {
           }
         }
 
-        // If backend returns empty campaigns, use the curated e-commerce deals
+        // Curated fallback if DB has no active flash campaigns currently scheduled
         setDeals(FALLBACK_FLASH_DEALS);
         setActiveDealTitle("Lightning Drops & Steals");
       } catch (err) {
-        console.warn(
-          "Flash deals API fetch error, using curated fallback:",
-          err,
-        );
+        console.warn("Flash deals API fetch error, using curated fallback:", err);
         if (isMounted) {
           setDeals(FALLBACK_FLASH_DEALS);
           setActiveDealTitle("Lightning Drops & Steals");
@@ -265,91 +244,6 @@ export default function FlashDeals() {
     if (!deals.length) return 60;
     return Math.max(...deals.map((d) => d.discountPercentage || 50));
   }, [deals]);
-
-  // Handle 1-Click Add to Cart
-  const handleQuickAddToCart = (e, item) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const prodId = item._id || item.id;
-    const prodName = item.name || "Product";
-    const prodPrice = item.dealPrice || item.price || 0;
-    const prodImg =
-      item.images?.[0]?.url ||
-      item.images?.[0] ||
-      item.image?.url ||
-      item.image ||
-      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80";
-
-    dispatch(
-      addToCart({
-        _id: prodId,
-        id: prodId,
-        name: prodName,
-        price: Number(prodPrice),
-        originalPrice: Number(item.originalPrice || prodPrice),
-        category:
-          typeof item.category === "object"
-            ? item.category?.name
-            : item.category || "General",
-        image: typeof prodImg === "object" ? prodImg.url : prodImg,
-        quantity: 1,
-        stock: item.remainingQuantity || item.dealQuantity || 20,
-      }),
-    );
-
-    // Set brief added state
-    setAddedItems((prev) => ({ ...prev, [prodId]: true }));
-    toast.success(`${prodName} added to cart at flash price!`, {
-      icon: "⚡",
-    });
-
-    setTimeout(() => {
-      setAddedItems((prev) => ({ ...prev, [prodId]: false }));
-    }, 2000);
-  };
-
-  // Handle Wishlist Toggle
-  const handleToggleWishlist = (e, item) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const prodId = item._id || item.id;
-    const isWished = wishlistItems.some((i) => {
-      const itemId = i && typeof i === "object" ? i._id || i.id : i;
-      return String(itemId) === String(prodId);
-    });
-
-    const prodImg =
-      item.images?.[0]?.url ||
-      item.images?.[0] ||
-      item.image?.url ||
-      item.image ||
-      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80";
-
-    dispatch(
-      toggleWishlist({
-        _id: prodId,
-        id: prodId,
-        name: item.name,
-        price: item.dealPrice || item.price,
-        originalPrice: item.originalPrice,
-        image: typeof prodImg === "object" ? prodImg.url : prodImg,
-        category:
-          typeof item.category === "object"
-            ? item.category?.name
-            : item.category || "General",
-        rating: item.rating || 4.8,
-        inStock: true,
-      }),
-    );
-
-    if (isWished) {
-      toast.success("Removed from Wishlist");
-    } else {
-      toast.success("Added to Wishlist! ❤️");
-    }
-  };
 
   if (loading) {
     return (
@@ -419,10 +313,7 @@ export default function FlashDeals() {
                     dark:text-rose-400
                   "
                 >
-                  <Flame
-                    size={12}
-                    className="fill-rose-500 text-rose-500 animate-pulse"
-                  />
+                  <Flame size={12} className="fill-rose-500 text-rose-500 animate-pulse" />
                   <span>FLASH DEAL OF THE HOUR</span>
                 </span>
 
@@ -492,9 +383,7 @@ export default function FlashDeals() {
                     <span className="bg-slate-800 px-2 py-0.5 rounded-md min-w-[28px] text-center text-amber-300">
                       {formatNumber(timeLeft.hours)}
                     </span>
-                    <span className="text-[8px] text-slate-400 font-sans mt-0.5">
-                      HRS
-                    </span>
+                    <span className="text-[8px] text-slate-400 font-sans mt-0.5">HRS</span>
                   </div>
 
                   <span className="text-amber-400 font-bold -mt-2.5">:</span>
@@ -504,9 +393,7 @@ export default function FlashDeals() {
                     <span className="bg-slate-800 px-2 py-0.5 rounded-md min-w-[28px] text-center text-amber-300">
                       {formatNumber(timeLeft.minutes)}
                     </span>
-                    <span className="text-[8px] text-slate-400 font-sans mt-0.5">
-                      MIN
-                    </span>
+                    <span className="text-[8px] text-slate-400 font-sans mt-0.5">MIN</span>
                   </div>
 
                   <span className="text-amber-400 font-bold -mt-2.5">:</span>
@@ -516,15 +403,73 @@ export default function FlashDeals() {
                     <span className="bg-rose-600 px-2 py-0.5 rounded-md min-w-[28px] text-center text-white shadow-sm animate-[pulse_1.5s_infinite]">
                       {formatNumber(timeLeft.seconds)}
                     </span>
-                    <span className="text-[8px] text-rose-300 font-sans mt-0.5 font-bold">
-                      SEC
-                    </span>
+                    <span className="text-[8px] text-rose-300 font-sans mt-0.5 font-bold">SEC</span>
                   </div>
                 </div>
               </div>
 
               {/* Slider Arrows & See All CTA */}
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleScrollLeft}
+                  className="
+                    w-9
+                    h-9
+                    rounded-xl
+                    bg-white
+                    dark:bg-slate-800
+                    hover:bg-slate-100
+                    dark:hover:bg-slate-700
+                    border
+                    border-slate-200
+                    dark:border-slate-700
+                    text-slate-700
+                    dark:text-slate-200
+                    flex
+                    items-center
+                    justify-center
+                    transition-all
+                    active:scale-95
+                    shadow-sm
+                    cursor-pointer
+                  "
+                  title="Scroll Left"
+                  aria-label="Scroll Flash Deals Left"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleScrollRight}
+                  className="
+                    w-9
+                    h-9
+                    rounded-xl
+                    bg-white
+                    dark:bg-slate-800
+                    hover:bg-slate-100
+                    dark:hover:bg-slate-700
+                    border
+                    border-slate-200
+                    dark:border-slate-700
+                    text-slate-700
+                    dark:text-slate-200
+                    flex
+                    items-center
+                    justify-center
+                    transition-all
+                    active:scale-95
+                    shadow-sm
+                    cursor-pointer
+                  "
+                  title="Scroll Right"
+                  aria-label="Scroll Flash Deals Right"
+                >
+                  <ChevronRight size={18} />
+                </button>
+
                 <Link
                   to="/flash-deals"
                   className="
@@ -563,8 +508,8 @@ export default function FlashDeals() {
         </div>
 
         {/* ============================================================
-            HORIZONTAL DEAL SHELF WITH ANCHOR SPOTLIGHT CARD
-            (Flipkart Super Deals & Blinkit Crazy Deals representation)
+            HORIZONTAL DEAL SHELF USING STANDARD PRODUCTCARD UI
+            (Matches New Arrivals, Best Sellers, and other marketplace sections)
         ============================================================ */}
         <div className="p-4 sm:p-6 lg:p-7">
           <div
@@ -579,288 +524,44 @@ export default function FlashDeals() {
               snap-mandatory
               pb-3
               pt-1
-              scrollbar-none
+              [scrollbar-width:none]
+              [-ms-overflow-style:none]
+              [&::-webkit-scrollbar]:hidden
             "
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
-            {/* ----------------------------------------------------
-                DYNAMIC PRODUCT DEAL CARDS (AMAZON & ZEPTO FORMAT)
-            ---------------------------------------------------- */}
             {deals.map((item, idx) => {
               const prodId = item._id || item.id || `deal-${idx}`;
-              const prodName = item.name || "Special Flash Deal Item";
               const dealPrice = Number(item.dealPrice || item.price || 0);
               const originalPrice = Number(
-                item.originalPrice || dealPrice * 1.6,
+                item.originalPrice || (dealPrice > 0 ? Math.round(dealPrice * 1.5) : dealPrice)
               );
               const discount =
                 item.discountPercentage ||
-                (originalPrice > 0
-                  ? Math.round(
-                      ((originalPrice - dealPrice) / originalPrice) * 100,
-                    )
-                  : 40);
-              const savings = Math.max(0, originalPrice - dealPrice);
+                (originalPrice > dealPrice
+                  ? Math.round(((originalPrice - dealPrice) / originalPrice) * 100)
+                  : 45);
 
-              const prodImage =
-                item.images?.[0]?.url ||
-                (typeof item.images?.[0] === "string"
-                  ? item.images[0]
-                  : null) ||
-                item.image?.url ||
-                item.image ||
-                "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80";
-
-              const categoryTitle =
-                typeof item.category === "object"
-                  ? item.category?.name || "Marketplace"
-                  : item.category || "Marketplace";
-
-              const isWished = wishlistItems.some((w) => {
-                const wid = w && typeof w === "object" ? w._id || w.id : w;
-                return String(wid) === String(prodId);
-              });
-
-              const isInCart = cartItems.some((c) => {
-                const cid =
-                  c && typeof c === "object"
-                    ? c._id || c.id || c.product?._id || c.product
-                    : c;
-                return String(cid) === String(prodId);
-              });
-
-              // Zepto & Amazon Stock Claimed Meter Simulation
-              const totalQty = item.dealQuantity || 40;
-              const soldQty = item.soldQuantity || Math.round(totalQty * 0.72);
-              const claimedPercent = Math.min(
-                95,
-                Math.max(40, Math.round((soldQty / totalQty) * 100)),
-              );
-              const remainingQty = Math.max(2, totalQty - soldQty);
+              const formattedProduct = {
+                ...item,
+                _id: prodId,
+                id: prodId,
+                name: item.name || "Exclusive Flash Deal",
+                price: dealPrice,
+                originalPrice: originalPrice > dealPrice ? originalPrice : null,
+                discountPercent: discount,
+                badge: `${discount}% OFF`,
+                inStock: true,
+                images: item.images,
+                category: item.category,
+                business: item.business || { businessName: "Verified Store" },
+              };
 
               return (
-                <div
+                <ProductCard
                   key={prodId}
-                  onClick={() => navigate(`/product/${prodId}`)}
-                  className="
-                    w-[230px]
-                    sm:w-[250px]
-                    md:w-[260px]
-                    shrink-0
-                    snap-start
-                    rounded-2xl
-                    border
-                    border-slate-200/90
-                    dark:border-slate-800
-                    bg-white
-                    dark:bg-slate-900
-                    overflow-hidden
-                    shadow-sm
-                    hover:shadow-xl
-                    hover:border-blue-400
-                    dark:hover:border-blue-700
-                    transition-all
-                    duration-300
-                    group
-                    hover:-translate-y-1.5
-                    flex
-                    flex-col
-                    justify-between
-                    cursor-pointer
-                  "
-                >
-                  {/* Top Image Stage & Overlays */}
-                  <div className="relative aspect-square w-full bg-slate-50 dark:bg-slate-800/50 overflow-hidden flex items-center justify-center p-3">
-                    {/* Discount Badge (Amazon / Zepto style) */}
-                    <div className="absolute top-2.5 left-2.5 z-10 flex flex-col gap-1">
-                      <span
-                        className="
-                          inline-flex
-                          items-center
-                          gap-1
-                          rounded-lg
-                          bg-rose-600
-                          text-white
-                          px-2
-                          py-1
-                          text-[10px]
-                          font-black
-                          tracking-wider
-                          shadow-sm
-                        "
-                      >
-                        <Flame size={10} className="fill-white" />
-                        <span>{discount}% OFF</span>
-                      </span>
-
-                      {claimedPercent >= 75 && (
-                        <span className="inline-block rounded-md bg-amber-500 text-slate-950 font-black text-[9px] px-1.5 py-0.5 tracking-tight shadow-sm">
-                          ALMOST GONE
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Wishlist Button */}
-                    <button
-                      type="button"
-                      onClick={(e) => handleToggleWishlist(e, item)}
-                      aria-label="Add to Wishlist"
-                      className={`
-                        absolute
-                        top-2.5
-                        right-2.5
-                        z-10
-                        h-8
-                        w-8
-                        rounded-full
-                        flex
-                        items-center
-                        justify-center
-                        shadow-sm
-                        backdrop-blur-sm
-                        transition-all
-                        duration-200
-                        ${
-                          isWished
-                            ? "bg-rose-50 text-rose-600"
-                            : "bg-white/90 dark:bg-slate-800/90 text-slate-500 hover:text-rose-500 hover:scale-105"
-                        }
-                      `}
-                    >
-                      <Heart
-                        size={15}
-                        className={
-                          isWished ? "fill-rose-500 text-rose-500" : ""
-                        }
-                      />
-                    </button>
-
-                    {/* Main Image */}
-                    <img
-                      src={prodImage}
-                      alt={prodName}
-                      loading="lazy"
-                      className="
-                        h-full
-                        w-full
-                        object-contain
-                        transition-transform
-                        duration-500
-                        ease-out
-                        group-hover:scale-105
-                      "
-                    />
-                  </div>
-
-                  {/* Card Content */}
-                  <div className="p-3.5 sm:p-4 flex flex-col flex-1 justify-between gap-3">
-                    <div className="space-y-1.5">
-                      {/* Category & Rating */}
-                      <div className="flex items-center justify-between text-[11px] text-slate-500">
-                        <span className="font-semibold uppercase tracking-wider text-[10px] text-blue-600 dark:text-blue-400 line-clamp-1">
-                          {categoryTitle}
-                        </span>
-                        <div className="flex items-center gap-1 font-bold text-slate-700 dark:text-slate-300">
-                          <Star
-                            size={11}
-                            className="fill-amber-400 text-amber-400"
-                          />
-                          <span>{item.rating || 4.8}</span>
-                        </div>
-                      </div>
-
-                      {/* Product Name */}
-                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-2 leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                        {prodName}
-                      </h4>
-
-                      {/* Pricing Row */}
-                      <div className="pt-1 flex items-baseline gap-2">
-                        <span className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
-                          ₹{dealPrice.toLocaleString()}
-                        </span>
-                        {originalPrice > dealPrice && (
-                          <span className="text-xs text-slate-400 line-through">
-                            ₹{originalPrice.toLocaleString()}
-                          </span>
-                        )}
-                        {savings > 0 && (
-                          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">
-                            Save ₹{savings.toLocaleString()}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Bottom Action & Stock Claimed Meter (Amazon & Zepto signature) */}
-                    <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-                      {/* Claimed Progress Meter */}
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between text-[10px] font-bold">
-                          <span className="text-rose-600 dark:text-rose-400">
-                            {claimedPercent}% Claimed
-                          </span>
-                          <span className="text-slate-400">
-                            {remainingQty} left
-                          </span>
-                        </div>
-                        <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-amber-500 to-rose-600 transition-all duration-500"
-                            style={{ width: `${claimedPercent}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* 1-Click Quick Add Button */}
-                      <button
-                        type="button"
-                        onClick={(e) => handleQuickAddToCart(e, item)}
-                        className={`
-                          w-full
-                          py-2
-                          px-3
-                          rounded-xl
-                          text-xs
-                          font-extrabold
-                          flex
-                          items-center
-                          justify-center
-                          gap-1.5
-                          transition-all
-                          duration-200
-                          shadow-xs
-                          active:scale-95
-                          cursor-pointer
-                          ${
-                            addedItems[prodId]
-                              ? "bg-emerald-600 text-white"
-                              : isInCart
-                                ? "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200"
-                                : "bg-blue-600 hover:bg-blue-700 text-white hover:shadow-md hover:-translate-y-0.5"
-                          }
-                        `}
-                      >
-                        {addedItems[prodId] ? (
-                          <>
-                            <Check size={14} className="text-white" />
-                            <span>Claimed & Added!</span>
-                          </>
-                        ) : isInCart ? (
-                          <>
-                            <ShoppingCart size={13} />
-                            <span>In Cart • Add More</span>
-                          </>
-                        ) : (
-                          <>
-                            <Zap size={13} className="fill-white" />
-                            <span>Claim Deal</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                  product={formattedProduct}
+                  isCarousel={true}
+                />
               );
             })}
           </div>
