@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { getServiceById } from "../../api/serviceService";
@@ -23,6 +23,7 @@ import {
   X,
   CreditCard,
   MapPin,
+  Camera,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -44,7 +45,7 @@ export default function ServiceDetails() {
 
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState("");
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   // Booking drawer / modal state
   const [showBookingModal, setShowBookingModal] = useState(false);
@@ -70,11 +71,7 @@ export default function ServiceDetails() {
         const data = await getServiceById(id);
         const serviceObj = data.service || data.data || data;
         setService(serviceObj);
-        setSelectedImage(
-          serviceObj.images?.[0] ||
-            serviceObj.thumbnail ||
-            "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80",
-        );
+        setSelectedImageIndex(0);
       } catch (err) {
         console.error("Failed to load service details:", err);
         toast.error("Failed to load service details");
@@ -84,6 +81,40 @@ export default function ServiceDetails() {
     };
     fetchDetails();
   }, [id]);
+
+  // Safely extract and deduplicate all images for the service gallery (up to 7 images)
+  const allImages = useMemo(() => {
+    if (!service) return [];
+    const list = [];
+    const pushIfNew = (url) => {
+      if (url && typeof url === "string" && !list.includes(url)) {
+        list.push(url);
+      }
+    };
+
+    // Primary cover / thumbnail
+    const thumbUrl =
+      typeof service.thumbnail === "string"
+        ? service.thumbnail
+        : service.thumbnail?.url;
+    pushIfNew(thumbUrl);
+
+    // Gallery images
+    if (Array.isArray(service.images)) {
+      service.images.forEach((img) => {
+        const url = typeof img === "string" ? img : img?.url;
+        pushIfNew(url);
+      });
+    }
+
+    // Fallback if none provided
+    if (list.length === 0) {
+      list.push(
+        "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80",
+      );
+    }
+    return list;
+  }, [service]);
 
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
@@ -186,7 +217,7 @@ export default function ServiceDetails() {
           </button>
           <ChevronRight size={14} className="text-gray-300" />
           <span className="text-gray-800 font-semibold line-clamp-1">
-            {service.name}
+            {service.serviceName || service.name}
           </span>
         </div>
       </div>
@@ -197,38 +228,54 @@ export default function ServiceDetails() {
           <div className="lg:col-span-8 space-y-8">
             {/* Gallery Card */}
             <div className="bg-white rounded-3xl p-4 border border-gray-200/80 shadow-sm space-y-4">
-              <div className="h-96 rounded-2xl overflow-hidden bg-gray-100 relative">
+              <div className="h-96 rounded-2xl overflow-hidden bg-gray-100 relative group">
                 <img
-                  src={selectedImage}
-                  alt={service.name}
-                  className="w-full h-full object-cover"
+                  src={allImages[selectedImageIndex] || allImages[0]}
+                  alt={service.serviceName || service.name}
+                  className="w-full h-full object-cover transition-all duration-300"
                 />
                 <div className="absolute top-4 right-4 bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-full text-xs shadow-lg flex items-center gap-1">
                   <Star size={14} className="fill-slate-950" />
                   {service.rating || service.avgRating || 4.9} Rating
                 </div>
+
+                {allImages.length > 1 && (
+                  <div className="absolute bottom-4 right-4 bg-slate-900/80 backdrop-blur-xs text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-md">
+                    <Camera size={13} />
+                    <span>{selectedImageIndex + 1} / {allImages.length} Photos</span>
+                  </div>
+                )}
               </div>
 
-              {/* Thumbnails */}
-              {service.images && service.images.length > 1 && (
-                <div className="flex gap-3 overflow-x-auto pb-2">
-                  {service.images.map((img, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedImage(img)}
-                      className={`w-20 h-20 rounded-xl overflow-hidden border-2 flex-shrink-0 transition-all ${
-                        selectedImage === img
-                          ? "border-indigo-600 ring-2 ring-indigo-600/30"
-                          : "border-transparent opacity-70 hover:opacity-100"
-                      }`}
-                    >
-                      <img
-                        src={img}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
+              {/* Thumbnails row (supports up to 7 images) */}
+              {allImages.length > 1 && (
+                <div className="flex gap-3 overflow-x-auto pb-2 pt-1 scrollbar-thin">
+                  {allImages.map((imgUrl, idx) => {
+                    const isSelected = selectedImageIndex === idx;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setSelectedImageIndex(idx)}
+                        className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 flex-shrink-0 transition-all cursor-pointer ${
+                          isSelected
+                            ? "border-indigo-600 ring-2 ring-indigo-600/30 scale-102"
+                            : "border-gray-200 opacity-70 hover:opacity-100 hover:border-gray-300"
+                        }`}
+                      >
+                        <img
+                          src={imgUrl}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                        {idx === 0 && (
+                          <span className="absolute bottom-1 left-1 bg-black/60 text-[9px] text-white px-1 rounded font-semibold">
+                            Cover
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronLeft, ChevronRight, MapPin, Store, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, Store, ArrowRight, Sparkles } from "lucide-react";
 import { getShops } from "../../../api/publicService";
 import { StoreGridSkeleton } from "../../../Components/Skeletons";
 
@@ -16,16 +16,17 @@ function TopBrands() {
     try {
       setLoading(true);
       const response = await getShops({
-        businessCategory: "ECOMMERCE",
+        isFeatured: true,
         anySlugType: true,
       });
       const shopsData = response?.data ?? response;
-      console.log("Fetched local shops:", shopsData);
       const shops = Array.isArray(shopsData)
         ? shopsData
         : shopsData?.data || [];
 
-      setLocalShops(shops);
+      // Strictly only show businesses marked as isFeatured: true
+      const featuredOnly = shops.filter((s) => s.isFeatured === true);
+      setLocalShops(featuredOnly);
     } catch (error) {
       console.error(
         "Failed to fetch local shops:",
@@ -216,6 +217,12 @@ function TopBrands() {
                       {/* Overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
 
+                      {/* Featured Badge */}
+                      <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-amber-500/95 backdrop-blur-xs text-white text-[10px] font-black flex items-center gap-1 shadow-xs z-10">
+                        <Sparkles size={10} className="fill-white text-white" />
+                        Featured
+                      </span>
+
                       {/* Business Type */}
                       <span
                         className="
@@ -373,8 +380,12 @@ function TopBrands() {
                 );
               })
             ) : (
-              <div className="w-full py-10 text-center text-sm text-slate-400">
-                No local shops available.
+              <div className="w-full py-8 text-center bg-white rounded-2xl border border-dashed border-slate-200">
+                <Store className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                <p className="text-xs font-bold text-slate-600">No featured partner shops spotlighted right now</p>
+                <Link to="/store" className="text-xs font-semibold text-blue-600 hover:underline mt-1 inline-block">
+                  Explore all registered businesses &rarr;
+                </Link>
               </div>
             )}
           </div>

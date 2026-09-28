@@ -96,10 +96,10 @@ function Navbar() {
     if (isServiceCategory(newBCat)) {
       navigate("/services");
     } else if (
+      newBCat === "business" ||
       newBCat === "other" ||
-      newBCat === "other" ||
-      newBCat === "Other" ||
-      newBCat === "OTHER" ||
+      newBCat === "Business" ||
+      newBCat === "BUSINESS" ||
       newBCat === "OTHER"
     ) {
       navigate("/store");
@@ -226,7 +226,12 @@ function Navbar() {
           ];
 
   const isService = isServiceCategory(selectedBusinessCategory);
-
+  const isBusiness =
+    selectedBusinessCategory === "business" ||
+    selectedBusinessCategory === "other" ||
+    selectedBusinessCategory === "Business" ||
+    selectedBusinessCategory === "BUSINESS" ||
+    selectedBusinessCategory === "OTHER";
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-xs font-sans">
       {/* Top Announcement Bar */}
@@ -263,7 +268,9 @@ function Navbar() {
               placeholder={
                 isService
                   ? "Search services, bookings, categories..."
-                  : "Search products, brands, categories..."
+                  : isBusiness
+                    ? "Search businesses, brands, categories..."
+                    : "Search products, brands, categories..."
               }
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -297,52 +304,56 @@ function Navbar() {
               <Tag size={17} className="text-red-500" />
               <span>Offers</span>
             </Link>
+            {isService || isBusiness ? (
+              <></>
+            ) : (
+              <>
+                <Link
+                  to="/wishlist"
+                  className="relative flex items-center gap-1.5 text-slate-700 hover:text-[#2563eb] transition-colors font-semibold"
+                >
+                  <div className="relative">
+                    <Heart size={18} />
+                    {wishlistQty > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                        {wishlistQty}
+                      </span>
+                    )}
+                  </div>
+                  <span>Wishlist</span>
+                </Link>
 
-            <Link
-              to="/compare"
-              className="relative flex items-center gap-1.5 text-slate-700 hover:text-[#2563eb] transition-colors font-semibold"
-              title="Compare Products"
-            >
-              <div className="relative">
-                <Scale size={18} />
-                {compareQty > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
-                    {compareQty}
-                  </span>
-                )}
-              </div>
-              <span>Compare</span>
-            </Link>
-
-            <Link
-              to="/wishlist"
-              className="relative flex items-center gap-1.5 text-slate-700 hover:text-[#2563eb] transition-colors font-semibold"
-            >
-              <div className="relative">
-                <Heart size={18} />
-                {wishlistQty > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
-                    {wishlistQty}
-                  </span>
-                )}
-              </div>
-              <span>Wishlist</span>
-            </Link>
-
-            <Link
-              to="/cart"
-              className="relative flex items-center gap-1.5 text-slate-700 hover:text-[#2563eb] transition-colors font-semibold"
-            >
-              <div className="relative">
-                <ShoppingCart size={18} />
-                {totalQty > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
-                    {totalQty}
-                  </span>
-                )}
-              </div>
-              <span>Cart</span>
-            </Link>
+                <Link
+                  to="/cart"
+                  className="relative flex items-center gap-1.5 text-slate-700 hover:text-[#2563eb] transition-colors font-semibold"
+                >
+                  <div className="relative">
+                    <ShoppingCart size={18} />
+                    {totalQty > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                        {totalQty}
+                      </span>
+                    )}
+                  </div>
+                  <span>Cart</span>
+                </Link>
+                <Link
+                  to="/compare"
+                  className="relative flex items-center gap-1.5 text-slate-700 hover:text-[#2563eb] transition-colors font-semibold"
+                  title="Compare Products"
+                >
+                  <div className="relative">
+                    <Scale size={18} />
+                    {compareQty > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                        {compareQty}
+                      </span>
+                    )}
+                  </div>
+                  <span>Compare</span>
+                </Link>
+              </>
+            )}
 
             {isAuthenticated ? (
               <Link
@@ -425,7 +436,7 @@ function Navbar() {
               {/* Default E-Commerce option */}
               <option value="E-Commerce">E-Commerce</option>
               {businessCategories
-                .filter(
+                .filter(  
                   (bc) =>
                     bc.name?.toLowerCase() !== "e-commerce" &&
                     bc.code?.toUpperCase() !== "ECOMMERCE",
@@ -473,6 +484,15 @@ function Navbar() {
                 <Layers size={13} />
                 <span>All Services</span>
               </button>
+            ) : isBusiness ? (
+              <button
+                type="button"
+                onClick={() => navigate("/store")}
+                className="px-3 py-1 rounded-full font-bold transition shrink-0 bg-blue-50 text-[#2563eb] hover:bg-blue-100 cursor-pointer text-xs flex items-center gap-1"
+              >
+                <Package size={13} />
+                <span>All Businesses</span>
+              </button>
             ) : (
               <button
                 type="button"
@@ -485,7 +505,7 @@ function Navbar() {
             )}
 
             {/* Flash Deals: Only show when NOT service */}
-            {!isService && (
+            {!isService && !isBusiness && (
               <Link
                 to="/flash-deals"
                 className="px-3 py-1 rounded-full font-black transition shrink-0 bg-amber-500 text-white hover:bg-amber-600 cursor-pointer flex items-center gap-1 shadow-2xs text-xs"
@@ -522,10 +542,18 @@ function Navbar() {
 
             {/* End Button: Explore All */}
             <button
-              onClick={() => navigate(isService ? "/services" : "/shop")}
+              onClick={() =>
+                navigate(
+                  isService ? "/services" : isBusiness ? "/business" : "/shop",
+                )
+              }
               className="px-3 py-1 rounded-full font-semibold transition shrink-0 text-[#2563eb] sm:text-slate-700 hover:bg-slate-200 hover:text-slate-900 cursor-pointer whitespace-nowrap text-xs"
             >
-              {isService ? "Explore all services" : "Explore all products"}
+              {isService
+                ? "Explore all services"
+                : isBusiness
+                  ? "Explore all businesses"
+                  : "Explore all products"}
             </button>
           </div>
 

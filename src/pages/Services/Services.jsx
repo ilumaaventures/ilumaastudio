@@ -26,6 +26,7 @@ import {
   Check,
   Package,
   Layers,
+  Camera,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -329,9 +330,6 @@ export default function Services() {
                     }`}
                   >
                     <span>All Categories</span>
-                    <span className="text-[10px] text-slate-400 font-bold">
-                      {services.length}
-                    </span>
                   </button>
 
                   {visibleCategories.map((cat) => {
@@ -357,9 +355,6 @@ export default function Services() {
                           )}
                           <span className="truncate">{cat.name}</span>
                         </div>
-                        <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full shrink-0">
-                          {count}
-                        </span>
                       </button>
                     );
                   })}
@@ -591,9 +586,21 @@ export default function Services() {
                     service.business?.businessName ||
                     service.business?.slug ||
                     "Verified Partner";
+                  const imgCount = Array.isArray(service.images)
+                    ? service.images.length
+                    : 0;
                   const imgUrl =
-                    service.images?.[0] ||
-                    service.thumbnail ||
+                    service.thumbnail?.url ||
+                    (typeof service.thumbnail === "string"
+                      ? service.thumbnail
+                      : null) ||
+                    service.images?.[0]?.url ||
+                    (typeof service.images?.[0] === "string"
+                      ? service.images[0]
+                      : null) ||
+                    (typeof service.image === "string"
+                      ? service.image
+                      : service.image?.url) ||
                     "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=600&q=80";
 
                   if (viewMode === "list") {
@@ -611,6 +618,12 @@ export default function Services() {
                           <div className="absolute top-2.5 left-2.5 bg-slate-900/80 backdrop-blur-xs text-white px-2 py-0.5 rounded-full text-[10px] font-bold">
                             {sCategoryName}
                           </div>
+                          {imgCount > 1 && (
+                            <div className="absolute bottom-2.5 right-2.5 bg-black/70 backdrop-blur-xs text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-sm">
+                              <Camera size={11} />
+                              <span>{imgCount}</span>
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex-1 flex flex-col justify-between space-y-3">
@@ -685,6 +698,12 @@ export default function Services() {
                             <Star size={12} className="fill-slate-950" />
                             <span>{sRating}</span>
                           </div>
+                          {imgCount > 1 && (
+                            <div className="absolute bottom-2.5 right-2.5 bg-black/70 backdrop-blur-xs text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-sm">
+                              <Camera size={11} />
+                              <span>{imgCount}</span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Card Content */}

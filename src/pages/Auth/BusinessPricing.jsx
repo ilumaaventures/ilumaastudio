@@ -480,70 +480,62 @@ function BusinessPricing() {
   const [searchFeature, setSearchFeature] = useState("");
   const [activeCardIndex, setActiveCardIndex] = useState(1); // Default active card index (Growth)
 
-  // Fetch Business Categories & Subscription Plans from Backend API
-  const loadBackendPlans = async () => {
-    try {
-      setLoading(true);
-
-      const [planRes, catRes] = await Promise.allSettled([
-        baseApi.get("/business-subscriptions/plans"),
-        baseApi.get("/business-categories"),
-      ]);
-
-      if (catRes.status === "fulfilled") {
-        const catList = catRes.value?.data?.data || catRes.value?.data || [];
-        setCategories(Array.isArray(catList) ? catList : []);
+  // Fetch Business Categories once from Backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const catRes = await baseApi.get("/business-categories");
+        const catList = catRes.data?.data || catRes.data || [];
+        if (Array.isArray(catList) && catList.length > 0) {
+          setCategories(catList);
+        }
+      } catch (err) {
+        console.warn("Using fallback categories:", err.message);
       }
+    };
+    fetchCategories();
+  }, []);
 
-      if (planRes.status === "fulfilled") {
+  // Fetch Subscription Plans dynamically based on selected Category
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        setLoading(true);
+        const params = {};
+        if (selectedCategory && selectedCategory !== "ALL") {
+          params.businessCategory = selectedCategory;
+        }
+
+        const planRes = await baseApi.get("/business-subscriptions/plans", {
+          params,
+        });
         const fetched =
-          planRes.value?.data?.plans ||
-          planRes.value?.data?.data ||
-          planRes.value?.data ||
-          [];
+          planRes.data?.plans ||
+          planRes.data?.data ||
+          (Array.isArray(planRes.data) ? planRes.data : []);
+
+        const enterprisePlan = DEFAULT_4_PLANS[3];
         if (Array.isArray(fetched) && fetched.length > 0) {
           const top3 = fetched.slice(0, 3);
-          const enterprisePlan = DEFAULT_4_PLANS[3];
           setPlans([...top3, enterprisePlan]);
         } else {
           setPlans(DEFAULT_4_PLANS);
         }
-      } else {
+      } catch (err) {
+        console.warn("Using default 4 pricing plan cards:", err.message);
         setPlans(DEFAULT_4_PLANS);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.warn("Using default 4 pricing plan cards:", err.message);
-      setPlans(DEFAULT_4_PLANS);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  useEffect(() => {
-    loadBackendPlans();
-  }, []);
+    fetchPlans();
+  }, [selectedCategory]);
 
-  // Filter Plans based on selected Business Category
+  // Display top 4 cards
   const displayedPlans = useMemo(() => {
-    if (selectedCategory === "ALL") return plans.slice(0, 4);
-
-    const filtered = plans.filter((p) => {
-      if (p.isCustomTalk) return true; // Enterprise plan is always included as 4th card
-      const pScope = p.businessCategoryScope || "";
-      const pCat =
-        typeof p.businessCategory === "object"
-          ? p.businessCategory?._id
-          : p.businessCategory;
-      return (
-        pScope.toLowerCase() === selectedCategory.toLowerCase() ||
-        pCat === selectedCategory ||
-        pScope === "ECOMMERCE" ||
-        !pScope
-      );
-    });
-
-    return filtered.slice(0, 4);
-  }, [plans, selectedCategory]);
+    return plans.slice(0, 4);
+  }, [plans]);
 
   const getMonthlyPrice = (plan) => {
     if (plan.pricing?.monthly !== undefined) return plan.pricing.monthly;
@@ -568,7 +560,13 @@ function BusinessPricing() {
       navigate("/contact");
       return;
     }
-    navigate(`/businessRegistration?plan=${plan._id}`);
+    const catQuery =
+      selectedCategory !== "ALL"
+        ? `&category=${selectedCategory}`
+        : plan.businessCategory?._id
+          ? `&category=${plan.businessCategory._id}`
+          : "";
+    navigate(`/businessRegistration?plan=${plan._id}${catQuery}`);
   };
 
   const handleCardInteraction = (idx) => {
@@ -661,72 +659,30 @@ function BusinessPricing() {
 
           {/* Business Category Filter Bar */}
           <div className="mt-6 flex flex-wrap justify-center items-center gap-2">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-2">
-              Filter by Industry:
-            </span>
             <button
-              type="button"
-              onClick={() => setSelectedCategory("ALL")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer border ${
-                selectedCategory === "ALL"
-                  ? "bg-indigo-600 border-indigo-600 text-white shadow-xs"
-                  : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+              value="E-commerce"
+              onClick={() => setSelectedCategory("E-commerce")}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer border
               }`}
             >
-              All Categories
+              E-commerce
             </button>
-            {categories.length > 0 ? (
-              categories.map((cat) => (
-                <button
-                  key={cat._id}
-                  type="button"
-                  onClick={() => setSelectedCategory(cat._id || cat.code)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer border ${
-                    selectedCategory === (cat._id || cat.code)
-                      ? "bg-indigo-600 border-indigo-600 text-white shadow-xs"
-                      : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              ))
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategory("ECOMMERCE")}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer border ${
-                    selectedCategory === "ECOMMERCE"
-                      ? "bg-indigo-600 border-indigo-600 text-white shadow-xs"
-                      : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                  }`}
-                >
-                  E-Commerce
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategory("GIFTING")}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer border ${
-                    selectedCategory === "GIFTING"
-                      ? "bg-indigo-600 border-indigo-600 text-white shadow-xs"
-                      : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                  }`}
-                >
-                  Gifting & Crafts
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategory("SERVICE")}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer border ${
-                    selectedCategory === "SERVICE"
-                      ? "bg-indigo-600 border-indigo-600 text-white shadow-xs"
-                      : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                  }`}
-                >
-                  Services
-                </button>
-              </>
-            )}
+            <button
+              value="Service"
+              onClick={() => setSelectedCategory("Service")}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer border
+              }`}
+            >
+              Service Provider
+            </button>
+            <button
+              value="business"
+              onClick={() => setSelectedCategory("business")}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer border
+              }`}
+            >
+              Both
+            </button>
           </div>
         </div>
       </section>

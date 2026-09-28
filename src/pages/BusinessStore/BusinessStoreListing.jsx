@@ -26,6 +26,7 @@ import { fetchBusinessCategories } from "../../api/categoryService";
 import { StoreGridSkeleton } from "../../Components/Skeletons";
 import { BASE_URL } from "../../api/baseApi";
 import toast from "react-hot-toast";
+import { fetchCategories } from "../../api/categoryService";
 
 /* =========================================================
    IMAGE RESOLVER HELPER
@@ -67,6 +68,9 @@ export default function BusinessStoreListing() {
   const [verifiedOnly, setVerifiedOnly] = useState(
     searchParams.get("verified") === "true",
   );
+  const [featuredOnly, setFeaturedOnly] = useState(
+    searchParams.get("featured") === "true",
+  );
   const [sortBy, setSortBy] = useState(searchParams.get("sort") || "popular");
   const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'list'
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -83,9 +87,9 @@ export default function BusinessStoreListing() {
 
         const [storeRes, catRes] = await Promise.all([
           fetchAllMarketplaceStores({ anySlugType: true }),
-          fetchBusinessCategories(),
+          fetchCategories({ businessCategory: "business" }),
         ]);
-
+        console.log("Fetched Categories:", catRes);
         if (!isMounted) return;
 
         // 1. Process Stores
@@ -99,7 +103,11 @@ export default function BusinessStoreListing() {
             (typeof s.slug === "object" ? s.slug?.slugName : s.slug) ||
             s.businessSlug ||
             s.subdomain ||
-            (s.businessName || s.name || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+            (s.businessName || s.name || "")
+              .toLowerCase()
+              .trim()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-+|-+$/g, "");
 
           const slugType =
             s.slugType ||
@@ -112,7 +120,10 @@ export default function BusinessStoreListing() {
             (s.website && s.website.includes(".") ? s.website.trim() : null);
 
           const isCustomDomain = slugType === "custom" && Boolean(customDomain);
-          const hasStorefront = Boolean(isCustomDomain || (rawSlug && rawSlug !== "store" && rawSlug.length > 0));
+          const hasStorefront = Boolean(
+            isCustomDomain ||
+            (rawSlug && rawSlug !== "store" && rawSlug.length > 0),
+          );
 
           const categoryName =
             (typeof s.businessCategory === "object"
@@ -166,7 +177,11 @@ export default function BusinessStoreListing() {
               resolveImg(s.banner) ||
               "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
             status: s.status || "active",
-            verified: s.status === "active" || s.status === "Active" || Boolean(s.isVerified),
+            verified:
+              s.status === "active" ||
+              s.status === "Active" ||
+              Boolean(s.isVerified),
+            isFeatured: Boolean(s.isFeatured),
             email: s.businessEmail || "",
             phone: s.businessPhone || "",
             website: s.website || "",
@@ -215,8 +230,21 @@ export default function BusinessStoreListing() {
   }, [stores]);
 
   /* =========================================================
-     3. DERIVED CATEGORY COUNTS
+     3. DERIVED CATEGORY LIST & COUNTS
   ========================================================= */
+  const displayCategoriesList = useMemo(() => {
+    if (categories && categories.length > 0) {
+      return categories;
+    }
+    const set = new Set();
+    stores.forEach((s) => {
+      if (s.category) set.add(s.category);
+    });
+    return Array.from(set)
+      .sort()
+      .map((name) => ({ name, code: name }));
+  }, [categories, stores]);
+
   const categoryCounts = useMemo(() => {
     const counts = {};
     stores.forEach((s) => {
@@ -245,11 +273,12 @@ export default function BusinessStoreListing() {
         }
 
         // Category Filter
-        if (
-          selectedCategory !== "all" &&
-          store.category.toLowerCase() !== selectedCategory.toLowerCase()
-        ) {
-          return false;
+        if (selectedCategory !== "all") {
+          const sCat = selectedCategory.toLowerCase();
+          const matchCat =
+            store.category.toLowerCase() === sCat ||
+            (store.businessType && store.businessType.toLowerCase() === sCat);
+          if (!matchCat) return false;
         }
 
         // City Filter
@@ -270,11 +299,22 @@ export default function BusinessStoreListing() {
           return false;
         }
 
+        // Featured Filter
+        if (featuredOnly && !store.isFeatured) {
+          return false;
+        }
+
         return true;
       })
       .sort((a, b) => {
         if (sortBy === "rating") {
           return b.rating - a.rating;
+        }
+        if (sortBy === "featured") {
+          if (b.isFeatured !== a.isFeatured) {
+            return b.isFeatured ? 1 : -1;
+          }
+          return b.reviews - a.reviews;
         }
         if (sortBy === "name_asc") {
           return a.name.localeCompare(b.name);
@@ -292,6 +332,7 @@ export default function BusinessStoreListing() {
     selectedCity,
     minRating,
     verifiedOnly,
+    featuredOnly,
     sortBy,
   ]);
 
@@ -304,6 +345,7 @@ export default function BusinessStoreListing() {
     setSelectedCity("all");
     setMinRating(0);
     setVerifiedOnly(false);
+    setFeaturedOnly(false);
     setSortBy("popular");
   };
 
@@ -312,7 +354,8 @@ export default function BusinessStoreListing() {
     selectedCategory !== "all" ||
     selectedCity !== "all" ||
     minRating > 0 ||
-    verifiedOnly;
+    verifiedOnly ||
+    featuredOnly;
 
   /* =========================================================
      6. STORE NAVIGATION (Matches Home Page Local Shop Section)
@@ -342,7 +385,11 @@ export default function BusinessStoreListing() {
       store.businessSlug ||
       store.subdomain ||
       (store.name && store.name !== "Local Merchant Store"
-        ? store.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+        ? store.name
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "")
         : "");
 
     // 1. External Custom Domain: act according to home page local shop section
@@ -361,7 +408,9 @@ export default function BusinessStoreListing() {
     }
 
     // 3. If neither exists, DO NOT navigate!
-    toast.error(`Storefront is not yet configured for ${store.name || "this business"}.`);
+    toast.error(
+      `Storefront is not yet configured for ${store.name || "this business"}.`,
+    );
   };
 
   return (
@@ -393,7 +442,8 @@ export default function BusinessStoreListing() {
                     Registered Businesses & Stores
                   </h1>
                   <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                    Browse all registered businesses, artisan stores and partners on ILumaa ({filteredStores.length} stores)
+                    Browse all registered businesses, artisan stores and
+                    partners on ILumaa ({filteredStores.length} stores)
                   </p>
                 </div>
               </div>
@@ -480,45 +530,42 @@ export default function BusinessStoreListing() {
                     }`}
                   >
                     <span>All Categories</span>
-
-                    <span
-                      className={`text-[10px] font-semibold ${
-                        selectedCategory === "all"
-                          ? "text-blue-500"
-                          : "text-slate-400"
-                      }`}
-                    >
-                      {stores.length}
-                    </span>
                   </button>
 
-                  {/* Categories */}
-                  {[
-                    "E-commerce",
-                    "Education",
-                    "Health",
-                    "Retail",
-                    "Technology",
-                    "Food & Beverage",
-                    "Supply Chain",
-                    "Automobile",
-                  ].map((cat) => {
-                    const count = categoryCounts[cat] || 0;
+                  {/* Categories fetched from backend */}
+                  {displayCategoriesList.map((catItem) => {
+                    const catName =
+                      typeof catItem === "string" ? catItem : catItem.name;
+                    const catCode =
+                      typeof catItem === "object" ? catItem.code : "";
+                    const count =
+                      categoryCounts[catName] ||
+                      (catCode ? categoryCounts[catCode] : 0) ||
+                      stores.filter(
+                        (s) =>
+                          s.category?.toLowerCase() === catName?.toLowerCase(),
+                      ).length;
                     const isSelected =
-                      selectedCategory.toLowerCase() === cat.toLowerCase();
+                      selectedCategory.toLowerCase() ===
+                        catName?.toLowerCase() ||
+                      (catCode &&
+                        selectedCategory.toLowerCase() ===
+                          catCode?.toLowerCase());
 
                     return (
                       <button
-                        key={cat}
+                        key={catItem._id || catName}
                         type="button"
-                        onClick={() => setSelectedCategory(cat)}
+                        onClick={() =>
+                          setSelectedCategory(isSelected ? "all" : catName)
+                        }
                         className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs transition-all ${
                           isSelected
                             ? "bg-blue-50 font-bold text-[#2563eb] dark:bg-slate-800 dark:text-blue-400"
                             : "text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/60"
                         }`}
                       >
-                        <span className="truncate pr-3">{cat}</span>
+                        <span className="truncate pr-3">{catName}</span>
                       </button>
                     );
                   })}
@@ -594,6 +641,25 @@ export default function BusinessStoreListing() {
                   />
                 </label>
               </div>
+
+              {/* 5. Featured Only Toggle */}
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+                <label className="flex items-center justify-between cursor-pointer">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                    <Sparkles
+                      size={16}
+                      className="text-amber-500 fill-amber-500"
+                    />
+                    <span>Featured Stores Only</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={featuredOnly}
+                    onChange={(e) => setFeaturedOnly(e.target.checked)}
+                    className="w-4 h-4 rounded text-amber-500 accent-amber-500 cursor-pointer"
+                  />
+                </label>
+              </div>
             </div>
           </aside>
 
@@ -633,6 +699,7 @@ export default function BusinessStoreListing() {
                     className="text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-slate-800 dark:text-slate-200 focus:outline-hidden"
                   >
                     <option value="popular">Most Popular</option>
+                    <option value="featured">Featured First ⭐</option>
                     <option value="rating">Top Rated</option>
                     <option value="newest">Newest First</option>
                     <option value="name_asc">Name: A to Z</option>
@@ -712,6 +779,14 @@ export default function BusinessStoreListing() {
                     </button>
                   </span>
                 )}
+                {featuredOnly && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-slate-800 text-[11px] font-bold text-amber-700 dark:text-amber-400">
+                    Featured
+                    <button onClick={() => setFeaturedOnly(false)}>
+                      <X size={12} />
+                    </button>
+                  </span>
+                )}
                 <button
                   onClick={resetFilters}
                   className="text-[11px] font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white underline ml-1"
@@ -777,7 +852,9 @@ export default function BusinessStoreListing() {
                         key={store._id}
                         onClick={(e) => handleStoreNavigate(store, e)}
                         className={`group bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 hover:shadow-md hover:border-[#2563eb]/40 transition-all duration-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 ${
-                          store.hasStorefront ? "cursor-pointer" : "cursor-default"
+                          store.hasStorefront
+                            ? "cursor-pointer"
+                            : "cursor-default"
                         }`}
                       >
                         <div className="flex items-center gap-4 min-w-0">
@@ -795,8 +872,16 @@ export default function BusinessStoreListing() {
                               </h3>
                               <BadgeCheck
                                 size={15}
-                                className={store.verified ? "text-[#2563eb] shrink-0" : "text-emerald-600 shrink-0"}
-                                title={store.verified ? "Verified Merchant" : "Registered Business"}
+                                className={
+                                  store.verified
+                                    ? "text-[#2563eb] shrink-0"
+                                    : "text-emerald-600 shrink-0"
+                                }
+                                title={
+                                  store.verified
+                                    ? "Verified Merchant"
+                                    : "Registered Business"
+                                }
                               />
                             </div>
                             <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
@@ -838,7 +923,11 @@ export default function BusinessStoreListing() {
                                 : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200/60 dark:border-slate-700/60"
                             }`}
                           >
-                            <span>{store.hasStorefront ? "Visit Store" : "Coming Soon"}</span>
+                            <span>
+                              {store.hasStorefront
+                                ? "Visit Store"
+                                : "Coming Soon"}
+                            </span>
                             {store.hasStorefront && <ChevronRight size={14} />}
                           </button>
                         </div>
@@ -852,7 +941,9 @@ export default function BusinessStoreListing() {
                       key={store._id}
                       onClick={(e) => handleStoreNavigate(store, e)}
                       className={`group bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xs hover:shadow-xl hover:border-[#2563eb]/40 transition-all duration-300 flex flex-col justify-between ${
-                        store.hasStorefront ? "cursor-pointer" : "cursor-default"
+                        store.hasStorefront
+                          ? "cursor-pointer"
+                          : "cursor-default"
                       }`}
                     >
                       {/* Store Banner / Image */}
@@ -867,14 +958,35 @@ export default function BusinessStoreListing() {
 
                           {/* Top Badges */}
                           <div className="absolute top-3 inset-x-3 flex items-center justify-between">
-                            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm px-2.5 py-1 rounded-full text-[10px] font-extrabold flex items-center gap-1 shadow-sm">
-                              <BadgeCheck
-                                size={13}
-                                className={store.verified ? "text-[#2563eb]" : "text-emerald-600"}
-                              />
-                              <span className={store.verified ? "text-[#2563eb]" : "text-emerald-700 dark:text-emerald-400"}>
-                                {store.verified ? "Verified Merchant" : "Registered Business"}
-                              </span>
+                            <div className="flex items-center gap-1.5">
+                              <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm px-2.5 py-1 rounded-full text-[10px] font-extrabold flex items-center gap-1 shadow-sm">
+                                <BadgeCheck
+                                  size={13}
+                                  className={
+                                    store.verified
+                                      ? "text-[#2563eb]"
+                                      : "text-emerald-600"
+                                  }
+                                />
+                                <span
+                                  className={
+                                    store.verified
+                                      ? "text-[#2563eb]"
+                                      : "text-emerald-700 dark:text-emerald-400"
+                                  }
+                                >
+                                  {store.verified
+                                    ? "Verified Merchant"
+                                    : "Registered Business"}
+                                </span>
+                              </div>
+
+                              {store.isFeatured && (
+                                <div className="bg-amber-500 text-white px-2 py-1 rounded-full text-[10px] font-black flex items-center gap-1 shadow-xs">
+                                  <Sparkles size={11} className="fill-white" />
+                                  <span>Featured</span>
+                                </div>
+                              )}
                             </div>
 
                             <div className="w-8 h-8 rounded-full bg-white/90 dark:bg-slate-900/90 flex items-center justify-center text-slate-800 dark:text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
@@ -945,7 +1057,11 @@ export default function BusinessStoreListing() {
                               : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200/60 dark:border-slate-700/60"
                           }`}
                         >
-                          <span>{store.hasStorefront ? "Visit Storefront" : "Coming Soon"}</span>
+                          <span>
+                            {store.hasStorefront
+                              ? "Visit Storefront"
+                              : "Coming Soon"}
+                          </span>
                           {store.hasStorefront && <ChevronRight size={14} />}
                         </button>
                       </div>
@@ -1000,19 +1116,43 @@ export default function BusinessStoreListing() {
                 >
                   All Categories
                 </button>
-                {Object.keys(categoryCounts).map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`w-full text-left text-xs px-3 py-2 rounded-xl font-medium ${
-                      selectedCategory.toLowerCase() === cat.toLowerCase()
-                        ? "bg-blue-50 dark:bg-slate-800 text-[#2563eb] font-bold"
-                        : "text-slate-600 dark:text-slate-400"
-                    }`}
-                  >
-                    {cat} ({categoryCounts[cat]})
-                  </button>
-                ))}
+                {displayCategoriesList.map((catItem) => {
+                  const catName =
+                    typeof catItem === "string" ? catItem : catItem.name;
+                  const catCode =
+                    typeof catItem === "object" ? catItem.code : "";
+                  const count =
+                    categoryCounts[catName] ||
+                    (catCode ? categoryCounts[catCode] : 0) ||
+                    stores.filter(
+                      (s) =>
+                        s.category?.toLowerCase() === catName?.toLowerCase(),
+                    ).length;
+                  const isSelected =
+                    selectedCategory.toLowerCase() === catName?.toLowerCase() ||
+                    (catCode &&
+                      selectedCategory.toLowerCase() ===
+                        catCode?.toLowerCase());
+
+                  return (
+                    <button
+                      key={catItem._id || catName}
+                      onClick={() =>
+                        setSelectedCategory(isSelected ? "all" : catName)
+                      }
+                      className={`w-full flex items-center justify-between text-left text-xs px-3 py-2 rounded-xl font-medium ${
+                        isSelected
+                          ? "bg-blue-50 dark:bg-slate-800 text-[#2563eb] font-bold"
+                          : "text-slate-600 dark:text-slate-400"
+                      }`}
+                    >
+                      <span>{catName}</span>
+                      <span className="text-[10px] text-slate-400">
+                        ({count})
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -1048,6 +1188,25 @@ export default function BusinessStoreListing() {
                   checked={verifiedOnly}
                   onChange={(e) => setVerifiedOnly(e.target.checked)}
                   className="w-4 h-4 rounded text-[#2563eb] accent-[#2563eb]"
+                />
+              </label>
+            </div>
+
+            {/* Mobile Featured */}
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+              <label className="flex items-center justify-between cursor-pointer">
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <Sparkles
+                    size={14}
+                    className="text-amber-500 fill-amber-500"
+                  />
+                  Featured Only
+                </span>
+                <input
+                  type="checkbox"
+                  checked={featuredOnly}
+                  onChange={(e) => setFeaturedOnly(e.target.checked)}
+                  className="w-4 h-4 rounded text-amber-500 accent-amber-500"
                 />
               </label>
             </div>

@@ -23,6 +23,15 @@ export const formatDuration = (dur) => {
 export default function ServiceCard({ service }) {
   const navigate = useNavigate();
   const serviceId = service._id || service.id;
+  const serviceTitle = service.serviceName || service.name || "Doorstep Service";
+  const serviceImg =
+    (typeof service.image === "string" ? service.image : service.image?.url) ||
+    service.thumbnail?.url ||
+    (typeof service.thumbnail === "string" ? service.thumbnail : null) ||
+    service.images?.[0]?.url ||
+    (typeof service.images?.[0] === "string" ? service.images[0] : null) ||
+    "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=700&q=80";
+  const imgCount = Array.isArray(service.images) ? service.images.length : 0;
 
   return (
     <div
@@ -33,8 +42,8 @@ export default function ServiceCard({ service }) {
         {/* Image */}
         <div className="relative h-[170px] sm:h-[185px] overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800">
           <img
-            src={service.image}
-            alt={service.name}
+            src={serviceImg}
+            alt={serviceTitle}
             draggable="false"
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
@@ -47,6 +56,12 @@ export default function ServiceCard({ service }) {
             </span>
           )}
 
+          {imgCount > 1 && (
+            <span className="absolute bottom-3 right-3 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-[9px] font-bold text-white shadow-xs">
+              📷 {imgCount}
+            </span>
+          )}
+
           {/* Quick View Button */}
           <button
             type="button"
@@ -55,7 +70,7 @@ export default function ServiceCard({ service }) {
               navigate(`/services/${serviceId}`);
             }}
             className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm flex items-center justify-center text-slate-800 dark:text-white opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 shadow-sm cursor-pointer"
-            aria-label={`View ${service.name}`}
+            aria-label={`View ${serviceTitle}`}
           >
             <ArrowUpRight size={17} />
           </button>

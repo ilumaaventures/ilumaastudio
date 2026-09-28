@@ -95,7 +95,12 @@ export default function ShopPage() {
   const maxPrice = parseInt(searchParams.get("maxPrice") || "500000", 10);
   const selectedBrands = useMemo(() => {
     const b = searchParams.get("brands");
-    return b ? b.split(",").map((s) => s.trim()).filter(Boolean) : [];
+    return b
+      ? b
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
   }, [searchParams]);
   const selectedRating = parseInt(searchParams.get("rating") || "0", 10);
   const availability = searchParams.get("availability") || "all";
@@ -286,9 +291,14 @@ export default function ShopPage() {
 
         if (!isMounted) return;
 
-        const prodList = res?.products || res?.data || (Array.isArray(res) ? res : []);
-        const total = typeof res?.total === "number" ? res.total : prodList.length;
-        const pages = typeof res?.pages === "number" ? res.pages : Math.ceil(total / itemsPerPage) || 1;
+        const prodList =
+          res?.products || res?.data || (Array.isArray(res) ? res : []);
+        const total =
+          typeof res?.total === "number" ? res.total : prodList.length;
+        const pages =
+          typeof res?.pages === "number"
+            ? res.pages
+            : Math.ceil(total / itemsPerPage) || 1;
 
         setProducts(prodList);
         setTotalProducts(total);
@@ -628,7 +638,9 @@ export default function ShopPage() {
             onClick={() => setShowMoreCategories(!showMoreCategories)}
             className="font-bold text-indigo-600 hover:underline text-[11px] pt-1 block cursor-pointer"
           >
-            {showMoreCategories ? "- View Less" : `+ View More (${categoryListCombined.length - 8})`}
+            {showMoreCategories
+              ? "- View Less"
+              : `+ View More (${categoryListCombined.length - 8})`}
           </button>
         )}
       </div>
@@ -757,7 +769,9 @@ export default function ShopPage() {
               onClick={() => setShowMoreBrands(!showMoreBrands)}
               className="font-bold text-indigo-600 hover:underline text-[11px] block cursor-pointer"
             >
-              {showMoreBrands ? "- View Less" : `+ View More (${filteredBrandList.length - 6})`}
+              {showMoreBrands
+                ? "- View Less"
+                : `+ View More (${filteredBrandList.length - 6})`}
             </button>
           )}
         </div>
@@ -789,10 +803,7 @@ export default function ShopPage() {
               <button
                 key={item.rating}
                 onClick={() =>
-                  updateFilters(
-                    { rating: isSelected ? 0 : item.rating },
-                    true,
-                  )
+                  updateFilters({ rating: isSelected ? 0 : item.rating }, true)
                 }
                 className={`w-full flex items-center justify-between text-left py-1.5 px-2.5 rounded-lg transition-colors cursor-pointer ${
                   isSelected
@@ -859,16 +870,13 @@ export default function ShopPage() {
                 </>
               )}
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              {selectedCategory === "All Categories"
-                ? "Browse Products"
-                : selectedCategory}
-            </h1>
           </div>
 
           <div className="text-xs font-bold text-slate-500 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3.5 py-2 rounded-xl self-start sm:self-auto shadow-2xs">
             Total Results:{" "}
-            <span className="text-indigo-600 font-extrabold">{totalProducts}</span>
+            <span className="text-indigo-600 font-extrabold">
+              {totalProducts}
+            </span>
           </div>
         </div>
 
@@ -892,10 +900,8 @@ export default function ShopPage() {
             <div className="text-xs font-medium text-slate-500 dark:text-slate-400 hidden sm:flex items-center gap-1.5">
               <span>Showing</span>
               <span className="font-bold text-slate-800 dark:text-slate-200">
-                {totalProducts > 0
-                  ? (currentPage - 1) * itemsPerPage + 1
-                  : 0}
-                –{Math.min(currentPage * itemsPerPage, totalProducts)}
+                {totalProducts > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}–
+                {Math.min(currentPage * itemsPerPage, totalProducts)}
               </span>
               <span>of</span>
               <span className="font-bold text-slate-800 dark:text-slate-200">
@@ -991,7 +997,8 @@ export default function ShopPage() {
 
             {selectedCategory !== "All Categories" && (
               <span className="inline-flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-lg text-slate-700 dark:text-slate-300 font-medium">
-                Category: <strong className="font-bold">{selectedCategory}</strong>
+                Category:{" "}
+                <strong className="font-bold">{selectedCategory}</strong>
                 <button
                   onClick={() => handleCategorySelect("All Categories")}
                   className="hover:text-red-500"
@@ -1003,7 +1010,10 @@ export default function ShopPage() {
 
             {maxPrice < 500000 && (
               <span className="inline-flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-lg text-slate-700 dark:text-slate-300 font-medium">
-                Price ≤ <strong className="font-bold">₹{maxPrice.toLocaleString()}</strong>
+                Price ≤{" "}
+                <strong className="font-bold">
+                  ₹{maxPrice.toLocaleString()}
+                </strong>
                 <button
                   onClick={() => {
                     setSliderMaxPrice(500000);
@@ -1033,7 +1043,8 @@ export default function ShopPage() {
 
             {selectedRating > 0 && (
               <span className="inline-flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-lg text-slate-700 dark:text-slate-300 font-medium">
-                Rating: <strong className="font-bold">{selectedRating}★+</strong>
+                Rating:{" "}
+                <strong className="font-bold">{selectedRating}★+</strong>
                 <button
                   onClick={() => updateFilters({ rating: 0 }, true)}
                   className="hover:text-red-500"
@@ -1045,7 +1056,10 @@ export default function ShopPage() {
 
             {availability !== "all" && (
               <span className="inline-flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-lg text-slate-700 dark:text-slate-300 font-medium">
-                Status: <strong className="font-bold">{availability === "inStock" ? "In Stock" : "Out of Stock"}</strong>
+                Status:{" "}
+                <strong className="font-bold">
+                  {availability === "inStock" ? "In Stock" : "Out of Stock"}
+                </strong>
                 <button
                   onClick={() => updateFilters({ availability: "all" }, true)}
                   className="hover:text-red-500"
@@ -1106,7 +1120,9 @@ export default function ShopPage() {
             {/* Loading Skeleton */}
             {loading ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                {Array.from({ length: itemsPerPage > 12 ? 12 : itemsPerPage }).map((_, i) => (
+                {Array.from({
+                  length: itemsPerPage > 12 ? 12 : itemsPerPage,
+                }).map((_, i) => (
                   <ProductSkeletonCard key={i} />
                 ))}
               </div>
@@ -1120,8 +1136,9 @@ export default function ShopPage() {
                   No Products Found
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
-                  We couldn't find any products matching your current filters. Try
-                  loosening your criteria or searching for different keywords.
+                  We couldn't find any products matching your current filters.
+                  Try loosening your criteria or searching for different
+                  keywords.
                 </p>
                 {activeFiltersCount > 0 && (
                   <button
@@ -1196,11 +1213,12 @@ export default function ShopPage() {
                           <span className="text-lg font-black text-slate-900 dark:text-white">
                             ₹{prod.price.toLocaleString()}
                           </span>
-                          {prod.originalPrice && prod.originalPrice > prod.price && (
-                            <span className="text-xs text-slate-400 line-through">
-                              ₹{prod.originalPrice.toLocaleString()}
-                            </span>
-                          )}
+                          {prod.originalPrice &&
+                            prod.originalPrice > prod.price && (
+                              <span className="text-xs text-slate-400 line-through">
+                                ₹{prod.originalPrice.toLocaleString()}
+                              </span>
+                            )}
                         </div>
                         <div className="flex items-center gap-2">
                           <button
@@ -1224,7 +1242,11 @@ export default function ShopPage() {
                                 }),
                               );
                             }}
-                            title={isCompared ? "Remove from compare" : "Add to compare"}
+                            title={
+                              isCompared
+                                ? "Remove from compare"
+                                : "Add to compare"
+                            }
                             className={`p-2 border rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                               isCompared
                                 ? "bg-indigo-50 border-indigo-600 text-indigo-600"
@@ -1239,7 +1261,9 @@ export default function ShopPage() {
                           >
                             <Heart
                               size={15}
-                              className={isWished ? "fill-red-500 text-red-500" : ""}
+                              className={
+                                isWished ? "fill-red-500 text-red-500" : ""
+                              }
                             />
                           </button>
                           {prod.inStock ? (
@@ -1271,8 +1295,15 @@ export default function ShopPage() {
               <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
                 {/* Pagination Status Info */}
                 <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                  Page <strong className="text-slate-900 dark:text-white font-bold">{currentPage}</strong> of{" "}
-                  <strong className="text-slate-900 dark:text-white font-bold">{totalPages}</strong> ({totalProducts} items)
+                  Page{" "}
+                  <strong className="text-slate-900 dark:text-white font-bold">
+                    {currentPage}
+                  </strong>{" "}
+                  of{" "}
+                  <strong className="text-slate-900 dark:text-white font-bold">
+                    {totalPages}
+                  </strong>{" "}
+                  ({totalProducts} items)
                 </div>
 
                 {/* Number Buttons Group */}

@@ -29,7 +29,7 @@ export default function ServiceListing() {
           const formatted = list.map((s, idx) => ({
             _id: s._id || `s_${idx}`,
             id: s._id || idx + 1,
-            name: s.name || s.title || "Doorstep Service",
+            name: s.serviceName || s.name || s.title || "Doorstep Service",
             category:
               typeof s.category === "object"
                 ? s.category?.name || "Home Care"
@@ -41,9 +41,13 @@ export default function ServiceListing() {
             duration: s.duration || "45 mins",
             location: s.location || "Lucknow",
             image:
-              s.thumbnail ||
-              s.images?.[0] ||
+              s.thumbnail?.url ||
+              (typeof s.thumbnail === "string" ? s.thumbnail : null) ||
+              s.images?.[0]?.url ||
+              (typeof s.images?.[0] === "string" ? s.images[0] : null) ||
+              (typeof s.image === "string" ? s.image : s.image?.url) ||
               "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=700&q=80",
+            images: Array.isArray(s.images) ? s.images : [],
             badge:
               idx % 3 === 0
                 ? "Popular"

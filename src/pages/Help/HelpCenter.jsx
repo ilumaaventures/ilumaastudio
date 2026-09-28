@@ -327,10 +327,10 @@ export default function HelpCenter() {
                   Response within 2 hours
                 </p>
                 <a
-                  href="mailto:support@ilumaastudio.com"
+                  href="mailto:connect@ilumaa.com"
                   className="text-xs font-bold text-purple-600 block pt-1 hover:underline"
                 >
-                  support@ilumaastudio.com
+                  connect@ilumaa.com
                 </a>
               </div>
             </div>

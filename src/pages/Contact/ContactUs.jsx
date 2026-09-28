@@ -216,10 +216,10 @@ export default function ContactUs() {
                   Direct support response within 12-24 hours
                 </p>
                 <a
-                  href="mailto:support@ilumaastudio.com"
+                  href="mailto:connect@ilumaa.com"
                   className="text-xs font-bold text-[#2563eb] hover:underline block pt-1"
                 >
-                  support@ilumaastudio.com
+                  connect@ilumaa.com
                 </a>
               </div>
             </div>

@@ -25,7 +25,7 @@ import {
   AlertCircle,
   KeyRound,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { registerBusiness, sendOTP, verifyOTP } from "../../api/authService";
 import baseApi from "../../api/baseApi";
@@ -62,6 +62,10 @@ const BUSINESS_SIZES = [
 
 export default function BusinessRegistration() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialPlanParam = searchParams.get("plan") || "";
+  const initialCategoryParam = searchParams.get("category") || "";
+
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -83,7 +87,7 @@ export default function BusinessRegistration() {
     linkedin_url: "",
     website_url: "",
     ownerPassword: "",
-    plan: "",
+    plan: initialPlanParam || "",
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -169,7 +173,7 @@ export default function BusinessRegistration() {
       await sendOTP(
         formData.legal_business_name,
         formData.business_email,
-        "business_registration"
+        "business_registration",
       );
       toast.success(`Verification code sent to ${formData.business_email}`);
       setOtpTimer(60);
@@ -247,14 +251,18 @@ export default function BusinessRegistration() {
     setOtpError("");
 
     if (cleanVal && index < 5) {
-      const nextInput = document.getElementById(`studio-otp-input-${index + 1}`);
+      const nextInput = document.getElementById(
+        `studio-otp-input-${index + 1}`,
+      );
       if (nextInput) nextInput.focus();
     }
   };
 
   const handleOtpKeyDown = (index, e) => {
     if (e.key === "Backspace" && !otpCode[index] && index > 0) {
-      const prevInput = document.getElementById(`studio-otp-input-${index - 1}`);
+      const prevInput = document.getElementById(
+        `studio-otp-input-${index - 1}`,
+      );
       if (prevInput) prevInput.focus();
     }
   };
@@ -286,10 +294,28 @@ export default function BusinessRegistration() {
           setBusinessCategories(fetchedCats);
         }
 
+        // Determine initial category
+        let selectedCatId = "";
+        if (initialCategoryParam && fetchedCats.length > 0) {
+          const matched = fetchedCats.find(
+            (c) =>
+              c._id === initialCategoryParam ||
+              c.code?.toLowerCase() === initialCategoryParam.toLowerCase() ||
+              c.name?.toLowerCase() === initialCategoryParam.toLowerCase(),
+          );
+          if (matched) selectedCatId = matched._id;
+        }
+        if (!selectedCatId && fetchedCats.length > 0) {
+          // Default to E-Commerce (ECOMMERCE) or first active category
+          const ecom = fetchedCats.find((c) => c.code === "ECOMMERCE");
+          selectedCatId = ecom ? ecom._id : fetchedCats[0]._id;
+        }
+
         setFormData((prev) => ({
           ...prev,
           business_type: fetchedTypes.length > 0 ? fetchedTypes[0]._id : "",
-          business_category: fetchedCats.length > 0 ? fetchedCats[0]._id : "",
+          business_category: selectedCatId,
+          plan: initialPlanParam || prev.plan,
         }));
       } catch (err) {
         console.error("Failed to load business metadata:", err);
@@ -299,7 +325,7 @@ export default function BusinessRegistration() {
     };
 
     fetchMetadata();
-  }, []);
+  }, [initialCategoryParam, initialPlanParam]);
 
   // Fetch Subscription Plans dynamically based on selected Category & Type
   useEffect(() => {
@@ -309,8 +335,6 @@ export default function BusinessRegistration() {
         const queryParams = new URLSearchParams();
         if (formData.business_category)
           queryParams.append("businessCategory", formData.business_category);
-        // if (formData.business_type)
-        //   queryParams.append("businessType", formData.business_type);
 
         const res = await baseApi.get(
           `business-subscriptions/plans?${queryParams.toString()}`,
@@ -321,8 +345,17 @@ export default function BusinessRegistration() {
           (Array.isArray(res.data) ? res.data : []);
         setPlans(Array.isArray(data) ? data : []);
         if (Array.isArray(data) && data.length > 0) {
-          const defaultPlan = data.find((p) => p.isPopular) || data[0];
-          setFormData((prev) => ({ ...prev, plan: defaultPlan._id }));
+          const matched =
+            initialPlanParam && data.find((p) => p._id === initialPlanParam);
+          if (matched) {
+            setFormData((prev) => ({ ...prev, plan: matched._id }));
+          } else if (
+            !formData.plan ||
+            !data.some((p) => p._id === formData.plan)
+          ) {
+            const defaultPlan = data.find((p) => p.isPopular) || data[0];
+            setFormData((prev) => ({ ...prev, plan: defaultPlan._id }));
+          }
         }
       } catch (err) {
         console.error("Error fetching subscription plans:", err);
@@ -331,10 +364,10 @@ export default function BusinessRegistration() {
       }
     };
 
-    if (formData.business_category || formData.business_type) {
+    if (formData.business_category) {
       fetchPlans();
     }
-  }, [formData.business_category, formData.business_type]);
+  }, [formData.business_category, initialPlanParam]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -713,7 +746,8 @@ export default function BusinessRegistration() {
                     >
                       {otpSending ? (
                         <>
-                          <Loader2 size={16} className="animate-spin" /> Sending Verification Code...
+                          <Loader2 size={16} className="animate-spin" /> Sending
+                          Verification Code...
                         </>
                       ) : isEmailVerified &&
                         verifiedEmail ===
@@ -765,25 +799,29 @@ export default function BusinessRegistration() {
 
                       <div>
                         <label className="block text-slate-700 font-semibold mb-1.5">
-                          Industry Category
+                          Business Category / Industry *
                         </label>
                         <select
                           name="business_category"
                           value={formData.business_category}
                           onChange={handleChange}
+                          required
                           className="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3.5 py-2.5 text-slate-900 focus:border-[#C9956C] focus:bg-white outline-none transition"
                         >
-                          {businessCategories.length > 0
-                            ? businessCategories.map((cat) => (
-                                <option key={cat._id} value={cat._id}>
-                                  {cat.name} ({cat.code || "Scope"})
-                                </option>
-                              ))
-                            : BUSINESS_CATEGORIES.map((cat) => (
-                                <option key={cat} value={cat}>
-                                  {cat}
-                                </option>
-                              ))}
+                          {/* {businessCategories.length > 0 ? (
+                            businessCategories.map((cat) => (
+                              <option key={cat._id} value={cat._id}>
+                                {cat.name} ({cat.code || "Scope"})
+                              </option>
+                            ))
+                          ) : (
+                            <option value="" disabled>
+                              Loading categories...
+                            </option>
+                          )} */}
+                          <option value="E-commerce">E-commerce</option>
+                          <option value="Service">Service Provider</option>
+                          <option value="business">Both</option>
                         </select>
                       </div>
                     </div>
@@ -1461,8 +1499,10 @@ export default function BusinessRegistration() {
               </h3>
               <p className="text-xs text-slate-500 mt-1.5 leading-relaxed max-w-xs mx-auto">
                 We've sent a 6-digit verification code to{" "}
-                <strong className="text-slate-800">{formData.business_email}</strong>.
-                Enter the code below to confirm and proceed to the next step.
+                <strong className="text-slate-800">
+                  {formData.business_email}
+                </strong>
+                . Enter the code below to confirm and proceed to the next step.
               </p>
             </div>
 
@@ -1499,7 +1539,8 @@ export default function BusinessRegistration() {
             >
               {otpVerifying ? (
                 <>
-                  <Loader2 size={16} className="animate-spin" /> Verifying Code...
+                  <Loader2 size={16} className="animate-spin" /> Verifying
+                  Code...
                 </>
               ) : (
                 <>
@@ -1521,7 +1562,8 @@ export default function BusinessRegistration() {
               <div>
                 {otpTimer > 0 ? (
                   <span className="text-slate-400 font-medium">
-                    Resend code in <strong className="text-slate-700">{otpTimer}s</strong>
+                    Resend code in{" "}
+                    <strong className="text-slate-700">{otpTimer}s</strong>
                   </span>
                 ) : (
                   <button
