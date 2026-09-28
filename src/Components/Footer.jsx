@@ -11,24 +11,23 @@ function Footer() {
   return (
     <footer className="bg-slate-900 text-slate-400 pt-12 pb-6 border-t border-slate-800 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
         {/* Top Footer 5 Column Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 pb-10 border-b border-slate-800 text-xs">
-          
           {/* Col 1: Brand Info */}
           <div className="space-y-3">
             <Link to="/" className="flex items-center gap-2.5 group">
               <img
                 src={ilumaIcon}
-                alt="ILumaa Studio"
+                alt="ILUMAA Studio"
                 className="w-8 h-8 object-contain rounded-lg group-hover:scale-105 transition-transform"
               />
               <span className="font-black text-lg text-white tracking-tight">
-                ILumaa<span className="text-[#2563eb]">Studio</span>
+                ILUMAA<span className="text-[#2563eb]">Studio</span>
               </span>
             </Link>
             <p className="text-slate-400 leading-relaxed text-[11px]">
-              Your one-stop destination for all your shopping needs. Quality products, best prices and more.
+              Your one-stop destination for all your shopping needs. Quality
+              products, best prices and more.
             </p>
             {/* Social Icons */}
             <div className="flex items-center gap-2 pt-2">
@@ -56,11 +55,46 @@ function Footer() {
               Shop
             </h4>
             <ul className="space-y-2 text-[11px]">
-              <li><Link to="/categories" className="hover:text-white transition-colors">All Categories</Link></li>
-              <li><Link to="/products?sort=bestsellers" className="hover:text-white transition-colors">Best Sellers</Link></li>
-              <li><Link to="/products?sort=new" className="hover:text-white transition-colors">New Arrivals</Link></li>
-              <li><Link to="/products?offers=true" className="hover:text-white transition-colors">Today's Deals</Link></li>
-              <li><Link to="/products?brands=true" className="hover:text-white transition-colors">Top Brands</Link></li>
+              <li>
+                <Link
+                  to="/categories"
+                  className="hover:text-white transition-colors"
+                >
+                  All Categories
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/products?sort=bestsellers"
+                  className="hover:text-white transition-colors"
+                >
+                  Best Sellers
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/products?sort=new"
+                  className="hover:text-white transition-colors"
+                >
+                  New Arrivals
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/products?offers=true"
+                  className="hover:text-white transition-colors"
+                >
+                  Today's Deals
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/products?brands=true"
+                  className="hover:text-white transition-colors"
+                >
+                  Top Brands
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -70,11 +104,43 @@ function Footer() {
               Customer Service
             </h4>
             <ul className="space-y-2 text-[11px]">
-              <li><Link to="/help" className="hover:text-white transition-colors">Help Center</Link></li>
-              <li><Link to="/track-order" className="hover:text-white transition-colors">Track Order</Link></li>
-              <li><Link to="/returns" className="hover:text-white transition-colors">Returns & Refunds</Link></li>
-              <li><Link to="/shipping" className="hover:text-white transition-colors">Shipping Info</Link></li>
-              <li><Link to="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
+              <li>
+                <Link to="/help" className="hover:text-white transition-colors">
+                  Help Center
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/track-order"
+                  className="hover:text-white transition-colors"
+                >
+                  Track Order
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/returns"
+                  className="hover:text-white transition-colors"
+                >
+                  Returns & Refunds
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/shipping"
+                  className="hover:text-white transition-colors"
+                >
+                  Shipping Info
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/contact"
+                  className="hover:text-white transition-colors"
+                >
+                  Contact Us
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -84,11 +150,46 @@ function Footer() {
               Company
             </h4>
             <ul className="space-y-2 text-[11px]">
-              <li><Link to="/about" className="hover:text-white transition-colors">About Us</Link></li>
-              <li><Link to="/careers" className="hover:text-white transition-colors">Careers</Link></li>
-              <li><Link to="/press" className="hover:text-white transition-colors">Press</Link></li>
-              <li><Link to="/affiliate" className="hover:text-[#2563eb] transition-colors">Affiliate Program</Link></li>
-              <li><Link to="/businessRegistration" className="hover:text-[#2563eb] transition-colors">Sell on ILumaaStudio</Link></li>
+              <li>
+                <Link
+                  to="/about"
+                  className="hover:text-white transition-colors"
+                >
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/careers"
+                  className="hover:text-white transition-colors"
+                >
+                  Careers
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/press"
+                  className="hover:text-white transition-colors"
+                >
+                  Press
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/affiliate"
+                  className="hover:text-[#2563eb] transition-colors"
+                >
+                  Affiliate Program
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/businessRegistration"
+                  className="hover:text-[#2563eb] transition-colors"
+                >
+                  Sell on ILUMAAStudio
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -98,12 +199,54 @@ function Footer() {
               Policies
             </h4>
             <ul className="space-y-2 text-[11px]">
-              <li><Link to="/policies" className="hover:text-white transition-colors">Business Policies</Link></li>
-              <li><Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
-              <li><Link to="/returns" className="hover:text-white transition-colors">Return & Refund Policy</Link></li>
-              <li><Link to="/shipping" className="hover:text-white transition-colors">Shipping Policy</Link></li>
-              <li><Link to="/cancellation" className="hover:text-white transition-colors">Cancellation Guidelines</Link></li>
+              <li>
+                <Link
+                  to="/policies"
+                  className="hover:text-white transition-colors"
+                >
+                  Business Policies
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/privacy"
+                  className="hover:text-white transition-colors"
+                >
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/terms"
+                  className="hover:text-white transition-colors"
+                >
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/returns"
+                  className="hover:text-white transition-colors"
+                >
+                  Return & Refund Policy
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/shipping"
+                  className="hover:text-white transition-colors"
+                >
+                  Shipping Policy
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/cancellation"
+                  className="hover:text-white transition-colors"
+                >
+                  Cancellation Guidelines
+                </Link>
+              </li>
             </ul>
 
             {/* Payment Icons */}
@@ -112,30 +255,42 @@ function Footer() {
                 Payment Methods
               </h5>
               <div className="flex flex-wrap gap-1.5">
-                {["VISA", "Mastercard", "UPI", "RuPay", "Paytm"].map((p, idx) => (
-                  <span
-                    key={idx}
-                    className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-[9px] font-black text-slate-300 tracking-wider"
-                  >
-                    {p}
-                  </span>
-                ))}
+                {["VISA", "Mastercard", "UPI", "RuPay", "Paytm"].map(
+                  (p, idx) => (
+                    <span
+                      key={idx}
+                      className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-[9px] font-black text-slate-300 tracking-wider"
+                    >
+                      {p}
+                    </span>
+                  ),
+                )}
               </div>
             </div>
           </div>
-
         </div>
 
         {/* Bottom Bar */}
         <div className="pt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-[11px] text-slate-400">
-          <p>© {new Date().getFullYear()} ILumaaStudio. All Rights Reserved.</p>
+          <p>© {new Date().getFullYear()} ILUMAAStudio. All Rights Reserved.</p>
           <div className="flex items-center gap-4">
-            <Link to="/sitemap" className="hover:text-white transition-colors">Sitemap</Link>
-            <Link to="/cookie-policy" className="hover:text-white transition-colors">Cookie Policy</Link>
-            <Link to="/accessibility" className="hover:text-white transition-colors">Accessibility</Link>
+            <Link to="/sitemap" className="hover:text-white transition-colors">
+              Sitemap
+            </Link>
+            <Link
+              to="/cookie-policy"
+              className="hover:text-white transition-colors"
+            >
+              Cookie Policy
+            </Link>
+            <Link
+              to="/accessibility"
+              className="hover:text-white transition-colors"
+            >
+              Accessibility
+            </Link>
           </div>
         </div>
-
       </div>
 
       {/* Floating Scroll To Top Button */}

@@ -75,13 +75,13 @@ function Home() {
       <BannerSection bannerType="promotion" />
       {/* New Arrivals Section */}
       <NewArrivalsSection />
-      <MegaSaleBanner
+      {/* <MegaSaleBanner
         bannerIndex={0}
         fallbackTitle="Curated Essentials for Modern Living"
         fallbackDescription="Explore handpicked products from verified brands with effortless checkout and dependable delivery."
         fallbackImageUrl="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80"
         fallbackLinkUrl="/shop"
-      />
+      /> */}
       {/* Popular Local Shops */}
       <TopBrands />
       <MegaSaleBanner

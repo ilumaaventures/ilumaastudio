@@ -371,11 +371,15 @@ function Cart() {
   // Auto-populate orderNotes from hamper calligraphy greeting if available
   useEffect(() => {
     if (!orderNotes) {
-      const hamperItem = cartItems.find((it) => it.hamperNote || it.hamperRecipient);
+      const hamperItem = cartItems.find(
+        (it) => it.hamperNote || it.hamperRecipient,
+      );
       if (hamperItem) {
         const parts = [];
-        if (hamperItem.hamperRecipient) parts.push(`To: ${hamperItem.hamperRecipient}`);
-        if (hamperItem.hamperSender) parts.push(`From: ${hamperItem.hamperSender}`);
+        if (hamperItem.hamperRecipient)
+          parts.push(`To: ${hamperItem.hamperRecipient}`);
+        if (hamperItem.hamperSender)
+          parts.push(`From: ${hamperItem.hamperSender}`);
         if (hamperItem.hamperNote) parts.push(`"${hamperItem.hamperNote}"`);
         setOrderNotes(parts.join(" | "));
       }
@@ -768,8 +772,14 @@ function Cart() {
         taxPrice: tax,
         couponCode: appliedCouponCode || undefined,
         totalPrice: total,
-        orderNotes: orderNotes.trim() || cartItems.find((it) => it.hamperNote)?.hamperNote || "",
-        notes: orderNotes.trim() || cartItems.find((it) => it.hamperNote)?.hamperNote || "",
+        orderNotes:
+          orderNotes.trim() ||
+          cartItems.find((it) => it.hamperNote)?.hamperNote ||
+          "",
+        notes:
+          orderNotes.trim() ||
+          cartItems.find((it) => it.hamperNote)?.hamperNote ||
+          "",
       };
 
       if (paymentMethod === "cod") {
@@ -1034,25 +1044,6 @@ function Cart() {
                   <PackagePlus size={15} className="text-[#2563eb]" />
                   <span>Add More Products</span>
                 </Link>
-
-                {/* Delivery Pincode Bar */}
-                <div className="bg-slate-50 p-2 sm:p-2.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center gap-2 max-w-full sm:max-w-xs w-full">
-                  <MapPin size={16} className="text-[#2563eb] shrink-0 ml-1" />
-                  <span className="text-[11px] font-bold text-slate-600 shrink-0 hidden xs:inline">
-                    PIN Code:
-                  </span>
-                  <input
-                    type="text"
-                    maxLength={6}
-                    placeholder="Enter 6-digit Pincode"
-                    value={shippingAddress.zip}
-                    onChange={(e) => {
-                      const zipVal = e.target.value.replace(/\D/g, "");
-                      setShippingAddress((prev) => ({ ...prev, zip: zipVal }));
-                    }}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs outline-none focus:border-[#2563eb] font-bold text-slate-900"
-                  />
-                </div>
               </div>
             </div>
 
@@ -1090,7 +1081,9 @@ function Cart() {
 
             <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
               {/* Cart Items List */}
-              <div className="lg:col-span-2 space-y-4">                {(() => {
+              <div className="lg:col-span-2 space-y-4">
+                {" "}
+                {(() => {
                   const hamperGroups = {};
                   const standaloneItems = [];
 
@@ -1191,7 +1184,9 @@ function Cart() {
                                   {item.source === "store" ? (
                                     <span className="text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-md flex items-center gap-1">
                                       <Store size={10} />
-                                      {item.storeName ? `Store: ${item.storeName}` : "Store"}
+                                      {item.storeName
+                                        ? `Store: ${item.storeName}`
+                                        : "Store"}
                                     </span>
                                   ) : (
                                     <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-md flex items-center gap-1">
@@ -1444,7 +1439,6 @@ function Cart() {
                     </div>
                   );
                 })()}
-
                 {/* Option to add other products or browse store */}
                 <div className="bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-blue-50/60 border border-blue-100 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
                   <div className="flex items-center gap-3 text-left w-full sm:w-auto">
@@ -1477,10 +1471,7 @@ function Cart() {
                   <h2 className="text-lg sm:text-xl font-black text-slate-900 border-b border-slate-100 pb-3 flex items-center justify-between">
                     <span>Order Summary</span>
                     <span className="text-xs font-semibold text-slate-500">
-                      {cartItems.reduce(
-                        (sum, i) => sum + (i.quantity || 1),
-                        0,
-                      )}{" "}
+                      {cartItems.reduce((sum, i) => sum + (i.quantity || 1), 0)}{" "}
                       items
                     </span>
                   </h2>
@@ -1542,7 +1533,9 @@ function Cart() {
 
                     <div className="flex justify-between items-center">
                       <div>
-                        <span className="font-medium block">Shipping & Delivery</span>
+                        <span className="font-medium block">
+                          Shipping & Delivery
+                        </span>
                         <span className="text-[10px] text-slate-400">
                           {subtotal >= 5000
                             ? "Free delivery applied"
@@ -1561,7 +1554,9 @@ function Cart() {
                     </div>
 
                     <div className="flex justify-between items-center pt-1 border-t border-dashed border-slate-100">
-                      <span className="font-medium text-slate-500">Taxable Net Amount</span>
+                      <span className="font-medium text-slate-500">
+                        Taxable Net Amount
+                      </span>
                       <span className="font-semibold text-slate-700">
                         ₹{taxableAmount.toLocaleString("en-IN")}
                       </span>
@@ -1618,7 +1613,30 @@ function Cart() {
                       </div>
                     )}
                   </div>
-
+                  {/* Delivery Pincode Bar */}
+                  <div className="bg-slate-50 p-2 sm:p-2.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center gap-2 max-w-full sm:max-w-xs w-full">
+                    <MapPin
+                      size={16}
+                      className="text-[#2563eb] shrink-0 ml-1"
+                    />
+                    <span className="text-[11px] font-bold text-slate-600 shrink-0 hidden xs:inline">
+                      PIN Code:
+                    </span>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      placeholder="Enter 6-digit Pincode"
+                      value={shippingAddress.zip}
+                      onChange={(e) => {
+                        const zipVal = e.target.value.replace(/\D/g, "");
+                        setShippingAddress((prev) => ({
+                          ...prev,
+                          zip: zipVal,
+                        }));
+                      }}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs outline-none focus:border-[#2563eb] font-bold text-slate-900"
+                    />
+                  </div>
                   {/* Total Amount */}
                   <div className="flex justify-between items-baseline text-base font-black text-slate-900">
                     <span>Total Amount</span>
@@ -1635,7 +1653,7 @@ function Cart() {
                   >
                     <span>
                       {!pincodeValidation.allAvailable
-                        ? "Unavailable Items in Cart"
+                        ? "Unavailable Cart check Pincode and Item Avilability"
                         : "Proceed to Checkout"}
                     </span>
                     <ArrowRight size={15} />
@@ -1915,7 +1933,8 @@ function Cart() {
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs outline-none focus:bg-white focus:border-[#2563eb] text-slate-800 resize-none font-medium"
                     />
                     <p className="text-[10px] text-slate-400">
-                      This note will be printed on the invoice and displayed directly in the merchant & admin fulfillment dashboard.
+                      This note will be printed on the invoice and displayed
+                      directly in the merchant & admin fulfillment dashboard.
                     </p>
                   </div>
 
@@ -2137,7 +2156,8 @@ function Cart() {
                   Order Confirmed!
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
-                  Thank you for shopping with us! Your order has been placed successfully.
+                  Thank you for shopping with us! Your order has been placed
+                  successfully.
                 </p>
               </div>
 
@@ -2157,7 +2177,11 @@ function Cart() {
                     Order ID
                   </span>
                   <span className="font-mono font-bold text-xs text-slate-900 mt-0.5 block truncate">
-                    ORD-{new Date(createdOrder.createdAt || Date.now()).getFullYear()}-{createdOrder._id?.toString().slice(-4).toUpperCase()}
+                    ORD-
+                    {new Date(
+                      createdOrder.createdAt || Date.now(),
+                    ).getFullYear()}
+                    -{createdOrder._id?.toString().slice(-4).toUpperCase()}
                   </span>
                 </div>
                 <div>
@@ -2173,7 +2197,12 @@ function Cart() {
                     Grand Total
                   </span>
                   <span className="font-black text-xs text-slate-900 mt-0.5 block">
-                    ₹{(createdOrder.totalPrice || createdOrder.totalAmount || total).toLocaleString("en-IN")}
+                    ₹
+                    {(
+                      createdOrder.totalPrice ||
+                      createdOrder.totalAmount ||
+                      total
+                    ).toLocaleString("en-IN")}
                   </span>
                 </div>
               </div>
@@ -2201,5 +2230,3 @@ function Cart() {
 }
 
 export default Cart;
-
-

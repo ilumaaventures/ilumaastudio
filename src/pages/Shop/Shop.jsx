@@ -216,13 +216,39 @@ export default function ShopPage() {
     let isMounted = true;
     const loadCategories = async () => {
       try {
-        const catRes = await fetchCategories({ businessType: "E-Commerce" });
+        const catRes = await fetchCategories({
+          businessType: "E-Commerce",
+          businessCategory: "ECOMMERCE",
+          all: "true",
+          limit: 100,
+        });
         const list =
           catRes?.categories ||
           catRes?.data ||
           (Array.isArray(catRes) ? catRes : []);
+
+        // Strictly only include ecommerce categories
+        const ecommerceCategories = list.filter((cat) => {
+          const bType = String(cat.businessType || "").toLowerCase();
+          const bCatCode = String(cat.businessCategory?.code || "").toUpperCase();
+          const bCatName = String(cat.businessCategory?.name || "").toLowerCase();
+          const name = String(cat.name || "").toLowerCase();
+
+          if (
+            bType.includes("service") ||
+            bCatCode.includes("SERVICE") ||
+            bCatName.includes("service") ||
+            bType.includes("business") ||
+            bCatCode.includes("BUSINESS") ||
+            name.endsWith(" services")
+          ) {
+            return false;
+          }
+          return true;
+        });
+
         if (isMounted) {
-          setApiCategories(list);
+          setApiCategories(ecommerceCategories);
         }
       } catch (err) {
         console.warn("Could not load categories for sidebar:", err);

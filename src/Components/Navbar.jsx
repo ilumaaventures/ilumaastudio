@@ -152,12 +152,49 @@ function Navbar() {
     try {
       setLoadingCategories(true);
       const bCat = targetBCat || selectedBusinessCategory || "E-Commerce";
-      const res = await fetchCategories({
-        businessCategory: bCat,
-        limit: 30,
-      });
-      const list =
+      const isEcomm =
+        !isServiceCategory(bCat) &&
+        bCat !== "business" &&
+        bCat !== "BUSINESS" &&
+        bCat !== "other";
+
+      const queryParams = {
+        limit: 50,
+      };
+
+      if (isEcomm) {
+        queryParams.businessCategory = "ECOMMERCE";
+        queryParams.businessType = "E-Commerce";
+      } else {
+        queryParams.businessCategory = bCat;
+      }
+
+      const res = await fetchCategories(queryParams);
+      let list =
         res?.data || res?.categories || (Array.isArray(res) ? res : []);
+
+      if (isEcomm) {
+        // Strictly filter to only show ecommerce categories
+        list = list.filter((cat) => {
+          const bType = String(cat.businessType || "").toLowerCase();
+          const bCatCode = String(cat.businessCategory?.code || "").toUpperCase();
+          const bCatName = String(cat.businessCategory?.name || "").toLowerCase();
+          const name = String(cat.name || "").toLowerCase();
+
+          if (
+            bType.includes("service") ||
+            bCatCode.includes("SERVICE") ||
+            bCatName.includes("service") ||
+            bType.includes("business") ||
+            bCatCode.includes("BUSINESS") ||
+            name.endsWith(" services")
+          ) {
+            return false;
+          }
+          return true;
+        });
+      }
+
       setCategories(list);
     } catch (err) {
       console.error("Failed to load categories for business category:", err);
@@ -436,7 +473,7 @@ function Navbar() {
               {/* Default E-Commerce option */}
               <option value="E-Commerce">E-Commerce</option>
               {businessCategories
-                .filter(  
+                .filter(
                   (bc) =>
                     bc.name?.toLowerCase() !== "e-commerce" &&
                     bc.code?.toUpperCase() !== "ECOMMERCE",

@@ -27,12 +27,40 @@ function FeaturedProductCategory() {
       setLoading(true);
       const res = await fetchCategories({
         businessType: "E-Commerce",
+        businessCategory: "ECOMMERCE",
+        isFeatured: "true",
+        all: "true",
       });
       const list =
         res?.data || res?.categories || (Array.isArray(res) ? res : []);
 
-      if (list.length > 0) {
-        const formatted = list.map((cat, idx) => ({
+      // Strictly only include featured ecommerce categories
+      const ecommFeatured = list.filter((cat) => {
+        const isFeat =
+          cat.isFeatured === true || String(cat.isFeatured) === "true";
+        if (!isFeat) return false;
+
+        const bType = String(cat.businessType || "").toLowerCase();
+        const bCatCode = String(cat.businessCategory?.code || "").toUpperCase();
+        const bCatName = String(cat.businessCategory?.name || "").toLowerCase();
+        const name = String(cat.name || "").toLowerCase();
+
+        if (
+          bType.includes("service") ||
+          bCatCode.includes("SERVICE") ||
+          bCatName.includes("service") ||
+          bType.includes("business") ||
+          bCatCode.includes("BUSINESS") ||
+          name.endsWith(" services")
+        ) {
+          return false;
+        }
+
+        return true;
+      });
+
+      if (ecommFeatured.length > 0) {
+        const formatted = ecommFeatured.map((cat, idx) => ({
           _id: cat._id || cat.id || `cat_${idx}`,
           name: cat.name || cat.title || "Category",
           count: cat.productCount
