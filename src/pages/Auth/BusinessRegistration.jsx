@@ -128,7 +128,11 @@ const getFallbackPlans = (category) => {
           : "Essential platform tools for emerging businesses",
       pricing: { monthly: 499, yearly: 399 },
       popular: false,
-      businessCategoryScope: isService ? "SERVICE" : isEcom ? "ECOMMERCE" : "ALL",
+      businessCategoryScope: isService
+        ? "SERVICE"
+        : isEcom
+          ? "ECOMMERCE"
+          : "ALL",
       limits: {
         maxProducts: 500,
         maxWarehouses: 1,
@@ -174,7 +178,11 @@ const getFallbackPlans = (category) => {
           : "Scale multi-channel operations across retail & services",
       pricing: { monthly: 999, yearly: 799 },
       popular: true,
-      businessCategoryScope: isService ? "SERVICE" : isEcom ? "ECOMMERCE" : "ALL",
+      businessCategoryScope: isService
+        ? "SERVICE"
+        : isEcom
+          ? "ECOMMERCE"
+          : "ALL",
       limits: {
         maxProducts: 5000,
         maxWarehouses: 3,
@@ -216,7 +224,8 @@ const getFallbackPlans = (category) => {
     {
       _id: "business",
       name: "Business",
-      description: "Comprehensive enterprise-grade infrastructure with priority SLA",
+      description:
+        "Comprehensive enterprise-grade infrastructure with priority SLA",
       pricing: { monthly: 1999, yearly: 1599 },
       popular: false,
       businessCategoryScope: "ALL",
@@ -538,9 +547,7 @@ export default function BusinessRegistration() {
             fallback.find((p) => p._id === initialPlanParam);
           setFormData((prev) => ({
             ...prev,
-            plan: matched
-              ? matched._id
-              : fallback[1]?._id || fallback[0]?._id,
+            plan: matched ? matched._id : fallback[1]?._id || fallback[0]?._id,
           }));
         }
       } catch (err) {
@@ -548,13 +555,10 @@ export default function BusinessRegistration() {
         const fallback = getFallbackPlans(formData.business_category);
         setPlans(fallback);
         const matched =
-          initialPlanParam &&
-          fallback.find((p) => p._id === initialPlanParam);
+          initialPlanParam && fallback.find((p) => p._id === initialPlanParam);
         setFormData((prev) => ({
           ...prev,
-          plan: matched
-            ? matched._id
-            : fallback[1]?._id || fallback[0]?._id,
+          plan: matched ? matched._id : fallback[1]?._id || fallback[0]?._id,
         }));
       } finally {
         setPlansLoading(false);
@@ -1027,7 +1031,7 @@ export default function BusinessRegistration() {
                           required
                           className="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3.5 py-2.5 text-slate-900 focus:border-[#C9956C] focus:bg-white outline-none transition"
                         >
-                          {/* {businessCategories.length > 0 ? (
+                          {businessCategories.length > 0 ? (
                             businessCategories.map((cat) => (
                               <option key={cat._id} value={cat._id}>
                                 {cat.name} ({cat.code || "Scope"})
@@ -1037,10 +1041,10 @@ export default function BusinessRegistration() {
                             <option value="" disabled>
                               Loading categories...
                             </option>
-                          )} */}
-                          <option value="E-commerce">E-commerce</option>
+                          )}
+                          {/* <option value="E-commerce">E-commerce</option>
                           <option value="Service">Service Provider</option>
-                          <option value="business">Both</option>
+                          <option value="business">Both</option> */}
                         </select>
                       </div>
                     </div>
