@@ -44,9 +44,9 @@ import StoreRenderer from "../../templates/StoreRenderer";
 // Priority order for newly launched templates so they appear first in the catalog
 const NEW_TEMPLATE_ORDER = {
   "hotel-resort": 1,
-  "hotel": 1,
+  hotel: 1,
   "travel-agency": 2,
-  "travel": 2,
+  travel: 2,
   "apex-audio": 3,
   "luxury-audio": 3,
   "crux-coffee": 4,
@@ -55,7 +55,7 @@ const NEW_TEMPLATE_ORDER = {
   "modern-couture": 5,
   "studio-apparel": 6,
   "modern-apparel": 6,
-  "apparel": 6,
+  apparel: 6,
 };
 
 // Deduplicate registry values so aliases (e.g. coffee-roasters, luxury-audio, modern-apparel) don't create duplicate cards
@@ -66,7 +66,7 @@ const deduplicatedTemplates = Object.values(
       acc[compId] = t;
     }
     return acc;
-  }, {})
+  }, {}),
 );
 
 // Show new templates first, followed by existing catalog
@@ -95,7 +95,11 @@ const templateList = uniqueRegistryTemplates.map((t) => {
   if (t.key === "hotel-resort" || t.key === "hotel" || t.category === "hotel") {
     icon = Palmtree;
     industryLabel = "Hotel & Luxury Resorts";
-  } else if (t.key === "travel-agency" || t.key === "travel" || t.category === "travel") {
+  } else if (
+    t.key === "travel-agency" ||
+    t.key === "travel" ||
+    t.category === "travel"
+  ) {
     icon = Compass;
     industryLabel = "Travel & Expeditions";
   } else if (t.key === "crux-coffee" || t.key === "coffee-roasters") {
@@ -223,6 +227,42 @@ const industryFilters = [
   { id: "clinic", label: "Health & Clinic", icon: Stethoscope },
 ];
 
+const featuredBusinesses = [
+  {
+    id: 1,
+    name: "Talentcio",
+    type: "Talent & Professional Services",
+    image:
+      "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80",
+    url: "https://talentcio.in",
+    badge: "Service Provider",
+  },
+  {
+    id: 2,
+    name: "Starling Tales",
+    type: "Artisan Gifts & Heirloom Keepsakes",
+    image: "https://studio.ilumaa.com/assets/Pholosphy-CuTZWtf1.png",
+    url: "https://studio.ilumaa.com/starlingtales",
+    badge: "Gifting",
+  },
+  {
+    id: 3,
+    name: "Kraftybling",
+    type: "Creative & Handmade Products",
+    image:
+      "https://media.istockphoto.com/id/1258525997/photo/pearl-jewelry-on-a-brown-background-golden-scarf-pearl-bracelet-jewelry-background-pearl.jpg?s=612x612&w=0&k=20&c=8NUgg-cm-Q5GFUONn-66IDFewBMsI7R8L6diCe-VvQk=",
+    url: "https://kraftybling.com",
+    badge: "Jewelry",
+  },
+  {
+    id: 4,
+    name: "ILUMAA Gifter",
+    type: "Curated Gifting",
+    image: "https://gifter.ilumaa.com/occasion_gift_box.jpg",
+    url: "https://gifter.ilumaa.com",
+    badge: "Gifting",
+  },
+];
 export default function StoreTemplate() {
   const [activeCategoryFilter, setActiveCategoryFilter] = useState("All");
   const [activeIndustryFilter, setActiveIndustryFilter] = useState("All");
@@ -306,6 +346,62 @@ export default function StoreTemplate() {
           <span className="text-[11px] font-mono text-slate-400 uppercase tracking-widest font-semibold">
             Production Ready
           </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8 mb-10">
+          {featuredBusinesses.map((business) => (
+            <a
+              key={business.id}
+              href={business.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-xl"
+            >
+              {/* Business Preview */}
+              <div className="relative aspect-[4/5] overflow-hidden bg-slate-100">
+                <img
+                  src={business.image}
+                  alt={business.name}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover object-top transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                />
+
+                {/* Badge */}
+                {business.badge && (
+                  <div className="absolute right-3 top-3">
+                    <span className="inline-flex items-center rounded-lg bg-slate-900/85 px-2.5 py-1 text-[10px] font-semibold text-white shadow-md backdrop-blur-md">
+                      {business.badge}
+                    </span>
+                  </div>
+                )}
+
+                {/* Hover Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                  <Link
+                    // to={`/template-preview/${template.key}`}
+                    className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-slate-900 shadow-lg transition-all duration-200 hover:bg-slate-50 hover:shadow-xl"
+                  >
+                    <Eye size={15} className="text-indigo-600" />
+                    Preview
+                  </Link>
+                </div>
+              </div>
+
+              {/* Business Info */}
+              <div className="flex min-h-[76px] items-center justify-between gap-3 px-4 py-3">
+                <div className="min-w-0">
+                  <h3 className="truncate text-sm font-semibold text-slate-900">
+                    {business.name}
+                  </h3>
+
+                  <p className="mt-1 truncate text-xs text-slate-500">
+                    {business.type}
+                  </p>
+                </div>
+              </div>
+            </a>
+          ))}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">

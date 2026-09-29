@@ -92,6 +92,7 @@ function Navbar() {
   // Immediate navigation handler on business category change:
   // ECOMMERCE => /shop, OTHER => /shop, SERVICE => /services
   const handleBusinessCategoryChange = (newBCat) => {
+    console.log("Business Category changed to:", newBCat);
     setSelectedBusinessCategory(newBCat);
     if (isServiceCategory(newBCat)) {
       navigate("/services");
@@ -177,8 +178,12 @@ function Navbar() {
         // Strictly filter to only show ecommerce categories
         list = list.filter((cat) => {
           const bType = String(cat.businessType || "").toLowerCase();
-          const bCatCode = String(cat.businessCategory?.code || "").toUpperCase();
-          const bCatName = String(cat.businessCategory?.name || "").toLowerCase();
+          const bCatCode = String(
+            cat.businessCategory?.code || "",
+          ).toUpperCase();
+          const bCatName = String(
+            cat.businessCategory?.name || "",
+          ).toLowerCase();
           const name = String(cat.name || "").toLowerCase();
 
           if (
