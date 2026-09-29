@@ -547,7 +547,7 @@ function Navbar() {
             )}
 
             {/* Flash Deals: Only show when NOT service */}
-            {!isService && !isBusiness && (
+            {/* {!isService && !isBusiness && (
               <Link
                 to="/flash-deals"
                 className="px-3 py-1 rounded-full font-black transition shrink-0 bg-amber-500 text-white hover:bg-amber-600 cursor-pointer flex items-center gap-1 shadow-2xs text-xs"
@@ -555,7 +555,7 @@ function Navbar() {
                 <Sparkles size={12} />
                 <span>Flash Deals</span>
               </Link>
-            )}
+            )} */}
 
             {loadingCategories ? (
               <span className="text-xs text-slate-400 font-medium px-3 animate-pulse">

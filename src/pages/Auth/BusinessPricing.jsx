@@ -21,6 +21,8 @@ import {
   ArrowDown,
   PhoneCall,
   CheckCircle2,
+  CalendarCheck,
+  Briefcase,
 } from "lucide-react";
 import baseApi from "../../api/baseApi";
 
@@ -29,16 +31,21 @@ const DEFAULT_4_PLANS = [
   {
     _id: "starter",
     name: "Starter",
-    description: "For small businesses & startups launching online store",
+    description:
+      "For small businesses & startups launching online store or service",
     billingModel: "FIXED",
     pricing: { monthly: 499, yearly: 399 },
     popular: false,
     badgeText: "BASIC STORE",
+    businessCategoryScope: "ALL",
     limits: {
       maxProducts: 500,
+      maxWarehouses: 1,
+      maxServices: 50,
+      maxBookings: 250,
+      maxEnquiries: 500,
       maxEmployees: 3,
       maxVendors: 2,
-      maxWarehouses: 1,
       maxTemplates: 3,
       recycleBinDays: 14,
     },
@@ -53,24 +60,32 @@ const DEFAULT_4_PLANS = [
   {
     _id: "growth",
     name: "Growth",
-    description: "For growing brands and scaling online businesses",
+    description: "For growing brands and scaling multi-channel businesses",
     billingModel: "FIXED",
     pricing: { monthly: 999, yearly: 799 },
     popular: true,
     badgeText: "MOST POPULAR",
+    businessCategoryScope: "ALL",
     limits: {
       maxProducts: 5000,
+      maxWarehouses: 3,
+      maxServices: 250,
+      maxBookings: 2500,
+      maxEnquiries: 5000,
       maxEmployees: 10,
       maxVendors: 5,
-      maxWarehouses: 3,
       maxTemplates: 10,
       recycleBinDays: 30,
     },
     modules: [
       { module: { label: "Dashboard", key: "dashboard" }, enabled: true },
       { module: { label: "Products", key: "products" }, enabled: true },
-      { module: { label: "Orders", key: "orders" }, enabled: true },
-      { module: { label: "Customers", key: "customers" }, enabled: true },
+      { module: { label: "Services", key: "services" }, enabled: true },
+      { module: { label: "Orders & Bookings", key: "orders" }, enabled: true },
+      {
+        module: { label: "Customers & Inquiries", key: "customers" },
+        enabled: true,
+      },
       { module: { label: "Inventory", key: "inventory" }, enabled: true },
       { module: { label: "Warehouse", key: "warehouse" }, enabled: true },
       { module: { label: "Reports", key: "reports" }, enabled: true },
@@ -79,17 +94,22 @@ const DEFAULT_4_PLANS = [
   {
     _id: "business",
     name: "Business",
-    description: "For established multi-store & multi-vendor operations",
+    description:
+      "For established multi-store, service & multi-vendor operations",
     billingModel: "HYBRID",
     pricing: { monthly: 1999, yearly: 1599 },
     commission: { type: "PERCENTAGE", value: 2 },
     popular: false,
     badgeText: "SCALE UP",
+    businessCategoryScope: "ALL",
     limits: {
       maxProducts: 25000,
+      maxWarehouses: 5,
+      maxServices: 1000,
+      maxBookings: 10000,
+      maxEnquiries: 20000,
       maxEmployees: 25,
       maxVendors: 10,
-      maxWarehouses: 5,
       maxTemplates: 20,
       recycleBinDays: 60,
     },
@@ -108,11 +128,15 @@ const DEFAULT_4_PLANS = [
     isCustomTalk: true,
     popular: false,
     badgeText: "CUSTOM DEPLOYMENT",
+    businessCategoryScope: "ALL",
     limits: {
       maxProducts: "Unlimited",
+      maxWarehouses: "Custom SLA",
+      maxServices: "Unlimited",
+      maxBookings: "Unlimited",
+      maxEnquiries: "Unlimited",
       maxEmployees: "Unlimited",
       maxVendors: "Unlimited",
-      maxWarehouses: "Custom SLA",
       maxTemplates: "Unlimited",
       recycleBinDays: "Custom Retention",
     },
@@ -537,6 +561,53 @@ function BusinessPricing() {
     return plans.slice(0, 4);
   }, [plans]);
 
+  const getPlanScope = (plan, filterCategory) => {
+    const scope = (plan?.businessCategoryScope || "").toUpperCase();
+    if (scope === "SERVICE") return "SERVICE";
+    if (scope === "ECOMMERCE" || scope === "GIFTING") return "ECOMMERCE";
+    if (scope === "BOTH" || scope === "BUSINESS") return "BOTH";
+
+    const catCode = (
+      plan?.businessCategory?.code ||
+      plan?.businessCategory?.name ||
+      ""
+    ).toUpperCase();
+    if (catCode.includes("SERVICE")) return "SERVICE";
+    if (
+      catCode.includes("ECOMMERCE") ||
+      catCode.includes("RETAIL") ||
+      catCode.includes("PRODUCT")
+    )
+      return "ECOMMERCE";
+    if (
+      catCode.includes("BOTH") ||
+      catCode.includes("BRAND") ||
+      catCode.includes("BUSINESS") ||
+      catCode.includes("other") ||
+      catCode.includes("Other")
+    )
+      return "BOTH";
+
+    const filterUpper = (filterCategory || "").toUpperCase();
+    if (filterUpper === "SERVICE") return "SERVICE";
+    if (filterUpper === "ECOMMERCE" || filterUpper === "E-COMMERCE")
+      return "ECOMMERCE";
+
+    return "BOTH";
+  };
+
+  const formatLimit = (val, suffix = "") => {
+    if (val === undefined || val === null || val === "") return "Unlimited";
+    if (typeof val === "string") return val;
+    if (typeof val === "number") {
+      if (val < 0) return "Unlimited";
+      return suffix
+        ? `${val.toLocaleString("en-IN")} ${suffix}`
+        : val.toLocaleString("en-IN");
+    }
+    return String(val);
+  };
+
   const getMonthlyPrice = (plan) => {
     if (plan.pricing?.monthly !== undefined) return plan.pricing.monthly;
     if (plan.monthly !== undefined) return plan.monthly;
@@ -560,13 +631,12 @@ function BusinessPricing() {
       navigate("/contact");
       return;
     }
-    const catQuery =
-      selectedCategory !== "ALL"
-        ? `&category=${selectedCategory}`
-        : plan.businessCategory?._id
-          ? `&category=${plan.businessCategory._id}`
-          : "";
-    navigate(`/businessRegistration?plan=${plan._id}${catQuery}`);
+    const scope = getPlanScope(plan, selectedCategory);
+    let catParam = "E-commerce";
+    if (scope === "SERVICE") catParam = "Service";
+    else if (scope === "BOTH") catParam = "business";
+
+    navigate(`/businessRegistration?plan=${plan._id}&category=${catParam}`);
   };
 
   const handleCardInteraction = (idx) => {
@@ -658,31 +728,96 @@ function BusinessPricing() {
           </div>
 
           {/* Business Category Filter Bar */}
-          <div className="mt-6 flex flex-wrap justify-center items-center gap-2">
-            <button
-              value="E-commerce"
-              onClick={() => setSelectedCategory("E-commerce")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer border
-              }`}
-            >
-              E-commerce
-            </button>
-            <button
-              value="Service"
-              onClick={() => setSelectedCategory("Service")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer border
-              }`}
-            >
-              Service Provider
-            </button>
-            <button
-              value="business"
-              onClick={() => setSelectedCategory("business")}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer border
-              }`}
-            >
-              Both
-            </button>
+          <div className="mt-8 flex flex-col items-center gap-3">
+            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+              Filter Plans by Business Sector
+            </span>
+            <div className="inline-flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-100/90 p-1.5 shadow-xs">
+              <button
+                type="button"
+                onClick={() => setSelectedCategory("ALL")}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition cursor-pointer ${
+                  selectedCategory === "ALL"
+                    ? "bg-white text-indigo-700 shadow-md ring-1 ring-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                <Sparkles
+                  size={14}
+                  className={
+                    selectedCategory === "ALL"
+                      ? "text-indigo-600"
+                      : "text-slate-400"
+                  }
+                />
+                All Plans
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedCategory("ECOMMERCE")}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition cursor-pointer ${
+                  selectedCategory === "ECOMMERCE" ||
+                  selectedCategory === "E-commerce"
+                    ? "bg-white text-indigo-700 shadow-md ring-1 ring-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                <Boxes
+                  size={14}
+                  className={
+                    selectedCategory === "ECOMMERCE" ||
+                    selectedCategory === "E-commerce"
+                      ? "text-indigo-600"
+                      : "text-slate-400"
+                  }
+                />
+                E-Commerce & Retail
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedCategory("SERVICE")}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition cursor-pointer ${
+                  selectedCategory === "SERVICE" ||
+                  selectedCategory === "Service"
+                    ? "bg-white text-indigo-700 shadow-md ring-1 ring-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                <Briefcase
+                  size={14}
+                  className={
+                    selectedCategory === "SERVICE" ||
+                    selectedCategory === "Service"
+                      ? "text-indigo-600"
+                      : "text-slate-400"
+                  }
+                />
+                Services & Bookings
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedCategory("Business")}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black transition cursor-pointer ${
+                  selectedCategory === "BOTH" || selectedCategory === "business"
+                    ? "bg-white text-indigo-700 shadow-md ring-1 ring-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                <Crown
+                  size={14}
+                  className={
+                    selectedCategory === "BOTH" ||
+                    selectedCategory === "business"
+                      ? "text-amber-500"
+                      : "text-slate-400"
+                  }
+                />
+                Omnichannel / Both
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -712,6 +847,7 @@ function BusinessPricing() {
               const isSelected = activeCardIndex === idx;
               const isEnterprise = plan.isCustomTalk;
               const isPopular = plan.popular;
+              const planScope = getPlanScope(plan, selectedCategory);
 
               const moduleItems = Array.isArray(plan.modules)
                 ? plan.modules
@@ -752,7 +888,7 @@ function BusinessPricing() {
                   )}
 
                   {/* ================= HEADER ================= */}
-                  <div className="mb-4 flex items-start justify-between gap-3">
+                  <div className="mb-3 flex items-start justify-between gap-3">
                     <div
                       className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition ${
                         isSelected
@@ -773,17 +909,34 @@ function BusinessPricing() {
                       )}
                     </div>
 
-                    <span
-                      className={`shrink-0 rounded-lg border px-2.5 py-1 text-[8px] font-black uppercase tracking-wider ${
-                        isSelected
-                          ? "border-indigo-200 bg-indigo-50 text-indigo-700"
-                          : isEnterprise
-                            ? "border-amber-200 bg-amber-50 text-amber-700"
-                            : "border-slate-200 bg-slate-50 text-slate-400"
-                      }`}
-                    >
-                      {plan.billingModel || "FIXED"}
-                    </span>
+                    <div className="flex flex-col items-end gap-1">
+                      <span
+                        className={`shrink-0 rounded-lg border px-2.5 py-0.5 text-[8px] font-black uppercase tracking-wider ${
+                          isSelected
+                            ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                            : isEnterprise
+                              ? "border-amber-200 bg-amber-50 text-amber-700"
+                              : "border-slate-200 bg-slate-50 text-slate-400"
+                        }`}
+                      >
+                        {plan.billingModel || "FIXED"}
+                      </span>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-wider ${
+                          planScope === "SERVICE"
+                            ? "bg-violet-50 text-violet-700 border border-violet-200"
+                            : planScope === "ECOMMERCE"
+                              ? "bg-amber-50 text-amber-800 border border-amber-200"
+                              : "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                        }`}
+                      >
+                        {planScope === "SERVICE"
+                          ? "Services Plan"
+                          : planScope === "ECOMMERCE"
+                            ? "E-Commerce Plan"
+                            : "Unified Suite"}
+                      </span>
+                    </div>
                   </div>
 
                   {/* ================= PLAN INFO ================= */}
@@ -799,7 +952,7 @@ function BusinessPricing() {
                   </div>
 
                   {/* ================= PRICE ================= */}
-                  <div className="my-5 border-b border-slate-100 pb-5">
+                  <div className="my-4 border-b border-slate-100 pb-4">
                     <div className="flex min-h-[42px] items-end gap-1">
                       {isEnterprise ? (
                         <span className="text-3xl font-black tracking-tight text-amber-600">
@@ -839,89 +992,135 @@ function BusinessPricing() {
 
                   {/* ================= LIMITS ================= */}
                   <div className="mb-5 rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5">
-                    <div className="mb-2.5 flex items-center gap-1.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
-
-                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-500">
-                        Platform Limits
-                      </span>
+                    <div className="mb-2.5 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-500">
+                          Platform Quotas & Limits
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="space-y-2.5">
-                      {/* Products */}
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-[10px] font-medium text-slate-500">
-                          Products Catalog
-                        </span>
+                    <div className="space-y-3">
+                      {/* E-Commerce Capacity (if ECOMMERCE or BOTH) */}
+                      {(planScope === "ECOMMERCE" || planScope === "BOTH") && (
+                        <div className="space-y-1.5 border-b border-slate-200/70 pb-2.5">
+                          <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-amber-800">
+                            <Boxes size={11} className="text-amber-600" />
+                            <span>E-Commerce Limits</span>
+                          </div>
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="font-medium text-slate-500">
+                              Products Catalog
+                            </span>
+                            <strong className="font-black text-slate-900">
+                              {formatLimit(plan.limits?.maxProducts)}
+                            </strong>
+                          </div>
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="font-medium text-slate-500">
+                              Warehouses
+                            </span>
+                            <strong className="font-black text-slate-900">
+                              {formatLimit(
+                                plan.limits?.maxWarehouses,
+                                typeof plan.limits?.maxWarehouses === "number"
+                                  ? "Hubs"
+                                  : "",
+                              )}
+                            </strong>
+                          </div>
+                        </div>
+                      )}
 
-                        <strong className="text-[10px] font-black text-slate-900">
-                          {typeof plan.limits?.maxProducts === "number"
-                            ? plan.limits.maxProducts.toLocaleString("en-IN")
-                            : plan.limits?.maxProducts || "Unlimited"}
-                        </strong>
-                      </div>
+                      {/* Services Capacity (if SERVICE or BOTH) */}
+                      {(planScope === "SERVICE" || planScope === "BOTH") && (
+                        <div className="space-y-1.5 border-b border-slate-200/70 pb-2.5">
+                          <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-violet-800">
+                            <CalendarCheck
+                              size={11}
+                              className="text-violet-600"
+                            />
+                            <span>Service & Booking Limits</span>
+                          </div>
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="font-medium text-slate-500">
+                              Active Services
+                            </span>
+                            <strong className="font-black text-slate-900">
+                              {formatLimit(plan.limits?.maxServices)}
+                            </strong>
+                          </div>
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="font-medium text-slate-500">
+                              Monthly Bookings
+                            </span>
+                            <strong className="font-black text-slate-900">
+                              {formatLimit(plan.limits?.maxBookings)}
+                            </strong>
+                          </div>
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="font-medium text-slate-500">
+                              Client Inquiries
+                            </span>
+                            <strong className="font-black text-slate-900">
+                              {formatLimit(plan.limits?.maxEnquiries)}
+                            </strong>
+                          </div>
+                        </div>
+                      )}
 
-                      {/* Employees */}
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-[10px] font-medium text-slate-500">
-                          Staff Accounts
-                        </span>
-
-                        <strong className="text-[10px] font-black text-slate-900">
-                          {plan.limits?.maxEmployees || "Unlimited"}
-                        </strong>
-                      </div>
-
-                      {/* Vendors */}
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-[10px] font-medium text-slate-500">
-                          Vendor Stores
-                        </span>
-
-                        <strong className="text-[10px] font-black text-indigo-700">
-                          {plan.limits?.maxVendors !== undefined
-                            ? `${plan.limits.maxVendors} Stores`
-                            : "Unlimited"}
-                        </strong>
-                      </div>
-
-                      {/* Warehouses */}
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-[10px] font-medium text-slate-500">
-                          Warehouses
-                        </span>
-
-                        <strong className="text-[10px] font-black text-slate-900">
-                          {plan.limits?.maxWarehouses || "Custom SLA"}
-                        </strong>
-                      </div>
-
-                      {/* Templates */}
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-[10px] font-medium text-slate-500">
-                          Template Builder
-                        </span>
-
-                        <strong className="text-[10px] font-black text-indigo-700">
-                          {plan.limits?.maxTemplates !== undefined &&
-                          plan.limits?.maxTemplates !== "Unlimited"
-                            ? `${plan.limits.maxTemplates} Templates`
-                            : "Unlimited"}
-                        </strong>
-                      </div>
-
-                      {/* Recycle Bin */}
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-[10px] font-medium text-slate-500">
-                          Recycle Bin
-                        </span>
-
-                        <strong className="text-[10px] font-black text-emerald-700">
-                          {plan.limits?.recycleBinDays !== undefined &&
-                          plan.limits?.recycleBinDays !== "Custom"
-                            ? `${plan.limits.recycleBinDays} Days`
-                            : "Custom"}
-                        </strong>
+                      {/* Common Platform Limits (Always shown) */}
+                      <div className="space-y-1.5 pt-0.5">
+                        <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-emerald-800">
+                          <Users size={11} className="text-emerald-600" />
+                          <span>Team & Operations (All Plans)</span>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="font-medium text-slate-500">
+                            Staff Accounts
+                          </span>
+                          <strong className="font-black text-slate-900">
+                            {formatLimit(plan.limits?.maxEmployees)}
+                          </strong>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="font-medium text-slate-500">
+                            Vendor Stores
+                          </span>
+                          <strong className="font-black text-indigo-700">
+                            {formatLimit(
+                              plan.limits?.maxVendors,
+                              typeof plan.limits?.maxVendors === "number"
+                                ? "Stores"
+                                : "",
+                            )}
+                          </strong>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="font-medium text-slate-500">
+                            Template Builder
+                          </span>
+                          <strong className="font-black text-indigo-700">
+                            {formatLimit(
+                              plan.limits?.maxTemplates,
+                              typeof plan.limits?.maxTemplates === "number"
+                                ? "Themes"
+                                : "",
+                            )}
+                          </strong>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="font-medium text-slate-500">
+                            Recycle Bin Retention
+                          </span>
+                          <strong className="font-black text-emerald-700">
+                            {plan.limits?.recycleBinDays !== undefined &&
+                            plan.limits?.recycleBinDays !== "Custom Retention"
+                              ? `${plan.limits.recycleBinDays} Days`
+                              : "Custom Retention"}
+                          </strong>
+                        </div>
                       </div>
                     </div>
                   </div>

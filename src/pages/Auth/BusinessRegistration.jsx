@@ -24,11 +24,14 @@ import {
   X,
   AlertCircle,
   KeyRound,
+  Boxes,
+  CalendarCheck,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { registerBusiness, sendOTP, verifyOTP } from "../../api/authService";
 import baseApi from "../../api/baseApi";
+import { registerOnBkonnect } from "../../api/bkonnect";
 
 const BUSINESS_TYPES = [
   { value: "PRIVATE_LIMITED", label: "Private Limited Company" },
@@ -60,11 +63,199 @@ const BUSINESS_SIZES = [
   "500+ Employees",
 ];
 
+const getPlanScope = (plan, selectedCategory) => {
+  const scope = (plan?.businessCategoryScope || "").toUpperCase();
+  if (scope === "SERVICE") return "SERVICE";
+  if (scope === "ECOMMERCE" || scope === "GIFTING") return "ECOMMERCE";
+  if (scope === "BOTH" || scope === "BUSINESS") return "BOTH";
+
+  const catCode = (
+    plan?.businessCategory?.code ||
+    plan?.businessCategory?.name ||
+    ""
+  ).toUpperCase();
+  if (catCode.includes("SERVICE")) return "SERVICE";
+  if (
+    catCode.includes("ECOMMERCE") ||
+    catCode.includes("RETAIL") ||
+    catCode.includes("PRODUCT")
+  )
+    return "ECOMMERCE";
+  if (
+    catCode.includes("BOTH") ||
+    catCode.includes("BRAND") ||
+    catCode.includes("BUSINESS")
+  )
+    return "BOTH";
+
+  const catUpper = String(selectedCategory || "").toUpperCase();
+  if (catUpper.includes("SERVICE")) return "SERVICE";
+  if (
+    catUpper.includes("ECOM") ||
+    catUpper.includes("RETAIL") ||
+    catUpper.includes("PRODUCT")
+  )
+    return "ECOMMERCE";
+
+  return "BOTH";
+};
+
+const formatLimit = (val, suffix = "") => {
+  if (val === undefined || val === null || val === "") return "Unlimited";
+  if (typeof val === "string") return val;
+  if (typeof val === "number") {
+    if (val < 0) return "Unlimited";
+    return suffix
+      ? `${val.toLocaleString("en-IN")} ${suffix}`
+      : val.toLocaleString("en-IN");
+  }
+  return String(val);
+};
+
+const getFallbackPlans = (category) => {
+  const catUpper = String(category || "").toUpperCase();
+  const isService = catUpper.includes("SERVICE");
+  const isEcom = catUpper.includes("ECOM") || catUpper.includes("RETAIL");
+
+  return [
+    {
+      _id: "starter",
+      name: "Starter",
+      description: isService
+        ? "Essential tools for service providers & appointment scheduling"
+        : isEcom
+          ? "Essential tools for small shops launching online store"
+          : "Essential platform tools for emerging businesses",
+      pricing: { monthly: 499, yearly: 399 },
+      popular: false,
+      businessCategoryScope: isService ? "SERVICE" : isEcom ? "ECOMMERCE" : "ALL",
+      limits: {
+        maxProducts: 500,
+        maxWarehouses: 1,
+        maxServices: 50,
+        maxBookings: 250,
+        maxEnquiries: 500,
+        maxEmployees: 3,
+        maxVendors: 2,
+        maxTemplates: 3,
+        recycleBinDays: 14,
+      },
+      features: isService
+        ? [
+            "Online appointment booking",
+            "Client inquiry management",
+            "Service catalog & pricing",
+            "Staff scheduling",
+            "Digital receipts & invoices",
+          ]
+        : isEcom
+          ? [
+              "Up to 500 product listings",
+              "Inventory tracking & alerts",
+              "Order management & shipping",
+              "1 warehouse location",
+              "Customer checkout & cart",
+            ]
+          : [
+              "Product catalog & services",
+              "Order & booking processing",
+              "Customer CRM & inquiries",
+              "Team access & permissions",
+              "Payment gateway integration",
+            ],
+    },
+    {
+      _id: "growth",
+      name: "Growth",
+      description: isService
+        ? "Advanced scheduling & booking management for growing agencies"
+        : isEcom
+          ? "Scale your online store with multi-warehouse & vendor support"
+          : "Scale multi-channel operations across retail & services",
+      pricing: { monthly: 999, yearly: 799 },
+      popular: true,
+      businessCategoryScope: isService ? "SERVICE" : isEcom ? "ECOMMERCE" : "ALL",
+      limits: {
+        maxProducts: 5000,
+        maxWarehouses: 3,
+        maxServices: 250,
+        maxBookings: 2500,
+        maxEnquiries: 5000,
+        maxEmployees: 10,
+        maxVendors: 5,
+        maxTemplates: 10,
+        recycleBinDays: 30,
+      },
+      features: isService
+        ? [
+            "Up to 250 active services",
+            "2,500 monthly bookings",
+            "5,000 client inquiries",
+            "Calendar sync & notifications",
+            "Staff & team management",
+            "Custom quote generator",
+          ]
+        : isEcom
+          ? [
+              "5,000 product catalog",
+              "3 warehouse fulfillment centers",
+              "5 vendor storefronts",
+              "Automated courier dispatch",
+              "Advanced analytics & reports",
+              "Discount & coupon engine",
+            ]
+          : [
+              "Full product & service catalog",
+              "Multi-warehouse & multi-vendor",
+              "Bookings & order management",
+              "10 staff accounts",
+              "Custom storefront templates",
+              "Reports & business analytics",
+            ],
+    },
+    {
+      _id: "business",
+      name: "Business",
+      description: "Comprehensive enterprise-grade infrastructure with priority SLA",
+      pricing: { monthly: 1999, yearly: 1599 },
+      popular: false,
+      businessCategoryScope: "ALL",
+      limits: {
+        maxProducts: 25000,
+        maxWarehouses: 5,
+        maxServices: 1000,
+        maxBookings: 10000,
+        maxEnquiries: 20000,
+        maxEmployees: 25,
+        maxVendors: 10,
+        maxTemplates: 20,
+        recycleBinDays: 60,
+      },
+      features: [
+        "High-volume catalog & multi-location",
+        "Dedicated POS & booking desk",
+        "Role-based permissions & audit logs",
+        "GST invoicing & tax reconciliation",
+        "Multi-store vendor management",
+        "Priority 24/7 technical support",
+      ],
+    },
+  ];
+};
+
 export default function BusinessRegistration() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialPlanParam = searchParams.get("plan") || "";
   const initialCategoryParam = searchParams.get("category") || "";
+
+  const resolveInitialCategory = () => {
+    if (!initialCategoryParam) return "E-commerce";
+    const lower = initialCategoryParam.toLowerCase();
+    if (lower.includes("service")) return "Service";
+    if (lower.includes("both") || lower.includes("busin")) return "business";
+    return "E-commerce";
+  };
 
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
@@ -80,7 +271,7 @@ export default function BusinessRegistration() {
   const [formData, setFormData] = useState({
     legal_business_name: "",
     business_type: "",
-    business_category: "",
+    business_category: resolveInitialCategory(),
     business_size: "1-10 Employees",
     business_email: "",
     business_phone: "",
@@ -294,27 +485,10 @@ export default function BusinessRegistration() {
           setBusinessCategories(fetchedCats);
         }
 
-        // Determine initial category
-        let selectedCatId = "";
-        if (initialCategoryParam && fetchedCats.length > 0) {
-          const matched = fetchedCats.find(
-            (c) =>
-              c._id === initialCategoryParam ||
-              c.code?.toLowerCase() === initialCategoryParam.toLowerCase() ||
-              c.name?.toLowerCase() === initialCategoryParam.toLowerCase(),
-          );
-          if (matched) selectedCatId = matched._id;
-        }
-        if (!selectedCatId && fetchedCats.length > 0) {
-          // Default to E-Commerce (ECOMMERCE) or first active category
-          const ecom = fetchedCats.find((c) => c.code === "ECOMMERCE");
-          selectedCatId = ecom ? ecom._id : fetchedCats[0]._id;
-        }
-
         setFormData((prev) => ({
           ...prev,
           business_type: fetchedTypes.length > 0 ? fetchedTypes[0]._id : "",
-          business_category: selectedCatId,
+          business_category: prev.business_category || resolveInitialCategory(),
           plan: initialPlanParam || prev.plan,
         }));
       } catch (err) {
@@ -343,8 +517,8 @@ export default function BusinessRegistration() {
           res.data?.plans ||
           res.data?.data ||
           (Array.isArray(res.data) ? res.data : []);
-        setPlans(Array.isArray(data) ? data : []);
         if (Array.isArray(data) && data.length > 0) {
+          setPlans(data);
           const matched =
             initialPlanParam && data.find((p) => p._id === initialPlanParam);
           if (matched) {
@@ -356,9 +530,32 @@ export default function BusinessRegistration() {
             const defaultPlan = data.find((p) => p.isPopular) || data[0];
             setFormData((prev) => ({ ...prev, plan: defaultPlan._id }));
           }
+        } else {
+          const fallback = getFallbackPlans(formData.business_category);
+          setPlans(fallback);
+          const matched =
+            initialPlanParam &&
+            fallback.find((p) => p._id === initialPlanParam);
+          setFormData((prev) => ({
+            ...prev,
+            plan: matched
+              ? matched._id
+              : fallback[1]?._id || fallback[0]?._id,
+          }));
         }
       } catch (err) {
         console.error("Error fetching subscription plans:", err);
+        const fallback = getFallbackPlans(formData.business_category);
+        setPlans(fallback);
+        const matched =
+          initialPlanParam &&
+          fallback.find((p) => p._id === initialPlanParam);
+        setFormData((prev) => ({
+          ...prev,
+          plan: matched
+            ? matched._id
+            : fallback[1]?._id || fallback[0]?._id,
+        }));
       } finally {
         setPlansLoading(false);
       }
@@ -369,6 +566,27 @@ export default function BusinessRegistration() {
     }
   }, [formData.business_category, initialPlanParam]);
 
+  const uniqueUserName =
+    formData.legal_business_name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "") +
+    "_" +
+    Math.floor(Math.random() * 10000);
+  const registerBkonnect = async () => {
+    try {
+      const postData = {
+        displayName: formData.legal_business_name,
+        username: uniqueUserName,
+        email: formData.business_email,
+        password: formData.ownerPassword,
+      };
+      await registerOnBkonnect(postData);
+    } catch (error) {
+      console.error("Error registering on Bkonnect:", error);
+    }
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateStep1() || !validateStep2()) return;
@@ -403,6 +621,7 @@ export default function BusinessRegistration() {
       };
 
       await registerBusiness(postData);
+      await registerBkonnect(); // Register on Bkonnect after successful business registration
       toast.success("Business registration submitted successfully!");
       setIsSubmitted(true);
     } catch (error) {
@@ -1069,6 +1288,10 @@ export default function BusinessRegistration() {
                       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                         {plans.map((plan) => {
                           const isSelected = formData.plan === plan._id;
+                          const planScope = getPlanScope(
+                            plan,
+                            formData.business_category,
+                          );
 
                           /* -----------------------------------------------
              PRICE
@@ -1183,12 +1406,29 @@ export default function BusinessRegistration() {
 
                               <div className="flex flex-1 flex-col p-6">
                                 {/* =======================================
-                    PLAN NAME
+                    PLAN NAME & SCOPE
                 ======================================== */}
                                 <div className="pt-4">
-                                  <h4 className="text-lg font-extrabold text-slate-900">
-                                    {plan.name}
-                                  </h4>
+                                  <div className="flex items-center justify-between gap-2">
+                                    <h4 className="text-lg font-extrabold text-slate-900">
+                                      {plan.name}
+                                    </h4>
+                                    <span
+                                      className={`rounded-md px-2 py-0.5 text-[8px] font-extrabold uppercase ${
+                                        planScope === "SERVICE"
+                                          ? "bg-violet-50 text-violet-700 border border-violet-200"
+                                          : planScope === "ECOMMERCE"
+                                            ? "bg-amber-50 text-amber-800 border border-amber-200"
+                                            : "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                                      }`}
+                                    >
+                                      {planScope === "SERVICE"
+                                        ? "Service Plan"
+                                        : planScope === "ECOMMERCE"
+                                          ? "E-Commerce"
+                                          : "Unified Suite"}
+                                    </span>
+                                  </div>
 
                                   <p className="mt-1.5 min-h-[38px] text-xs leading-5 text-slate-500">
                                     {plan.description ||
@@ -1199,7 +1439,7 @@ export default function BusinessRegistration() {
                                 {/* =======================================
                     PRICE
                 ======================================== */}
-                                <div className="mt-6">
+                                <div className="mt-5">
                                   <div className="flex items-end gap-1">
                                     <span className="text-4xl font-black tracking-tight text-slate-900">
                                       ₹{currentPrice.toLocaleString("en-IN")}
@@ -1238,6 +1478,166 @@ export default function BusinessRegistration() {
                                         </span>
                                       </div>
                                     )}
+                                </div>
+
+                                {/* =======================================
+                    CAPACITY LIMITS
+                ======================================== */}
+                                <div className="mt-5 rounded-xl border border-slate-100 bg-slate-50/80 p-3 text-left">
+                                  <div className="mb-2 flex items-center justify-between">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="h-1.5 w-1.5 rounded-full bg-[#C9956C]" />
+                                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-500">
+                                        Included Capacity
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2.5">
+                                    {/* E-Commerce Capacity (if ECOMMERCE or BOTH) */}
+                                    {(planScope === "ECOMMERCE" ||
+                                      planScope === "BOTH") && (
+                                      <div className="space-y-1 border-b border-slate-200/60 pb-2">
+                                        <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-amber-800">
+                                          <Boxes
+                                            size={10}
+                                            className="text-amber-600"
+                                          />
+                                          <span>E-Commerce Limits</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-[11px]">
+                                          <span className="font-medium text-slate-500">
+                                            Products Catalog
+                                          </span>
+                                          <strong className="font-black text-slate-900">
+                                            {formatLimit(
+                                              plan.limits?.maxProducts,
+                                            )}
+                                          </strong>
+                                        </div>
+                                        <div className="flex items-center justify-between text-[11px]">
+                                          <span className="font-medium text-slate-500">
+                                            Warehouses
+                                          </span>
+                                          <strong className="font-black text-slate-900">
+                                            {formatLimit(
+                                              plan.limits?.maxWarehouses,
+                                              typeof plan.limits
+                                                ?.maxWarehouses === "number"
+                                                ? "Hubs"
+                                                : "",
+                                            )}
+                                          </strong>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Services Capacity (if SERVICE or BOTH) */}
+                                    {(planScope === "SERVICE" ||
+                                      planScope === "BOTH") && (
+                                      <div className="space-y-1 border-b border-slate-200/60 pb-2">
+                                        <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-violet-800">
+                                          <CalendarCheck
+                                            size={10}
+                                            className="text-violet-600"
+                                          />
+                                          <span>Service & Booking Limits</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-[11px]">
+                                          <span className="font-medium text-slate-500">
+                                            Active Services
+                                          </span>
+                                          <strong className="font-black text-slate-900">
+                                            {formatLimit(
+                                              plan.limits?.maxServices,
+                                            )}
+                                          </strong>
+                                        </div>
+                                        <div className="flex items-center justify-between text-[11px]">
+                                          <span className="font-medium text-slate-500">
+                                            Monthly Bookings
+                                          </span>
+                                          <strong className="font-black text-slate-900">
+                                            {formatLimit(
+                                              plan.limits?.maxBookings,
+                                            )}
+                                          </strong>
+                                        </div>
+                                        <div className="flex items-center justify-between text-[11px]">
+                                          <span className="font-medium text-slate-500">
+                                            Client Inquiries
+                                          </span>
+                                          <strong className="font-black text-slate-900">
+                                            {formatLimit(
+                                              plan.limits?.maxEnquiries,
+                                            )}
+                                          </strong>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Common Platform Limits (Always shown) */}
+                                    <div className="space-y-1 pt-0.5">
+                                      <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-emerald-800">
+                                        <Users
+                                          size={10}
+                                          className="text-emerald-600"
+                                        />
+                                        <span>Team & Operations</span>
+                                      </div>
+                                      <div className="flex items-center justify-between text-[11px]">
+                                        <span className="font-medium text-slate-500">
+                                          Staff Accounts
+                                        </span>
+                                        <strong className="font-black text-slate-900">
+                                          {formatLimit(
+                                            plan.limits?.maxEmployees,
+                                          )}
+                                        </strong>
+                                      </div>
+                                      <div className="flex items-center justify-between text-[11px]">
+                                        <span className="font-medium text-slate-500">
+                                          Vendor Stores
+                                        </span>
+                                        <strong className="font-black text-indigo-700">
+                                          {formatLimit(
+                                            plan.limits?.maxVendors,
+                                            typeof plan.limits?.maxVendors ===
+                                              "number"
+                                              ? "Stores"
+                                              : "",
+                                          )}
+                                        </strong>
+                                      </div>
+                                      <div className="flex items-center justify-between text-[11px]">
+                                        <span className="font-medium text-slate-500">
+                                          Template Builder
+                                        </span>
+                                        <strong className="font-black text-indigo-700">
+                                          {formatLimit(
+                                            plan.limits?.maxTemplates,
+                                            typeof plan.limits?.maxTemplates ===
+                                              "number"
+                                              ? "Themes"
+                                              : "",
+                                          )}
+                                        </strong>
+                                      </div>
+                                      <div className="flex items-center justify-between text-[11px]">
+                                        <span className="font-medium text-slate-500">
+                                          Recycle Bin
+                                        </span>
+                                        <strong className="font-black text-emerald-700">
+                                          {plan.limits?.recycleBinDays !==
+                                            undefined &&
+                                          plan.limits?.recycleBinDays !==
+                                            "Custom Retention"
+                                            ? `${plan.limits.recycleBinDays} Days`
+                                            : "Custom"}
+                                        </strong>
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
 
                                 {/* =======================================

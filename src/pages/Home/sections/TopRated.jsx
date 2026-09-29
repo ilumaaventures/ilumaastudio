@@ -34,7 +34,7 @@ export default function TopRated() {
         if (isMounted) {
           // Filter to valid real products only (no mock placeholders)
           const validRealProducts = list.filter(
-            (p) => p && p.name && (p._id || p.id)
+            (p) => p && p.name && (p._id || p.id),
           );
 
           // Sort real products by rating descending, or fallback to reviews/price
@@ -120,37 +120,13 @@ export default function TopRated() {
               Top Rated Products
             </h2>
             <p className="text-xs text-slate-500 font-medium mt-1">
-              Real verified merchant products acclaimed for exceptional quality and customer satisfaction.
+              Real verified merchant products acclaimed for exceptional quality
+              and customer satisfaction.
             </p>
           </div>
 
           {/* Navigation Controls */}
           <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
-            <button
-              onClick={() => handleScroll("left")}
-              disabled={!canScrollLeft}
-              aria-label="Scroll Left"
-              className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all ${
-                canScrollLeft
-                  ? "border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-2xs cursor-pointer active:scale-95"
-                  : "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
-              }`}
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <button
-              onClick={() => handleScroll("right")}
-              disabled={!canScrollRight}
-              aria-label="Scroll Right"
-              className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all ${
-                canScrollRight
-                  ? "border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-2xs cursor-pointer active:scale-95"
-                  : "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
-              }`}
-            >
-              <ChevronRight size={18} />
-            </button>
-
             <Link
               to="/products?sort=rating"
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0 ml-1"

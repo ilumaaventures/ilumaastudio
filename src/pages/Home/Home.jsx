@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import HeroBanner from "./sections/HeroBanner";
 import MarketplaceHub from "./sections/MarketplaceHub";
 import ShopByCategory from "./sections/ShopByCategory";
@@ -12,7 +13,10 @@ import OccasionsAndCollections from "./sections/OccasionsAndCollections";
 import MegaSaleBanner from "./sections/MegaSaleBanner";
 import AppNewsletterSocial from "./sections/AppNewsletterSocial";
 import { getProducts } from "../../api/productService";
-import { fetchCategories } from "../../api/categoryService";
+import {
+  fetchCategories,
+  fetchBusinessCategories,
+} from "../../api/categoryService";
 import FeaturedProductCategory from "./sections/FeaturedProductCategory";
 import TopRated from "./sections/TopRated";
 import PromotionalShowcase from "./sections/PromotionalShowcase";
@@ -23,20 +27,48 @@ import NewArrivalsSection from "./sections/NewArrivalsSection";
 import BannerSection from "../../Components/BannerSection";
 import HomeShimmer from "./components/HomeShimmer";
 import CategorySection from "./sections/CategorySection";
+import TopRatedServiceProviders from "./sections/TopRatedServiceProviders";
 
 function Home() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [serviceCategories, setServiceCategories] = useState([]);
+  const [businessCategories, setBusinessCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [serviceCategoriesLoading, setServiceCategoriesLoading] =
+    useState(true);
+  const [businessCategoriesLoading, setBusinessCategoriesLoading] =
+    useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadHomeData = async () => {
       try {
         setLoading(true);
-        const [productsData, categoriesData] = await Promise.all([
-          getProducts({ productType: "E-Commerce", limit: 12 }),
-          fetchCategories({ businessType: "E-Commerce" }),
+        setServiceCategoriesLoading(true);
+        setBusinessCategoriesLoading(true);
+
+        const [
+          productsData,
+          categoriesData,
+          serviceCategoriesData,
+          businessCategoriesData,
+        ] = await Promise.all([
+          getProducts({ productType: "E-Commerce", limit: 12 }).catch(() => []),
+          fetchCategories({ businessType: "E-Commerce" }).catch(() => []),
+          fetchCategories({
+            businessCategory: "SERVICE",
+            status: "active",
+          }).catch(() => []),
+          fetchCategories({
+            businessCategory: "BUSINESS",
+            status: "active",
+          }).catch(() => []),
         ]);
+
+        if (!isMounted) return;
 
         const plist = Array.isArray(productsData)
           ? productsData
@@ -46,171 +78,55 @@ function Home() {
           categoriesData?.categories ||
           (Array.isArray(categoriesData) ? categoriesData : []);
 
+        const slist =
+          serviceCategoriesData?.data ||
+          serviceCategoriesData?.categories ||
+          (Array.isArray(serviceCategoriesData) ? serviceCategoriesData : []);
+
+        let blist =
+          businessCategoriesData?.data ||
+          businessCategoriesData?.categories ||
+          (Array.isArray(businessCategoriesData) ? businessCategoriesData : []);
+
+        // Fallback for business categories if no items returned under BUSINESS code
+        if (!blist || blist.length === 0) {
+          try {
+            const bCatRes = await fetchBusinessCategories({ status: "active" });
+            const fallbackList =
+              bCatRes?.data || (Array.isArray(bCatRes) ? bCatRes : []);
+            if (fallbackList.length > 0) {
+              blist = fallbackList;
+            }
+          } catch (e) {
+            console.error("Fallback business categories error:", e);
+          }
+        }
+
         setProducts(plist);
         setCategories(clist);
+        setServiceCategories(slist);
+        setBusinessCategories(blist);
       } catch (err) {
         console.error("Failed to load home page data:", err);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+          setServiceCategoriesLoading(false);
+          setBusinessCategoriesLoading(false);
+        }
       }
     };
+
     loadHomeData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (loading) {
     return <HomeShimmer />;
   }
-  const serviceCategories = [
-    {
-      id: 1,
-      name: "Home Maintenance & Repair",
-      description: "Plumbing, AC, Electrical & Carpentry",
-      icon: "🔧",
-    },
-    {
-      id: 2,
-      name: "Cleaning & Sanitation",
-      description: "Deep Cleaning, Pest Control & Tanks",
-      icon: "🧹",
-    },
-    {
-      id: 3,
-      name: "Beauty & Salon at Home",
-      description: "Hair, Makeup, Spa & Grooming",
-      icon: "💇",
-    },
-    {
-      id: 4,
-      name: "Event Management & PR",
-      description: "Weddings, Corporate & Party Planning",
-      icon: "🎉",
-    },
-    {
-      id: 5,
-      name: "IT Support & Networking",
-      description: "Computer Repair, AMC & CCTV",
-      icon: "💻",
-    },
-    {
-      id: 6,
-      name: "Legal & Tax Consulting",
-      description: "GST, Filing, Trade License & CA",
-      icon: "⚖️",
-    },
-    {
-      id: 7,
-      name: "Packers & Movers",
-      description: "Relocation, Transport & Storage",
-      icon: "📦",
-    },
-    {
-      id: 8,
-      name: "Health & Fitness Coaching",
-      description: "Yoga, Trainers & Dieticians",
-      icon: "🏋️",
-    },
-  ];
-  const productCategories = [
-    {
-      id: 1,
-      name: "Electronics & Gadgets",
-      description: "Mobiles, Laptops, PCs & Accessories",
-      icon: "📱",
-    },
-    {
-      id: 2,
-      name: "Fashion & Apparel",
-      description: "Men, Women & Kids Clothing",
-      icon: "👕",
-    },
-    {
-      id: 3,
-      name: "Groceries & FMCG",
-      description: "Daily Needs, Staples & Beverages",
-      icon: "🛒",
-    },
-    {
-      id: 4,
-      name: "Home & Office Furniture",
-      description: "Desks, Sofas, Beds & Decor",
-      icon: "🛋️",
-    },
-  ];
-
-  const businessCategories = [
-    {
-      id: 1,
-      name: "Manufacturers",
-      description: "Factories, production units & manufacturers",
-      icon: "🏭",
-    },
-    {
-      id: 2,
-      name: "Wholesalers & Distributors",
-      description: "Bulk suppliers, distributors & stockists",
-      icon: "📦",
-    },
-    {
-      id: 3,
-      name: "Retailers & Dealers",
-      description: "Local shops, dealers & authorized sellers",
-      icon: "🏪",
-    },
-    {
-      id: 4,
-      name: "Importers & Exporters",
-      description: "International trade & sourcing businesses",
-      icon: "🌍",
-    },
-    {
-      id: 5,
-      name: "Construction & Infrastructure",
-      description: "Builders, contractors & infrastructure companies",
-      icon: "🏗️",
-    },
-    {
-      id: 6,
-      name: "Real Estate",
-      description: "Property dealers, developers & agencies",
-      icon: "🏢",
-    },
-    {
-      id: 7,
-      name: "Logistics & Transportation",
-      description: "Transporters, fleet operators & logistics firms",
-      icon: "🚚",
-    },
-    {
-      id: 8,
-      name: "IT & Technology",
-      description: "IT companies, software firms & tech providers",
-      icon: "💻",
-    },
-    {
-      id: 9,
-      name: "Healthcare & Pharma",
-      description: "Hospitals, clinics, pharma & medical businesses",
-      icon: "🏥",
-    },
-    {
-      id: 10,
-      name: "Education & Training",
-      description: "Schools, institutes, coaching & training centers",
-      icon: "🎓",
-    },
-    {
-      id: 11,
-      name: "Hotels & Restaurants",
-      description: "Hotels, restaurants, cafes & hospitality businesses",
-      icon: "🏨",
-    },
-    {
-      id: 12,
-      name: "Finance & Professional Services",
-      description: "CA, legal, finance & consulting firms",
-      icon: "💼",
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-[#fafafa] font-sans antialiased text-slate-900 pb-12 space-y-6 sm:space-y-8 animate-fadeIn">
@@ -227,22 +143,18 @@ function Home() {
       <BannerSection bannerType="promotion" />
       {/* New Arrivals Section */}
       <NewArrivalsSection />
-      {/* <MegaSaleBanner
-        bannerIndex={0}
-        fallbackTitle="Curated Essentials for Modern Living"
-        fallbackDescription="Explore handpicked products from verified brands with effortless checkout and dependable delivery."
-        fallbackImageUrl="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80"
-        fallbackLinkUrl="/shop"
-      /> */}
 
+      {/* On-Demand & Professional Services Category Section */}
       <CategorySection
         title="On-Demand & Professional Services"
         subtitle="Find trusted professionals for your everyday needs."
         categories={serviceCategories}
+        loading={serviceCategoriesLoading}
         viewAllText="View All Services"
-        onViewAll={() => console.log("View all services")}
+        onViewAll={() => navigate("/services")}
         onCategoryClick={(category) => {
-          console.log("Selected service:", category);
+          const categoryName = category.name || category.slug || category._id;
+          navigate(`/services?category=${encodeURIComponent(categoryName)}`);
         }}
         linkUrl="/services"
       />
@@ -273,20 +185,24 @@ function Home() {
       {/* Our Occasion & Our Collection */}
       <OccasionsAndCollections />
 
+      {/* Top Rated Service Providers */}
+      <TopRatedServiceProviders />
       {/* Trust & Guarantee Perks */}
       <WhyChooseUs />
       {/* Top Rated Picks Section */}
       <TopRated />
-      {/* Bottom Offer Banner & Footer */}
 
+      {/* Enterprise & Local Brands Sectors Category Section */}
       <CategorySection
         title="Enterprise & Local Brands Sectors"
         subtitle="Connect with businesses, suppliers and professional providers."
         categories={businessCategories}
+        loading={businessCategoriesLoading}
         viewAllText="View All Businesses"
-        onViewAll={() => console.log("View all businesses")}
+        onViewAll={() => navigate("/store")}
         onCategoryClick={(category) => {
-          console.log("Selected business:", category);
+          const categoryName = category.name || category.code || category._id;
+          navigate(`/store?category=${encodeURIComponent(categoryName)}`);
         }}
         linkUrl="/store"
       />
