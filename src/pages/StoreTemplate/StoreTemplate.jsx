@@ -245,6 +245,32 @@ const featuredBusinesses = [
     url: "https://studio.ilumaa.com/starlingtales",
     badge: "Gifting",
   },
+
+  {
+    id: 5,
+    name: "Pixel6D",
+    type: "3D Printing & Prototyping",
+    image: "https://pixel6d.com/images/modern-living-room.png",
+    url: "https://pixel6d.com",
+    badge: "3D Printing",
+  },
+  {
+    id: 6,
+    name: "TRD Deftech",
+    type: "Defensive Technology",
+    image:
+      "https://www.trddeftech.com/assets/services/service_precision_manufacturing.png",
+    url: "https://trddeftech.com",
+    badge: "Defensive Tech",
+  },
+  {
+    id: 7,
+    name: "Aricsso India",
+    type: "Manufacturing & Industrial Solutions",
+    image: "https://aricssoindia.co.in/images/sam3.jfif",
+    url: "https://aricsso.com",
+    badge: "Industrial Solutions",
+  },
   {
     id: 3,
     name: "Kraftybling",
@@ -256,11 +282,19 @@ const featuredBusinesses = [
   },
   {
     id: 4,
-    name: "ILUMAA Gifter",
+    name: "Gifter",
     type: "Curated Gifting",
     image: "https://gifter.ilumaa.com/occasion_gift_box.jpg",
     url: "https://gifter.ilumaa.com",
     badge: "Gifting",
+  },
+  {
+    id: 8,
+    name: "Trinex System LLP",
+    type: "Industrial Automation & Robotics",
+    image: "https://trinex-fe.vercel.app/assets/focus.jpg",
+    url: "https://trinex-fe.vercel.app/",
+    badge: "Industrial Solutions",
   },
 ];
 export default function StoreTemplate() {
