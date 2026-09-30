@@ -70,17 +70,22 @@ function BusinessCard({ provider, index }) {
 
   const location =
     provider.location ||
-    [provider.address?.city, provider.address?.state].filter(Boolean).join(", ") ||
+    [provider.address?.city, provider.address?.state]
+      .filter(Boolean)
+      .join(", ") ||
     "Verified Location";
 
   const shopSlug =
     provider.slugName ||
-    (typeof provider.slug === "object" ? provider.slug?.slugName : provider.slug) ||
+    (typeof provider.slug === "object"
+      ? provider.slug?.slugName
+      : provider.slug) ||
     provider.businessSlug ||
     provider.subdomain ||
     provider._id;
 
-  const isCustomDomain = provider.slugType === "domain" && provider.customDomain;
+  const isCustomDomain =
+    provider.slugType === "domain" && provider.customDomain;
   const storeUrl = isCustomDomain
     ? `https://${provider.customDomain}`
     : `/store/${shopSlug}`;
@@ -187,7 +192,7 @@ function BusinessCard({ provider, index }) {
 
       {/* Card Footer CTAs */}
       <div className="p-5 pt-0 pb-5">
-        <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+        <div className="grid grid-cols-1 gap-2 border-t border-slate-100 pt-3">
           <Link
             to={servicesUrl}
             className="
@@ -201,7 +206,7 @@ function BusinessCard({ provider, index }) {
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
 
-          <Link
+          {/* <Link
             to={storeUrl}
             className="
               inline-flex items-center justify-center gap-1
@@ -212,7 +217,7 @@ function BusinessCard({ provider, index }) {
           >
             <span>Storefront</span>
             <ExternalLink className="h-3 w-3" />
-          </Link>
+          </Link> */}
         </div>
       </div>
     </article>
@@ -242,9 +247,15 @@ function FeaturedBusinesses() {
       const featuredServicesOnly = shops.filter((s) => {
         if (!s.isFeatured) return false;
         const catCode =
-          (typeof s.businessCategory === "object" ? s.businessCategory?.code : "")?.toUpperCase() || "";
+          (typeof s.businessCategory === "object"
+            ? s.businessCategory?.code
+            : ""
+          )?.toUpperCase() || "";
         const catName =
-          (typeof s.businessCategory === "object" ? s.businessCategory?.name : String(s.businessCategory || ""))?.toLowerCase() || "";
+          (typeof s.businessCategory === "object"
+            ? s.businessCategory?.name
+            : String(s.businessCategory || "")
+          )?.toLowerCase() || "";
         const isService =
           catCode === "SERVICE" ||
           catCode === "SERVICES" ||
@@ -256,7 +267,7 @@ function FeaturedBusinesses() {
     } catch (error) {
       console.error(
         "Failed to fetch featured service providers:",
-        error?.response?.data || error?.message || error
+        error?.response?.data || error?.message || error,
       );
       setProviders([]);
     } finally {
@@ -288,7 +299,8 @@ function FeaturedBusinesses() {
               </h2>
             </div>
             <p className="mt-1 text-xs sm:text-sm text-slate-500 font-medium">
-              Explore verified service providers and agencies connected through the ILUMAA ecosystem.
+              Explore verified service providers and agencies connected through
+              the ILUMAA ecosystem.
             </p>
           </div>
 

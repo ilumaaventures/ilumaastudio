@@ -19,6 +19,7 @@ import {
   Mail,
   Phone,
   Check,
+  ArrowRight,
 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { fetchAllMarketplaceStores } from "../../api/storeApi";
@@ -167,7 +168,18 @@ export default function BusinessStoreListing() {
             hasStorefront,
             category: categoryName,
             businessType: businessTypeName,
-            description: s.description || "",
+            description:
+              (
+                s.description ||
+                s.shortDescription ||
+                s.bio ||
+                s.about ||
+                s.aboutUs ||
+                s.tagline ||
+                s.businessDescription ||
+                ""
+              ).trim() ||
+              `Official merchant store for ${s.businessName || s.name || s.tradeName || "business"} offering verified products and customer services.`,
             rating: Number(s.rating) || 4.8,
             reviews: Number(s.reviewsCount) || 12,
             city: city.trim(),
@@ -175,7 +187,7 @@ export default function BusinessStoreListing() {
             image:
               resolveImg(s.logo) ||
               resolveImg(s.banner) ||
-              "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
+              "https://www.pngfind.com/pngs/m/665-6659827_enterprise-comments-default-company-logo-png-transparent-png.png",
             status: s.status || "active",
             verified:
               s.status === "active" ||
@@ -186,6 +198,9 @@ export default function BusinessStoreListing() {
             phone: s.businessPhone || "",
             website: s.website || "",
             createdAt: s.createdAt || null,
+            rawCategory: s.category,
+            rawBusinessCategory: s.businessCategory,
+            rawBusinessType: s.businessType,
           };
         });
 
@@ -358,59 +373,70 @@ export default function BusinessStoreListing() {
     featuredOnly;
 
   /* =========================================================
-     6. STORE NAVIGATION (Matches Home Page Local Shop Section)
-     Checks slug and related storefront info; if exists navigates,
-     if not exists, does not navigate.
+     6. SERVICE CATEGORY DETECTION & STORE NAVIGATION
+     If business category is service/services/service provider,
+     navigate to /services?businessId=...
+     Otherwise, navigate to /shop?businessId=...
   ========================================================= */
+  const isServiceCategory = (store) => {
+    if (!store) return false;
+    const valuesToCheck = [
+      store.category,
+      store.businessType,
+      typeof store.rawCategory === "object"
+        ? store.rawCategory?.name
+        : store.rawCategory,
+      typeof store.rawCategory === "object" ? store.rawCategory?.title : null,
+      typeof store.rawCategory === "object" ? store.rawCategory?.code : null,
+      typeof store.rawCategory === "object" ? store.rawCategory?.slug : null,
+      typeof store.rawBusinessCategory === "object"
+        ? store.rawBusinessCategory?.name
+        : store.rawBusinessCategory,
+      typeof store.rawBusinessCategory === "object"
+        ? store.rawBusinessCategory?.code
+        : null,
+      typeof store.rawBusinessType === "object"
+        ? store.rawBusinessType?.name
+        : store.rawBusinessType,
+    ].filter(Boolean);
+
+    const serviceTerms = [
+      "service",
+      "services",
+      "serive",
+      "serives",
+      "service provider",
+      "service providers",
+      "serivice provider",
+      "service_provider",
+    ];
+
+    return valuesToCheck.some((val) => {
+      const lower = String(val).toLowerCase().trim();
+      return (
+        serviceTerms.includes(lower) ||
+        lower.startsWith("service") ||
+        lower.endsWith("services") ||
+        lower.includes("service provider") ||
+        lower.includes("serivice provider") ||
+        lower.includes("serive")
+      );
+    });
+  };
+
   const handleStoreNavigate = (store, e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
 
-    const slugType =
-      store.slugType ||
-      (typeof store.slug === "object" ? store.slug?.slugType : null) ||
-      "path";
+    const targetId = store._id || store.id;
 
-    const customDomain =
-      store.customDomain ||
-      (typeof store.slug === "object" ? store.slug?.customDomain : null);
-
-    const isCustomDomain = slugType === "custom" && Boolean(customDomain);
-
-    const shopSlug =
-      store.slugName ||
-      (typeof store.slug === "object" ? store.slug?.slugName : store.slug) ||
-      store.businessSlug ||
-      store.subdomain ||
-      (store.name && store.name !== "Local Merchant Store"
-        ? store.name
-            .toLowerCase()
-            .trim()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/^-+|-+$/g, "")
-        : "");
-
-    // 1. External Custom Domain: act according to home page local shop section
-    if (isCustomDomain && customDomain) {
-      const cleanUrl = customDomain.trim().startsWith("http")
-        ? customDomain.trim()
-        : `https://${customDomain.trim()}`;
-      window.open(cleanUrl, "_blank", "noopener,noreferrer");
-      return;
+    if (isServiceCategory(store)) {
+      navigate(`/services?businessId=${encodeURIComponent(targetId)}`);
+    } else {
+      navigate(`/shop?businessId=${encodeURIComponent(targetId)}`);
     }
-
-    // 2. Internal Storefront: act according to home page local shop section (/:shopSlug)
-    if (shopSlug && shopSlug !== "store" && shopSlug.trim()) {
-      navigate(`/${shopSlug}`);
-      return;
-    }
-
-    // 3. If neither exists, DO NOT navigate!
-    toast.error(
-      `Storefront is not yet configured for ${store.name || "this business"}.`,
-    );
   };
 
   return (
@@ -888,16 +914,54 @@ export default function BusinessStoreListing() {
                               <span className="font-semibold text-[#2563eb]">
                                 {store.category}
                               </span>
+                              {store.businessType && (
+                                <>
+                                  <span>•</span>
+                                  <span className="text-slate-500 dark:text-slate-400">
+                                    {store.businessType}
+                                  </span>
+                                </>
+                              )}
                               <span>•</span>
                               <span className="flex items-center gap-1">
-                                <MapPin size={12} className="text-slate-400" />
+                                <MapPin
+                                  size={12}
+                                  className="text-slate-400 shrink-0"
+                                />
                                 {store.location}
                               </span>
                             </div>
                             {store.description && (
-                              <p className="text-xs text-slate-500 line-clamp-1">
+                              <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
                                 {store.description}
                               </p>
+                            )}
+                            {(store.website || store.phone) && (
+                              <div className="flex items-center gap-3 text-[11px] text-slate-400 pt-0.5">
+                                {store.website && (
+                                  <span className="flex items-center gap-1 text-slate-500 hover:text-[#2563eb]">
+                                    <Globe
+                                      size={11}
+                                      className="shrink-0 text-slate-400"
+                                    />
+                                    <span className="truncate max-w-[150px]">
+                                      {store.website.replace(
+                                        /^https?:\/\//,
+                                        "",
+                                      )}
+                                    </span>
+                                  </span>
+                                )}
+                                {store.phone && (
+                                  <span className="flex items-center gap-1 text-slate-500">
+                                    <Phone
+                                      size={11}
+                                      className="shrink-0 text-slate-400"
+                                    />
+                                    <span>{store.phone}</span>
+                                  </span>
+                                )}
+                              </div>
                             )}
                           </div>
                         </div>
@@ -917,18 +981,14 @@ export default function BusinessStoreListing() {
                           <button
                             type="button"
                             onClick={(e) => handleStoreNavigate(store, e)}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors ${
-                              store.hasStorefront
-                                ? "bg-slate-900 dark:bg-slate-800 hover:bg-[#2563eb] text-white cursor-pointer shadow-xs"
-                                : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200/60 dark:border-slate-700/60"
-                            }`}
+                            className="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors bg-slate-900 dark:bg-slate-800 hover:bg-[#2563eb] text-white cursor-pointer shadow-xs"
                           >
                             <span>
-                              {store.hasStorefront
-                                ? "Visit Store"
-                                : "Coming Soon"}
+                              {isServiceCategory(store)
+                                ? "View Services"
+                                : "View Products"}
                             </span>
-                            {store.hasStorefront && <ChevronRight size={14} />}
+                            <ChevronRight size={14} />
                           </button>
                         </div>
                       </div>
@@ -939,7 +999,7 @@ export default function BusinessStoreListing() {
                   return (
                     <div
                       key={store._id}
-                      onClick={(e) => handleStoreNavigate(store, e)}
+                      // onClick={(e) => handleStoreNavigate(store, e)}
                       className={`group bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xs hover:shadow-xl hover:border-[#2563eb]/40 transition-all duration-300 flex flex-col justify-between ${
                         store.hasStorefront
                           ? "cursor-pointer"
@@ -1005,7 +1065,7 @@ export default function BusinessStoreListing() {
                         {/* Store Body Details */}
                         <div className="p-5 space-y-3">
                           <div className="flex items-center justify-between">
-                            <span className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-slate-800 text-[#2563eb] font-bold text-[10px] uppercase tracking-wider">
+                            <span className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-slate-800 text-[#2563eb] font-bold text-[10px] uppercase tracking-wider truncate max-w-[150px]">
                               {store.category}
                             </span>
 
@@ -1022,12 +1082,12 @@ export default function BusinessStoreListing() {
                           </div>
 
                           {store.description && (
-                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                            <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
                               {store.description}
                             </p>
                           )}
 
-                          <div className="space-y-1.5 pt-1 text-xs">
+                          <div className="space-y-1.5 pt-2 text-xs border-t border-slate-100 dark:border-slate-800">
                             <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 font-medium">
                               <MapPin
                                 size={13}
@@ -1037,9 +1097,21 @@ export default function BusinessStoreListing() {
                             </div>
 
                             {store.businessType && (
-                              <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
-                                <Building2 size={12} className="shrink-0" />
+                              <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-[11px]">
+                                <Building2
+                                  size={12}
+                                  className="shrink-0 text-slate-400"
+                                />
                                 <span>Type: {store.businessType}</span>
+                              </div>
+                            )}
+
+                            {store.website && (
+                              <div className="flex items-center gap-1.5 text-[11px] text-[#2563eb]">
+                                <Globe size={12} className="shrink-0" />
+                                <span className="truncate">
+                                  {store.website.replace(/^https?:\/\//, "")}
+                                </span>
                               </div>
                             )}
                           </div>
@@ -1051,18 +1123,14 @@ export default function BusinessStoreListing() {
                         <button
                           type="button"
                           onClick={(e) => handleStoreNavigate(store, e)}
-                          className={`w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-xs ${
-                            store.hasStorefront
-                              ? "bg-slate-900 dark:bg-slate-800 hover:bg-[#2563eb] text-white cursor-pointer"
-                              : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200/60 dark:border-slate-700/60"
-                          }`}
+                          className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-50 dark:bg-slate-800/80 px-3.5 py-2.5 text-xs font-bold text-[#2563eb] hover:bg-blue-600 hover:text-white dark:hover:bg-[#2563eb] dark:hover:text-white transition-all cursor-pointer shadow-2xs"
                         >
                           <span>
-                            {store.hasStorefront
-                              ? "Visit Storefront"
-                              : "Coming Soon"}
+                            {isServiceCategory(store)
+                              ? "Explore Services"
+                              : "Explore Products"}
                           </span>
-                          {store.hasStorefront && <ChevronRight size={14} />}
+                          <ArrowRight size={14} />
                         </button>
                       </div>
                     </div>

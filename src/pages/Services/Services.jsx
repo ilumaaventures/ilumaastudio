@@ -84,15 +84,6 @@ export default function Services() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showMoreCategories, setShowMoreCategories] = useState(false);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
-
-  // Sync URL search params
-  useEffect(() => {
-    const cat = searchParams.get("category");
-    if (cat) setSelectedCategory(cat);
-    const search = searchParams.get("search");
-    if (search) setSearchQuery(search);
-  }, [searchParams]);
-
   // Sync state back to URL
   const updateUrlParams = (newCat, newSearch) => {
     const params = new URLSearchParams();
@@ -137,6 +128,57 @@ export default function Services() {
     loadCategories();
   }, []);
 
+  // Lookup map: ID -> Category Name, and Name -> Category Name
+  const categoryIdToName = useMemo(() => {
+    const map = new Map();
+    categories.forEach((c) => {
+      if (c._id) map.set(String(c._id).toLowerCase(), c.name);
+      if (c.name) map.set(c.name.toLowerCase(), c.name);
+      if (c.slug) map.set(c.slug.toLowerCase(), c.name);
+    });
+    return map;
+  }, [categories]);
+
+  // Sync URL search params
+  useEffect(() => {
+    const cat = searchParams.get("category");
+    if (cat) {
+      const mapped = categoryIdToName.get(cat.toLowerCase());
+      setSelectedCategory(mapped || cat);
+    }
+    const search = searchParams.get("search");
+    if (search !== null) setSearchQuery(search);
+  }, [searchParams, categoryIdToName]);
+
+  // Helper to resolve all human-readable category names for a service
+  const getServiceCategoryNames = useCallback(
+    (s) => {
+      const names = [];
+      const checkAndAdd = (val) => {
+        if (!val) return;
+        if (typeof val === "string") {
+          const mapped = categoryIdToName.get(val.toLowerCase());
+          if (mapped) names.push(mapped);
+          else names.push(val);
+        } else if (typeof val === "object") {
+          if (val.name) names.push(val.name);
+          else if (val.title) names.push(val.title);
+          else if (val._id) {
+            const mapped = categoryIdToName.get(String(val._id).toLowerCase());
+            if (mapped) names.push(mapped);
+          }
+        }
+      };
+
+      checkAndAdd(s.category);
+      if (Array.isArray(s.categories)) {
+        s.categories.forEach(checkAndAdd);
+      }
+      return Array.from(new Set(names.filter(Boolean)));
+    },
+    [categoryIdToName],
+  );
+
   // Fetch Services from API
   const fetchServices = useCallback(async () => {
     try {
@@ -146,8 +188,14 @@ export default function Services() {
       if (bizParam) queryParams.businessId = bizParam;
 
       const res = await getServices(queryParams);
-      const dataList =
-        res.services || res.data || (Array.isArray(res) ? res : []);
+      let dataList = [];
+      if (Array.isArray(res)) {
+        dataList = res;
+      } else if (res && Array.isArray(res.services)) {
+        dataList = res.services;
+      } else if (res && Array.isArray(res.data)) {
+        dataList = res.data;
+      }
       setServices(dataList);
     } catch (err) {
       console.error("Error loading services:", err);
@@ -166,34 +214,17 @@ export default function Services() {
   const categoryCounts = useMemo(() => {
     const counts = {};
     services.forEach((s) => {
-      const cats = [];
-      if (s.category) {
-        cats.push(
-          s.category?.name ||
-            s.category?.title ||
-            (typeof s.category === "string" ? s.category : "")
-        );
-      }
-      if (Array.isArray(s.categories)) {
-        s.categories.forEach((c) => {
-          cats.push(
-            c?.name ||
-              c?.title ||
-              (typeof c === "string" ? c : "")
-          );
-        });
-      }
-      const uniqueCats = Array.from(new Set(cats.filter(Boolean)));
-      if (uniqueCats.length === 0) {
+      const cats = getServiceCategoryNames(s);
+      if (cats.length === 0) {
         counts["General"] = (counts["General"] || 0) + 1;
       } else {
-        uniqueCats.forEach((catName) => {
+        cats.forEach((catName) => {
           counts[catName] = (counts[catName] || 0) + 1;
         });
       }
     });
     return counts;
-  }, [services]);
+  }, [services, getServiceCategoryNames]);
 
   // Filtered & Sorted services
   const filteredServices = useMemo(() => {
@@ -209,48 +240,56 @@ export default function Services() {
         // Search Query Filter
         if (searchQuery.trim()) {
           const query = searchQuery.toLowerCase().trim();
-          const nameMatch =
-            (s.serviceName || s.name || "").toLowerCase().includes(query);
-          const descMatch =
-            (s.description || s.shortDescription || "").toLowerCase().includes(query);
-          const catName =
-            (s.category?.name || (typeof s.category === "string" ? s.category : "")).toLowerCase();
-          const catsMatch =
-            Array.isArray(s.categories) &&
-            s.categories.some((c) =>
-              (c?.name || c?.title || "").toLowerCase().includes(query)
-            );
-          const bizMatch =
-            (s.business?.businessName || s.business?.tradeName || "").toLowerCase().includes(query);
+          const nameMatch = (s.serviceName || s.name || "")
+            .toLowerCase()
+            .includes(query);
+          const descMatch = (s.description || s.shortDescription || "")
+            .toLowerCase()
+            .includes(query);
+          const sCatNames = getServiceCategoryNames(s).map((n) =>
+            n.toLowerCase(),
+          );
+          const catMatch = sCatNames.some((n) => n.includes(query));
+          const bizMatch = (
+            s.business?.businessName ||
+            s.business?.tradeName ||
+            ""
+          )
+            .toLowerCase()
+            .includes(query);
           const tagMatch =
             Array.isArray(s.tags) &&
             s.tags.some((t) => String(t).toLowerCase().includes(query));
 
-          if (!nameMatch && !descMatch && !catName.includes(query) && !catsMatch && !bizMatch && !tagMatch) {
+          if (!nameMatch && !descMatch && !catMatch && !bizMatch && !tagMatch) {
             return false;
           }
         }
 
         // Category Filter
         if (selectedCategory && selectedCategory !== "All Categories") {
-          const targetCat = selectedCategory.toLowerCase().trim();
-          const matchSingle =
-            (s.category?.name && s.category.name.toLowerCase().trim() === targetCat) ||
-            (s.category?.slug && s.category.slug.toLowerCase().trim() === targetCat) ||
-            (s.category?.title && s.category.title.toLowerCase().trim() === targetCat) ||
-            (s.category?._id && String(s.category._id) === selectedCategory) ||
-            (typeof s.category === "string" && s.category.toLowerCase().trim() === targetCat);
+          const targetStr = selectedCategory.toLowerCase().trim();
+          const targetName =
+            categoryIdToName.get(targetStr)?.toLowerCase() || targetStr;
 
-          const matchMulti =
-            Array.isArray(s.categories) &&
-            s.categories.some((c) => {
-              const cName = (c?.name || c?.title || (typeof c === "string" ? c : "")).toLowerCase().trim();
-              const cSlug = (c?.slug || "").toLowerCase().trim();
-              const cId = String(c?._id || c || "");
-              return cName === targetCat || cSlug === targetCat || cId === selectedCategory;
-            });
+          const sCatNames = getServiceCategoryNames(s).map((n) =>
+            n.toLowerCase(),
+          );
+          const sCatIds = [
+            String(s.category?._id || s.category || ""),
+            ...(Array.isArray(s.categories)
+              ? s.categories.map((c) => String(c?._id || c || ""))
+              : []),
+          ]
+            .map((id) => id.toLowerCase())
+            .filter(Boolean);
 
-          if (!matchSingle && !matchMulti) return false;
+          const matchesName =
+            sCatNames.includes(targetName) || sCatNames.includes(targetStr);
+          const matchesId =
+            sCatIds.includes(targetStr) || sCatIds.includes(targetName);
+
+          if (!matchesName && !matchesId) return false;
         }
 
         // Price Filter
@@ -258,8 +297,11 @@ export default function Services() {
         if (price < priceMin || price > priceMax) return false;
 
         // Rating Filter
-        const rating = s.rating || s.avgRating || 4.8;
-        if (rating < minRating) return false;
+        const rating =
+          s.averageRating !== undefined && s.averageRating !== null
+            ? s.averageRating
+            : s.rating || s.avgRating || 0;
+        if (minRating > 0 && rating < minRating) return false;
 
         return true;
       })
@@ -380,7 +422,9 @@ export default function Services() {
 
                   {visibleCategories.map((cat) => {
                     const isSelected =
-                      selectedCategory.toLowerCase() === cat.name.toLowerCase();
+                      selectedCategory.toLowerCase() === cat.name.toLowerCase() ||
+                      selectedCategory.toLowerCase() === String(cat._id).toLowerCase() ||
+                      (categoryIdToName.get(selectedCategory.toLowerCase()) || "").toLowerCase() === cat.name.toLowerCase();
                     const count = categoryCounts[cat.name] || 0;
                     return (
                       <button
@@ -401,6 +445,11 @@ export default function Services() {
                           )}
                           <span className="truncate">{cat.name}</span>
                         </div>
+                        {count > 0 && (
+                          <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full ml-1 shrink-0">
+                            {count}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
@@ -622,12 +671,12 @@ export default function Services() {
                 {paginatedServices.map((service) => {
                   const sPrice = service.pricing?.amount || service.price || 0;
                   const sRating = service.rating || service.avgRating || 4.9;
+                  const catNames = getServiceCategoryNames(service);
                   const sCategoryName =
+                    catNames[0] ||
                     service.category?.name ||
                     service.category?.title ||
-                    (typeof service.category === "string"
-                      ? service.category
-                      : "Service");
+                    "Service";
                   const sBizName =
                     service.business?.businessName ||
                     service.business?.slug ||

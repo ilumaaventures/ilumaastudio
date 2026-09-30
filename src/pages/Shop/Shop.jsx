@@ -106,6 +106,8 @@ export default function ShopPage() {
   const availability = searchParams.get("availability") || "all";
   const sortBy = searchParams.get("sort") || "Popularity";
   const viewMode = searchParams.get("view") || "grid";
+  const businessId =
+    searchParams.get("businessId") || searchParams.get("business") || "";
 
   // Local UI-only inputs for smooth debouncing (typing, dragging slider)
   const [searchInput, setSearchInput] = useState(urlSearch);
@@ -183,10 +185,13 @@ export default function ShopPage() {
       if (merged.view === "grid") {
         delete merged.view;
       }
+      if (businessId) {
+        merged.businessId = businessId;
+      }
 
       setSearchParams(merged, { replace: false });
     },
-    [searchParams, setSearchParams],
+    [searchParams, setSearchParams, businessId],
   );
 
   // Debounce search input changes (350ms)
@@ -278,6 +283,11 @@ export default function ShopPage() {
           productType: "E-Commerce",
         };
 
+        if (businessId) {
+          queryParams.businessId = businessId;
+          queryParams.business = businessId;
+        }
+
         if (urlSearch.trim()) {
           queryParams.search = urlSearch.trim();
         }
@@ -317,8 +327,16 @@ export default function ShopPage() {
 
         if (!isMounted) return;
 
-        const prodList =
+        let prodList =
           res?.products || res?.data || (Array.isArray(res) ? res : []);
+
+        if (businessId) {
+          prodList = prodList.filter((p) => {
+            const pBizId = p.business?._id || p.business;
+            return !pBizId || String(pBizId) === String(businessId);
+          });
+        }
+
         const total =
           typeof res?.total === "number" ? res.total : prodList.length;
         const pages =
@@ -370,6 +388,7 @@ export default function ShopPage() {
     selectedRating,
     availability,
     sortBy,
+    businessId,
   ]);
 
   // Format backend products into uniform list for cards
@@ -477,7 +496,9 @@ export default function ShopPage() {
     setSearchInput("");
     setSliderMaxPrice(500000);
     setBrandSearch("");
-    setSearchParams({}, { replace: false });
+    const next = {};
+    if (businessId) next.businessId = businessId;
+    setSearchParams(next, { replace: false });
   };
 
   const handleCategorySelect = (catName) => {
@@ -905,6 +926,29 @@ export default function ShopPage() {
             </span>
           </div>
         </div>
+
+        {/* Business Context Filter Banner */}
+        {businessId && (
+          <div className="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-900/60 p-3.5 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-2xs">
+            <div className="flex items-center gap-2 text-indigo-900 dark:text-indigo-200">
+              <Package size={16} className="text-indigo-600 shrink-0" />
+              <span className="font-semibold">
+                Showing products exclusively for this merchant.
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                const next = { ...Object.fromEntries(searchParams.entries()) };
+                delete next.businessId;
+                delete next.business;
+                setSearchParams(next);
+              }}
+              className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer shrink-0"
+            >
+              View All Products
+            </button>
+          </div>
+        )}
 
         {/* Top Controls Toolbar */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-4 shadow-xs">
