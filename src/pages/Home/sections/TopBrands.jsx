@@ -17,6 +17,7 @@ function TopBrands() {
       setLoading(true);
       const response = await getShops({
         isFeatured: true,
+        businessCategory: "ECOMMERCE",
         anySlugType: true,
       });
       const shopsData = response?.data ?? response;
@@ -24,8 +25,21 @@ function TopBrands() {
         ? shopsData
         : shopsData?.data || [];
 
-      // Strictly only show businesses marked as isFeatured: true
-      const featuredOnly = shops.filter((s) => s.isFeatured === true);
+      // Strictly only show businesses marked as isFeatured: true AND businesscategory ecommerce or product marketplace
+      const featuredOnly = shops.filter((s) => {
+        if (!s.isFeatured) return false;
+        const catCode =
+          (typeof s.businessCategory === "object" ? s.businessCategory?.code : "")?.toUpperCase() || "";
+        const catName =
+          (typeof s.businessCategory === "object" ? s.businessCategory?.name : String(s.businessCategory || ""))?.toLowerCase() || "";
+        const isEcom =
+          catCode === "ECOMMERCE" ||
+          catName.includes("ecommerce") ||
+          catName.includes("e-commerce") ||
+          catName.includes("product") ||
+          catName.includes("marketplace");
+        return isEcom;
+      });
       setLocalShops(featuredOnly);
     } catch (error) {
       console.error(

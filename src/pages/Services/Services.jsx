@@ -141,7 +141,11 @@ export default function Services() {
   const fetchServices = useCallback(async () => {
     try {
       setServicesLoading(true);
-      const res = await getServices({ limit: 100 });
+      const bizParam = searchParams.get("businessId");
+      const queryParams = { limit: 100 };
+      if (bizParam) queryParams.businessId = bizParam;
+
+      const res = await getServices(queryParams);
       const dataList =
         res.services || res.data || (Array.isArray(res) ? res : []);
       setServices(dataList);
@@ -152,7 +156,7 @@ export default function Services() {
       setLoading(false);
       setServicesLoading(false);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     fetchServices();
@@ -162,11 +166,31 @@ export default function Services() {
   const categoryCounts = useMemo(() => {
     const counts = {};
     services.forEach((s) => {
-      const catName =
-        s.category?.name ||
-        s.category?.title ||
-        (typeof s.category === "string" ? s.category : "General");
-      counts[catName] = (counts[catName] || 0) + 1;
+      const cats = [];
+      if (s.category) {
+        cats.push(
+          s.category?.name ||
+            s.category?.title ||
+            (typeof s.category === "string" ? s.category : "")
+        );
+      }
+      if (Array.isArray(s.categories)) {
+        s.categories.forEach((c) => {
+          cats.push(
+            c?.name ||
+              c?.title ||
+              (typeof c === "string" ? c : "")
+          );
+        });
+      }
+      const uniqueCats = Array.from(new Set(cats.filter(Boolean)));
+      if (uniqueCats.length === 0) {
+        counts["General"] = (counts["General"] || 0) + 1;
+      } else {
+        uniqueCats.forEach((catName) => {
+          counts[catName] = (counts[catName] || 0) + 1;
+        });
+      }
     });
     return counts;
   }, [services]);
@@ -175,37 +199,58 @@ export default function Services() {
   const filteredServices = useMemo(() => {
     return services
       .filter((s) => {
+        // Business ID Filter (if specified in URL)
+        const bizFilter = searchParams.get("businessId");
+        if (bizFilter) {
+          const sBizId = s.business?._id || s.business || "";
+          if (String(sBizId) !== String(bizFilter)) return false;
+        }
+
         // Search Query Filter
         if (searchQuery.trim()) {
-          const query = searchQuery.toLowerCase();
+          const query = searchQuery.toLowerCase().trim();
           const nameMatch =
-            s.serviceName?.toLowerCase().includes(query) ||
-            s.name?.toLowerCase().includes(query);
-          const descMatch = s.description?.toLowerCase().includes(query);
-          const catMatch = (
-            s.category?.name || typeof s.category === "string" ? s.category : ""
-          )
-            .toLowerCase()
-            .includes(query);
-          const bizMatch = s.business?.businessName
-            ?.toLowerCase()
-            .includes(query);
-          if (!nameMatch && !descMatch && !catMatch && !bizMatch) return false;
+            (s.serviceName || s.name || "").toLowerCase().includes(query);
+          const descMatch =
+            (s.description || s.shortDescription || "").toLowerCase().includes(query);
+          const catName =
+            (s.category?.name || (typeof s.category === "string" ? s.category : "")).toLowerCase();
+          const catsMatch =
+            Array.isArray(s.categories) &&
+            s.categories.some((c) =>
+              (c?.name || c?.title || "").toLowerCase().includes(query)
+            );
+          const bizMatch =
+            (s.business?.businessName || s.business?.tradeName || "").toLowerCase().includes(query);
+          const tagMatch =
+            Array.isArray(s.tags) &&
+            s.tags.some((t) => String(t).toLowerCase().includes(query));
+
+          if (!nameMatch && !descMatch && !catName.includes(query) && !catsMatch && !bizMatch && !tagMatch) {
+            return false;
+          }
         }
 
         // Category Filter
         if (selectedCategory && selectedCategory !== "All Categories") {
-          const catName =
-            s.category?.name ||
-            s.category?.title ||
-            (typeof s.category === "string" ? s.category : "");
-          const catId = s.category?._id || "";
-          if (
-            catName.toLowerCase() !== selectedCategory.toLowerCase() &&
-            catId !== selectedCategory
-          ) {
-            return false;
-          }
+          const targetCat = selectedCategory.toLowerCase().trim();
+          const matchSingle =
+            (s.category?.name && s.category.name.toLowerCase().trim() === targetCat) ||
+            (s.category?.slug && s.category.slug.toLowerCase().trim() === targetCat) ||
+            (s.category?.title && s.category.title.toLowerCase().trim() === targetCat) ||
+            (s.category?._id && String(s.category._id) === selectedCategory) ||
+            (typeof s.category === "string" && s.category.toLowerCase().trim() === targetCat);
+
+          const matchMulti =
+            Array.isArray(s.categories) &&
+            s.categories.some((c) => {
+              const cName = (c?.name || c?.title || (typeof c === "string" ? c : "")).toLowerCase().trim();
+              const cSlug = (c?.slug || "").toLowerCase().trim();
+              const cId = String(c?._id || c || "");
+              return cName === targetCat || cSlug === targetCat || cId === selectedCategory;
+            });
+
+          if (!matchSingle && !matchMulti) return false;
         }
 
         // Price Filter
@@ -231,6 +276,7 @@ export default function Services() {
       });
   }, [
     services,
+    searchParams,
     searchQuery,
     selectedCategory,
     priceMin,

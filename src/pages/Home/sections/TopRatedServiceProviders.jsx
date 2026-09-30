@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   ArrowRight,
   BadgeCheck,
@@ -6,93 +6,86 @@ import {
   ChevronLeft,
   ChevronRight,
   MapPin,
-  Building2,
-  Laptop,
-  WalletCards,
+  Sparkles,
+  ExternalLink,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { getShops } from "../../../api/publicService";
+import { StoreGridSkeleton } from "../../../Components/Skeletons";
 
-/* =========================================================
-   FEATURED BUSINESSES
-   Only relevant business information is displayed.
-========================================================= */
-
-const providers = [
-  {
-    id: 1,
-    name: "Resource Gateway",
-    type: "Business Consulting & Services",
-    tagline: "Helping businesses build, grow and operate better.",
-    location: "Gurugram, Haryana",
-    logo: "https://resourcegateway.in/logo-clean.png",
-    cover: "https://resourcegateway.in/hero-bg.jpg",
-    website: "https://resourcegateway.in/",
-    accent: "from-slate-900 to-blue-700",
-    icon: BriefcaseBusiness,
-  },
-
-  {
-    id: 2,
-    name: "TalentCIO",
-    type: "Technology Talent Platform",
-    tagline: "Connecting businesses with skilled technology talent.",
-    location: "India · Global",
-    logo: "https://talentcio.in/navbar-logo.png",
-    cover:
-      "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80",
-    website: "https://talentcio.in/",
-    accent: "from-emerald-600 to-teal-700",
-    icon: Laptop,
-  },
-
-  {
-    id: 3,
-    name: "ILUMAA Tech",
-    type: "Technology & Product Engineering",
-    tagline: "Technology solutions for modern businesses.",
-    location: "India",
-    logo: "https://tech.ilumaa.com/ilumaa_logo.png",
-    cover:
-      "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
-    website: "https://tech.ilumaa.com/",
-    accent: "from-violet-600 to-indigo-700",
-    icon: Laptop,
-  },
-
-  {
-    id: 4,
-    name: "Cowork Insta",
-    type: "Coworking & Managed Workspace",
-    tagline: "Flexible workspaces designed for modern businesses.",
-    location: "Gurugram, Haryana",
-    logo: "https://coworkinsta.com/images/favicon/114.png",
-    cover: "https://coworkinsta.com/images/cabins/3.png",
-    website: "https://coworkinsta.com/",
-    accent: "from-orange-500 to-red-600",
-    icon: Building2,
-  },
-
-  {
-    id: 5,
-    name: "Flance",
-    type: "Finance SaaS",
-    tagline: "A SaaS platform built for modern financial operations.",
-    location: "India",
-    logo: null,
-    cover:
-      "https://images.unsplash.com/photo-1559526324-593bc073d938?auto=format&fit=crop&w=1200&q=80",
-    website: "#",
-    accent: "from-cyan-600 to-blue-700",
-    icon: WalletCards,
-  },
+const DEFAULT_SERVICE_COVERS = [
+  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80",
 ];
 
-/* =========================================================
-   BUSINESS CARD
-========================================================= */
+const ACCENT_GRADIENTS = [
+  "from-blue-600 to-indigo-700",
+  "from-emerald-600 to-teal-700",
+  "from-violet-600 to-indigo-700",
+  "from-orange-500 to-red-600",
+  "from-cyan-600 to-blue-700",
+];
 
-function BusinessCard({ provider }) {
-  const Icon = provider.icon;
+function ServiceProviderSkeleton() {
+  return (
+    <div className="min-w-[315px] max-w-[315px] snap-start rounded-[26px] border border-slate-200/80 bg-white p-4 shadow-sm animate-pulse space-y-4">
+      <div className="h-36 bg-slate-100 rounded-2xl w-full" />
+      <div className="space-y-2 pt-2">
+        <div className="h-4 bg-slate-200 rounded w-3/4" />
+        <div className="h-3 bg-slate-100 rounded w-1/2" />
+        <div className="h-3 bg-slate-100 rounded w-full" />
+      </div>
+      <div className="h-10 bg-slate-100 rounded-xl w-full pt-4" />
+    </div>
+  );
+}
+
+function BusinessCard({ provider, index }) {
+  const coverImage =
+    provider.cover ||
+    provider.banner ||
+    provider.heroBanner ||
+    DEFAULT_SERVICE_COVERS[index % DEFAULT_SERVICE_COVERS.length];
+
+  const accentGradient = ACCENT_GRADIENTS[index % ACCENT_GRADIENTS.length];
+
+  const businessName =
+    provider.businessName || provider.tradeName || "Service Provider";
+
+  const categoryName =
+    (typeof provider.businessCategory === "object"
+      ? provider.businessCategory?.name
+      : provider.businessCategory) ||
+    (typeof provider.businessType === "object"
+      ? provider.businessType?.name
+      : provider.businessType) ||
+    "Professional Services";
+
+  const tagline =
+    provider.description ||
+    provider.tagline ||
+    "High quality professional and on-demand services.";
+
+  const location =
+    provider.location ||
+    [provider.address?.city, provider.address?.state].filter(Boolean).join(", ") ||
+    "Verified Location";
+
+  const shopSlug =
+    provider.slugName ||
+    (typeof provider.slug === "object" ? provider.slug?.slugName : provider.slug) ||
+    provider.businessSlug ||
+    provider.subdomain ||
+    provider._id;
+
+  const isCustomDomain = provider.slugType === "domain" && provider.customDomain;
+  const storeUrl = isCustomDomain
+    ? `https://${provider.customDomain}`
+    : `/store/${shopSlug}`;
+
+  const servicesUrl = `/services?businessId=${provider._id}`;
 
   return (
     <article
@@ -102,225 +95,123 @@ function BusinessCard({ provider }) {
         snap-start
         overflow-hidden
         rounded-[26px]
-        border border-slate-200/70
+        border border-slate-200/80
         bg-white
         shadow-[0_8px_30px_rgba(15,23,42,0.06)]
         transition-all duration-300
         hover:-translate-y-1.5
         hover:border-blue-200
         hover:shadow-[0_20px_50px_rgba(15,23,42,0.12)]
+        flex flex-col justify-between
       "
     >
-      {/* =================================================
-          Cover Image
-      ================================================= */}
+      <div>
+        {/* Cover Image */}
+        <div className="relative h-[145px] overflow-hidden">
+          <img
+            src={coverImage}
+            alt={`${businessName} cover`}
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            loading="lazy"
+          />
 
-      <div className="relative h-[145px] overflow-hidden">
-        <img
-          src={provider.cover}
-          alt={`${provider.name} cover`}
-          className="
-            h-full w-full
-            object-cover
-            transition-transform duration-700
-            group-hover:scale-105
-          "
-          loading="lazy"
-        />
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/20 to-transparent" />
 
-        {/* Image Overlay */}
+          {/* Business Label */}
+          <div className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/30 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-white backdrop-blur-md">
+            <BriefcaseBusiness className="h-3.5 w-3.5 text-blue-400" />
+            Service
+          </div>
 
-        <div
-          className="
-            absolute inset-0
-            bg-gradient-to-t
-            from-slate-950/65
-            via-slate-950/10
-            to-transparent
-          "
-        />
+          {/* Verified Badge */}
+          <div className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1.5 text-[10px] font-semibold text-slate-700 shadow-sm backdrop-blur-md">
+            <BadgeCheck className="h-3.5 w-3.5 text-blue-600" />
+            Verified
+          </div>
 
-        {/* Business Label */}
-
-        <div
-          className="
-            absolute left-4 top-4
-            inline-flex items-center gap-1.5
-            rounded-full
-            border border-white/20
-            bg-black/20
-            px-3 py-1.5
-            text-[10px]
-            font-semibold
-            uppercase
-            tracking-wide
-            text-white
-            backdrop-blur-md
-          "
-        >
-          <Icon className="h-3.5 w-3.5" />
-          Business
+          {/* Bottom Cover Title */}
+          <div className="absolute bottom-3 left-4 right-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/80">
+              Featured Provider
+            </p>
+            <h3 className="mt-0.5 text-base font-bold text-white truncate">
+              {businessName}
+            </h3>
+          </div>
         </div>
 
-        {/* Verified */}
-
-        <div
-          className="
-            absolute right-4 top-4
-            inline-flex items-center gap-1.5
-            rounded-full
-            bg-white/95
-            px-2.5 py-1.5
-            text-[10px]
-            font-semibold
-            text-slate-700
-            shadow-sm
-          "
-        >
-          <BadgeCheck className="h-3.5 w-3.5 text-blue-600" />
-          Verified
+        {/* Logo Avatar */}
+        <div className="relative px-5">
+          <div className="absolute -top-9 left-5 flex h-[70px] w-[70px] items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-white shadow-md">
+            {provider.logo ? (
+              <img
+                src={provider.logo}
+                alt={`${businessName} logo`}
+                className="h-full w-full object-contain p-1.5"
+                loading="lazy"
+              />
+            ) : (
+              <div
+                className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${accentGradient} text-xl font-black text-white`}
+              >
+                {(businessName[0] || "S").toUpperCase()}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Cover Title */}
+        {/* Content */}
+        <div className="p-5 pt-11">
+          <div>
+            <h3 className="text-base font-bold tracking-tight text-slate-950 transition-colors group-hover:text-blue-600 line-clamp-1">
+              {businessName}
+            </h3>
+            <p className="mt-1 text-xs font-semibold text-blue-600 truncate">
+              {categoryName}
+            </p>
+          </div>
 
-        <div className="absolute bottom-4 left-4 right-4">
-          <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/70">
-            Featured Business
+          <p className="mt-2.5 min-h-[40px] line-clamp-2 text-xs leading-5 text-slate-500">
+            {tagline}
           </p>
 
-          <h3 className="mt-1 text-lg font-bold text-white">{provider.name}</h3>
-        </div>
-      </div>
-
-      {/* =================================================
-          Logo
-      ================================================= */}
-
-      <div className="relative px-5">
-        <div
-          className="
-            absolute
-            -top-9 left-5
-            flex h-[72px] w-[72px]
-            items-center justify-center
-            overflow-hidden
-            rounded-2xl
-            border-4 border-white
-            bg-white
-            shadow-lg
-          "
-        >
-          {provider.logo ? (
-            <img
-              src={provider.logo}
-              alt={`${provider.name} logo`}
-              className="h-full w-full object-contain p-2"
-              loading="lazy"
-            />
-          ) : (
-            <div
-              className={`
-                flex h-full w-full
-                items-center justify-center
-                bg-gradient-to-br ${provider.accent}
-                text-xl font-black
-                text-white
-              `}
-            >
-              F
+          {location && (
+            <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
+              <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+              <span className="truncate">{location}</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* =================================================
-          Content
-      ================================================= */}
-
-      <div className="p-5 pt-12">
-        {/* Business Name + Type */}
-
-        <div>
-          <h3
-            className="
-              text-lg
-              font-bold
-              tracking-tight
-              text-slate-950
-              transition-colors
-              group-hover:text-blue-600
-            "
-          >
-            {provider.name}
-          </h3>
-
-          <p className="mt-1 text-xs font-medium text-blue-600">
-            {provider.type}
-          </p>
-        </div>
-
-        {/* Description */}
-
-        <p
-          className="
-            mt-3
-            min-h-[42px]
-            line-clamp-2
-            text-sm
-            leading-5
-            text-slate-500
-          "
-        >
-          {provider.tagline}
-        </p>
-
-        {/* Location */}
-
-        {provider.location && (
-          <div
-            className="
-              mt-4
-              flex items-center gap-1.5
-              text-xs
-              text-slate-400
-            "
-          >
-            <MapPin className="h-3.5 w-3.5" />
-            <span>{provider.location}</span>
-          </div>
-        )}
-
-        {/* CTA */}
-
-        <div className="mt-5 border-t border-slate-100 pt-4">
+      {/* Card Footer CTAs */}
+      <div className="p-5 pt-0 pb-5">
+        <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
           <Link
-            to="/businesses"
+            to={servicesUrl}
             className="
-              group/cta
-              inline-flex
-              w-full
-              items-center
-              justify-between
-              rounded-xl
-              bg-slate-950
-              px-4
-              py-2.5
-              text-xs
-              font-semibold
-              text-white
-              transition-all duration-300
-              hover:bg-blue-600
+              inline-flex items-center justify-center gap-1
+              rounded-xl bg-blue-50 px-3 py-2
+              text-xs font-bold text-blue-600
+              hover:bg-blue-100 transition-colors
             "
           >
-            <span>Explore Business</span>
+            <span>Services</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
 
-            <ArrowRight
-              className="
-                h-4 w-4
-                transition-transform duration-300
-                group-hover/cta:translate-x-1
-              "
-            />
+          <Link
+            to={storeUrl}
+            className="
+              inline-flex items-center justify-center gap-1
+              rounded-xl bg-slate-950 px-3 py-2
+              text-xs font-bold text-white
+              hover:bg-blue-600 transition-colors
+            "
+          >
+            <span>Storefront</span>
+            <ExternalLink className="h-3 w-3" />
           </Link>
         </div>
       </div>
@@ -328,162 +219,160 @@ function BusinessCard({ provider }) {
   );
 }
 
-/* =========================================================
-   MAIN SECTION
-========================================================= */
-
 function FeaturedBusinesses() {
-  const scrollLeft = () => {
-    document.getElementById("featured-businesses")?.scrollBy({
-      left: -335,
-      behavior: "smooth",
-    });
+  const [providers, setProviders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const scrollRef = useRef(null);
+
+  const fetchServiceProviders = async () => {
+    try {
+      setLoading(true);
+      const response = await getShops({
+        isFeatured: true,
+        businessCategory: "SERVICE",
+        anySlugType: true,
+      });
+
+      const shopsData = response?.data ?? response;
+      const shops = Array.isArray(shopsData)
+        ? shopsData
+        : shopsData?.data || [];
+
+      // Strictly only show businesses marked as isFeatured: true AND category is service / services
+      const featuredServicesOnly = shops.filter((s) => {
+        if (!s.isFeatured) return false;
+        const catCode =
+          (typeof s.businessCategory === "object" ? s.businessCategory?.code : "")?.toUpperCase() || "";
+        const catName =
+          (typeof s.businessCategory === "object" ? s.businessCategory?.name : String(s.businessCategory || ""))?.toLowerCase() || "";
+        const isService =
+          catCode === "SERVICE" ||
+          catCode === "SERVICES" ||
+          catName.includes("service");
+        return isService;
+      });
+
+      setProviders(featuredServicesOnly);
+    } catch (error) {
+      console.error(
+        "Failed to fetch featured service providers:",
+        error?.response?.data || error?.message || error
+      );
+      setProviders([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const scrollRight = () => {
-    document.getElementById("featured-businesses")?.scrollBy({
-      left: 335,
+  useEffect(() => {
+    fetchServiceProviders();
+  }, []);
+
+  const scroll = (direction) => {
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollBy({
+      left: direction === "left" ? -340 : 340,
       behavior: "smooth",
     });
   };
 
   return (
-    <section className="w-full bg-white py-12 sm:py-16">
+    <section className="w-full bg-white py-10 sm:py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* =================================================
-            Header
-        ================================================= */}
-
-        <div
-          className="
-            mb-7
-            flex flex-col
-            gap-5
-            sm:flex-row
-            sm:items-end
-            sm:justify-between
-          "
-        >
+        {/* Header */}
+        <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
-            {/* Eyebrow */}
-
-            {/* Heading */}
-
-            <h2
-              className="
-                text-2xl
-                font-bold
-                tracking-tight
-                text-slate-950
-                sm:text-3xl
-              "
-            >
-              Top Rated Service Providers
-            </h2>
-
-            {/* Description */}
-
-            <p
-              className="
-                mt-2
-                max-w-xl
-                text-sm
-                leading-6
-                text-slate-500
-                sm:text-base
-              "
-            >
-              Explore Service providers connected through the ILUMAA ecosystem.
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Top Rated Service Providers
+              </h2>
+            </div>
+            <p className="mt-1 text-xs sm:text-sm text-slate-500 font-medium">
+              Explore verified service providers and agencies connected through the ILUMAA ecosystem.
             </p>
           </div>
 
-          {/* =================================================
-              Navigation
-          ================================================= */}
-
+          {/* Navigation Controls */}
           <div className="flex items-center gap-2">
-            <Link
-              to="/businesses"
-              className="
-                group
-                inline-flex
-                items-center
-                gap-1.5
-                rounded-full
-                bg-slate-950
-                px-4
-                py-2
-                text-xs
-                font-semibold
-                text-white
-                transition-all
-                hover:bg-blue-600
-              "
+            <button
+              onClick={() => scroll("left")}
+              aria-label="Scroll Left"
+              className="hidden sm:inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-2xs hover:bg-slate-50 hover:text-slate-900 transition-colors"
             >
-              View All
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              onClick={() => scroll("right")}
+              aria-label="Scroll Right"
+              className="hidden sm:inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-2xs hover:bg-slate-50 hover:text-slate-900 transition-colors"
+            >
+              <ChevronRight size={16} />
+            </button>
+            <Link
+              to="/services"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0"
+            >
+              <span>View All Services</span>
               <ArrowRight
-                className="
-                  h-3.5 w-3.5
-                  transition-transform
-                  group-hover:translate-x-1
-                "
+                size={13}
+                className="transition-transform duration-200 group-hover:translate-x-0.5"
               />
             </Link>
           </div>
         </div>
 
-        {/* =================================================
-            Business Cards
-        ================================================= */}
-
+        {/* Business Cards / Loading / Fallback */}
         <div className="relative">
-          {/* Right fade */}
-
-          <div
-            className="
-              pointer-events-none
-              absolute
-              right-0
-              top-0
-              z-10
-              hidden
-              h-full
-              w-16
-              bg-gradient-to-l
-              from-white
-              to-transparent
-              sm:block
-            "
-          />
-
-          <div
-            id="featured-businesses"
-            className="
-              flex
-              gap-5
-              overflow-x-auto
-              pb-5
-              snap-x
-              snap-mandatory
-              scroll-smooth
-              [-ms-overflow-style:none]
-              [scrollbar-width:none]
-              [&::-webkit-scrollbar]:hidden
-            "
-          >
-            {providers.map((provider) => (
-              <BusinessCard key={provider.id} provider={provider} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex gap-5 overflow-x-auto pb-4">
+              <ServiceProviderSkeleton />
+              <ServiceProviderSkeleton />
+              <ServiceProviderSkeleton />
+            </div>
+          ) : providers.length > 0 ? (
+            <div
+              ref={scrollRef}
+              className="
+                flex
+                gap-5
+                overflow-x-auto
+                pb-4
+                snap-x
+                snap-mandatory
+                scroll-smooth
+                [-ms-overflow-style:none]
+                [scrollbar-width:none]
+                [&::-webkit-scrollbar]:hidden
+              "
+            >
+              {providers.map((provider, index) => (
+                <BusinessCard
+                  key={provider._id || index}
+                  provider={provider}
+                  index={index}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-slate-500">
+              <p className="text-sm font-medium">
+                No featured service providers found at the moment.
+              </p>
+              <Link
+                to="/services"
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:underline"
+              >
+                <span>Browse all available services</span>
+                <ArrowRight size={12} />
+              </Link>
+            </div>
+          )}
         </div>
 
-        {/* =================================================
-            Mobile CTA
-        ================================================= */}
-
-        <div className="mt-2 flex justify-center sm:hidden">
+        {/* Mobile View All CTA */}
+        <div className="mt-4 flex justify-center sm:hidden">
           <Link
-            to="/businesses"
+            to="/services"
             className="
               inline-flex
               items-center
@@ -491,18 +380,18 @@ function FeaturedBusinesses() {
               rounded-xl
               border border-slate-200
               bg-white
-              px-5 py-3
-              text-sm
-              font-semibold
+              px-5 py-2.5
+              text-xs
+              font-bold
               text-slate-800
-              shadow-sm
+              shadow-2xs
               transition
               hover:border-blue-200
               hover:text-blue-600
             "
           >
-            Explore All Businesses
-            <ArrowRight className="h-4 w-4" />
+            <span>Explore All Services</span>
+            <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
       </div>

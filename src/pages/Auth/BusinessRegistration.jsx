@@ -146,27 +146,27 @@ const getFallbackPlans = (category) => {
       },
       features: isService
         ? [
-            "Online appointment booking",
-            "Client inquiry management",
-            "Service catalog & pricing",
-            "Staff scheduling",
-            "Digital receipts & invoices",
-          ]
+          "Online appointment booking",
+          "Client inquiry management",
+          "Service catalog & pricing",
+          "Staff scheduling",
+          "Digital receipts & invoices",
+        ]
         : isEcom
           ? [
-              "Up to 500 product listings",
-              "Inventory tracking & alerts",
-              "Order management & shipping",
-              "1 warehouse location",
-              "Customer checkout & cart",
-            ]
+            "Up to 500 product listings",
+            "Inventory tracking & alerts",
+            "Order management & shipping",
+            "1 warehouse location",
+            "Customer checkout & cart",
+          ]
           : [
-              "Product catalog & services",
-              "Order & booking processing",
-              "Customer CRM & inquiries",
-              "Team access & permissions",
-              "Payment gateway integration",
-            ],
+            "Product catalog & services",
+            "Order & booking processing",
+            "Customer CRM & inquiries",
+            "Team access & permissions",
+            "Payment gateway integration",
+          ],
     },
     {
       _id: "growth",
@@ -196,30 +196,30 @@ const getFallbackPlans = (category) => {
       },
       features: isService
         ? [
-            "Up to 250 active services",
-            "2,500 monthly bookings",
-            "5,000 client inquiries",
-            "Calendar sync & notifications",
-            "Staff & team management",
-            "Custom quote generator",
-          ]
+          "Up to 250 active services",
+          "2,500 monthly bookings",
+          "5,000 client inquiries",
+          "Calendar sync & notifications",
+          "Staff & team management",
+          "Custom quote generator",
+        ]
         : isEcom
           ? [
-              "5,000 product catalog",
-              "3 warehouse fulfillment centers",
-              "5 vendor storefronts",
-              "Automated courier dispatch",
-              "Advanced analytics & reports",
-              "Discount & coupon engine",
-            ]
+            "5,000 product catalog",
+            "3 warehouse fulfillment centers",
+            "5 vendor storefronts",
+            "Automated courier dispatch",
+            "Advanced analytics & reports",
+            "Discount & coupon engine",
+          ]
           : [
-              "Full product & service catalog",
-              "Multi-warehouse & multi-vendor",
-              "Bookings & order management",
-              "10 staff accounts",
-              "Custom storefront templates",
-              "Reports & business analytics",
-            ],
+            "Full product & service catalog",
+            "Multi-warehouse & multi-vendor",
+            "Bookings & order management",
+            "10 staff accounts",
+            "Custom storefront templates",
+            "Reports & business analytics",
+          ],
     },
     {
       _id: "business",
@@ -585,6 +585,7 @@ export default function BusinessRegistration() {
         username: uniqueUserName,
         email: formData.business_email,
         password: formData.ownerPassword,
+        source: "ILumaaStudio"
       };
       await registerOnBkonnect(postData);
     } catch (error) {
@@ -632,7 +633,7 @@ export default function BusinessRegistration() {
       console.error(error);
       toast.error(
         error?.response?.data?.message ||
-          "Failed to submit registration. Please try again.",
+        "Failed to submit registration. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -895,7 +896,7 @@ export default function BusinessRegistration() {
                           Business Email Address *
                         </label>
                         {isEmailVerified &&
-                        verifiedEmail ===
+                          verifiedEmail ===
                           formData.business_email.trim().toLowerCase() ? (
                           <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
                             <CheckCircle2 size={12} /> Email Verified
@@ -918,13 +919,12 @@ export default function BusinessRegistration() {
                           onChange={handleChange}
                           placeholder="owner@company.com"
                           required
-                          className={`w-full rounded-xl border bg-slate-50/50 pl-10 pr-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white outline-none transition ${
-                            isEmailVerified &&
-                            verifiedEmail ===
+                          className={`w-full rounded-xl border bg-slate-50/50 pl-10 pr-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white outline-none transition ${isEmailVerified &&
+                              verifiedEmail ===
                               formData.business_email.trim().toLowerCase()
                               ? "border-emerald-300 focus:border-emerald-500 bg-emerald-50/10"
                               : "border-slate-300 focus:border-[#C9956C]"
-                          }`}
+                            }`}
                         />
                       </div>
                     </div>
@@ -974,7 +974,7 @@ export default function BusinessRegistration() {
                         </>
                       ) : isEmailVerified &&
                         verifiedEmail ===
-                          formData.business_email.trim().toLowerCase() ? (
+                        formData.business_email.trim().toLowerCase() ? (
                         <>
                           Continue to Business Scale <ArrowRight size={16} />
                         </>
@@ -1008,15 +1008,15 @@ export default function BusinessRegistration() {
                         >
                           {businessTypes.length > 0
                             ? businessTypes.map((bt) => (
-                                <option key={bt._id} value={bt._id}>
-                                  {bt.name} ({bt.code || "Type"})
-                                </option>
-                              ))
+                              <option key={bt._id} value={bt._id}>
+                                {bt.name} ({bt.code || "Type"})
+                              </option>
+                            ))
                             : BUSINESS_TYPES.map((bt) => (
-                                <option key={bt.value} value={bt.value}>
-                                  {bt.label}
-                                </option>
-                              ))}
+                              <option key={bt.value} value={bt.value}>
+                                {bt.label}
+                              </option>
+                            ))}
                         </select>
                       </div>
 
@@ -1218,11 +1218,10 @@ export default function BusinessRegistration() {
                           <button
                             type="button"
                             onClick={() => setBillingCycle("monthly")}
-                            className={`rounded-lg px-5 py-2 text-xs font-bold transition ${
-                              billingCycle === "monthly"
+                            className={`rounded-lg px-5 py-2 text-xs font-bold transition ${billingCycle === "monthly"
                                 ? "bg-slate-900 text-white shadow-sm"
                                 : "text-slate-500 hover:text-slate-800"
-                            }`}
+                              }`}
                           >
                             Monthly
                           </button>
@@ -1230,19 +1229,17 @@ export default function BusinessRegistration() {
                           <button
                             type="button"
                             onClick={() => setBillingCycle("yearly")}
-                            className={`flex items-center gap-2 rounded-lg px-5 py-2 text-xs font-bold transition ${
-                              billingCycle === "yearly"
+                            className={`flex items-center gap-2 rounded-lg px-5 py-2 text-xs font-bold transition ${billingCycle === "yearly"
                                 ? "bg-[#C9956C] text-white shadow-sm"
                                 : "text-slate-500 hover:text-slate-800"
-                            }`}
+                              }`}
                           >
                             Yearly
                             <span
-                              className={`rounded-full px-2 py-0.5 text-[9px] font-black ${
-                                billingCycle === "yearly"
+                              className={`rounded-full px-2 py-0.5 text-[9px] font-black ${billingCycle === "yearly"
                                   ? "bg-white/20 text-white"
                                   : "bg-emerald-50 text-emerald-600"
-                              }`}
+                                }`}
                             >
                               SAVE
                             </span>
@@ -1307,9 +1304,9 @@ export default function BusinessRegistration() {
 
                           const yearlyPrice = Number(
                             plan.pricing?.yearly ??
-                              plan.pricing?.annual ??
-                              plan.yearlyPrice ??
-                              0,
+                            plan.pricing?.annual ??
+                            plan.yearlyPrice ??
+                            0,
                           );
 
                           /*
@@ -1342,9 +1339,9 @@ export default function BusinessRegistration() {
                           const yearlySavings =
                             monthlyPrice > 0
                               ? Math.max(
-                                  0,
-                                  monthlyPrice * 12 - calculatedYearlyPrice,
-                                )
+                                0,
+                                monthlyPrice * 12 - calculatedYearlyPrice,
+                              )
                               : 0;
 
                           /* -----------------------------------------------
@@ -1377,13 +1374,12 @@ export default function BusinessRegistration() {
                                   plan: plan._id,
                                 }))
                               }
-                              className={`relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border-2 bg-white transition-all duration-300 ${
-                                isSelected
+                              className={`relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border-2 bg-white transition-all duration-300 ${isSelected
                                   ? "border-[#C9956C] shadow-xl shadow-[#C9956C]/10"
                                   : isPopular
                                     ? "border-[#DDBA9B] shadow-md"
                                     : "border-slate-200 shadow-sm hover:-translate-y-1 hover:border-slate-300 hover:shadow-lg"
-                              }`}
+                                }`}
                             >
                               {/* =========================================
                   POPULAR BADGE
@@ -1418,13 +1414,12 @@ export default function BusinessRegistration() {
                                       {plan.name}
                                     </h4>
                                     <span
-                                      className={`rounded-md px-2 py-0.5 text-[8px] font-extrabold uppercase ${
-                                        planScope === "SERVICE"
+                                      className={`rounded-md px-2 py-0.5 text-[8px] font-extrabold uppercase ${planScope === "SERVICE"
                                           ? "bg-violet-50 text-violet-700 border border-violet-200"
                                           : planScope === "ECOMMERCE"
                                             ? "bg-amber-50 text-amber-800 border border-amber-200"
                                             : "bg-indigo-50 text-indigo-700 border border-indigo-200"
-                                      }`}
+                                        }`}
                                     >
                                       {planScope === "SERVICE"
                                         ? "Service Plan"
@@ -1501,84 +1496,84 @@ export default function BusinessRegistration() {
                                     {/* E-Commerce Capacity (if ECOMMERCE or BOTH) */}
                                     {(planScope === "ECOMMERCE" ||
                                       planScope === "BOTH") && (
-                                      <div className="space-y-1 border-b border-slate-200/60 pb-2">
-                                        <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-amber-800">
-                                          <Boxes
-                                            size={10}
-                                            className="text-amber-600"
-                                          />
-                                          <span>E-Commerce Limits</span>
+                                        <div className="space-y-1 border-b border-slate-200/60 pb-2">
+                                          <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-amber-800">
+                                            <Boxes
+                                              size={10}
+                                              className="text-amber-600"
+                                            />
+                                            <span>E-Commerce Limits</span>
+                                          </div>
+                                          <div className="flex items-center justify-between text-[11px]">
+                                            <span className="font-medium text-slate-500">
+                                              Products Catalog
+                                            </span>
+                                            <strong className="font-black text-slate-900">
+                                              {formatLimit(
+                                                plan.limits?.maxProducts,
+                                              )}
+                                            </strong>
+                                          </div>
+                                          <div className="flex items-center justify-between text-[11px]">
+                                            <span className="font-medium text-slate-500">
+                                              Warehouses
+                                            </span>
+                                            <strong className="font-black text-slate-900">
+                                              {formatLimit(
+                                                plan.limits?.maxWarehouses,
+                                                typeof plan.limits
+                                                  ?.maxWarehouses === "number"
+                                                  ? "Hubs"
+                                                  : "",
+                                              )}
+                                            </strong>
+                                          </div>
                                         </div>
-                                        <div className="flex items-center justify-between text-[11px]">
-                                          <span className="font-medium text-slate-500">
-                                            Products Catalog
-                                          </span>
-                                          <strong className="font-black text-slate-900">
-                                            {formatLimit(
-                                              plan.limits?.maxProducts,
-                                            )}
-                                          </strong>
-                                        </div>
-                                        <div className="flex items-center justify-between text-[11px]">
-                                          <span className="font-medium text-slate-500">
-                                            Warehouses
-                                          </span>
-                                          <strong className="font-black text-slate-900">
-                                            {formatLimit(
-                                              plan.limits?.maxWarehouses,
-                                              typeof plan.limits
-                                                ?.maxWarehouses === "number"
-                                                ? "Hubs"
-                                                : "",
-                                            )}
-                                          </strong>
-                                        </div>
-                                      </div>
-                                    )}
+                                      )}
 
                                     {/* Services Capacity (if SERVICE or BOTH) */}
                                     {(planScope === "SERVICE" ||
                                       planScope === "BOTH") && (
-                                      <div className="space-y-1 border-b border-slate-200/60 pb-2">
-                                        <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-violet-800">
-                                          <CalendarCheck
-                                            size={10}
-                                            className="text-violet-600"
-                                          />
-                                          <span>Service & Booking Limits</span>
+                                        <div className="space-y-1 border-b border-slate-200/60 pb-2">
+                                          <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-violet-800">
+                                            <CalendarCheck
+                                              size={10}
+                                              className="text-violet-600"
+                                            />
+                                            <span>Service & Booking Limits</span>
+                                          </div>
+                                          <div className="flex items-center justify-between text-[11px]">
+                                            <span className="font-medium text-slate-500">
+                                              Active Services
+                                            </span>
+                                            <strong className="font-black text-slate-900">
+                                              {formatLimit(
+                                                plan.limits?.maxServices,
+                                              )}
+                                            </strong>
+                                          </div>
+                                          <div className="flex items-center justify-between text-[11px]">
+                                            <span className="font-medium text-slate-500">
+                                              Monthly Bookings
+                                            </span>
+                                            <strong className="font-black text-slate-900">
+                                              {formatLimit(
+                                                plan.limits?.maxBookings,
+                                              )}
+                                            </strong>
+                                          </div>
+                                          <div className="flex items-center justify-between text-[11px]">
+                                            <span className="font-medium text-slate-500">
+                                              Client Inquiries
+                                            </span>
+                                            <strong className="font-black text-slate-900">
+                                              {formatLimit(
+                                                plan.limits?.maxEnquiries,
+                                              )}
+                                            </strong>
+                                          </div>
                                         </div>
-                                        <div className="flex items-center justify-between text-[11px]">
-                                          <span className="font-medium text-slate-500">
-                                            Active Services
-                                          </span>
-                                          <strong className="font-black text-slate-900">
-                                            {formatLimit(
-                                              plan.limits?.maxServices,
-                                            )}
-                                          </strong>
-                                        </div>
-                                        <div className="flex items-center justify-between text-[11px]">
-                                          <span className="font-medium text-slate-500">
-                                            Monthly Bookings
-                                          </span>
-                                          <strong className="font-black text-slate-900">
-                                            {formatLimit(
-                                              plan.limits?.maxBookings,
-                                            )}
-                                          </strong>
-                                        </div>
-                                        <div className="flex items-center justify-between text-[11px]">
-                                          <span className="font-medium text-slate-500">
-                                            Client Inquiries
-                                          </span>
-                                          <strong className="font-black text-slate-900">
-                                            {formatLimit(
-                                              plan.limits?.maxEnquiries,
-                                            )}
-                                          </strong>
-                                        </div>
-                                      </div>
-                                    )}
+                                      )}
 
                                     {/* Common Platform Limits (Always shown) */}
                                     <div className="space-y-1 pt-0.5">
@@ -1634,7 +1629,7 @@ export default function BusinessRegistration() {
                                         <strong className="font-black text-emerald-700">
                                           {plan.limits?.recycleBinDays !==
                                             undefined &&
-                                          plan.limits?.recycleBinDays !==
+                                            plan.limits?.recycleBinDays !==
                                             "Custom Retention"
                                             ? `${plan.limits.recycleBinDays} Days`
                                             : "Custom"}
@@ -1669,8 +1664,8 @@ export default function BusinessRegistration() {
                                             typeof feature === "string"
                                               ? feature
                                               : feature?.name ||
-                                                feature?.label ||
-                                                feature?.title;
+                                              feature?.label ||
+                                              feature?.title;
 
                                           return (
                                             <div
@@ -1764,11 +1759,10 @@ export default function BusinessRegistration() {
                                       plan: plan._id,
                                     }));
                                   }}
-                                  className={`mt-5 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-xs font-extrabold transition ${
-                                    isSelected
+                                  className={`mt-5 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-xs font-extrabold transition ${isSelected
                                       ? "bg-[#C9956C] text-white shadow-md shadow-[#C9956C]/20"
                                       : "bg-slate-900 text-white hover:bg-slate-800"
-                                  }`}
+                                    }`}
                                 >
                                   {isSelected ? (
                                     <>
