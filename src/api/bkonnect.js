@@ -3,7 +3,7 @@ import axios from "axios";
 
 export const registerOnBkonnect = async (data) => {
   const response = await axios.post(
-    `${import.meta.env.VITE_BKONNECT_URL}/auth/register`,
+    `${import.meta.env.VITE_BKONNECT_URL}/api/auth/register`,
     data,
     {
       headers: {
