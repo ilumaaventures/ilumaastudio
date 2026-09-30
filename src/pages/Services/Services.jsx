@@ -422,9 +422,14 @@ export default function Services() {
 
                   {visibleCategories.map((cat) => {
                     const isSelected =
-                      selectedCategory.toLowerCase() === cat.name.toLowerCase() ||
-                      selectedCategory.toLowerCase() === String(cat._id).toLowerCase() ||
-                      (categoryIdToName.get(selectedCategory.toLowerCase()) || "").toLowerCase() === cat.name.toLowerCase();
+                      selectedCategory.toLowerCase() ===
+                        cat.name.toLowerCase() ||
+                      selectedCategory.toLowerCase() ===
+                        String(cat._id).toLowerCase() ||
+                      (
+                        categoryIdToName.get(selectedCategory.toLowerCase()) ||
+                        ""
+                      ).toLowerCase() === cat.name.toLowerCase();
                     const count = categoryCounts[cat.name] || 0;
                     return (
                       <button
@@ -753,8 +758,13 @@ export default function Services() {
 
                             <div className="flex items-center gap-3">
                               <div className="flex items-center gap-1 text-xs text-slate-500 font-bold">
-                                <Clock size={13} className="text-[#004ac6]" />
-                                <span>{formatDuration(service.duration)}</span>
+                                {/* view in details */}
+                                <Link
+                                  to={`/services/${service._id}`}
+                                  className="border border-black/10 hover:border-[#004ac6] px-3 py-1 rounded-xl text-xs font-extrabold transition-all shadow-xs flex items-center gap-1"
+                                >
+                                  <span>View Details</span>
+                                </Link>
                               </div>
 
                               <Link
