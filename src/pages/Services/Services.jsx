@@ -701,7 +701,7 @@ export default function Services() {
                     (typeof service.image === "string"
                       ? service.image
                       : service.image?.url) ||
-                    "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=600&q=80";
+                    "https://thumbs.dreamstime.com/b/default-image-icon-vector-missing-picture-page-website-design-mobile-app-no-photo-available-236105299.jpg";
 
                   if (viewMode === "list") {
                     return (
