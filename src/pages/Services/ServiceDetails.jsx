@@ -110,7 +110,7 @@ export default function ServiceDetails() {
     // Fallback if none provided
     if (list.length === 0) {
       list.push(
-        "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80",
+        "https://thumbs.dreamstime.com/b/default-image-icon-vector-missing-picture-page-website-design-mobile-app-no-photo-available-236105299.jpg",
       );
     }
     return list;
@@ -242,7 +242,9 @@ export default function ServiceDetails() {
                 {allImages.length > 1 && (
                   <div className="absolute bottom-4 right-4 bg-slate-900/80 backdrop-blur-xs text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-md">
                     <Camera size={13} />
-                    <span>{selectedImageIndex + 1} / {allImages.length} Photos</span>
+                    <span>
+                      {selectedImageIndex + 1} / {allImages.length} Photos
+                    </span>
                   </div>
                 )}
               </div>

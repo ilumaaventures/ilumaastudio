@@ -28,6 +28,7 @@ import BannerSection from "../../Components/BannerSection";
 import HomeShimmer from "./components/HomeShimmer";
 import CategorySection from "./sections/CategorySection";
 import TopRatedServiceProviders from "./sections/TopRatedServiceProviders";
+import PopularFoodSpots from "./sections/PopularFoodSpots";
 
 function Home() {
   const navigate = useNavigate();
@@ -208,6 +209,9 @@ function Home() {
       />
 
       <AppNewsletterSocial />
+
+      {/* Popular Food Spots */}
+      {/* <PopularFoodSpots /> */}
     </div>
   );
 }

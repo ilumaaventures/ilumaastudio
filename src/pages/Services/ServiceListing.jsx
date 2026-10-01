@@ -46,7 +46,7 @@ export default function ServiceListing() {
               s.images?.[0]?.url ||
               (typeof s.images?.[0] === "string" ? s.images[0] : null) ||
               (typeof s.image === "string" ? s.image : s.image?.url) ||
-              "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=700&q=80",
+              "https://thumbs.dreamstime.com/b/default-image-icon-vector-missing-picture-page-website-design-mobile-app-no-photo-available-236105299.jpg",
             images: Array.isArray(s.images) ? s.images : [],
             badge:
               idx % 3 === 0
