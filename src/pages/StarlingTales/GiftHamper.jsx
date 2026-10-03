@@ -8,9 +8,11 @@ import {
   CheckCircle2,
   Sparkles,
   Feather,
+  Play,
 } from "lucide-react";
 import "./StarlingTales.css";
 import { useStore } from "../Store/StoreContext";
+import StarlingHamperVideoModal from "./components/StarlingHamperVideoModal";
 
 // Local Hamper Assets from ILumaaStudio
 import hamper1 from "../../assests/hamper-1 (1).jpeg";
@@ -170,6 +172,7 @@ const HAMPERS_DATA = [
 export default function GiftHamper() {
   const { business, storeHomePath: contextHomePath } = useStore();
   const [activeHamperIndex, setActiveHamperIndex] = useState(0);
+  const [showVideoModal, setShowVideoModal] = useState(false);
 
   const storeHomePath =
     contextHomePath ||
@@ -294,11 +297,11 @@ export default function GiftHamper() {
                 shopping bag. We will pack them in a gift box with message card
                 for you to write your personal greetings.
               </p>
-              {/* CTA Button */}
-              <div className="pt-2">
+              {/* CTA Buttons */}
+              <div className="pt-2 flex flex-wrap items-center gap-3">
                 <Link
                   to={`${storeHomePath}/create-hamper`}
-                  className="inline-flex items-center gap-2.5 px-7 py-3.5 bg-[#2C3E35] hover:bg-[#1E2B25] text-white text-[11px] font-bold tracking-[0.2em] uppercase rounded-full transition-all duration-200 shadow-md group"
+                  className="inline-flex items-center gap-2.5 px-6 py-3.5 bg-[#2C3E35] hover:bg-[#1E2B25] text-white text-[11px] font-bold tracking-[0.2em] uppercase rounded-full transition-all duration-200 shadow-md group"
                 >
                   <span>Create your own hamper</span>
                   <MoveRight
@@ -306,9 +309,26 @@ export default function GiftHamper() {
                     className="transition-transform group-hover:translate-x-1"
                   />
                 </Link>
+
+                <button
+                  type="button"
+                  onClick={() => setShowVideoModal(true)}
+                  className="inline-flex items-center gap-2 px-5 py-3.5 border border-[#2C3E35]/30 hover:border-[#2C3E35] text-[#2C3E35] hover:bg-[#2C3E35]/5 text-[11px] font-bold tracking-[0.16em] uppercase rounded-full transition-all duration-200 cursor-pointer shadow-xs"
+                >
+                  <Play size={13} className="fill-current text-[#C5A880]" />
+                  <span>Watch Crafting Video</span>
+                </button>
               </div>
             </div>
           </div>
+
+          {/* Video Modal triggered on demand */}
+          {showVideoModal && (
+            <StarlingHamperVideoModal
+              forceOpen={true}
+              onClose={() => setShowVideoModal(false)}
+            />
+          )}
 
           {/* ================= RIGHT COLUMN: CLEAN & SIMPLE IMAGE SHOWCASE ================= */}
           <div className="flex items-center justify-center p-2 sm:p-4">

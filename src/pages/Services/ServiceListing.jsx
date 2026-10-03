@@ -35,6 +35,9 @@ export default function ServiceListing() {
                 ? s.category?.name || "Home Care"
                 : s.category || "Home Care",
             price: Number(s.pricing?.amount || s.price) || 0,
+            serviceMode: s.serviceMode,
+            bookingType: s.bookingType,
+            allowBooking: s.allowBooking,
             rating: s.rating || 4.8,
             reviews: s.reviewsCount || 0,
             bookings: s.bookingsCount || 0,

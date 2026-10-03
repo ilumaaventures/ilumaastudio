@@ -5,6 +5,11 @@ export const getProductReviews = async (productId) => {
   return response.data;
 };
 
+export const getServiceReviews = async (serviceId) => {
+  const response = await baseApi.get(`/reviews/service/${serviceId}`);
+  return response.data;
+};
+
 export const createReview = async (reviewData) => {
   // Check if reviewData is FormData to set correct headers
   const isFormData = reviewData instanceof FormData;

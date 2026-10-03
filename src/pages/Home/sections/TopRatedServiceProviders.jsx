@@ -306,25 +306,11 @@ function FeaturedBusinesses() {
 
           {/* Navigation Controls */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => scroll("left")}
-              aria-label="Scroll Left"
-              className="hidden sm:inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-2xs hover:bg-slate-50 hover:text-slate-900 transition-colors"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              onClick={() => scroll("right")}
-              aria-label="Scroll Right"
-              className="hidden sm:inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-2xs hover:bg-slate-50 hover:text-slate-900 transition-colors"
-            >
-              <ChevronRight size={16} />
-            </button>
             <Link
-              to="/services"
+              to="/store"
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0"
             >
-              <span>View All Services</span>
+              <span>View All</span>
               <ArrowRight
                 size={13}
                 className="transition-transform duration-200 group-hover:translate-x-0.5"

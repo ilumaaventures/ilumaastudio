@@ -626,22 +626,16 @@ export default function CreateOwnHamper() {
 
               {/* Price Breakdown */}
               <div className="pt-3 border-t border-[#E8DFC8]/60 space-y-2 text-xs">
-                <div className="flex justify-between text-[#5B5B5B]">
+                {/* <div className="flex justify-between text-[#5B5B5B]">
                   <span>Packaging Basket</span>
                   <span className="font-medium text-[#2C3E35]">
                     {formatPrice(selectedBasket?.price || 0)}
                   </span>
-                </div>
+                </div> */}
                 <div className="flex justify-between text-[#5B5B5B]">
                   <span>Nursery Treasures ({totalItemCount})</span>
                   <span className="font-medium text-[#2C3E35]">
                     {formatPrice(itemsCost)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-[#5B5B5B]">
-                  <span>Gift Card & Wax Seal</span>
-                  <span className="font-bold text-emerald-700 uppercase tracking-wider text-[10px]">
-                    Included
                   </span>
                 </div>
 

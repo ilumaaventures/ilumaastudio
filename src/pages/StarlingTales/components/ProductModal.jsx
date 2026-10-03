@@ -12,7 +12,9 @@ export default function ProductModal({
   onAddToCart,
 }) {
   const storeContext = useStore() || {};
-  const contextPolicies = Array.isArray(storeContext.policies) ? storeContext.policies : [];
+  const contextPolicies = Array.isArray(storeContext.policies)
+    ? storeContext.policies
+    : [];
   const [fetchedPolicies, setFetchedPolicies] = useState(contextPolicies);
 
   useEffect(() => {
@@ -21,7 +23,8 @@ export default function ProductModal({
       return;
     }
 
-    const bizId = storeContext.business?._id || product?.business || product?.businessId;
+    const bizId =
+      storeContext.business?._id || product?.business || product?.businessId;
     const bizSlug = storeContext.storeSlug || "starlingtales";
 
     let isMounted = true;
@@ -29,20 +32,27 @@ export default function ProductModal({
       try {
         let res;
         if (bizId) {
-          res = await baseApi.get("/business-policies/public", { params: { businessId: bizId } });
+          res = await baseApi.get("/business-policies/public", {
+            params: { businessId: bizId },
+          });
         } else {
-          res = await baseApi.get("/business-policies/public", { params: { subdomain: bizSlug } });
+          res = await baseApi.get("/business-policies/public", {
+            params: { subdomain: bizSlug },
+          });
         }
         const policyList = Array.isArray(res.data?.policies)
           ? res.data.policies
           : Array.isArray(res.data)
-          ? res.data
-          : [];
+            ? res.data
+            : [];
         if (isMounted && policyList.length > 0) {
           setFetchedPolicies(policyList);
         }
       } catch (err) {
-        console.log("Could not load public business policies for product modal:", err);
+        console.log(
+          "Could not load public business policies for product modal:",
+          err,
+        );
       }
     }
 
@@ -52,27 +62,44 @@ export default function ProductModal({
     };
   }, [contextPolicies, storeContext.business, storeContext.storeSlug, product]);
 
-  const activePolicies = fetchedPolicies.length > 0 ? fetchedPolicies : contextPolicies;
+  const activePolicies =
+    fetchedPolicies.length > 0 ? fetchedPolicies : contextPolicies;
 
   const foundReturn = activePolicies.find(
-    (p) => p.type === "return_policy" || p.type === "return" || p.type === "return_refund_policy"
+    (p) =>
+      p.type === "return_policy" ||
+      p.type === "return" ||
+      p.type === "return_refund_policy",
   );
   const foundExchange = activePolicies.find(
-    (p) => p.type === "exchange_policy" || p.type === "exchange"
+    (p) => p.type === "exchange_policy" || p.type === "exchange",
   );
   const foundRefund = activePolicies.find(
-    (p) => p.type === "refund_policy" || p.type === "refund" || p.type === "return_refund_policy"
+    (p) =>
+      p.type === "refund_policy" ||
+      p.type === "refund" ||
+      p.type === "return_refund_policy",
   );
   const foundShipping = activePolicies.find(
-    (p) => p.type === "shipping_policy" || p.type === "shipping"
+    (p) => p.type === "shipping_policy" || p.type === "shipping",
   );
 
   // Other business policies (custom, cancellation, etc.)
   const additionalPolicies = activePolicies.filter(
     (p) =>
-      !["return_policy", "return", "exchange_policy", "exchange", "refund_policy", "refund", "return_refund_policy", "shipping_policy", "shipping", "terms_and_conditions", "privacy_policy"].includes(
-        p.type?.toLowerCase()
-      )
+      ![
+        "return_policy",
+        "return",
+        "exchange_policy",
+        "exchange",
+        "refund_policy",
+        "refund",
+        "return_refund_policy",
+        "shipping_policy",
+        "shipping",
+        "terms_and_conditions",
+        "privacy_policy",
+      ].includes(p.type?.toLowerCase()),
   );
 
   const defaultReturnText =
@@ -91,10 +118,17 @@ export default function ProductModal({
     return (
       <div className="space-y-2 text-text-body text-[13px] font-light leading-relaxed">
         {sections.map((section, idx) => {
-          if (section.startsWith("###") || section.startsWith("##") || section.startsWith("#")) {
+          if (
+            section.startsWith("###") ||
+            section.startsWith("##") ||
+            section.startsWith("#")
+          ) {
             const heading = section.replace(/^#+\s*/, "");
             return (
-              <h5 key={idx} className="font-semibold text-[#2C3E35] text-xs pt-1">
+              <h5
+                key={idx}
+                className="font-semibold text-[#2C3E35] text-xs pt-1"
+              >
                 {heading}
               </h5>
             );
@@ -462,9 +496,8 @@ export default function ProductModal({
                 </summary>
                 <div className="pb-4">
                   <p className="text-text-body text-[13px] font-light leading-relaxed">
-                    Every Starling Tales piece is lovingly packaged in a
-                    keepsake box with tissue paper and a handwritten gift note,
-                    ready to gift straight from the box.
+                    Gift box packaging is available at an additional cost of INR
+                    500.
                   </p>
                 </div>
               </details>
@@ -496,7 +529,10 @@ export default function ProductModal({
                   />
                 </summary>
                 <div className="pb-4">
-                  {renderPolicyContent(foundExchange?.content, defaultExchangeText)}
+                  {renderPolicyContent(
+                    foundExchange?.content,
+                    defaultExchangeText,
+                  )}
                 </div>
               </details>
 
@@ -533,7 +569,10 @@ export default function ProductModal({
               )}
 
               {additionalPolicies.map((pol) => (
-                <details key={pol._id || pol.title} className="border-b border-cream-dark">
+                <details
+                  key={pol._id || pol.title}
+                  className="border-b border-cream-dark"
+                >
                   <summary className="flex items-center justify-between py-4 text-text-dark cursor-pointer text-[13px] font-medium tracking-wide list-none select-none">
                     <span className="flex items-center gap-1.5 font-bold text-[#2C3E35]">
                       {pol.title}
@@ -543,9 +582,7 @@ export default function ProductModal({
                       className="transition-transform duration-200 group-open:rotate-270 h-4 w-4 rotate-90"
                     />
                   </summary>
-                  <div className="pb-4">
-                    {renderPolicyContent(pol.content)}
-                  </div>
+                  <div className="pb-4">{renderPolicyContent(pol.content)}</div>
                 </details>
               ))}
             </div>

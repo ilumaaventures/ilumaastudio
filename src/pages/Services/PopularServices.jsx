@@ -105,7 +105,9 @@ export default function PopularServices() {
                 typeof s.category === "object"
                   ? s.category?.name || "Home Care"
                   : s.category || "Home Care",
-              price: Number(s.pricing?.amount || s.price) || 299,
+              price: Number(s.pricing?.amount || s.price) || (s.serviceMode === "ENQUIRY" ? 0 : 299),
+              serviceMode: s.serviceMode,
+              isEnquiryOnly: s.serviceMode?.toUpperCase() === "ENQUIRY" || s.bookingType?.toLowerCase() === "inquiry" || s.allowBooking === false,
               rating: s.rating || 4.8,
               reviews: s.reviewsCount || 120,
               location: formatLocation(s.location),
@@ -252,9 +254,15 @@ export default function PopularServices() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 mt-2">
-                    <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
-                      ₹{(service.price || 0).toLocaleString("en-IN")}
-                    </span>
+                    {service.isEnquiryOnly ? (
+                      <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                        Quote on Enquiry
+                      </span>
+                    ) : (
+                      <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
+                        ₹{(service.price || 0).toLocaleString("en-IN")}
+                      </span>
+                    )}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -263,7 +271,7 @@ export default function PopularServices() {
                       }}
                       className="px-3 py-1.5 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-[11px] font-bold transition-colors shadow-xs cursor-pointer"
                     >
-                      Book Now
+                      {service.isEnquiryOnly ? "Enquire Now" : "Book Now"}
                     </button>
                   </div>
                 </div>

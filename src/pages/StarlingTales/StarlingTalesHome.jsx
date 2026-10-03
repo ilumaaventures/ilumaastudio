@@ -19,6 +19,7 @@ import GiftHamper from "./GiftHamper";
 import StarlingCollection from "./StarlingCollection";
 import StarlingAbout from "./StarlingAbout";
 import StarlingLandingIntro from "./components/StarlingLandingIntro";
+import StarlingHamperVideoModal from "./components/StarlingHamperVideoModal";
 
 export default function StarlingTalesHome() {
   const [showIntro, setShowIntro] = useState(() => {
@@ -55,7 +56,12 @@ export default function StarlingTalesHome() {
 
   return (
     <>
+      {/* 1. Cinematic Animated Landing Intro (Create_animated_landing-page_video_202609051224.mp4) */}
       {showIntro && <StarlingLandingIntro onEnter={handleEnterIntro} />}
+
+      {/* 2. Assembling Gift Hamper Pop-up (Assembling_personalized_gift_ham...mp4 - triggers on 1-2 scrolls) */}
+      {!showIntro && <StarlingHamperVideoModal />}
+
       <div className="min-h-screen bg-cream text-text-dark font-sans selection:bg-blue-light selection:text-blue-soft relative overflow-x-hidden">
         <div className="bg-text-dark text-cream text-[11px] tracking-[0.2em] uppercase py-2 text-center font-medium px-4">
           Free shipping on all heirloom keepsakes over ₹5,000

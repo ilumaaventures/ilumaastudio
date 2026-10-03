@@ -134,17 +134,35 @@ export default function ServicesCatalogPage({
             </div>
 
             <div className="pt-4 border-t border-slate-100 mt-4 flex items-center justify-between">
-              <span className="text-base font-black text-slate-900">
-                ₹{Number(srv.price).toFixed(2)}
-              </span>
-              <button
-                onClick={() => onOpenBooking && onOpenBooking(srv)}
-                className="px-4 py-2 rounded-xl text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer hover:opacity-90"
-                style={{ backgroundColor: primaryColor }}
-              >
-                <Calendar size={13} />
-                <span>Book Now</span>
-              </button>
+              {srv.serviceMode?.toUpperCase() === "ENQUIRY" || srv.bookingType?.toLowerCase() === "inquiry" || srv.allowBooking === false ? (
+                <span className="text-xs sm:text-sm font-bold text-indigo-600">
+                  Quote on Enquiry
+                </span>
+              ) : (
+                <span className="text-base font-black text-slate-900">
+                  ₹{Number(srv.price || 0).toFixed(2)}
+                </span>
+              )}
+
+              {srv.serviceMode?.toUpperCase() === "ENQUIRY" || srv.bookingType?.toLowerCase() === "inquiry" || srv.allowBooking === false ? (
+                <button
+                  onClick={() => onOpenBooking && onOpenBooking(srv)}
+                  className="px-4 py-2 rounded-xl text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer hover:opacity-90"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <ArrowRight size={13} />
+                  <span>Send Enquiry</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => onOpenBooking && onOpenBooking(srv)}
+                  className="px-4 py-2 rounded-xl text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer hover:opacity-90"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <Calendar size={13} />
+                  <span>Book Now</span>
+                </button>
+              )}
             </div>
           </div>
         ))}

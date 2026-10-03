@@ -293,8 +293,12 @@ export default function Services() {
         }
 
         // Price Filter
+        const isEnquiry =
+          s.serviceMode?.toUpperCase() === "ENQUIRY" ||
+          s.bookingType?.toLowerCase() === "inquiry" ||
+          s.allowBooking === false;
         const price = s.pricing?.amount || s.price || 0;
-        if (price < priceMin || price > priceMax) return false;
+        if (!isEnquiry && (price < priceMin || price > priceMax)) return false;
 
         // Rating Filter
         const rating =
@@ -674,6 +678,10 @@ export default function Services() {
                 }
               >
                 {paginatedServices.map((service) => {
+                  const isEnquiryOnly =
+                    service.serviceMode?.toUpperCase() === "ENQUIRY" ||
+                    service.bookingType?.toLowerCase() === "inquiry" ||
+                    service.allowBooking === false;
                   const sPrice = service.pricing?.amount || service.price || 0;
                   const sRating = service.rating || service.avgRating || 4.9;
                   const catNames = getServiceCategoryNames(service);
@@ -744,21 +752,70 @@ export default function Services() {
                             <p className="text-xs text-slate-500 font-medium line-clamp-2 mt-1">
                               {service.description}
                             </p>
+
+                            {/* Category-Adaptive Attribute Chips */}
+                            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                              {service.deliveryType && (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700">
+                                  {service.deliveryType === "AT_HOME"
+                                    ? "Doorstep / At-Home"
+                                    : service.deliveryType === "REMOTE"
+                                    ? "Remote / Online"
+                                    : service.deliveryType === "HYBRID"
+                                    ? "Hybrid"
+                                    : "On-Site Visit"}
+                                </span>
+                              )}
+                              {service.customAttributes?.technology && (
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
+                                  Tech: {Array.isArray(service.customAttributes.technology)
+                                    ? service.customAttributes.technology.slice(0, 3).join(", ")
+                                    : String(service.customAttributes.technology)}
+                                </span>
+                              )}
+                              {service.customAttributes?.massageType && (
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700">
+                                  Treatment: {String(service.customAttributes.massageType)}
+                                </span>
+                              )}
+                              {service.customAttributes?.subject && (
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700">
+                                  Subject: {String(service.customAttributes.subject)}
+                                </span>
+                              )}
+                              {service.customAttributes?.applianceType && (
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700">
+                                  Appliance: {String(service.customAttributes.applianceType)}
+                                </span>
+                              )}
+                            </div>
                           </div>
 
                           <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                             <div>
-                              <span className="text-[10px] text-slate-400 font-bold block">
-                                Starting From
-                              </span>
-                              <span className="text-lg font-black text-slate-900">
-                                ₹{sPrice.toLocaleString("en-IN")}
-                              </span>
+                              {isEnquiryOnly ? (
+                                <div>
+                                  <span className="text-[10px] text-[#004ac6] font-extrabold uppercase tracking-wider block">
+                                    Enquiry Only
+                                  </span>
+                                  <span className="text-sm font-black text-slate-900">
+                                    Custom Quote
+                                  </span>
+                                </div>
+                              ) : (
+                                <div>
+                                  <span className="text-[10px] text-slate-400 font-bold block">
+                                    Starting From
+                                  </span>
+                                  <span className="text-lg font-black text-slate-900">
+                                    ₹{sPrice.toLocaleString("en-IN")}
+                                  </span>
+                                </div>
+                              )}
                             </div>
 
                             <div className="flex items-center gap-3">
                               <div className="flex items-center gap-1 text-xs text-slate-500 font-bold">
-                                {/* view in details */}
                                 <Link
                                   to={`/services/${service._id}`}
                                   className="border border-black/10 hover:border-[#004ac6] px-3 py-1 rounded-xl text-xs font-extrabold transition-all shadow-xs flex items-center gap-1"
@@ -771,7 +828,13 @@ export default function Services() {
                                 to={`/services/${service._id}`}
                                 className="bg-[#004ac6] hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs flex items-center gap-1"
                               >
-                                <span>Book Now</span>
+                                <span>
+                                  {isEnquiryOnly
+                                    ? "Send Enquiry"
+                                    : service.serviceMode === "BOTH"
+                                    ? "Book / Enquire"
+                                    : "Book Now"}
+                                </span>
                                 <ArrowRight size={13} />
                               </Link>
                             </div>
@@ -822,6 +885,38 @@ export default function Services() {
                           <p className="text-xs text-slate-500 font-medium line-clamp-2 leading-relaxed">
                             {service.description}
                           </p>
+
+                          {/* Industry Attribute Badges */}
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            {service.deliveryType && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">
+                                {service.deliveryType === "AT_HOME"
+                                  ? "At-Home"
+                                  : service.deliveryType === "REMOTE"
+                                  ? "Remote"
+                                  : service.deliveryType === "HYBRID"
+                                  ? "Hybrid"
+                                  : "On-Site"}
+                              </span>
+                            )}
+                            {service.customAttributes?.technology && (
+                              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 truncate max-w-[130px]">
+                                {Array.isArray(service.customAttributes.technology)
+                                  ? service.customAttributes.technology.slice(0, 2).join(", ")
+                                  : String(service.customAttributes.technology)}
+                              </span>
+                            )}
+                            {service.customAttributes?.massageType && (
+                              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">
+                                {String(service.customAttributes.massageType)}
+                              </span>
+                            )}
+                            {service.customAttributes?.subject && (
+                              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700">
+                                {String(service.customAttributes.subject)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
@@ -829,24 +924,45 @@ export default function Services() {
                       <div className="p-4 pt-0 space-y-3">
                         <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
                           <div>
-                            <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider">
-                              Starting Price
-                            </span>
-                            <span className="text-base font-black text-slate-900">
-                              ₹{sPrice.toLocaleString("en-IN")}
-                            </span>
+                            {isEnquiryOnly ? (
+                              <div>
+                                <span className="text-[9px] text-[#004ac6] font-extrabold uppercase tracking-wider block">
+                                  Enquiry Only
+                                </span>
+                                <span className="text-sm font-black text-slate-900">
+                                  Custom Proposal
+                                </span>
+                              </div>
+                            ) : (
+                              <div>
+                                <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider">
+                                  Starting Price
+                                </span>
+                                <span className="text-base font-black text-slate-900">
+                                  ₹{sPrice.toLocaleString("en-IN")}
+                                </span>
+                              </div>
+                            )}
                           </div>
-                          <div className="flex items-center gap-1 text-xs text-slate-500 font-bold">
-                            <Clock size={12} className="text-[#004ac6]" />
-                            <span>{formatDuration(service.duration)}</span>
-                          </div>
+                          {!isEnquiryOnly && (
+                            <div className="flex items-center gap-1 text-xs text-slate-500 font-bold">
+                              <Clock size={12} className="text-[#004ac6]" />
+                              <span>{formatDuration(service.duration)}</span>
+                            </div>
+                          )}
                         </div>
 
                         <Link
                           to={`/services/${service._id}`}
                           className="w-full bg-slate-900 group-hover:bg-[#004ac6] text-white text-center py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 shadow-2xs"
                         >
-                          <span>Book Appointment</span>
+                          <span>
+                            {isEnquiryOnly
+                              ? "Send Enquiry"
+                              : service.serviceMode === "BOTH"
+                              ? "Book / Enquire"
+                              : "Book Appointment"}
+                          </span>
                           <ArrowRight size={14} />
                         </Link>
                       </div>

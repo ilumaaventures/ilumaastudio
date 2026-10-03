@@ -97,7 +97,6 @@ export default function StarlingWhatsAppButton() {
         {/* Hover Tooltip when popup is closed */}
         {!isOpen && !isDismissed && (
           <div className="hidden sm:flex items-center gap-2 bg-[#2C3E35] text-[#FAF6F0] text-xs py-2 px-3.5 rounded-xl shadow-xl border border-[#C5A880]/30 animate-bounce transition-all duration-300">
-            <Sparkles size={13} className="text-[#C5A880]" />
             <span className="font-serif">Chat with us on WhatsApp</span>
             <button
               onClick={(e) => {

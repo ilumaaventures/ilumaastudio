@@ -22,10 +22,18 @@ export const getServiceById = async (id) => {
 
 export const getServiceCategories = async () => {
   try {
+    const response = await baseApi.get("/service-categories");
+    if (response.data?.categories) return response.data.categories;
+    if (Array.isArray(response.data)) return response.data;
+    if (response.data?.data) return response.data.data;
+  } catch (err) {
+    // fallback
+  }
+  try {
     const response = await baseApi.get("/categories?businessType=Service");
-    return response.data;
+    return response.data?.categories || response.data?.data || response.data || [];
   } catch (error) {
     console.error("Error fetching service categories:", error);
-    throw error;
+    return [];
   }
 };

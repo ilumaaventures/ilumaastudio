@@ -33,6 +33,11 @@ export default function ServiceCard({ service }) {
     "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=700&q=80";
   const imgCount = Array.isArray(service.images) ? service.images.length : 0;
 
+  const isEnquiryOnly =
+    service.serviceMode?.toUpperCase() === "ENQUIRY" ||
+    service.bookingType?.toLowerCase() === "inquiry" ||
+    service.allowBooking === false;
+
   return (
     <div
       onClick={() => navigate(`/services/${serviceId}`)}
@@ -121,15 +126,62 @@ export default function ServiceCard({ service }) {
             <Clock3 size={11} className="shrink-0" />
             <span>{formatDuration(service.duration)}</span>
           </div>
+
+          {/* Attribute chips / Delivery badge */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1.5">
+            {service.deliveryType && (
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+                {service.deliveryType === "AT_HOME"
+                  ? "At Home"
+                  : service.deliveryType === "REMOTE"
+                  ? "Remote / Virtual"
+                  : service.deliveryType === "HYBRID"
+                  ? "Hybrid"
+                  : "On-Site"}
+              </span>
+            )}
+            {service.customAttributes && (
+              <>
+                {service.customAttributes.technology && (
+                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 truncate max-w-[120px]">
+                    {Array.isArray(service.customAttributes.technology)
+                      ? service.customAttributes.technology.slice(0, 2).join(", ")
+                      : String(service.customAttributes.technology)}
+                  </span>
+                )}
+                {service.customAttributes.massageType && (
+                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">
+                    {String(service.customAttributes.massageType)}
+                  </span>
+                )}
+                {service.customAttributes.subject && (
+                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700">
+                    {String(service.customAttributes.subject)}
+                  </span>
+                )}
+                {service.customAttributes.applianceType && (
+                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700">
+                    {String(service.customAttributes.applianceType)}
+                  </span>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Price & Direct Book Button */}
+      {/* Price & Dynamic Action Button */}
       <div className="flex items-center justify-between gap-3 pt-3">
         <div>
-          <span className="text-sm sm:text-base font-black text-slate-900 dark:text-white">
-            From ₹{(service.price || 0).toLocaleString("en-IN")}
-          </span>
+          {isEnquiryOnly ? (
+            <span className="text-xs sm:text-sm font-extrabold text-blue-600 dark:text-blue-400">
+              Quote on Enquiry
+            </span>
+          ) : (
+            <span className="text-sm sm:text-base font-black text-slate-900 dark:text-white">
+              From ₹{(service.price || service.pricing?.amount || 0).toLocaleString("en-IN")}
+            </span>
+          )}
         </div>
 
         <button
@@ -140,7 +192,11 @@ export default function ServiceCard({ service }) {
           }}
           className="px-3.5 py-1.5 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-[11px] font-bold transition-colors shadow-xs cursor-pointer"
         >
-          Book Now
+          {isEnquiryOnly
+            ? "Send Enquiry"
+            : service.serviceMode === "BOTH"
+            ? "Book / Enquire"
+            : "Book Now"}
         </button>
       </div>
     </div>
