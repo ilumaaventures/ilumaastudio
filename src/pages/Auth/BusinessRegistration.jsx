@@ -26,6 +26,7 @@ import {
   KeyRound,
   Boxes,
   CalendarCheck,
+  ShoppingBag,
 } from "lucide-react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -63,7 +64,41 @@ const BUSINESS_SIZES = [
   "500+ Employees",
 ];
 
-const getPlanScope = (plan, selectedCategory) => {
+const getCategoryScope = (categoryVal, businessCategoriesList = []) => {
+  if (!categoryVal) return "ECOMMERCE";
+
+  const found = businessCategoriesList.find(
+    (c) =>
+      c._id === categoryVal || c.code === categoryVal || c.name === categoryVal,
+  );
+  if (found) {
+    const code = (found.code || "").toUpperCase();
+    const name = (found.name || "").toLowerCase();
+    if (code === "SERVICE" || name.includes("service")) return "SERVICE";
+    if (
+      code === "BUSINESS" ||
+      code === "OTHER" ||
+      name.includes("both") ||
+      name.includes("brand") ||
+      name.includes("busi")
+    )
+      return "BOTH";
+    return "ECOMMERCE";
+  }
+
+  const str = String(categoryVal).toUpperCase();
+  if (str.includes("SERV")) return "SERVICE";
+  if (
+    str.includes("BOTH") ||
+    str.includes("BUSI") ||
+    str.includes("BRAND") ||
+    str === "OTHER"
+  )
+    return "BOTH";
+  return "ECOMMERCE";
+};
+
+const getPlanScope = (plan) => {
   const scope = (plan?.businessCategoryScope || "").toUpperCase();
   if (scope === "SERVICE") return "SERVICE";
   if (scope === "ECOMMERCE" || scope === "GIFTING") return "ECOMMERCE";
@@ -88,16 +123,11 @@ const getPlanScope = (plan, selectedCategory) => {
   )
     return "BOTH";
 
-  const catUpper = String(selectedCategory || "").toUpperCase();
-  if (catUpper.includes("SERVICE")) return "SERVICE";
-  if (
-    catUpper.includes("ECOM") ||
-    catUpper.includes("RETAIL") ||
-    catUpper.includes("PRODUCT")
-  )
-    return "ECOMMERCE";
+  const nameUpper = String(plan?.name || "").toUpperCase();
+  if (nameUpper.includes("BOTH")) return "BOTH";
+  if (nameUpper.includes("SERVICE")) return "SERVICE";
 
-  return "BOTH";
+  return "ECOMMERCE";
 };
 
 const formatLimit = (val, suffix = "") => {
@@ -112,142 +142,163 @@ const formatLimit = (val, suffix = "") => {
   return String(val);
 };
 
-const getFallbackPlans = (category) => {
-  const catUpper = String(category || "").toUpperCase();
-  const isService = catUpper.includes("SERVICE");
-  const isEcom = catUpper.includes("ECOM") || catUpper.includes("RETAIL");
+const getFallbackPlans = (categoryScope) => {
+  const isService = categoryScope === "SERVICE";
+  const isBoth = categoryScope === "BOTH";
 
   return [
     {
-      _id: "starter",
-      name: "Starter",
+      _id: "launch",
+      name: "Launch",
       description: isService
-        ? "Essential tools for service providers & appointment scheduling"
-        : isEcom
-          ? "Essential tools for small shops launching online store"
-          : "Essential platform tools for emerging businesses",
-      pricing: { monthly: 499, yearly: 399 },
+        ? "Essential appointment booking & client desk for independent providers."
+        : isBoth
+          ? "Essential multi-channel setup with online storefront & booking desk."
+          : "Essential online shop setup with product catalog, cart & checkout.",
+      pricing: { monthly: 0, yearly: 0 },
       popular: false,
       businessCategoryScope: isService
         ? "SERVICE"
-        : isEcom
-          ? "ECOMMERCE"
-          : "ALL",
+        : isBoth
+          ? "BUSINESS"
+          : "ECOMMERCE",
       limits: {
-        maxProducts: 500,
-        maxWarehouses: 1,
-        maxServices: 50,
-        maxBookings: 250,
-        maxEnquiries: 500,
-        maxEmployees: 3,
-        maxVendors: 2,
-        maxTemplates: 3,
-        recycleBinDays: 14,
+        maxProducts: isService ? 0 : 50,
+        maxWarehouses: isService ? 0 : 1,
+        maxServices: isService || isBoth ? 10 : 0,
+        maxBookings: isService || isBoth ? 50 : 0,
+        maxEnquiries: 100,
+        maxEmployees: 1,
+        maxVendors: 1,
+        maxTemplates: 1,
+        recycleBinDays: 7,
       },
       features: isService
         ? [
             "Online appointment booking",
-            "Client inquiry management",
             "Service catalog & pricing",
-            "Staff scheduling",
-            "Digital receipts & invoices",
+            "Client inquiry desk",
+            "Email notifications",
+            "1 staff account",
           ]
-        : isEcom
+        : isBoth
           ? [
-              "Up to 500 product listings",
-              "Inventory tracking & alerts",
-              "Order management & shipping",
-              "1 warehouse location",
-              "Customer checkout & cart",
+              "Unified product & service catalog",
+              "Basic storefront & bookings",
+              "Inventory & order tracking",
+              "Customer inquiries",
+              "1 staff account",
             ]
           : [
-              "Product catalog & services",
-              "Order & booking processing",
-              "Customer CRM & inquiries",
-              "Team access & permissions",
-              "Payment gateway integration",
+              "Up to 50 product listings",
+              "Standard checkout & cart",
+              "Order management",
+              "1 warehouse location",
+              "1 staff account",
             ],
     },
     {
       _id: "growth",
-      name: "Growth",
+      name: isBoth ? "Growth Both" : "Growth",
       description: isService
-        ? "Advanced scheduling & booking management for growing agencies"
-        : isEcom
-          ? "Scale your online store with multi-warehouse & vendor support"
-          : "Scale multi-channel operations across retail & services",
-      pricing: { monthly: 999, yearly: 799 },
+        ? "Advanced scheduling, staff allocation & client CRM for growing clinics & agencies."
+        : isBoth
+          ? "Scale hybrid operations powering retail storefront and appointment booking."
+          : "Scale sales with coupon engine, multi-warehouse shipping and advanced analytics.",
+      pricing: { monthly: 199, yearly: 1990 },
       popular: true,
       businessCategoryScope: isService
         ? "SERVICE"
-        : isEcom
-          ? "ECOMMERCE"
-          : "ALL",
+        : isBoth
+          ? "BUSINESS"
+          : "ECOMMERCE",
       limits: {
-        maxProducts: 5000,
-        maxWarehouses: 3,
-        maxServices: 250,
-        maxBookings: 2500,
-        maxEnquiries: 5000,
-        maxEmployees: 10,
-        maxVendors: 5,
-        maxTemplates: 10,
+        maxProducts: isService ? 0 : 500,
+        maxWarehouses: isService ? 0 : 2,
+        maxServices: isService || isBoth ? 50 : 0,
+        maxBookings: isService || isBoth ? 500 : 0,
+        maxEnquiries: 1000,
+        maxEmployees: 5,
+        maxVendors: 3,
+        maxTemplates: 5,
         recycleBinDays: 30,
       },
       features: isService
         ? [
-            "Up to 250 active services",
-            "2,500 monthly bookings",
-            "5,000 client inquiries",
-            "Calendar sync & notifications",
-            "Staff & team management",
-            "Custom quote generator",
+            "Up to 50 active services",
+            "500 monthly bookings",
+            "Automated booking reminders",
+            "Multi-staff calendar assignment",
+            "Customer review collection",
+            "Advanced service analytics",
           ]
-        : isEcom
+        : isBoth
           ? [
-              "5,000 product catalog",
-              "3 warehouse fulfillment centers",
-              "5 vendor storefronts",
-              "Automated courier dispatch",
-              "Advanced analytics & reports",
-              "Discount & coupon engine",
+              "500 products & 50 active services",
+              "Unified checkout & booking calendar",
+              "POS integration & barcode support",
+              "Multi-staff & vendor coordination",
+              "Storefront builder with 5 themes",
+              "Comprehensive business analytics",
             ]
           : [
-              "Full product & service catalog",
-              "Multi-warehouse & multi-vendor",
-              "Bookings & order management",
-              "10 staff accounts",
-              "Custom storefront templates",
-              "Reports & business analytics",
+              "Up to 500 product catalog",
+              "2 warehouse hubs & dispatch",
+              "Promotions & coupon engine",
+              "Inventory low-stock alerts",
+              "Storefront builder with 5 themes",
+              "Sales reports & revenue analytics",
             ],
     },
     {
-      _id: "business",
-      name: "Business",
-      description:
-        "Comprehensive enterprise-grade infrastructure with priority SLA",
-      pricing: { monthly: 1999, yearly: 1599 },
+      _id: "scale",
+      name: isBoth ? "Scale Both" : isService ? "Scale 123" : "Scale",
+      description: isService
+        ? "Enterprise-grade booking infrastructure for multi-location healthcare and consulting firms."
+        : isBoth
+          ? "Full-scale commerce and booking powerhouse with dedicated POS, APIs & multi-location."
+          : "Maximum capacity enterprise ecommerce with multi-warehouse and high-volume order routing.",
+      pricing: { monthly: 499, yearly: 5400 },
       popular: false,
-      businessCategoryScope: "ALL",
+      businessCategoryScope: isService
+        ? "SERVICE"
+        : isBoth
+          ? "BUSINESS"
+          : "ECOMMERCE",
       limits: {
-        maxProducts: 25000,
-        maxWarehouses: 5,
-        maxServices: 1000,
-        maxBookings: 10000,
-        maxEnquiries: 20000,
-        maxEmployees: 25,
+        maxProducts: isService ? 0 : 5000,
+        maxWarehouses: isService ? 0 : 5,
+        maxServices: isService || isBoth ? 250 : 0,
+        maxBookings: isService || isBoth ? 2500 : 0,
+        maxEnquiries: 5000,
+        maxEmployees: 15,
         maxVendors: 10,
-        maxTemplates: 20,
+        maxTemplates: 15,
         recycleBinDays: 60,
       },
-      features: [
-        "High-volume catalog & multi-location",
-        "Dedicated POS & booking desk",
-        "Role-based permissions & audit logs",
-        "GST invoicing & tax reconciliation",
-        "Multi-store vendor management",
-        "Priority 24/7 technical support",
-      ],
+      features: isService
+        ? [
+            "Unlimited active services & custom pricing",
+            "2,500 monthly bookings",
+            "Dedicated booking desk & scheduling",
+            "Multi-location agency support",
+            "Priority SLA support & onboarding",
+          ]
+        : isBoth
+          ? [
+              "5,000 products & 250 services",
+              "High-volume catalog & multi-location",
+              "Dedicated POS & booking desk",
+              "Role-based permissions & audit logs",
+              "Priority 24/7 technical support",
+            ]
+          : [
+              "5,000 product catalog",
+              "5 regional warehouse fulfillment hubs",
+              "Bulk order import & export",
+              "Automated courier dispatch APIs",
+              "Priority SLA support & onboarding",
+            ],
     },
   ];
 };
@@ -258,12 +309,41 @@ export default function BusinessRegistration() {
   const initialPlanParam = searchParams.get("plan") || "";
   const initialCategoryParam = searchParams.get("category") || "";
 
-  const resolveInitialCategory = () => {
-    if (!initialCategoryParam) return "E-commerce";
-    const lower = initialCategoryParam.toLowerCase();
-    if (lower.includes("service")) return "Service";
-    if (lower.includes("both") || lower.includes("busin")) return "business";
-    return "E-commerce";
+  const resolveInitialCategory = (fetchedCats = []) => {
+    const lower = (initialCategoryParam || "").toLowerCase();
+    if (fetchedCats.length > 0) {
+      if (lower.includes("service")) {
+        const found = fetchedCats.find(
+          (c) =>
+            (c.code || "").toUpperCase() === "SERVICE" ||
+            (c.name || "").toLowerCase().includes("service"),
+        );
+        if (found) return found._id;
+      }
+      if (
+        lower.includes("both") ||
+        lower.includes("busin") ||
+        lower.includes("brand")
+      ) {
+        const found = fetchedCats.find(
+          (c) =>
+            (c.code || "").toUpperCase() === "BUSINESS" ||
+            (c.name || "").toLowerCase().includes("both") ||
+            (c.name || "").toLowerCase().includes("brand") ||
+            (c.name || "").toLowerCase().includes("busin"),
+        );
+        if (found) return found._id;
+      }
+      const ecom = fetchedCats.find(
+        (c) =>
+          (c.code || "").toUpperCase() === "ECOMMERCE" ||
+          (c.name || "").toLowerCase().includes("e-com") ||
+          (c.name || "").toLowerCase().includes("market"),
+      );
+      if (ecom) return ecom._id;
+      return fetchedCats[0]._id;
+    }
+    return "ECOMMERCE";
   };
 
   const [step, setStep] = useState(1);
@@ -494,12 +574,21 @@ export default function BusinessRegistration() {
           setBusinessCategories(fetchedCats);
         }
 
-        setFormData((prev) => ({
-          ...prev,
-          business_type: fetchedTypes.length > 0 ? fetchedTypes[0]._id : "",
-          business_category: prev.business_category || resolveInitialCategory(),
-          plan: initialPlanParam || prev.plan,
-        }));
+        const resolvedCatId = resolveInitialCategory(fetchedCats);
+
+        setFormData((prev) => {
+          const currentCat = prev.business_category;
+          const isValidId = fetchedCats.some((c) => c._id === currentCat);
+          return {
+            ...prev,
+            business_type:
+              fetchedTypes.length > 0
+                ? prev.business_type || fetchedTypes[0]._id
+                : "",
+            business_category: isValidId ? currentCat : resolvedCatId,
+            plan: initialPlanParam || prev.plan,
+          };
+        });
       } catch (err) {
         console.error("Failed to load business metadata:", err);
       } finally {
@@ -510,65 +599,106 @@ export default function BusinessRegistration() {
     fetchMetadata();
   }, [initialCategoryParam, initialPlanParam]);
 
-  // Fetch Subscription Plans dynamically based on selected Category & Type
+  // Fetch Subscription Plans dynamically
   useEffect(() => {
     const fetchPlans = async () => {
       try {
         setPlansLoading(true);
-        const queryParams = new URLSearchParams();
-        if (formData.business_category)
-          queryParams.append("businessCategory", formData.business_category);
-
-        const res = await baseApi.get(
-          `business-subscriptions/plans?${queryParams.toString()}`,
-        );
+        const res = await baseApi.get("business-subscriptions/plans");
         const data =
           res.data?.plans ||
           res.data?.data ||
           (Array.isArray(res.data) ? res.data : []);
         if (Array.isArray(data) && data.length > 0) {
           setPlans(data);
-          const matched =
-            initialPlanParam && data.find((p) => p._id === initialPlanParam);
-          if (matched) {
-            setFormData((prev) => ({ ...prev, plan: matched._id }));
-          } else if (
-            !formData.plan ||
-            !data.some((p) => p._id === formData.plan)
-          ) {
-            const defaultPlan = data.find((p) => p.isPopular) || data[0];
-            setFormData((prev) => ({ ...prev, plan: defaultPlan._id }));
-          }
         } else {
-          const fallback = getFallbackPlans(formData.business_category);
-          setPlans(fallback);
-          const matched =
-            initialPlanParam &&
-            fallback.find((p) => p._id === initialPlanParam);
-          setFormData((prev) => ({
-            ...prev,
-            plan: matched ? matched._id : fallback[1]?._id || fallback[0]?._id,
-          }));
+          setPlans(getFallbackPlans("ECOMMERCE"));
         }
       } catch (err) {
         console.error("Error fetching subscription plans:", err);
-        const fallback = getFallbackPlans(formData.business_category);
-        setPlans(fallback);
-        const matched =
-          initialPlanParam && fallback.find((p) => p._id === initialPlanParam);
-        setFormData((prev) => ({
-          ...prev,
-          plan: matched ? matched._id : fallback[1]?._id || fallback[0]?._id,
-        }));
+        setPlans(getFallbackPlans("ECOMMERCE"));
       } finally {
         setPlansLoading(false);
       }
     };
 
-    if (formData.business_category) {
-      fetchPlans();
+    fetchPlans();
+  }, []);
+
+  // Derive active category scope (ECOMMERCE, SERVICE, BOTH)
+  const activeCategoryScope = getCategoryScope(
+    formData.business_category,
+    businessCategories,
+  );
+
+  // Filter plans strictly by selected category
+  const filteredPlans = plans.filter((plan) => {
+    const pScope = getPlanScope(plan);
+    if (activeCategoryScope === "SERVICE") {
+      return pScope === "SERVICE";
     }
-  }, [formData.business_category, initialPlanParam]);
+    if (activeCategoryScope === "BOTH") {
+      return pScope === "BOTH";
+    }
+    return pScope === "ECOMMERCE";
+  });
+
+  // Ensure formData.plan points to a valid plan within filteredPlans
+  useEffect(() => {
+    if (filteredPlans.length > 0) {
+      const isCurrentInFiltered = filteredPlans.some(
+        (p) => p._id === formData.plan,
+      );
+      if (!isCurrentInFiltered) {
+        const defaultPlan =
+          (initialPlanParam &&
+            filteredPlans.find((p) => p._id === initialPlanParam)) ||
+          filteredPlans.find(
+            (p) =>
+              p.isPopular ||
+              p.popular ||
+              p.name?.toLowerCase().includes("growth"),
+          ) ||
+          filteredPlans[1] ||
+          filteredPlans[0];
+        if (defaultPlan) {
+          setFormData((prev) => ({ ...prev, plan: defaultPlan._id }));
+        }
+      }
+    }
+  }, [formData.business_category, activeCategoryScope, plans]);
+
+  // Tab switch in Step 3
+  const handleCategoryTabChange = (targetScope) => {
+    const targetCat = businessCategories.find((c) => {
+      const code = (c.code || "").toUpperCase();
+      const name = (c.name || "").toLowerCase();
+      if (targetScope === "SERVICE") {
+        return code === "SERVICE" || name.includes("service");
+      }
+      if (targetScope === "BOTH") {
+        return (
+          code === "BUSINESS" ||
+          code === "OTHER" ||
+          name.includes("both") ||
+          name.includes("brand") ||
+          name.includes("busi")
+        );
+      }
+      return (
+        code === "ECOMMERCE" ||
+        name.includes("e-com") ||
+        name.includes("market")
+      );
+    });
+
+    if (targetCat) {
+      setFormData((prev) => ({
+        ...prev,
+        business_category: targetCat._id,
+      }));
+    }
+  };
 
   const uniqueUserName =
     formData.legal_business_name
@@ -1038,32 +1168,38 @@ export default function BusinessRegistration() {
                           className="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3.5 py-2.5 text-slate-900 focus:border-[#C9956C] focus:bg-white outline-none transition"
                         >
                           {businessCategories.length > 0 ? (
-                            businessCategories.map((cat) => (
-                              <>
+                            businessCategories.map((cat) => {
+                              const code = (cat.code || "").toUpperCase();
+                              const name = (cat.name || "").toLowerCase();
+                              let label = cat.name;
+                              if (
+                                code === "ECOMMERCE" ||
+                                name.includes("market") ||
+                                name.includes("e-com")
+                              ) {
+                                label =
+                                  "E-Commerce (Product Marketplace & Online Retail)";
+                              } else if (
+                                code === "SERVICE" ||
+                                name.includes("service")
+                              ) {
+                                label =
+                                  "Services (Service Provider & Appointments)";
+                              } else if (
+                                code === "BUSINESS" ||
+                                code === "OTHER" ||
+                                name.includes("both") ||
+                                name.includes("brand") ||
+                                name.includes("busi")
+                              ) {
+                                label = "Both (E-Commerce Products & Services)";
+                              }
+                              return (
                                 <option key={cat._id} value={cat._id}>
-                                  {[
-                                    "business",
-                                    "businesses",
-                                    "brand",
-                                    "brands",
-                                    "company",
-                                    "companies",
-                                    "Business",
-                                    "BUSINESS",
-                                    "Business Brands",
-                                    "Brand",
-                                    "BRAND",
-                                    "Company",
-                                    "COMPANY",
-                                    "Other",
-                                    "OTHER",
-                                    "other",
-                                  ].includes(cat.name)
-                                    ? "Both"
-                                    : cat.name}{" "}
+                                  {label}
                                 </option>
-                              </>
-                            ))
+                              );
+                            })
                           ) : (
                             <option value="" disabled>
                               Loading categories...
@@ -1183,92 +1319,36 @@ export default function BusinessRegistration() {
                     {/* =====================================================
         HEADER
     ====================================================== */}
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                          <Sparkles size={17} className="text-[#C9956C]" />
-                          Step 3: Choose Your Plan
-                        </h3>
-
-                        <p className="mt-1.5 text-xs leading-5 text-slate-500">
-                          Select the plan that best fits your business. You can
-                          upgrade or change your plan later.
-                        </p>
-                      </div>
-
-                      {/* Full Pricing Page */}
-                      <a
-                        href={`${import.meta.env.VITE_STUDIO_URL}/business-pricing`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {" "}
-                        <button
-                          type="button"
-                          className="hidden shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-[#C9956C] hover:text-[#C9956C] sm:flex"
-                        >
-                          Compare Plans
-                          <ExternalLink size={13} />
-                        </button>
-                      </a>
-                    </div>
-
-                    {/* Mobile Pricing Link */}
-                    <a
-                      href={`${import.meta.env.VITE_STUDIO_URL}/business-pricing`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {" "}
-                      <button
-                        type="button"
-                        className="flex items-center gap-1.5 text-xs font-bold text-[#C9956C] sm:hidden"
-                      >
-                        Compare all plans
-                        <ExternalLink size={13} />
-                      </button>
-                    </a>
 
                     {/* =====================================================
-        BILLING TOGGLE
-    ====================================================== */}
-                    {!plansLoading && plans.length > 0 && (
-                      <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:flex-row">
-                        <span className="text-xs font-semibold text-slate-600">
-                          Choose billing cycle
-                        </span>
-
-                        <div className="flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+                        BILLING CYCLE TOGGLE
+                    ====================================================== */}
+                    {!plansLoading && filteredPlans.length > 0 && (
+                      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 py-1">
+                        <div className="inline-flex items-center rounded-2xl border border-slate-200 bg-slate-100 p-1 shadow-2xs">
                           <button
                             type="button"
                             onClick={() => setBillingCycle("monthly")}
-                            className={`rounded-lg px-5 py-2 text-xs font-bold transition ${
+                            className={`px-5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
                               billingCycle === "monthly"
-                                ? "bg-slate-900 text-white shadow-sm"
+                                ? "bg-white text-slate-900 shadow-sm"
                                 : "text-slate-500 hover:text-slate-800"
                             }`}
                           >
-                            Monthly
+                            Monthly Billing
                           </button>
-
                           <button
                             type="button"
                             onClick={() => setBillingCycle("yearly")}
-                            className={`flex items-center gap-2 rounded-lg px-5 py-2 text-xs font-bold transition ${
+                            className={`flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
                               billingCycle === "yearly"
                                 ? "bg-[#C9956C] text-white shadow-sm"
                                 : "text-slate-500 hover:text-slate-800"
                             }`}
                           >
-                            Yearly
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-[9px] font-black ${
-                                billingCycle === "yearly"
-                                  ? "bg-white/20 text-white"
-                                  : "bg-emerald-50 text-emerald-600"
-                              }`}
-                            >
-                              SAVE
+                            <span>Yearly Billing</span>
+                            <span className="rounded-full bg-emerald-500/20 text-emerald-800 text-[10px] font-black px-2 py-0.5 border border-emerald-400/30">
+                              SAVE 20%
                             </span>
                           </button>
                         </div>
@@ -1276,54 +1356,60 @@ export default function BusinessRegistration() {
                     )}
 
                     {/* =====================================================
-        LOADING
-    ====================================================== */}
+                        LOADING STATE
+                    ====================================================== */}
                     {plansLoading ? (
-                      <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-slate-200 bg-white">
-                        <div className="text-center">
+                      <div className="flex min-h-[320px] items-center justify-center rounded-3xl border border-slate-200 bg-white">
+                        <div className="text-center p-8">
                           <Loader2
-                            size={28}
+                            size={32}
                             className="mx-auto animate-spin text-[#C9956C]"
                           />
-
-                          <p className="mt-3 text-xs font-medium text-slate-500">
-                            Loading available plans...
+                          <p className="mt-3 text-xs font-bold text-slate-600">
+                            Loading subscription plans...
                           </p>
                         </div>
                       </div>
-                    ) : plans.length === 0 ? (
+                    ) : filteredPlans.length === 0 ? (
                       /* ===================================================
-          NO PLANS
-      ==================================================== */
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8 text-center">
-                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
-                          <Sparkles size={20} />
+                          EMPTY STATE
+                      ==================================================== */
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-8 sm:p-12 text-center">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-[#C9956C]">
+                          <Sparkles size={24} />
                         </div>
-
-                        <h4 className="mt-4 text-sm font-bold text-slate-800">
-                          No active plans available
+                        <h4 className="mt-4 text-base font-extrabold text-slate-900">
+                          No active plans found for this category
                         </h4>
-
                         <p className="mx-auto mt-2 max-w-sm text-xs leading-5 text-slate-500">
-                          You can continue with the default trial plan. Our team
-                          can help you choose a plan after registration.
+                          Try switching to another category tab above to explore
+                          available plans.
                         </p>
+                        <div className="mt-4 flex items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleCategoryTabChange("ECOMMERCE")}
+                            className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                          >
+                            View E-Commerce Plans
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleCategoryTabChange("SERVICE")}
+                            className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                          >
+                            View Service Plans
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       /* ===================================================
-          PRICING CARDS
-      ==================================================== */
-                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                        {plans.map((plan) => {
+                          FILTERED PRICING CARDS (MOBILE & DESKTOP OPTIMIZED)
+                      ==================================================== */
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6 items-stretch">
+                        {filteredPlans.map((plan) => {
                           const isSelected = formData.plan === plan._id;
-                          const planScope = getPlanScope(
-                            plan,
-                            formData.business_category,
-                          );
-
-                          /* -----------------------------------------------
-             PRICE
-          ------------------------------------------------ */
+                          const planScope = getPlanScope(plan);
 
                           const monthlyPrice = Number(
                             plan.pricing?.monthly ?? plan.price ?? 0,
@@ -1336,10 +1422,6 @@ export default function BusinessRegistration() {
                               0,
                           );
 
-                          /*
-                           * If backend does not provide yearly pricing,
-                           * calculate it using 20% annual discount.
-                           */
                           const calculatedYearlyPrice =
                             yearlyPrice > 0
                               ? yearlyPrice
@@ -1350,18 +1432,10 @@ export default function BusinessRegistration() {
                               ? calculatedYearlyPrice
                               : monthlyPrice;
 
-                          /* -----------------------------------------------
-             MONTHLY EQUIVALENT FOR YEARLY
-          ------------------------------------------------ */
-
                           const monthlyEquivalent =
                             billingCycle === "yearly"
                               ? Math.round(calculatedYearlyPrice / 12)
                               : monthlyPrice;
-
-                          /* -----------------------------------------------
-             SAVINGS
-          ------------------------------------------------ */
 
                           const yearlySavings =
                             monthlyPrice > 0
@@ -1371,19 +1445,11 @@ export default function BusinessRegistration() {
                                 )
                               : 0;
 
-                          /* -----------------------------------------------
-             POPULAR
-          ------------------------------------------------ */
-
                           const isPopular =
                             plan.isPopular ||
                             plan.is_popular ||
                             plan.popular ||
                             plan.name?.toLowerCase().includes("growth");
-
-                          /* -----------------------------------------------
-             FEATURES
-          ------------------------------------------------ */
 
                           const features =
                             plan.features ||
@@ -1401,79 +1467,70 @@ export default function BusinessRegistration() {
                                   plan: plan._id,
                                 }))
                               }
-                              className={`relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border-2 bg-white transition-all duration-300 ${
+                              className={`group relative flex cursor-pointer flex-col justify-between overflow-hidden rounded-2xl sm:rounded-3xl border-2 bg-white transition-all duration-300 ${
                                 isSelected
-                                  ? "border-[#C9956C] shadow-xl shadow-[#C9956C]/10"
+                                  ? "border-[#C9956C] shadow-xl shadow-[#C9956C]/15 ring-2 ring-[#C9956C]/20"
                                   : isPopular
-                                    ? "border-[#DDBA9B] shadow-md"
-                                    : "border-slate-200 shadow-sm hover:-translate-y-1 hover:border-slate-300 hover:shadow-lg"
+                                    ? "border-amber-400/70 shadow-md hover:border-[#C9956C] hover:shadow-xl"
+                                    : "border-slate-200 shadow-2xs hover:border-slate-300 hover:shadow-lg"
                               }`}
                             >
-                              {/* =========================================
-                  POPULAR BADGE
-              ========================================== */}
+                              {/* Popular Badge */}
                               {isPopular && (
                                 <div className="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2">
-                                  <span className="whitespace-nowrap rounded-full bg-[#C9956C] px-4 py-1.5 text-[9px] font-black uppercase tracking-widest text-white shadow-md">
+                                  <span className="whitespace-nowrap rounded-full bg-gradient-to-r from-[#C9956C] to-amber-600 px-3.5 py-1 text-[9px] font-black uppercase tracking-widest text-white shadow-sm">
                                     Most Popular
                                   </span>
                                 </div>
                               )}
 
-                              {/* =========================================
-                  SELECTED BADGE
-              ========================================== */}
+                              {/* Selected Badge */}
                               {isSelected && (
-                                <div className="absolute right-4 top-4">
-                                  <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-bold text-emerald-700">
-                                    <CheckCircle2 size={11} />
+                                <div className="absolute right-3.5 top-3.5 z-10">
+                                  <span className="flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[10px] font-extrabold text-emerald-700 shadow-2xs">
+                                    <CheckCircle2 size={12} />
                                     Selected
                                   </span>
                                 </div>
                               )}
 
-                              <div className="flex flex-1 flex-col p-6">
-                                {/* =======================================
-                    PLAN NAME & SCOPE
-                ======================================== */}
-                                <div className="pt-4">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <h4 className="text-lg font-extrabold text-slate-900">
+                              <div className="flex flex-1 flex-col p-5 sm:p-6">
+                                {/* Header / Title */}
+                                <div className="pt-2">
+                                  <div className="flex items-center justify-between gap-2 pr-16 sm:pr-20">
+                                    <h4 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
                                       {plan.name}
                                     </h4>
                                     <span
-                                      className={`rounded-md px-2 py-0.5 text-[8px] font-extrabold uppercase ${
+                                      className={`rounded-md px-2 py-0.5 text-[8px] font-black uppercase tracking-wider ${
                                         planScope === "SERVICE"
                                           ? "bg-violet-50 text-violet-700 border border-violet-200"
                                           : planScope === "ECOMMERCE"
                                             ? "bg-amber-50 text-amber-800 border border-amber-200"
-                                            : "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                                            : "bg-blue-50 text-blue-700 border border-blue-200"
                                       }`}
                                     >
                                       {planScope === "SERVICE"
                                         ? "Service Plan"
                                         : planScope === "ECOMMERCE"
                                           ? "E-Commerce"
-                                          : "Unified Suite"}
+                                          : "Both (Unified)"}
                                     </span>
                                   </div>
 
-                                  <p className="mt-1.5 min-h-[38px] text-xs leading-5 text-slate-500">
+                                  <p className="mt-1.5 min-h-[36px] text-xs leading-relaxed text-slate-500">
                                     {plan.description ||
-                                      `Everything you need to grow with ${plan.name}.`}
+                                      `Everything you need to launch and scale with ${plan.name}.`}
                                   </p>
                                 </div>
 
-                                {/* =======================================
-                    PRICE
-                ======================================== */}
-                                <div className="mt-5">
-                                  <div className="flex items-end gap-1">
-                                    <span className="text-4xl font-black tracking-tight text-slate-900">
+                                {/* Price Container */}
+                                <div className="mt-4 pt-3 border-t border-slate-100">
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
                                       ₹{currentPrice.toLocaleString("en-IN")}
                                     </span>
-
-                                    <span className="mb-1 text-xs text-slate-400">
+                                    <span className="text-xs text-slate-400 font-bold">
                                       /
                                       {billingCycle === "yearly"
                                         ? "year"
@@ -1481,10 +1538,10 @@ export default function BusinessRegistration() {
                                     </span>
                                   </div>
 
-                                  {/* Yearly equivalent */}
+                                  {/* Yearly equivalent or free label */}
                                   {billingCycle === "yearly" &&
                                     monthlyPrice > 0 && (
-                                      <p className="mt-1 text-[10px] text-slate-400">
+                                      <p className="mt-1 text-[11px] font-medium text-slate-400">
                                         Equivalent to ₹
                                         {monthlyEquivalent.toLocaleString(
                                           "en-IN",
@@ -1493,11 +1550,10 @@ export default function BusinessRegistration() {
                                       </p>
                                     )}
 
-                                  {/* Savings */}
                                   {billingCycle === "yearly" &&
                                     yearlySavings > 0 && (
-                                      <div className="mt-3 inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1">
-                                        <span className="text-[10px] font-bold text-emerald-700">
+                                      <div className="mt-2 inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 border border-emerald-200">
+                                        <span className="text-[10px] font-extrabold text-emerald-700">
                                           Save ₹
                                           {yearlySavings.toLocaleString(
                                             "en-IN",
@@ -1508,46 +1564,42 @@ export default function BusinessRegistration() {
                                     )}
                                 </div>
 
-                                {/* =======================================
-                    CAPACITY LIMITS
-                ======================================== */}
-                                <div className="mt-5 rounded-xl border border-slate-100 bg-slate-50/80 p-3 text-left">
-                                  <div className="mb-2 flex items-center justify-between">
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="h-1.5 w-1.5 rounded-full bg-[#C9956C]" />
-                                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-500">
-                                        Included Capacity
-                                      </span>
-                                    </div>
+                                {/* Capacity Limits Box */}
+                                <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5 text-left">
+                                  <div className="mb-2.5 flex items-center gap-1.5">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-[#C9956C]" />
+                                    <span className="text-[9px] font-black uppercase tracking-wider text-slate-500">
+                                      Included Capacity Limits
+                                    </span>
                                   </div>
 
-                                  <div className="space-y-2.5">
-                                    {/* E-Commerce Capacity (if ECOMMERCE or BOTH) */}
+                                  <div className="space-y-2">
+                                    {/* E-Commerce limits */}
                                     {(planScope === "ECOMMERCE" ||
                                       planScope === "BOTH") && (
                                       <div className="space-y-1 border-b border-slate-200/60 pb-2">
-                                        <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-amber-800">
+                                        <div className="flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider text-amber-800">
                                           <Boxes
-                                            size={10}
+                                            size={11}
                                             className="text-amber-600"
                                           />
                                           <span>E-Commerce Limits</span>
                                         </div>
-                                        <div className="flex items-center justify-between text-[11px]">
+                                        <div className="flex items-center justify-between text-xs">
                                           <span className="font-medium text-slate-500">
-                                            Products Catalog
+                                            Product Catalog
                                           </span>
-                                          <strong className="font-black text-slate-900">
+                                          <strong className="font-extrabold text-slate-900">
                                             {formatLimit(
                                               plan.limits?.maxProducts,
                                             )}
                                           </strong>
                                         </div>
-                                        <div className="flex items-center justify-between text-[11px]">
+                                        <div className="flex items-center justify-between text-xs">
                                           <span className="font-medium text-slate-500">
                                             Warehouses
                                           </span>
-                                          <strong className="font-black text-slate-900">
+                                          <strong className="font-extrabold text-slate-900">
                                             {formatLimit(
                                               plan.limits?.maxWarehouses,
                                               typeof plan.limits
@@ -1560,42 +1612,42 @@ export default function BusinessRegistration() {
                                       </div>
                                     )}
 
-                                    {/* Services Capacity (if SERVICE or BOTH) */}
+                                    {/* Service limits */}
                                     {(planScope === "SERVICE" ||
                                       planScope === "BOTH") && (
                                       <div className="space-y-1 border-b border-slate-200/60 pb-2">
-                                        <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-violet-800">
+                                        <div className="flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider text-violet-800">
                                           <CalendarCheck
-                                            size={10}
+                                            size={11}
                                             className="text-violet-600"
                                           />
                                           <span>Service & Booking Limits</span>
                                         </div>
-                                        <div className="flex items-center justify-between text-[11px]">
+                                        <div className="flex items-center justify-between text-xs">
                                           <span className="font-medium text-slate-500">
                                             Active Services
                                           </span>
-                                          <strong className="font-black text-slate-900">
+                                          <strong className="font-extrabold text-slate-900">
                                             {formatLimit(
                                               plan.limits?.maxServices,
                                             )}
                                           </strong>
                                         </div>
-                                        <div className="flex items-center justify-between text-[11px]">
+                                        <div className="flex items-center justify-between text-xs">
                                           <span className="font-medium text-slate-500">
                                             Monthly Bookings
                                           </span>
-                                          <strong className="font-black text-slate-900">
+                                          <strong className="font-extrabold text-slate-900">
                                             {formatLimit(
                                               plan.limits?.maxBookings,
                                             )}
                                           </strong>
                                         </div>
-                                        <div className="flex items-center justify-between text-[11px]">
+                                        <div className="flex items-center justify-between text-xs">
                                           <span className="font-medium text-slate-500">
                                             Client Inquiries
                                           </span>
-                                          <strong className="font-black text-slate-900">
+                                          <strong className="font-extrabold text-slate-900">
                                             {formatLimit(
                                               plan.limits?.maxEnquiries,
                                             )}
@@ -1604,30 +1656,30 @@ export default function BusinessRegistration() {
                                       </div>
                                     )}
 
-                                    {/* Common Platform Limits (Always shown) */}
+                                    {/* Operational limits */}
                                     <div className="space-y-1 pt-0.5">
-                                      <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-emerald-800">
+                                      <div className="flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider text-emerald-800">
                                         <Users
-                                          size={10}
+                                          size={11}
                                           className="text-emerald-600"
                                         />
                                         <span>Team & Operations</span>
                                       </div>
-                                      <div className="flex items-center justify-between text-[11px]">
+                                      <div className="flex items-center justify-between text-xs">
                                         <span className="font-medium text-slate-500">
                                           Staff Accounts
                                         </span>
-                                        <strong className="font-black text-slate-900">
+                                        <strong className="font-extrabold text-slate-900">
                                           {formatLimit(
                                             plan.limits?.maxEmployees,
                                           )}
                                         </strong>
                                       </div>
-                                      <div className="flex items-center justify-between text-[11px]">
+                                      <div className="flex items-center justify-between text-xs">
                                         <span className="font-medium text-slate-500">
                                           Vendor Stores
                                         </span>
-                                        <strong className="font-black text-indigo-700">
+                                        <strong className="font-extrabold text-indigo-700">
                                           {formatLimit(
                                             plan.limits?.maxVendors,
                                             typeof plan.limits?.maxVendors ===
@@ -1637,11 +1689,11 @@ export default function BusinessRegistration() {
                                           )}
                                         </strong>
                                       </div>
-                                      <div className="flex items-center justify-between text-[11px]">
+                                      <div className="flex items-center justify-between text-xs">
                                         <span className="font-medium text-slate-500">
-                                          Template Builder
+                                          Storefront Themes
                                         </span>
-                                        <strong className="font-black text-indigo-700">
+                                        <strong className="font-extrabold text-indigo-700">
                                           {formatLimit(
                                             plan.limits?.maxTemplates,
                                             typeof plan.limits?.maxTemplates ===
@@ -1651,63 +1703,45 @@ export default function BusinessRegistration() {
                                           )}
                                         </strong>
                                       </div>
-                                      <div className="flex items-center justify-between text-[11px]">
-                                        <span className="font-medium text-slate-500">
-                                          Recycle Bin
-                                        </span>
-                                        <strong className="font-black text-emerald-700">
-                                          {plan.limits?.recycleBinDays !==
-                                            undefined &&
-                                          plan.limits?.recycleBinDays !==
-                                            "Custom Retention"
-                                            ? `${plan.limits.recycleBinDays} Days`
-                                            : "Custom"}
-                                        </strong>
-                                      </div>
                                     </div>
                                   </div>
                                 </div>
 
-                                {/* =======================================
-                    FEATURES
-                ======================================== */}
-                                <div className="mt-6 flex-1 border-t border-slate-100 pt-5">
-                                  <div className="mb-4 flex items-center justify-between">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                      What's included
+                                {/* Features List */}
+                                <div className="mt-5 flex-1 border-t border-slate-100 pt-4">
+                                  <div className="mb-3 flex items-center justify-between">
+                                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                      Features Included
                                     </p>
-
                                     {features.length > 0 && (
-                                      <span className="rounded-full bg-slate-100 px-2 py-1 text-[9px] font-bold text-slate-500">
-                                        {features.length} FEATURES
+                                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-extrabold text-slate-600">
+                                        {features.length} features
                                       </span>
                                     )}
                                   </div>
 
-                                  <div className="space-y-3">
+                                  <div className="space-y-2.5">
                                     {features.length > 0 ? (
                                       features
-                                        .slice(0, 6)
-                                        .map((feature, index) => {
+                                        .slice(0, 5)
+                                        .map((feature, idx) => {
                                           const featureName =
                                             typeof feature === "string"
                                               ? feature
                                               : feature?.name ||
                                                 feature?.label ||
                                                 feature?.title;
-
                                           return (
                                             <div
-                                              key={index}
-                                              className="flex items-start gap-2.5 text-xs text-slate-600"
+                                              key={idx}
+                                              className="flex items-start gap-2 text-xs text-slate-600 leading-tight"
                                             >
-                                              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                                              <span className="mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                                                 <Check
-                                                  size={10}
+                                                  size={9}
                                                   strokeWidth={3}
                                                 />
                                               </span>
-
                                               <span>{featureName}</span>
                                             </div>
                                           );
@@ -1716,82 +1750,63 @@ export default function BusinessRegistration() {
                                       <>
                                         <div className="flex items-center gap-2 text-xs text-slate-600">
                                           <Check
-                                            size={14}
-                                            className="text-emerald-500"
+                                            size={13}
+                                            className="text-emerald-500 shrink-0"
                                           />
-                                          Store management
+                                          <span>Dashboard & Inventory</span>
                                         </div>
-
                                         <div className="flex items-center gap-2 text-xs text-slate-600">
                                           <Check
-                                            size={14}
-                                            className="text-emerald-500"
+                                            size={13}
+                                            className="text-emerald-500 shrink-0"
                                           />
-                                          Product management
+                                          <span>
+                                            Order & Customer Management
+                                          </span>
                                         </div>
-
                                         <div className="flex items-center gap-2 text-xs text-slate-600">
                                           <Check
-                                            size={14}
-                                            className="text-emerald-500"
+                                            size={13}
+                                            className="text-emerald-500 shrink-0"
                                           />
-                                          Order management
-                                        </div>
-
-                                        <div className="flex items-center gap-2 text-xs text-slate-600">
-                                          <Check
-                                            size={14}
-                                            className="text-emerald-500"
-                                          />
-                                          Customer management
+                                          <span>Reporting & Insights</span>
                                         </div>
                                       </>
                                     )}
                                   </div>
 
-                                  {/* More features */}
-                                  {features.length > 6 && (
-                                    <p className="mt-4 text-[10px] font-semibold text-slate-400">
-                                      + {features.length - 6} more features
-                                      included
+                                  {features.length > 5 && (
+                                    <p className="mt-2.5 text-[10px] font-bold text-slate-400">
+                                      + {features.length - 5} more features
                                     </p>
                                   )}
                                 </div>
 
-                                {/* =======================================
-                    FULL DETAILS
-                ======================================== */}
+                                {/* Full Plan Details Link */}
                                 <a
                                   href={`${import.meta.env.VITE_STUDIO_URL}/business-pricing`}
                                   target="_blank"
                                   rel="noopener noreferrer"
+                                  className="mt-4 flex w-full items-center justify-center gap-1 border-t border-slate-100 pt-3 text-xs font-bold text-[#C9956C] hover:text-[#a8744b] transition"
                                 >
-                                  <button
-                                    type="button"
-                                    className="mt-6 flex w-full items-center justify-center gap-1.5 border-t border-slate-100 pt-4 text-xs font-bold text-[#C9956C] transition hover:text-[#b07d54]"
-                                  >
-                                    See full plan details
-                                    <ExternalLink size={13} />
-                                  </button>{" "}
+                                  <span>View detailed breakdown</span>
+                                  <ExternalLink size={12} />
                                 </a>
 
-                                {/* =======================================
-                    SELECT BUTTON
-                ======================================== */}
+                                {/* Select Button */}
                                 <button
                                   type="button"
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setFormData((prev) => ({
                                       ...prev,
                                       plan: plan._id,
                                     }));
                                   }}
-                                  className={`mt-5 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-xs font-extrabold transition ${
+                                  className={`mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-3 sm:py-3.5 text-xs font-black transition-all cursor-pointer ${
                                     isSelected
-                                      ? "bg-[#C9956C] text-white shadow-md shadow-[#C9956C]/20"
-                                      : "bg-slate-900 text-white hover:bg-slate-800"
+                                      ? "bg-[#C9956C] text-white shadow-md shadow-[#C9956C]/25"
+                                      : "bg-slate-900 hover:bg-slate-800 text-white shadow-xs"
                                   }`}
                                 >
                                   {isSelected ? (

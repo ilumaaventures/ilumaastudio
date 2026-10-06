@@ -375,14 +375,14 @@ export default function Services() {
             <div className="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-xs sticky top-28 space-y-6">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
-                  <SlidersHorizontal size={18} className="text-[#004ac6]" />
+                  <SlidersHorizontal size={18} className="text-[#2563eb]" />
                   <h3 className="font-black text-slate-900 text-base">
                     Filter Services
                   </h3>
                 </div>
                 <button
                   onClick={handleClearFilters}
-                  className="text-xs font-bold text-[#004ac6] hover:underline flex items-center gap-1 cursor-pointer"
+                  className="text-xs font-bold text-[#2563eb] hover:underline flex items-center gap-1 cursor-pointer"
                 >
                   <RotateCcw size={13} />
                   <span>Reset</span>
@@ -407,7 +407,7 @@ export default function Services() {
                       placeholder="Search categories..."
                       value={categorySearch}
                       onChange={(e) => setCategorySearch(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#004ac6]"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#2563eb]"
                     />
                   </div>
                 )}
@@ -417,7 +417,7 @@ export default function Services() {
                     onClick={() => handleCategorySelect("All Categories")}
                     className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       selectedCategory === "All Categories"
-                        ? "bg-blue-50 text-[#004ac6]"
+                        ? "bg-blue-50 text-[#2563eb]"
                         : "text-slate-700 hover:bg-slate-50"
                     }`}
                   >
@@ -441,7 +441,7 @@ export default function Services() {
                         onClick={() => handleCategorySelect(cat.name)}
                         className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                           isSelected
-                            ? "bg-blue-50 text-[#004ac6] font-bold"
+                            ? "bg-blue-50 text-[#2563eb] font-bold"
                             : "text-slate-700 hover:bg-slate-50"
                         }`}
                       >
@@ -449,7 +449,7 @@ export default function Services() {
                           {isSelected && (
                             <Check
                               size={14}
-                              className="text-[#004ac6] shrink-0"
+                              className="text-[#2563eb] shrink-0"
                             />
                           )}
                           <span className="truncate">{cat.name}</span>
@@ -466,7 +466,7 @@ export default function Services() {
                   {categories.length > 7 && (
                     <button
                       onClick={() => setShowMoreCategories(!showMoreCategories)}
-                      className="text-xs font-bold text-[#004ac6] hover:underline pt-1 block"
+                      className="text-xs font-bold text-[#2563eb] hover:underline pt-1 block"
                     >
                       {showMoreCategories
                         ? "- Show Less"
@@ -482,7 +482,7 @@ export default function Services() {
                   <label className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
                     Price Range (₹)
                   </label>
-                  <span className="text-xs font-bold text-[#004ac6]">
+                  <span className="text-xs font-bold text-[#2563eb]">
                     Up to ₹{priceMax.toLocaleString("en-IN")}
                   </span>
                 </div>
@@ -494,7 +494,7 @@ export default function Services() {
                   step="500"
                   value={priceMax}
                   onChange={(e) => setPriceMax(Number(e.target.value))}
-                  className="w-full accent-[#004ac6] cursor-pointer"
+                  className="w-full accent-[#2563eb] cursor-pointer"
                 />
 
                 <div className="flex items-center gap-2 pt-1">
@@ -557,7 +557,7 @@ export default function Services() {
                 <div className="bg-blue-50/70 border border-blue-100 p-3.5 rounded-2xl flex items-start gap-3">
                   <ShieldCheck
                     size={20}
-                    className="text-[#004ac6] shrink-0 mt-0.5"
+                    className="text-[#2563eb] shrink-0 mt-0.5"
                   />
                   <p className="text-[11px] text-slate-700 font-medium leading-relaxed">
                     All service professionals on ILUMAA Studio are
@@ -600,7 +600,7 @@ export default function Services() {
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-3 py-1.5 text-xs font-bold focus:outline-none focus:border-[#004ac6] cursor-pointer"
+                    className="bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-3 py-1.5 text-xs font-bold focus:outline-none focus:border-[#2563eb] cursor-pointer"
                   >
                     <option value="rating-desc">Highest Rated</option>
                     <option value="price-asc">Price: Low to High</option>
@@ -614,7 +614,7 @@ export default function Services() {
                     onClick={() => setViewMode("list")}
                     className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                       viewMode === "list"
-                        ? "bg-white text-[#004ac6] shadow-xs"
+                        ? "bg-white text-[#2563eb] shadow-xs"
                         : "text-slate-500 hover:text-slate-900"
                     }`}
                     title="List View"
@@ -625,7 +625,7 @@ export default function Services() {
                     onClick={() => setViewMode("grid")}
                     className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                       viewMode === "grid"
-                        ? "bg-white text-[#004ac6] shadow-xs"
+                        ? "bg-white text-[#2563eb] shadow-xs"
                         : "text-slate-500 hover:text-slate-900"
                     }`}
                     title="Grid View"
@@ -648,7 +648,7 @@ export default function Services() {
             {/* Empty State */}
             {!servicesLoading && filteredServices.length === 0 && (
               <div className="bg-white border border-slate-200/90 rounded-3xl p-12 text-center shadow-xs space-y-4">
-                <div className="w-16 h-16 bg-blue-50 rounded-3xl flex items-center justify-center mx-auto text-[#004ac6]">
+                <div className="w-16 h-16 bg-blue-50 rounded-3xl flex items-center justify-center mx-auto text-[#2563eb]">
                   <Search size={30} />
                 </div>
                 <h3 className="text-lg font-black text-slate-900">
@@ -661,7 +661,7 @@ export default function Services() {
                 </p>
                 <button
                   onClick={handleClearFilters}
-                  className="bg-[#004ac6] hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-extrabold text-xs transition-all shadow-md cursor-pointer"
+                  className="bg-[#2563eb] hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-extrabold text-xs transition-all shadow-md cursor-pointer"
                 >
                   Reset All Filters
                 </button>
@@ -715,7 +715,7 @@ export default function Services() {
                     return (
                       <div
                         key={service._id}
-                        className="bg-white border border-slate-200/90 hover:border-[#004ac6]/40 rounded-3xl p-4 shadow-xs hover:shadow-lg transition-all flex flex-col sm:flex-row gap-5 group"
+                        className="bg-white border border-slate-200/90 hover:border-[#2563eb]/40 rounded-3xl p-4 shadow-xs hover:shadow-lg transition-all flex flex-col sm:flex-row gap-5 group"
                       >
                         <div className="sm:w-48 h-40 rounded-2xl overflow-hidden bg-slate-100 shrink-0 relative">
                           <img
@@ -737,7 +737,7 @@ export default function Services() {
                         <div className="flex-1 flex flex-col justify-between space-y-3">
                           <div>
                             <div className="flex items-center justify-between gap-2 mb-1">
-                              <span className="text-[10px] font-black uppercase text-[#004ac6] tracking-wider">
+                              <span className="text-[10px] font-black uppercase text-[#2563eb] tracking-wider">
                                 {sBizName}
                               </span>
                               <div className="flex items-center gap-1 text-amber-500 font-black text-xs">
@@ -746,7 +746,7 @@ export default function Services() {
                               </div>
                             </div>
 
-                            <h3 className="text-base font-black text-slate-900 group-hover:text-[#004ac6] transition-colors">
+                            <h3 className="text-base font-black text-slate-900 group-hover:text-[#2563eb] transition-colors">
                               {service.serviceName || service.name}
                             </h3>
                             <p className="text-xs text-slate-500 font-medium line-clamp-2 mt-1">
@@ -795,7 +795,7 @@ export default function Services() {
                             <div>
                               {isEnquiryOnly ? (
                                 <div>
-                                  <span className="text-[10px] text-[#004ac6] font-extrabold uppercase tracking-wider block">
+                                  <span className="text-[10px] text-[#2563eb] font-extrabold uppercase tracking-wider block">
                                     Enquiry Only
                                   </span>
                                   <span className="text-sm font-black text-slate-900">
@@ -818,7 +818,7 @@ export default function Services() {
                               <div className="flex items-center gap-1 text-xs text-slate-500 font-bold">
                                 <Link
                                   to={`/services/${service._id}`}
-                                  className="border border-black/10 hover:border-[#004ac6] px-3 py-1 rounded-xl text-xs font-extrabold transition-all shadow-xs flex items-center gap-1"
+                                  className="border border-black/10 hover:border-[#2563eb] px-3 py-1 rounded-xl text-xs font-extrabold transition-all shadow-xs flex items-center gap-1"
                                 >
                                   <span>View Details</span>
                                 </Link>
@@ -826,7 +826,7 @@ export default function Services() {
 
                               <Link
                                 to={`/services/${service._id}`}
-                                className="bg-[#004ac6] hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs flex items-center gap-1"
+                                className="bg-[#2563eb] hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs flex items-center gap-1"
                               >
                                 <span>
                                   {isEnquiryOnly
@@ -848,7 +848,7 @@ export default function Services() {
                   return (
                     <div
                       key={service._id}
-                      className="bg-white border border-slate-200/90 hover:border-[#004ac6]/50 rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
+                      className="bg-white border border-slate-200/90 hover:border-[#2563eb]/50 rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
                     >
                       <div>
                         {/* Thumbnail & Image Badges */}
@@ -859,7 +859,7 @@ export default function Services() {
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                           <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-xs px-2.5 py-1 rounded-full text-[10px] font-extrabold text-slate-900 shadow-2xs flex items-center gap-1">
-                            <Tag size={11} className="text-[#004ac6]" />
+                            <Tag size={11} className="text-[#2563eb]" />
                             <span>{sCategoryName}</span>
                           </div>
                           <div className="absolute top-3 right-3 bg-amber-400 text-slate-950 px-2.5 py-0.5 rounded-full text-[11px] font-black shadow-2xs flex items-center gap-1">
@@ -876,10 +876,10 @@ export default function Services() {
 
                         {/* Card Content */}
                         <div className="p-4 space-y-2">
-                          <p className="text-[10px] font-black text-[#004ac6] uppercase tracking-wider truncate">
+                          <p className="text-[10px] font-black text-[#2563eb] uppercase tracking-wider truncate">
                             {sBizName}
                           </p>
-                          <h3 className="font-black text-slate-900 text-sm group-hover:text-[#004ac6] transition-colors line-clamp-1">
+                          <h3 className="font-black text-slate-900 text-sm group-hover:text-[#2563eb] transition-colors line-clamp-1">
                             {service.serviceName || service.name}
                           </h3>
                           <p className="text-xs text-slate-500 font-medium line-clamp-2 leading-relaxed">
@@ -926,7 +926,7 @@ export default function Services() {
                           <div>
                             {isEnquiryOnly ? (
                               <div>
-                                <span className="text-[9px] text-[#004ac6] font-extrabold uppercase tracking-wider block">
+                                <span className="text-[9px] text-[#2563eb] font-extrabold uppercase tracking-wider block">
                                   Enquiry Only
                                 </span>
                                 <span className="text-sm font-black text-slate-900">
@@ -946,7 +946,7 @@ export default function Services() {
                           </div>
                           {!isEnquiryOnly && (
                             <div className="flex items-center gap-1 text-xs text-slate-500 font-bold">
-                              <Clock size={12} className="text-[#004ac6]" />
+                              <Clock size={12} className="text-[#2563eb]" />
                               <span>{formatDuration(service.duration)}</span>
                             </div>
                           )}
@@ -954,7 +954,7 @@ export default function Services() {
 
                         <Link
                           to={`/services/${service._id}`}
-                          className="w-full bg-slate-900 group-hover:bg-[#004ac6] text-white text-center py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 shadow-2xs"
+                          className="w-full bg-slate-900 group-hover:bg-[#2563eb] text-white text-center py-2.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 shadow-2xs"
                         >
                           <span>
                             {isEnquiryOnly
@@ -1006,7 +1006,7 @@ export default function Services() {
           <div className="w-full max-w-xs bg-white h-full overflow-y-auto p-5 space-y-6 shadow-2xl animate-in slide-in-from-right duration-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-2">
-                <Filter size={18} className="text-[#004ac6]" />
+                <Filter size={18} className="text-[#2563eb]" />
                 <h3 className="font-black text-slate-900 text-base">Filters</h3>
               </div>
               <button
@@ -1030,7 +1030,7 @@ export default function Services() {
                   }}
                   className={`w-full text-left p-2 rounded-xl text-xs font-bold ${
                     selectedCategory === "All Categories"
-                      ? "bg-blue-50 text-[#004ac6]"
+                      ? "bg-blue-50 text-[#2563eb]"
                       : "text-slate-700"
                   }`}
                 >
@@ -1045,7 +1045,7 @@ export default function Services() {
                     }}
                     className={`w-full text-left p-2 rounded-xl text-xs font-semibold ${
                       selectedCategory.toLowerCase() === cat.name.toLowerCase()
-                        ? "bg-blue-50 text-[#004ac6] font-bold"
+                        ? "bg-blue-50 text-[#2563eb] font-bold"
                         : "text-slate-700"
                     }`}
                   >
@@ -1059,7 +1059,7 @@ export default function Services() {
             <div className="pt-4 border-t border-slate-100 space-y-2">
               <button
                 onClick={() => setMobileFilterOpen(false)}
-                className="w-full bg-[#004ac6] text-white py-2.5 rounded-xl font-bold text-xs"
+                className="w-full bg-[#2563eb] text-white py-2.5 rounded-xl font-bold text-xs"
               >
                 Apply Filters
               </button>

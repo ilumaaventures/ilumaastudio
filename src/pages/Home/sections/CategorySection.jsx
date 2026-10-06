@@ -36,8 +36,7 @@ const FALLBACK_IMAGES = {
     "https://images.unsplash.com/photo-1559526324-593bc073d938?auto=format&fit=crop&w=1200&q=85",
   office:
     "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=85",
-  tech:
-    "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=85",
+  tech: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=85",
   marketing:
     "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1200&q=85",
   health:
@@ -52,12 +51,10 @@ const FALLBACK_IMAGES = {
     "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=85",
   events:
     "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=85",
-  food:
-    "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=85",
+  food: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=85",
   automotive:
     "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1200&q=85",
-  home:
-    "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=1200&q=85",
+  home: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=1200&q=85",
   professional:
     "https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1200&q=85",
 };
@@ -1046,66 +1043,6 @@ function CategorySection({
 
           {/* Header Right: Carousel Controls + View All */}
           <div className="flex items-center gap-2 self-start sm:self-auto">
-            {/* Scroll Left Button */}
-            <button
-              type="button"
-              onClick={() => scroll("left")}
-              disabled={!canScrollLeft}
-              aria-label="Scroll left"
-              className={`
-                h-10
-                w-10
-                rounded-full
-                border
-                border-slate-200
-                bg-white
-                flex
-                items-center
-                justify-center
-                text-slate-700
-                shadow-sm
-                transition-all
-                duration-200
-                ${
-                  canScrollLeft
-                    ? "hover:bg-slate-900 hover:text-white hover:border-slate-900 active:scale-95 cursor-pointer"
-                    : "opacity-40 cursor-not-allowed"
-                }
-              `}
-            >
-              <ChevronLeft size={18} />
-            </button>
-
-            {/* Scroll Right Button */}
-            <button
-              type="button"
-              onClick={() => scroll("right")}
-              disabled={!canScrollRight}
-              aria-label="Scroll right"
-              className={`
-                h-10
-                w-10
-                rounded-full
-                border
-                border-slate-200
-                bg-white
-                flex
-                items-center
-                justify-center
-                text-slate-700
-                shadow-sm
-                transition-all
-                duration-200
-                ${
-                  canScrollRight
-                    ? "hover:bg-slate-900 hover:text-white hover:border-slate-900 active:scale-95 cursor-pointer"
-                    : "opacity-40 cursor-not-allowed"
-                }
-              `}
-            >
-              <ChevronRight size={18} />
-            </button>
-
             {/* View All Button */}
             <a
               href={linkUrl}

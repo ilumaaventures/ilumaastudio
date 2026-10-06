@@ -235,8 +235,12 @@ export default function ShopPage() {
         // Strictly only include ecommerce categories
         const ecommerceCategories = list.filter((cat) => {
           const bType = String(cat.businessType || "").toLowerCase();
-          const bCatCode = String(cat.businessCategory?.code || "").toUpperCase();
-          const bCatName = String(cat.businessCategory?.name || "").toLowerCase();
+          const bCatCode = String(
+            cat.businessCategory?.code || "",
+          ).toUpperCase();
+          const bCatName = String(
+            cat.businessCategory?.name || "",
+          ).toLowerCase();
           const name = String(cat.name || "").toLowerCase();
 
           if (
@@ -635,7 +639,7 @@ export default function ShopPage() {
             placeholder="Keywords, title, SKU..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-medium text-xs transition"
+            className="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-medium text-xs transition"
           />
         </div>
       </div>
@@ -649,7 +653,7 @@ export default function ShopPage() {
           {selectedCategory !== "All Categories" && (
             <button
               onClick={() => handleCategorySelect("All Categories")}
-              className="text-[10px] font-bold text-indigo-600 hover:underline"
+              className="text-[10px] font-bold text-blue-600 hover:underline"
             >
               Reset
             </button>
@@ -668,13 +672,13 @@ export default function ShopPage() {
                 onClick={() => handleCategorySelect(cat.name)}
                 className={`w-full flex items-center justify-between text-left transition-colors py-1.5 px-2.5 rounded-lg cursor-pointer text-xs ${
                   isSelected
-                    ? "bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-200/60 dark:border-indigo-800/60"
+                    ? "bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 font-bold border border-blue-200/60 dark:border-blue-800/60"
                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white font-medium"
                 }`}
               >
                 <span className="truncate">{cat.name}</span>
                 {isSelected && (
-                  <Check size={12} className="text-indigo-600 shrink-0" />
+                  <Check size={12} className="text-blue-600 shrink-0" />
                 )}
               </button>
             );
@@ -683,7 +687,7 @@ export default function ShopPage() {
         {categoryListCombined.length > 8 && !mobileFilterOpen && (
           <button
             onClick={() => setShowMoreCategories(!showMoreCategories)}
-            className="font-bold text-indigo-600 hover:underline text-[11px] pt-1 block cursor-pointer"
+            className="font-bold text-blue-600 hover:underline text-[11px] pt-1 block cursor-pointer"
           >
             {showMoreCategories
               ? "- View Less"
@@ -704,7 +708,7 @@ export default function ShopPage() {
                 setSliderMaxPrice(500000);
                 updateFilters({ maxPrice: 500000 }, true);
               }}
-              className="text-[10px] font-bold text-indigo-600 hover:underline"
+              className="text-[10px] font-bold text-blue-600 hover:underline"
             >
               Reset
             </button>
@@ -718,7 +722,7 @@ export default function ShopPage() {
             step={500}
             value={sliderMaxPrice}
             onChange={(e) => setSliderMaxPrice(Number(e.target.value))}
-            className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+            className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
           />
         </div>
         <div className="flex items-center gap-2 text-xs">
@@ -748,7 +752,7 @@ export default function ShopPage() {
               onClick={() => updateFilters({ availability: item.id }, true)}
               className={`py-1.5 rounded-lg text-center font-bold text-[11px] transition cursor-pointer ${
                 availability === item.id
-                  ? "bg-white dark:bg-slate-900 text-indigo-600 shadow-2xs"
+                  ? "bg-white dark:bg-slate-900 text-blue-600 shadow-2xs"
                   : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -768,7 +772,7 @@ export default function ShopPage() {
             {selectedBrands.length > 0 && (
               <button
                 onClick={() => updateFilters({ brands: "" }, true)}
-                className="text-[10px] font-bold text-indigo-600 hover:underline"
+                className="text-[10px] font-bold text-blue-600 hover:underline"
               >
                 Reset
               </button>
@@ -804,7 +808,7 @@ export default function ShopPage() {
                     type="checkbox"
                     checked={selectedBrands.includes(brand)}
                     onChange={() => handleBrandToggle(brand)}
-                    className="w-3.5 h-3.5 rounded border-slate-300 text-indigo-600 focus:ring-0 cursor-pointer accent-indigo-600"
+                    className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer accent-blue-600"
                   />
                   <span className="font-semibold text-xs">{brand}</span>
                 </div>
@@ -814,7 +818,7 @@ export default function ShopPage() {
           {filteredBrandList.length > 6 && !mobileFilterOpen && (
             <button
               onClick={() => setShowMoreBrands(!showMoreBrands)}
-              className="font-bold text-indigo-600 hover:underline text-[11px] block cursor-pointer"
+              className="font-bold text-blue-600 hover:underline text-[11px] block cursor-pointer"
             >
               {showMoreBrands
                 ? "- View Less"
@@ -833,7 +837,7 @@ export default function ShopPage() {
           {selectedRating > 0 && (
             <button
               onClick={() => updateFilters({ rating: 0 }, true)}
-              className="text-[10px] font-bold text-indigo-600 hover:underline"
+              className="text-[10px] font-bold text-blue-600 hover:underline"
             >
               Reset
             </button>
@@ -854,7 +858,7 @@ export default function ShopPage() {
                 }
                 className={`w-full flex items-center justify-between text-left py-1.5 px-2.5 rounded-lg transition-colors cursor-pointer ${
                   isSelected
-                    ? "bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-200/60"
+                    ? "bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 font-bold border border-blue-200/60"
                     : "hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400"
                 }`}
               >
@@ -878,7 +882,7 @@ export default function ShopPage() {
                   </span>
                 </div>
                 {isSelected && (
-                  <Check size={12} className="text-indigo-600 shrink-0" />
+                  <Check size={12} className="text-blue-600 shrink-0" />
                 )}
               </button>
             );
@@ -894,44 +898,11 @@ export default function ShopPage() {
       className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-200 transition-colors pb-16"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
-        {/* Breadcrumbs & Title */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-              <Link to="/" className="hover:text-indigo-600 transition-colors">
-                Home
-              </Link>
-              <ChevronRight size={12} />
-              <Link
-                to="/shop"
-                className="hover:text-indigo-600 transition-colors"
-              >
-                Shop Catalog
-              </Link>
-              {selectedCategory !== "All Categories" && (
-                <>
-                  <ChevronRight size={12} />
-                  <span className="text-slate-900 dark:text-white font-bold">
-                    {selectedCategory}
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="text-xs font-bold text-slate-500 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3.5 py-2 rounded-xl self-start sm:self-auto shadow-2xs">
-            Total Results:{" "}
-            <span className="text-indigo-600 font-extrabold">
-              {totalProducts}
-            </span>
-          </div>
-        </div>
-
         {/* Business Context Filter Banner */}
         {businessId && (
-          <div className="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-900/60 p-3.5 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-2xs">
-            <div className="flex items-center gap-2 text-indigo-900 dark:text-indigo-200">
-              <Package size={16} className="text-indigo-600 shrink-0" />
+          <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/60 p-3.5 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-2xs">
+            <div className="flex items-center gap-2 text-blue-900 dark:text-blue-200">
+              <Package size={16} className="text-blue-600 shrink-0" />
               <span className="font-semibold">
                 Showing products exclusively for this merchant.
               </span>
@@ -943,7 +914,7 @@ export default function ShopPage() {
                 delete next.business;
                 setSearchParams(next);
               }}
-              className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer shrink-0"
+              className="font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer shrink-0"
             >
               View All Products
             </button>
@@ -956,12 +927,12 @@ export default function ShopPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileFilterOpen(true)}
-              className="lg:hidden flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm transition-colors cursor-pointer"
+              className="lg:hidden flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition-colors cursor-pointer"
             >
               <SlidersHorizontal size={14} />
               <span>Filters</span>
               {activeFiltersCount > 0 && (
-                <span className="bg-white text-indigo-600 w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-black">
+                <span className="bg-white text-blue-600 w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-black">
                   {activeFiltersCount}
                 </span>
               )}
@@ -991,7 +962,7 @@ export default function ShopPage() {
               <select
                 value={sortBy}
                 onChange={(e) => updateFilters({ sort: e.target.value }, true)}
-                className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none cursor-pointer focus:ring-1 focus:ring-indigo-500"
+                className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 outline-none cursor-pointer focus:ring-1 focus:ring-blue-500"
               >
                 <option value="Popularity">Popularity</option>
                 <option value="Price: Low to High">Price: Low to High</option>
@@ -1024,7 +995,7 @@ export default function ShopPage() {
                 onClick={() => updateFilters({ view: "grid" }, false)}
                 className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                   viewMode === "grid"
-                    ? "bg-indigo-600 text-white shadow-2xs"
+                    ? "bg-blue-600 text-white shadow-2xs"
                     : "text-slate-400 hover:text-slate-700 dark:hover:text-white"
                 }`}
                 title="Grid View"
@@ -1035,7 +1006,7 @@ export default function ShopPage() {
                 onClick={() => updateFilters({ view: "list" }, false)}
                 className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                   viewMode === "list"
-                    ? "bg-indigo-600 text-white shadow-2xs"
+                    ? "bg-blue-600 text-white shadow-2xs"
                     : "text-slate-400 hover:text-slate-700 dark:hover:text-white"
                 }`}
                 title="List View"
@@ -1048,8 +1019,8 @@ export default function ShopPage() {
 
         {/* Active Filters Chips Bar */}
         {activeFiltersCount > 0 && (
-          <div className="flex flex-wrap items-center gap-2 bg-indigo-50/50 dark:bg-slate-900/50 border border-indigo-100 dark:border-slate-800 p-3 rounded-xl text-xs">
-            <span className="text-indigo-900 dark:text-indigo-300 font-bold flex items-center gap-1">
+          <div className="flex flex-wrap items-center gap-2 bg-blue-50/50 dark:bg-slate-900/50 border border-blue-100 dark:border-slate-800 p-3 rounded-xl text-xs">
+            <span className="text-blue-900 dark:text-blue-300 font-bold flex items-center gap-1">
               <Tag size={12} /> Active Filters:
             </span>
 
@@ -1154,7 +1125,7 @@ export default function ShopPage() {
           <aside className="hidden lg:block lg:col-span-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 space-y-6 shadow-xs sticky top-24">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3.5">
               <div className="flex items-center gap-2">
-                <Filter size={16} className="text-indigo-600" />
+                <Filter size={16} className="text-blue-600" />
                 <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
                   Filters
                 </h2>
@@ -1162,7 +1133,7 @@ export default function ShopPage() {
               {activeFiltersCount > 0 && (
                 <button
                   onClick={handleClearFilters}
-                  className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition cursor-pointer"
+                  className="text-xs font-bold text-blue-600 hover:text-blue-800 transition cursor-pointer"
                 >
                   Clear All
                 </button>
@@ -1199,7 +1170,7 @@ export default function ShopPage() {
             ) : formattedProducts.length === 0 ? (
               /* Empty State */
               <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-12 text-center space-y-3 shadow-xs">
-                <div className="w-14 h-14 bg-indigo-50 dark:bg-slate-800 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto">
+                <div className="w-14 h-14 bg-blue-50 dark:bg-slate-800 text-blue-600 rounded-2xl flex items-center justify-center mx-auto">
                   <Package size={28} />
                 </div>
                 <h3 className="text-base font-black text-slate-900 dark:text-white">
@@ -1213,7 +1184,7 @@ export default function ShopPage() {
                 {activeFiltersCount > 0 && (
                   <button
                     onClick={handleClearFilters}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition cursor-pointer mt-2"
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition cursor-pointer mt-2"
                   >
                     Clear All Filters ({activeFiltersCount})
                   </button>
@@ -1251,7 +1222,7 @@ export default function ShopPage() {
                         </div>
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                               {prod.brand}
                             </span>
                             {prod.discount && (
@@ -1319,8 +1290,8 @@ export default function ShopPage() {
                             }
                             className={`p-2 border rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                               isCompared
-                                ? "bg-indigo-50 border-indigo-600 text-indigo-600"
-                                : "border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-300 hover:text-indigo-600"
+                                ? "bg-blue-50 border-blue-600 text-blue-600"
+                                : "border-slate-200 dark:border-slate-700 text-slate-500 hover:border-blue-300 hover:text-blue-600"
                             }`}
                           >
                             <Scale size={14} />
@@ -1339,7 +1310,7 @@ export default function ShopPage() {
                           {prod.inStock ? (
                             <button
                               onClick={(e) => handleAddToCart(prod, e)}
-                              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                             >
                               <ShoppingCart size={14} />
                               <span>Add to Cart</span>
@@ -1417,7 +1388,7 @@ export default function ShopPage() {
                         onClick={() => handlePageChange(p)}
                         className={`w-8 h-8 rounded-xl text-xs font-black transition-all cursor-pointer ${
                           isCurrent
-                            ? "bg-indigo-600 text-white shadow-xs"
+                            ? "bg-blue-600 text-white shadow-xs"
                             : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
                         }`}
                       >
@@ -1452,7 +1423,7 @@ export default function ShopPage() {
                   onClick={scrollToTop}
                   className="hidden md:flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3.5 py-1.5 rounded-xl text-xs font-bold hover:bg-slate-50 transition cursor-pointer"
                 >
-                  <ArrowUp size={13} className="text-indigo-600" />
+                  <ArrowUp size={13} className="text-blue-600" />
                   <span>Top</span>
                 </button>
               </div>
@@ -1463,7 +1434,7 @@ export default function ShopPage() {
         {/* Feature Trust Ribbon */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-10 mt-10 border-t border-slate-200/80 dark:border-slate-800 text-xs">
           <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800">
-            <Truck size={22} className="text-indigo-600 shrink-0" />
+            <Truck size={22} className="text-blue-600 shrink-0" />
             <div>
               <div className="font-bold text-slate-900 dark:text-white">
                 Fast Delivery
@@ -1475,7 +1446,7 @@ export default function ShopPage() {
           </div>
 
           <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800">
-            <ShieldCheck size={22} className="text-indigo-600 shrink-0" />
+            <ShieldCheck size={22} className="text-blue-600 shrink-0" />
             <div>
               <div className="font-bold text-slate-900 dark:text-white">
                 Buyer Protection
@@ -1487,7 +1458,7 @@ export default function ShopPage() {
           </div>
 
           <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800">
-            <RotateCcw size={22} className="text-indigo-600 shrink-0" />
+            <RotateCcw size={22} className="text-blue-600 shrink-0" />
             <div>
               <div className="font-bold text-slate-900 dark:text-white">
                 Easy Returns
@@ -1499,7 +1470,7 @@ export default function ShopPage() {
           </div>
 
           <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800">
-            <Headphones size={22} className="text-indigo-600 shrink-0" />
+            <Headphones size={22} className="text-blue-600 shrink-0" />
             <div>
               <div className="font-bold text-slate-900 dark:text-white">
                 Customer Support
@@ -1523,7 +1494,7 @@ export default function ShopPage() {
           <div className="relative ml-auto w-full max-w-xs bg-white dark:bg-slate-900 h-full flex flex-col justify-between shadow-2xl z-10 p-5 space-y-4 overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
-                <SlidersHorizontal size={18} className="text-indigo-600" />
+                <SlidersHorizontal size={18} className="text-blue-600" />
                 <h2 className="text-sm font-black text-slate-900 dark:text-white">
                   Filter Catalog
                 </h2>
@@ -1549,7 +1520,7 @@ export default function ShopPage() {
               </button>
               <button
                 onClick={() => setMobileFilterOpen(false)}
-                className="w-2/3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md"
+                className="w-2/3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md"
               >
                 Apply ({totalProducts})
               </button>
