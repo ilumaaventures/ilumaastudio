@@ -9,9 +9,10 @@ import {
   Scale,
   Share2,
   Check,
+  Trash2,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { addToCart } from "../redux/reducers/cartReducer";
+import { addToCart, removeFromCart } from "../redux/reducers/cartReducer";
 import { toggleWishlist } from "../redux/reducers/wishlistReducer";
 import { toggleCompare } from "../redux/reducers/compareReducer";
 import toast from "react-hot-toast";
@@ -228,6 +229,17 @@ export default function ProductCard({
     }
   };
 
+  const handleRemoveFromCart = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    dispatch(removeFromCart(prodId));
+    toast.success(`Removed ${productName} from cart`, {
+      icon: "🗑️",
+    });
+  };
+
   const handleAddToCart = (e) => {
     if (e) {
       e.preventDefault();
@@ -240,9 +252,7 @@ export default function ProductCard({
     }
 
     if (isInCart) {
-      toast.success(`${productName} is already in your cart!`, {
-        icon: "🛒",
-      });
+      handleRemoveFromCart(e);
       return;
     }
 
@@ -518,15 +528,19 @@ export default function ProductCard({
               isInCart ? (
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAddToCart(e);
-                  }}
-                  className="flex h-9 sm:h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3 text-xs font-bold text-white shadow-2xs transition-all active:scale-98 cursor-pointer"
-                  title="Item is in your cart"
+                  onClick={handleRemoveFromCart}
+                  className="group/cartbtn flex h-9 sm:h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-50 hover:bg-rose-50 border border-emerald-300 hover:border-rose-300 px-3 text-xs font-bold text-emerald-700 hover:text-rose-600 shadow-2xs transition-all duration-200 active:scale-98 cursor-pointer"
+                  title="Item in cart — click to remove"
+                  aria-label="Remove item from cart"
                 >
-                  <Check size={14} strokeWidth={2.5} className="text-white" />
-                  <span>Added</span>
+                  <span className="flex items-center gap-1.5 group-hover/cartbtn:hidden">
+                    <Check size={14} strokeWidth={2.5} className="text-emerald-600" />
+                    <span>In Cart</span>
+                  </span>
+                  <span className="hidden group-hover/cartbtn:flex items-center gap-1.5">
+                    <Trash2 size={13} strokeWidth={2.2} className="text-rose-600" />
+                    <span>Remove</span>
+                  </span>
                 </button>
               ) : (
                 <button

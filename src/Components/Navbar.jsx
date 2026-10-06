@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   Menu,
   X,
@@ -19,14 +19,20 @@ import {
   Building2,
   ChevronDown,
   Scale,
+  Calendar,
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "../redux/actions/authActions";
 import TopBar from "./TopBar";
+import { fetchCategories } from "../api/categoryService";
 import {
-  fetchCategories,
-  fetchBusinessCategories,
-} from "../api/categoryService";
+  setSelectedBusinessCategory,
+  fetchGlobalBusinessCategories,
+  BUSINESS_CATEGORY_CODES,
+  isEcommerceCategory,
+  isServiceCategory,
+  isBusinessCategory,
+} from "../redux/reducers/businessCategoryReducer";
 import { getUserLocation } from "../utils/location";
 import ilumaIcon from "../assests/iluma_icon.png";
 
@@ -36,6 +42,7 @@ function Navbar() {
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Enforce Light Theme Only
   useEffect(() => {
@@ -53,56 +60,77 @@ function Navbar() {
   const wishlistQty = wishlistItems.length;
   const compareQty = compareItems.length;
 
+  // Global Redux Business Category State
+  const { selectedBusinessCategory, businessCategories } = useSelector(
+    (s) =>
+      s.businessCategory || {
+        selectedBusinessCategory: BUSINESS_CATEGORY_CODES.ECOMMERCE,
+        businessCategories: [],
+      },
+  );
+
   const [categories, setCategories] = useState([]);
-  const [businessCategories, setBusinessCategories] = useState([]);
-  const [selectedBusinessCategory, setSelectedBusinessCategory] =
-    useState("E-Commerce");
   const [loadingCategories, setLoadingCategories] = useState(false);
 
-  const [location, setLocation] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
   const catScrollRef = useRef(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
 
-  // Helper to determine route based on Business Category Code:
-  // "SERVICE" => /services
-  // "ECOMMERCE" => /shop
-  // "OTHER" => /shop
-  const isServiceCategory = (bCatVal) => {
-    if (!bCatVal) return false;
+  const isService = isServiceCategory(selectedBusinessCategory);
+  const isBusiness = isBusinessCategory(selectedBusinessCategory);
 
-    const found = businessCategories.find(
-      (bc) =>
-        bc._id === bCatVal ||
-        bc.code?.toUpperCase() === String(bCatVal).toUpperCase() ||
-        bc.name?.toLowerCase() === String(bCatVal).toLowerCase(),
-    );
+  // Auto-sync Global Business Category State on Route Change:
+  // - On Home page ("/", "") or moving anywhere general -> set ECOMMERCE
+  // - On Shop pages (/shop, /products, /productlisting, etc.) -> set ECOMMERCE
+  // - On Service listing / services pages -> set SERVICE (Service Provider)
+  // - On Store / Brands / Business pages -> set BUSINESS (Business Brands)
+  useEffect(() => {
+    const path = (location.pathname || "").toLowerCase();
 
-    const code = (found?.code || String(bCatVal)).toUpperCase();
-    const name = (found?.name || String(bCatVal)).toLowerCase();
-
-    // Explicit code checks
-    if (code === "SERVICE" || code === "SERVICES") return true;
-    if (code === "ECOMMERCE" || code === "OTHER") return false;
-
-    // Fallback text matching
-    return name.includes("service") || code.includes("SERV");
-  };
+    // 1. Service Provider routes: /servicelisting, /services, /services/:id, /my-bookings, etc.
+    if (
+      path.startsWith("/services") ||
+      path.startsWith("/services") ||
+      path.startsWith("/service/") ||
+      path.startsWith("/my-bookings") ||
+      path.startsWith("/bookings") ||
+      path.startsWith("/booking-success")
+    ) {
+      if (selectedBusinessCategory !== BUSINESS_CATEGORY_CODES.SERVICE) {
+        dispatch(setSelectedBusinessCategory(BUSINESS_CATEGORY_CODES.SERVICE));
+      }
+    }
+    // 2. Business Brands routes: /store, /brands, /business, /businessregistration, /business-pricing, /store/:slug
+    else if (
+      path.startsWith("/store") ||
+      path.startsWith("/brands") ||
+      path.startsWith("/business") ||
+      path.startsWith("/businessregistration") ||
+      path.startsWith("/business-pricing")
+    ) {
+      if (selectedBusinessCategory !== BUSINESS_CATEGORY_CODES.BUSINESS) {
+        dispatch(setSelectedBusinessCategory(BUSINESS_CATEGORY_CODES.BUSINESS));
+      }
+    }
+    // 3. E-Commerce routes & Home page / general navigation:
+    // "/", "/shop", "/products", "/productlisting", "/cart", "/wishlist", "/compare", "/flash-deals", "/offers", etc.
+    else {
+      if (selectedBusinessCategory !== BUSINESS_CATEGORY_CODES.ECOMMERCE) {
+        dispatch(
+          setSelectedBusinessCategory(BUSINESS_CATEGORY_CODES.ECOMMERCE),
+        );
+      }
+    }
+  }, [location.pathname, dispatch, selectedBusinessCategory]);
 
   // Immediate navigation handler on business category change:
-  // ECOMMERCE => /shop, OTHER => /shop, SERVICE => /services
+  // ECOMMERCE => /shop, SERVICE => /servicelisting, BUSINESS => /store
   const handleBusinessCategoryChange = (newBCat) => {
-    console.log("Business Category changed to:", newBCat);
-    setSelectedBusinessCategory(newBCat);
+    dispatch(setSelectedBusinessCategory(newBCat));
     if (isServiceCategory(newBCat)) {
       navigate("/services");
-    } else if (
-      newBCat === "business" ||
-      newBCat === "other" ||
-      newBCat === "Business" ||
-      newBCat === "BUSINESS" ||
-      newBCat === "OTHER"
-    ) {
+    } else if (isBusinessCategory(newBCat)) {
       navigate("/store");
     } else {
       navigate("/shop");
@@ -136,15 +164,13 @@ function Navbar() {
     };
   }, [categories]);
 
-  // 1. Fetch Business Categories from Backend
-  const loadBusinessCategories = async () => {
+  // Fetch user location
+  const fetchLocation = async () => {
     try {
-      const res = await fetchBusinessCategories({ status: "active" });
-      const list =
-        res?.data || res?.businessCategories || (Array.isArray(res) ? res : []);
-      setBusinessCategories(list);
+      const loc = await getUserLocation();
+      if (loc) setUserLocation(loc);
     } catch (err) {
-      console.error("Failed to load business categories:", err);
+      console.error("Failed to get location:", err);
     }
   };
 
@@ -152,29 +178,38 @@ function Navbar() {
   const getCategoriesByBusinessCategory = async (targetBCat) => {
     try {
       setLoadingCategories(true);
-      const bCat = targetBCat || selectedBusinessCategory || "E-Commerce";
-      const isEcomm =
-        !isServiceCategory(bCat) &&
-        bCat !== "business" &&
-        bCat !== "BUSINESS" &&
-        bCat !== "other";
+      const bCat =
+        targetBCat ||
+        selectedBusinessCategory ||
+        BUSINESS_CATEGORY_CODES.ECOMMERCE;
+      const isServ = isServiceCategory(bCat);
+      const isBusi = isBusinessCategory(bCat);
+
+      // Match backend business category by code or name
+      const matchedCatObj = businessCategories.find((bc) => {
+        if (isServ) return isServiceCategory(bc.code || bc.name);
+        if (isBusi) return isBusinessCategory(bc.code || bc.name);
+        return isEcommerceCategory(bc.code || bc.name);
+      });
 
       const queryParams = {
         limit: 50,
       };
 
-      if (isEcomm) {
-        queryParams.businessCategory = "ECOMMERCE";
-        queryParams.businessType = "E-Commerce";
+      if (matchedCatObj?._id) {
+        queryParams.businessCategory = matchedCatObj._id;
+      } else if (isServ) {
+        queryParams.businessCategory = "SERVICE";
+      } else if (isBusi) {
+        queryParams.businessCategory = "BUSINESS";
       } else {
-        queryParams.businessCategory = bCat;
+        queryParams.businessCategory = "ECOMMERCE";
       }
 
       const res = await fetchCategories(queryParams);
-      let list =
-        res?.data || res?.categories || (Array.isArray(res) ? res : []);
+      let list = Array.isArray(res) ? res : res?.data || res?.categories || [];
 
-      if (isEcomm) {
+      if (!isServ && !isBusi) {
         // Strictly filter to only show ecommerce categories
         list = list.filter((cat) => {
           const bType = String(cat.businessType || "").toLowerCase();
@@ -209,29 +244,24 @@ function Navbar() {
     }
   };
 
-  const fetchLocation = async () => {
-    try {
-      const loc = await getUserLocation();
-      setLocation(loc);
-    } catch (error) {
-      console.log("Location permission denied:", error.message);
-    }
-  };
-
   useEffect(() => {
-    loadBusinessCategories();
+    if (!businessCategories || businessCategories.length === 0) {
+      dispatch(fetchGlobalBusinessCategories());
+    }
     fetchLocation();
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     getCategoriesByBusinessCategory(selectedBusinessCategory);
-  }, [selectedBusinessCategory]);
+  }, [selectedBusinessCategory, businessCategories]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
       if (isServiceCategory(selectedBusinessCategory)) {
         navigate(`/services?search=${encodeURIComponent(searchTerm.trim())}`);
+      } else if (isBusinessCategory(selectedBusinessCategory)) {
+        navigate(`/store?search=${encodeURIComponent(searchTerm.trim())}`);
       } else {
         navigate(`/shop?search=${encodeURIComponent(searchTerm.trim())}`);
       }
@@ -257,23 +287,24 @@ function Navbar() {
             { name: "Event Planning" },
             { name: "Fitness & Training" },
           ]
-        : [
-            { name: "Fashion" },
-            { name: "Electronics" },
-            { name: "Home & Living" },
-            { name: "Beauty & Care" },
-            { name: "Sports & Outdoors" },
-            { name: "Books & Stationery" },
-            { name: "Gifting" },
-          ];
+        : isBusinessCategory(selectedBusinessCategory)
+          ? [
+              { name: "Marketing & Advertising" },
+              { name: "Professional Services" },
+              { name: "Education & Training" },
+              { name: "Healthcare & Pharma" },
+              { name: "Corporate Supplies" },
+            ]
+          : [
+              { name: "Fashion" },
+              { name: "Electronics" },
+              { name: "Home & Living" },
+              { name: "Beauty & Care" },
+              { name: "Sports & Outdoors" },
+              { name: "Books & Stationery" },
+              { name: "Gifting" },
+            ];
 
-  const isService = isServiceCategory(selectedBusinessCategory);
-  const isBusiness =
-    selectedBusinessCategory === "business" ||
-    selectedBusinessCategory === "other" ||
-    selectedBusinessCategory === "Business" ||
-    selectedBusinessCategory === "BUSINESS" ||
-    selectedBusinessCategory === "OTHER";
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-xs font-sans">
       {/* Top Announcement Bar */}
@@ -311,7 +342,7 @@ function Navbar() {
                 isService
                   ? "Search services, bookings, categories..."
                   : isBusiness
-                    ? "Search businesses, brands, categories..."
+                    ? "Search businesses, brands, suppliers..."
                     : "Search products, brands, categories..."
               }
               value={searchTerm}
@@ -334,7 +365,7 @@ function Navbar() {
               <MapPin size={16} className="text-[#2563eb]" />
               <div className="flex flex-col text-[10px] leading-tight">
                 <span className="font-bold text-slate-900">
-                  {location?.city || "Unknown City"}
+                  {userLocation?.city || "Unknown City"}
                 </span>
               </div>
             </div>
@@ -346,9 +377,29 @@ function Navbar() {
               <Tag size={17} className="text-red-500" />
               <span>Offers</span>
             </Link>
-            {isService || isBusiness ? (
-              <></>
+
+            {isService ? (
+              /* SERVICES MODE: Show Bookings */
+              <Link
+                to={isAuthenticated ? "/my-bookings" : "/services"}
+                className="flex items-center gap-1.5 text-slate-700 hover:text-[#2563eb] transition-colors font-semibold"
+                title="My Bookings"
+              >
+                <Calendar size={18} className="text-[#2563eb]" />
+                <span>Bookings</span>
+              </Link>
+            ) : isBusiness ? (
+              /* BUSINESS MODE: Show Stores Directory */
+              <Link
+                to="/store"
+                className="flex items-center gap-1.5 text-slate-700 hover:text-[#2563eb] transition-colors font-semibold"
+                title="Business Stores Directory"
+              >
+                <Building2 size={18} className="text-[#2563eb]" />
+                <span>Stores</span>
+              </Link>
             ) : (
+              /* E-COMMERCE MODE: Show Wishlist, Cart, Compare */
               <>
                 <Link
                   to="/wishlist"
@@ -379,6 +430,7 @@ function Navbar() {
                   </div>
                   <span>Cart</span>
                 </Link>
+
                 <Link
                   to="/compare"
                   className="relative flex items-center gap-1.5 text-slate-700 hover:text-[#2563eb] transition-colors font-semibold"
@@ -418,42 +470,63 @@ function Navbar() {
 
           {/* Mobile Right Action Icons */}
           <div className="lg:hidden flex items-center gap-1 sm:gap-2">
-            <Link
-              to="/compare"
-              className="relative p-1.5 text-slate-700 hover:text-[#2563eb]"
-              title="Compare"
-            >
-              <Scale size={20} />
-              {compareQty > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-2xs">
-                  {compareQty}
-                </span>
-              )}
-            </Link>
-            <Link
-              to="/wishlist"
-              className="relative p-1.5 text-slate-700 hover:text-[#2563eb]"
-              title="Wishlist"
-            >
-              <Heart size={20} />
-              {wishlistQty > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-2xs">
-                  {wishlistQty}
-                </span>
-              )}
-            </Link>
-            <Link
-              to="/cart"
-              className="relative p-1.5 text-slate-700 hover:text-[#2563eb]"
-              title="Cart"
-            >
-              <ShoppingCart size={20} />
-              {totalQty > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-2xs">
-                  {totalQty}
-                </span>
-              )}
-            </Link>
+            {isService ? (
+              <Link
+                to={isAuthenticated ? "/my-bookings" : "/services"}
+                className="p-1.5 text-slate-700 hover:text-[#2563eb]"
+                title="Bookings"
+              >
+                <Calendar size={20} className="text-[#2563eb]" />
+              </Link>
+            ) : isBusiness ? (
+              <Link
+                to="/store"
+                className="p-1.5 text-slate-700 hover:text-[#2563eb]"
+                title="Stores"
+              >
+                <Building2 size={20} className="text-[#2563eb]" />
+              </Link>
+            ) : (
+              <>
+                <Link
+                  to="/compare"
+                  className="relative p-1.5 text-slate-700 hover:text-[#2563eb]"
+                  title="Compare"
+                >
+                  <Scale size={20} />
+                  {compareQty > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-2xs">
+                      {compareQty}
+                    </span>
+                  )}
+                </Link>
+                <Link
+                  to="/wishlist"
+                  className="relative p-1.5 text-slate-700 hover:text-[#2563eb]"
+                  title="Wishlist"
+                >
+                  <Heart size={20} />
+                  {wishlistQty > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-2xs">
+                      {wishlistQty}
+                    </span>
+                  )}
+                </Link>
+                <Link
+                  to="/cart"
+                  className="relative p-1.5 text-slate-700 hover:text-[#2563eb]"
+                  title="Cart"
+                >
+                  <ShoppingCart size={20} />
+                  {totalQty > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-2xs">
+                      {totalQty}
+                    </span>
+                  )}
+                </Link>
+              </>
+            )}
+
             <button
               onClick={() => setMobileMenu(!mobileMenu)}
               className="p-1.5 text-slate-700 hover:text-[#2563eb] cursor-pointer"
@@ -471,18 +544,38 @@ function Navbar() {
           {/* Business Category Selector Dropdown (Defaults to E-Commerce) */}
           <div className="relative shrink-0 flex items-center">
             <select
-              value={selectedBusinessCategory}
+              value={
+                isService
+                  ? BUSINESS_CATEGORY_CODES.SERVICE
+                  : isBusiness
+                    ? BUSINESS_CATEGORY_CODES.BUSINESS
+                    : BUSINESS_CATEGORY_CODES.ECOMMERCE
+              }
               onChange={(e) => handleBusinessCategoryChange(e.target.value)}
               className="bg-white border border-slate-300 text-slate-800 rounded-full pl-3 pr-5 py-1 text-xs font-extrabold shadow-2xs focus:outline-none focus:border-[#2563eb] cursor-pointer hover:bg-slate-50 transition appearance-none"
             >
-              {/* Default E-Commerce option */}
-              <option value="E-Commerce">E-Commerce</option>
+              <option value={BUSINESS_CATEGORY_CODES.ECOMMERCE}>
+                E-Commerce
+              </option>
+              <option value={BUSINESS_CATEGORY_CODES.SERVICE}>
+                Service Provider
+              </option>
+              <option value={BUSINESS_CATEGORY_CODES.BUSINESS}>
+                Business Brands
+              </option>
               {businessCategories
-                .filter(
-                  (bc) =>
-                    bc.name?.toLowerCase() !== "e-commerce" &&
-                    bc.code?.toUpperCase() !== "ECOMMERCE",
-                )
+                .filter((bc) => {
+                  const code = String(bc.code || "").toUpperCase();
+                  const name = String(bc.name || "").toLowerCase();
+                  return (
+                    code !== "ECOMMERCE" &&
+                    code !== "SERVICE" &&
+                    code !== "BUSINESS" &&
+                    name !== "e-commerce" &&
+                    name !== "service provider" &&
+                    name !== "business brands"
+                  );
+                })
                 .map((bc) => (
                   <option
                     key={bc._id || bc.code}
@@ -566,8 +659,10 @@ function Navbar() {
                 const catName = cat.name || cat.title;
                 const catId = cat._id || cat.id || idx;
                 const targetPath = isService
-                  ? `/services?category=${encodeURIComponent(catId)}&businessCategory=${encodeURIComponent(selectedBusinessCategory)}`
-                  : `/shop?category=${encodeURIComponent(catId)}`;
+                  ? `/services?category=${encodeURIComponent(catName)}`
+                  : isBusiness
+                    ? `/store?category=${encodeURIComponent(catName)}`
+                    : `/shop?category=${encodeURIComponent(catName)}`;
 
                 return (
                   <button
@@ -586,7 +681,7 @@ function Navbar() {
             <button
               onClick={() =>
                 navigate(
-                  isService ? "/services" : isBusiness ? "/business" : "/shop",
+                  isService ? "/services" : isBusiness ? "/store" : "/shop",
                 )
               }
               className="px-3 py-1 rounded-full font-semibold transition shrink-0 text-[#2563eb] sm:text-slate-700 hover:bg-slate-200 hover:text-slate-900 cursor-pointer whitespace-nowrap text-xs"
@@ -678,20 +773,41 @@ function Navbar() {
               Select Business Category
             </label>
             <select
-              value={selectedBusinessCategory}
+              value={
+                isService
+                  ? BUSINESS_CATEGORY_CODES.SERVICE
+                  : isBusiness
+                    ? BUSINESS_CATEGORY_CODES.BUSINESS
+                    : BUSINESS_CATEGORY_CODES.ECOMMERCE
+              }
               onChange={(e) => {
                 handleBusinessCategoryChange(e.target.value);
                 setMobileMenu(false);
               }}
               className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:border-[#2563eb]"
             >
-              <option value="E-Commerce">E-Commerce</option>
+              <option value={BUSINESS_CATEGORY_CODES.ECOMMERCE}>
+                E-Commerce
+              </option>
+              <option value={BUSINESS_CATEGORY_CODES.SERVICE}>
+                Service Provider
+              </option>
+              <option value={BUSINESS_CATEGORY_CODES.BUSINESS}>
+                Business Brands
+              </option>
               {businessCategories
-                .filter(
-                  (bc) =>
-                    bc.name?.toLowerCase() !== "e-commerce" &&
-                    bc.code?.toUpperCase() !== "ECOMMERCE",
-                )
+                .filter((bc) => {
+                  const code = String(bc.code || "").toUpperCase();
+                  const name = String(bc.name || "").toLowerCase();
+                  return (
+                    code !== "ECOMMERCE" &&
+                    code !== "SERVICE" &&
+                    code !== "BUSINESS" &&
+                    name !== "e-commerce" &&
+                    name !== "service provider" &&
+                    name !== "business brands"
+                  );
+                })
                 .map((bc) => (
                   <option
                     key={bc._id || bc.code}
@@ -708,48 +824,122 @@ function Navbar() {
             <MapPin size={15} className="text-[#2563eb] shrink-0" />
             <span className="text-slate-500">Location:</span>
             <span className="font-bold text-slate-900">
-              {location?.city || "Detecting Location..."}
+              {userLocation?.city || "Detecting Location..."}
             </span>
           </div>
 
-          {/* Quick Links Grid */}
+          {/* Quick Links Grid - Mode Adapted */}
           <div className="space-y-1">
             <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider px-1">
               Quick Navigation
             </div>
             <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
-              <Link
-                to="/shop"
-                onClick={() => setMobileMenu(false)}
-                className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-blue-50 rounded-xl font-bold text-slate-800 hover:text-[#2563eb] transition-colors border border-slate-100"
-              >
-                <Package size={16} className="text-[#2563eb]" />
-                <span>Shop All</span>
-              </Link>
-              <Link
-                to="/services"
-                onClick={() => setMobileMenu(false)}
-                className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-blue-50 rounded-xl font-bold text-slate-800 hover:text-[#2563eb] transition-colors border border-slate-100"
-              >
-                <Layers size={16} className="text-purple-600" />
-                <span>Services</span>
-              </Link>
-              <Link
-                to="/offers"
-                onClick={() => setMobileMenu(false)}
-                className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-blue-50 rounded-xl font-bold text-slate-800 hover:text-[#2563eb] transition-colors border border-slate-100"
-              >
-                <Tag size={16} className="text-red-500" />
-                <span>Offers</span>
-              </Link>
-              <Link
-                to="/flash-deals"
-                onClick={() => setMobileMenu(false)}
-                className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-blue-50 rounded-xl font-bold text-slate-800 hover:text-[#2563eb] transition-colors border border-slate-100"
-              >
-                <Sparkles size={16} className="text-amber-500" />
-                <span>Flash Deals</span>
-              </Link>
+              {isService ? (
+                <>
+                  <Link
+                    to="/services"
+                    onClick={() => setMobileMenu(false)}
+                    className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-blue-50 rounded-xl font-bold text-slate-800 hover:text-[#2563eb] transition-colors border border-slate-100"
+                  >
+                    <Layers size={16} className="text-[#2563eb]" />
+                    <span>All Services</span>
+                  </Link>
+                  <Link
+                    to={isAuthenticated ? "/my-bookings" : "/services"}
+                    onClick={() => setMobileMenu(false)}
+                    className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-blue-50 rounded-xl font-bold text-slate-800 hover:text-[#2563eb] transition-colors border border-slate-100"
+                  >
+                    <Calendar size={16} className="text-purple-600" />
+                    <span>My Bookings</span>
+                  </Link>
+                  <Link
+                    to="/offers"
+                    onClick={() => setMobileMenu(false)}
+                    className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-blue-50 rounded-xl font-bold text-slate-800 hover:text-[#2563eb] transition-colors border border-slate-100"
+                  >
+                    <Tag size={16} className="text-red-500" />
+                    <span>Offers</span>
+                  </Link>
+                  <Link
+                    to="/help"
+                    onClick={() => setMobileMenu(false)}
+                    className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-blue-50 rounded-xl font-bold text-slate-800 hover:text-[#2563eb] transition-colors border border-slate-100"
+                  >
+                    <Sparkles size={16} className="text-amber-500" />
+                    <span>Support</span>
+                  </Link>
+                </>
+              ) : isBusiness ? (
+                <>
+                  <Link
+                    to="/store"
+                    onClick={() => setMobileMenu(false)}
+                    className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-blue-50 rounded-xl font-bold text-slate-800 hover:text-[#2563eb] transition-colors border border-slate-100"
+                  >
+                    <Building2 size={16} className="text-[#2563eb]" />
+                    <span>All Stores</span>
+                  </Link>
+                  <Link
+                    to="/businessRegistration"
+                    onClick={() => setMobileMenu(false)}
+                    className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-blue-50 rounded-xl font-bold text-slate-800 hover:text-[#2563eb] transition-colors border border-slate-100"
+                  >
+                    <Package size={16} className="text-emerald-600" />
+                    <span>Register Business</span>
+                  </Link>
+                  <Link
+                    to="/business-pricing"
+                    onClick={() => setMobileMenu(false)}
+                    className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-blue-50 rounded-xl font-bold text-slate-800 hover:text-[#2563eb] transition-colors border border-slate-100"
+                  >
+                    <Tag size={16} className="text-blue-500" />
+                    <span>Plans & Pricing</span>
+                  </Link>
+                  <Link
+                    to="/offers"
+                    onClick={() => setMobileMenu(false)}
+                    className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-blue-50 rounded-xl font-bold text-slate-800 hover:text-[#2563eb] transition-colors border border-slate-100"
+                  >
+                    <Sparkles size={16} className="text-amber-500" />
+                    <span>Offers</span>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/shop"
+                    onClick={() => setMobileMenu(false)}
+                    className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-blue-50 rounded-xl font-bold text-slate-800 hover:text-[#2563eb] transition-colors border border-slate-100"
+                  >
+                    <Package size={16} className="text-[#2563eb]" />
+                    <span>Shop All</span>
+                  </Link>
+                  <Link
+                    to="/cart"
+                    onClick={() => setMobileMenu(false)}
+                    className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-blue-50 rounded-xl font-bold text-slate-800 hover:text-[#2563eb] transition-colors border border-slate-100"
+                  >
+                    <ShoppingCart size={16} className="text-indigo-600" />
+                    <span>Cart ({totalQty})</span>
+                  </Link>
+                  <Link
+                    to="/wishlist"
+                    onClick={() => setMobileMenu(false)}
+                    className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-blue-50 rounded-xl font-bold text-slate-800 hover:text-[#2563eb] transition-colors border border-slate-100"
+                  >
+                    <Heart size={16} className="text-rose-500" />
+                    <span>Wishlist ({wishlistQty})</span>
+                  </Link>
+                  <Link
+                    to="/flash-deals"
+                    onClick={() => setMobileMenu(false)}
+                    className="flex items-center gap-2 p-2.5 bg-slate-50 hover:bg-blue-50 rounded-xl font-bold text-slate-800 hover:text-[#2563eb] transition-colors border border-slate-100"
+                  >
+                    <Sparkles size={16} className="text-amber-500" />
+                    <span>Flash Deals</span>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

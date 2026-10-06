@@ -27,7 +27,7 @@ import {
   Boxes,
   CalendarCheck,
 } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { registerBusiness, sendOTP, verifyOTP } from "../../api/authService";
 import baseApi from "../../api/baseApi";
@@ -766,12 +766,6 @@ export default function BusinessRegistration() {
                 Commerce Portal
               </div>
 
-              <p className="mt-4 text-sm leading-6 text-slate-600">
-                Join thousands of leading brands using ILumaa to manage
-                multi-channel commerce, inventory, staff permissions, and vendor
-                payouts in one unified platform.
-              </p>
-
               {/* Feature Cards */}
               <div className="mt-8 space-y-4">
                 <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -985,6 +979,17 @@ export default function BusinessRegistration() {
                         </>
                       )}
                     </button>
+                    <div className="mt-3 text-[11px] text-slate-500 text-center">
+                      {" "}
+                      Business Account?{" "}
+                      <Link
+                        to={import.meta.env.VITE_DASHBOARD_URL}
+                        className="font-semibold text-[#2563eb] hover:underline"
+                      >
+                        {" "}
+                        Login Here{" "}
+                      </Link>{" "}
+                    </div>
                   </div>
                 )}
 

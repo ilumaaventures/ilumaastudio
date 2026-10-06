@@ -45,28 +45,13 @@ function Home() {
   useEffect(() => {
     let isMounted = true;
 
-    const loadHomeData = async () => {
+    // Load main products & e-commerce categories
+    const loadMainData = async () => {
       try {
         setLoading(true);
-        setServiceCategoriesLoading(true);
-        setBusinessCategoriesLoading(true);
-
-        const [
-          productsData,
-          categoriesData,
-          serviceCategoriesData,
-          businessCategoriesData,
-        ] = await Promise.all([
+        const [productsData, categoriesData] = await Promise.all([
           getProducts({ productType: "E-Commerce", limit: 12 }).catch(() => []),
           fetchCategories({ businessType: "E-Commerce" }).catch(() => []),
-          fetchCategories({
-            businessCategory: "SERVICE",
-            status: "active",
-          }).catch(() => []),
-          fetchCategories({
-            businessCategory: "BUSINESS",
-            status: "active",
-          }).catch(() => []),
         ]);
 
         if (!isMounted) return;
@@ -79,15 +64,64 @@ function Home() {
           categoriesData?.categories ||
           (Array.isArray(categoriesData) ? categoriesData : []);
 
-        const slist =
-          serviceCategoriesData?.data ||
-          serviceCategoriesData?.categories ||
-          (Array.isArray(serviceCategoriesData) ? serviceCategoriesData : []);
+        setProducts(plist);
+        setCategories(clist);
+      } catch (err) {
+        console.error("Failed to load home products:", err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    // Load Service Categories from backend
+    const loadServiceCategories = async () => {
+      try {
+        setServiceCategoriesLoading(true);
+        const res = await fetchCategories({
+          businessCategory: "SERVICE",
+          status: "active",
+        }).catch(() => null);
+
+        let slist =
+          res?.data ||
+          res?.categories ||
+          (Array.isArray(res) ? res : []);
+
+        // Fallback check if businessCategory: "SERVICE" returned nothing
+        if (!slist || slist.length === 0) {
+          const fallbackRes = await fetchCategories({
+            businessType: "Service",
+            status: "active",
+          }).catch(() => null);
+          slist =
+            fallbackRes?.data ||
+            fallbackRes?.categories ||
+            (Array.isArray(fallbackRes) ? fallbackRes : []);
+        }
+
+        if (isMounted) {
+          setServiceCategories(slist || []);
+        }
+      } catch (err) {
+        console.error("Failed to load service categories:", err);
+      } finally {
+        if (isMounted) setServiceCategoriesLoading(false);
+      }
+    };
+
+    // Load Business Categories from backend
+    const loadBusinessCategories = async () => {
+      try {
+        setBusinessCategoriesLoading(true);
+        const res = await fetchCategories({
+          businessCategory: "BUSINESS",
+          status: "active",
+        }).catch(() => null);
 
         let blist =
-          businessCategoriesData?.data ||
-          businessCategoriesData?.categories ||
-          (Array.isArray(businessCategoriesData) ? businessCategoriesData : []);
+          res?.data ||
+          res?.categories ||
+          (Array.isArray(res) ? res : []);
 
         // Fallback for business categories if no items returned under BUSINESS code
         if (!blist || blist.length === 0) {
@@ -103,22 +137,19 @@ function Home() {
           }
         }
 
-        setProducts(plist);
-        setCategories(clist);
-        setServiceCategories(slist);
-        setBusinessCategories(blist);
-      } catch (err) {
-        console.error("Failed to load home page data:", err);
-      } finally {
         if (isMounted) {
-          setLoading(false);
-          setServiceCategoriesLoading(false);
-          setBusinessCategoriesLoading(false);
+          setBusinessCategories(blist || []);
         }
+      } catch (err) {
+        console.error("Failed to load business categories:", err);
+      } finally {
+        if (isMounted) setBusinessCategoriesLoading(false);
       }
     };
 
-    loadHomeData();
+    loadMainData();
+    loadServiceCategories();
+    loadBusinessCategories();
 
     return () => {
       isMounted = false;
@@ -147,11 +178,14 @@ function Home() {
 
       {/* On-Demand & Professional Services Category Section */}
       <CategorySection
+        badge="Professional Services"
         title="On-Demand & Professional Services"
-        subtitle="Find trusted professionals for your everyday needs."
+        subtitle="Find certified experts, consultants and specialized service providers."
         categories={serviceCategories}
         loading={serviceCategoriesLoading}
         viewAllText="View All Services"
+        cardCtaText="Explore Services"
+        sectionType="services"
         onViewAll={() => navigate("/services")}
         onCategoryClick={(category) => {
           const categoryName = category.name || category.slug || category._id;
@@ -195,11 +229,14 @@ function Home() {
 
       {/* Enterprise & Local Brands Sectors Category Section */}
       <CategorySection
+        badge="Enterprise & Business Sectors"
         title="Enterprise & Local Brands Sectors"
-        subtitle="Connect with businesses, suppliers and professional providers."
+        subtitle="Connect with verified enterprises, local brands, suppliers and industry partners."
         categories={businessCategories}
         loading={businessCategoriesLoading}
         viewAllText="View All Businesses"
+        cardCtaText="Explore Businesses"
+        sectionType="business"
         onViewAll={() => navigate("/store")}
         onCategoryClick={(category) => {
           const categoryName = category.name || category.code || category._id;

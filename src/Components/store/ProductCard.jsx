@@ -1,8 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ShoppingCart, Eye, Star, Coins, Check } from "lucide-react";
-import { useDispatch } from "react-redux";
-import { addToCart } from "../../redux/reducers/cartReducer";
+import { ShoppingCart, Eye, Star, Coins, Check, Trash2 } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { addToCart, removeFromCart } from "../../redux/reducers/cartReducer";
 import toast from "react-hot-toast";
 import { useStore } from "../../pages/Store/StoreContext";
 
@@ -12,6 +12,18 @@ export default function ProductCard({ product, theme = null }) {
   const basePath =
     storeHomePath ||
     `/${encodeURIComponent(business?.subdomain || business?.slug || business?.businessName || "")}`;
+
+  const cartItems = useSelector(
+    (s) => s.cart?.cartItems || s.cart?.items || [],
+  );
+  const prodId = product._id || product.id;
+  const isInCart = cartItems.some((i) => {
+    const itemId =
+      i && typeof i === "object"
+        ? i._id || i.id || i.product?._id || i.product || i.cartItemId
+        : i;
+    return String(itemId) === String(prodId);
+  });
 
   const checkIsOutOfStock = (prod) => {
     if (!prod) return false;
@@ -237,18 +249,35 @@ export default function ProductCard({ product, theme = null }) {
             </div>
           </div>
 
-          <button
-            onClick={handleAdd}
-            disabled={isOutOfStock}
-            className={`p-2.5 rounded-xl transition-all duration-200 cursor-pointer shadow-xs ${
-              isOutOfStock
-                ? "bg-slate-100 text-slate-300 cursor-not-allowed"
-                : "bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white"
-            }`}
-            title="Add to Cart"
-          >
-            <ShoppingCart size={16} />
-          </button>
+          {isInCart ? (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dispatch(removeFromCart(prodId));
+                toast.success(`Removed ${product.name} from cart`, { icon: "🗑️" });
+              }}
+              className="group/storecart p-2.5 rounded-xl transition-all duration-200 cursor-pointer shadow-xs bg-emerald-50 hover:bg-rose-50 text-emerald-600 hover:text-rose-600 border border-emerald-200 hover:border-rose-200"
+              title="In cart — click to remove"
+              aria-label="Remove from cart"
+            >
+              <Check size={16} className="group-hover/storecart:hidden" />
+              <Trash2 size={16} className="hidden group-hover/storecart:block" />
+            </button>
+          ) : (
+            <button
+              onClick={handleAdd}
+              disabled={isOutOfStock}
+              className={`p-2.5 rounded-xl transition-all duration-200 cursor-pointer shadow-xs ${
+                isOutOfStock
+                  ? "bg-slate-100 text-slate-300 cursor-not-allowed"
+                  : "bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white"
+              }`}
+              title="Add to Cart"
+            >
+              <ShoppingCart size={16} />
+            </button>
+          )}
         </div>
       </div>
     </div>

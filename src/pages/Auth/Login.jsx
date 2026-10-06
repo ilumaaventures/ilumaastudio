@@ -182,14 +182,19 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="text-center text-xs text-slate-500 dark:text-slate-400">
-          Don't have an account?{" "}
-          <Link
-            to="/register"
-            className="font-bold text-[#2563eb] hover:underline"
-          >
-            Create Account
-          </Link>
+        <div className="space-y-2 text-center text-xs text-slate-500 dark:text-slate-400">
+          {" "}
+          <div>
+            {" "}
+            Don&apos;t have an account?{" "}
+            <Link
+              to="/register"
+              className="font-semibold text-[#2563eb] hover:underline"
+            >
+              {" "}
+              Create an Account{" "}
+            </Link>{" "}
+          </div>{" "}
         </div>
       </div>
     </div>
