@@ -90,16 +90,26 @@ export default function BusinessStoreListing() {
         try {
           catData = await fetchCategories({ isIndustry: "true" });
         } catch (e) {
-          console.warn("fetchCategories with isIndustry failed, falling back:", e);
+          console.warn(
+            "fetchCategories with isIndustry failed, falling back:",
+            e,
+          );
         }
 
         const [storeRes, fallbackCatRes] = await Promise.all([
           fetchAllMarketplaceStores({ anySlugType: true }),
-          (!catData || (Array.isArray(catData) && catData.length === 0))
+          !catData ||
+          (Array.isArray(catData) && catData.length === 0) ||
+          (catData?.data && catData.data.length === 0)
             ? fetchCategories({ businessCategory: "business" })
             : Promise.resolve(catData),
         ]);
-        const catRes = (catData && (!Array.isArray(catData) || catData.length > 0)) ? catData : fallbackCatRes;
+        const catRes =
+          catData &&
+          ((Array.isArray(catData) && catData.length > 0) ||
+            (catData?.data && catData.data.length > 0))
+            ? catData
+            : fallbackCatRes;
         console.log("Fetched Industry / Business Categories:", catRes);
         if (!isMounted) return;
 
@@ -149,6 +159,13 @@ export default function BusinessStoreListing() {
               : "") ||
             s.industrySlug ||
             "";
+
+          const industryId =
+            (typeof s.businessIndustry === "object"
+              ? s.businessIndustry?._id
+              : s.businessIndustry) ||
+            s.rawBusinessIndustry?._id ||
+            null;
 
           const categoryName =
             (typeof s.businessCategory === "object"
@@ -224,6 +241,7 @@ export default function BusinessStoreListing() {
             createdAt: s.createdAt || null,
             industry: industryName,
             industrySlug: industrySlug,
+            industryId: industryId,
             rawCategory: s.category,
             rawBusinessCategory: s.businessCategory,
             rawBusinessType: s.businessType,
@@ -234,9 +252,14 @@ export default function BusinessStoreListing() {
         setStores(formatted);
 
         // 2. Process Business Categories
-        const catList = Array.isArray(catRes)
-          ? catRes
-          : catRes?.data || catRes?.categories || [];
+        let catList = [];
+        if (Array.isArray(catRes)) {
+          catList = catRes;
+        } else if (Array.isArray(catRes?.data)) {
+          catList = catRes.data;
+        } else if (Array.isArray(catRes?.categories)) {
+          catList = catRes.categories;
+        }
         setCategories(catList);
       } catch (err) {
         console.error("Failed to load stores from API:", err);
@@ -272,37 +295,236 @@ export default function BusinessStoreListing() {
   }, [stores]);
 
   /* =========================================================
-     3. DERIVED CATEGORY LIST & COUNTS
+     3. NORMALIZER & MATCHING HELPERS
+  ========================================================= */
+  const normalizeStr = (str) =>
+    String(str || "")
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]/g, "");
+
+  const isStoreMatchingCategory = (store, target) => {
+    if (!store || !target || target === "all") return true;
+
+    const targetObj =
+      typeof target === "object"
+        ? target
+        : {
+            _id: target,
+            name: target,
+            slug: target,
+            code: target,
+          };
+
+    const targetId = targetObj._id ? String(targetObj._id) : "";
+    const targetNameNorm = normalizeStr(targetObj.name);
+    const targetSlugNorm = normalizeStr(targetObj.slug);
+    const targetCodeNorm = normalizeStr(targetObj.code);
+
+    // 1. Match against store's businessIndustry (ObjectId or populated object)
+    const storeIndId = store.rawBusinessIndustry?._id
+      ? String(store.rawBusinessIndustry._id)
+      : store.rawBusinessIndustry
+        ? String(store.rawBusinessIndustry)
+        : store.industryId
+          ? String(store.industryId)
+          : "";
+
+    if (
+      targetId &&
+      storeIndId &&
+      targetId.toLowerCase() === storeIndId.toLowerCase()
+    )
+      return true;
+
+    const storeIndNorm = normalizeStr(store.industry);
+    const storeIndSlugNorm = normalizeStr(store.industrySlug);
+
+    if (
+      targetNameNorm &&
+      (storeIndNorm === targetNameNorm || storeIndSlugNorm === targetNameNorm)
+    )
+      return true;
+    if (
+      targetSlugNorm &&
+      (storeIndNorm === targetSlugNorm || storeIndSlugNorm === targetSlugNorm)
+    )
+      return true;
+    if (
+      targetCodeNorm &&
+      (storeIndNorm === targetCodeNorm || storeIndSlugNorm === targetCodeNorm)
+    )
+      return true;
+
+    // 2. Match against store's category / businessCategory / businessType
+    const storeCatNorm = normalizeStr(store.category);
+    const storeTypeNorm = normalizeStr(store.businessType);
+
+    if (
+      targetNameNorm &&
+      (storeCatNorm === targetNameNorm || storeTypeNorm === targetNameNorm)
+    )
+      return true;
+    if (
+      targetSlugNorm &&
+      (storeCatNorm === targetSlugNorm || storeTypeNorm === targetSlugNorm)
+    )
+      return true;
+    if (
+      targetCodeNorm &&
+      (storeCatNorm === targetCodeNorm || storeTypeNorm === targetCodeNorm)
+    )
+      return true;
+
+    // 3. Match against raw populated category / businessCategory objects
+    const rawCatName =
+      typeof store.rawCategory === "object"
+        ? store.rawCategory?.name
+        : store.rawCategory;
+    if (
+      rawCatName &&
+      (normalizeStr(rawCatName) === targetNameNorm ||
+        normalizeStr(rawCatName) === targetSlugNorm)
+    )
+      return true;
+
+    const rawBCatName =
+      typeof store.rawBusinessCategory === "object"
+        ? store.rawBusinessCategory?.name
+        : store.rawBusinessCategory;
+    if (
+      rawBCatName &&
+      (normalizeStr(rawBCatName) === targetNameNorm ||
+        normalizeStr(rawBCatName) === targetSlugNorm)
+    )
+      return true;
+
+    return false;
+  };
+
+  const isCategorySelected = (catItem, selected) => {
+    if (!selected || selected === "all" || !catItem) return false;
+    const selNorm = normalizeStr(selected);
+    if (
+      catItem._id &&
+      String(catItem._id).toLowerCase() === String(selected).toLowerCase()
+    )
+      return true;
+    if (normalizeStr(catItem.name) === selNorm) return true;
+    if (normalizeStr(catItem.slug) === selNorm) return true;
+    if (catItem.code && normalizeStr(catItem.code) === selNorm) return true;
+    return false;
+  };
+
+  /* =========================================================
+     4. DERIVED CATEGORY LIST & COUNTS
   ========================================================= */
   const displayCategoriesList = useMemo(() => {
+    const list = [];
+    const seen = new Set();
+
     if (categories && categories.length > 0) {
-      return categories;
+      categories.forEach((cat) => {
+        const id = cat._id ? String(cat._id) : "";
+        const name = cat.name || "";
+        const slug = cat.slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+        const key = (name || id).toLowerCase();
+        if (name && !seen.has(key)) {
+          seen.add(key);
+          list.push({
+            _id: id,
+            name,
+            slug,
+            code: cat.code || "",
+            icon: cat.icon || "",
+          });
+        }
+      });
     }
-    const set = new Set();
+
+    // Also include any distinct industries from stores if not yet present
     stores.forEach((s) => {
-      if (s.industry) set.add(s.industry);
-      else if (s.category) set.add(s.category);
+      if (s.industry) {
+        const key = s.industry.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push({
+            _id: s.industryId || `ind_${list.length}`,
+            name: s.industry,
+            slug:
+              s.industrySlug ||
+              s.industry.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+            code: s.industry,
+          });
+        }
+      }
     });
-    return Array.from(set)
-      .sort()
-      .map((name) => ({ name, code: name }));
+
+    return list;
   }, [categories, stores]);
 
   const categoryCounts = useMemo(() => {
     const counts = {};
-    stores.forEach((s) => {
-      const cat = s.category || "Other";
-      const ind = s.industry;
-      counts[cat] = (counts[cat] || 0) + 1;
-      if (ind) {
-        counts[ind] = (counts[ind] || 0) + 1;
-      }
+    displayCategoriesList.forEach((cat) => {
+      const count = stores.filter((s) =>
+        isStoreMatchingCategory(s, cat),
+      ).length;
+      counts[cat.name] = count;
+      if (cat.slug) counts[cat.slug] = count;
+      if (cat._id) counts[String(cat._id)] = count;
     });
     return counts;
-  }, [stores]);
+  }, [displayCategoriesList, stores]);
+
+  // Keep state synced with URL search params
+  useEffect(() => {
+    const urlCat = searchParams.get("category");
+    if (urlCat) {
+      if (urlCat !== selectedCategory) {
+        setSelectedCategory(urlCat);
+      }
+    } else if (selectedCategory !== "all") {
+      setSelectedCategory("all");
+    }
+  }, [searchParams]);
+
+  const handleSelectCategory = (catIdentifier) => {
+    const targetObj =
+      typeof catIdentifier === "object"
+        ? catIdentifier
+        : { name: catIdentifier, slug: catIdentifier, _id: catIdentifier };
+
+    const isAlreadySelected = isCategorySelected(targetObj, selectedCategory);
+
+    const nextVal =
+      isAlreadySelected || catIdentifier === "all"
+        ? "all"
+        : typeof catIdentifier === "object"
+          ? catIdentifier.slug || catIdentifier.name
+          : catIdentifier;
+
+    setSelectedCategory(nextVal);
+
+    // Sync URL search params
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextVal === "all") {
+      nextParams.delete("category");
+    } else {
+      nextParams.set("category", nextVal);
+    }
+    setSearchParams(nextParams, { replace: true });
+  };
+
+  const selectedCategoryLabel = useMemo(() => {
+    if (selectedCategory === "all") return "";
+    const matched = displayCategoriesList.find((c) =>
+      isCategorySelected(c, selectedCategory),
+    );
+    return matched?.name || selectedCategory;
+  }, [selectedCategory, displayCategoriesList]);
 
   /* =========================================================
-     4. FILTER & SORT STORES
+     5. FILTER & SORT STORES
   ========================================================= */
   const filteredStores = useMemo(() => {
     return stores
@@ -315,26 +537,27 @@ export default function BusinessStoreListing() {
           const matchInd = (store.industry || "").toLowerCase().includes(q);
           const matchCity = store.location.toLowerCase().includes(q);
           const matchDesc = store.description.toLowerCase().includes(q);
-          if (!matchName && !matchCat && !matchInd && !matchCity && !matchDesc) {
+          if (
+            !matchName &&
+            !matchCat &&
+            !matchInd &&
+            !matchCity &&
+            !matchDesc
+          ) {
             return false;
           }
         }
 
         // Category / Industry Filter
         if (selectedCategory !== "all") {
-          const sCat = selectedCategory.toLowerCase().trim();
-          const matchCat =
-            (store.industry && store.industry.toLowerCase() === sCat) ||
-            (store.industrySlug && store.industrySlug.toLowerCase() === sCat) ||
-            (store.category && store.category.toLowerCase() === sCat) ||
-            (store.businessType && store.businessType.toLowerCase() === sCat) ||
-            (typeof store.rawCategory === "object" &&
-              store.rawCategory?.name?.toLowerCase() === sCat) ||
-            (typeof store.rawBusinessCategory === "object" &&
-              store.rawBusinessCategory?.name?.toLowerCase() === sCat) ||
-            (typeof store.rawBusinessIndustry === "object" &&
-              store.rawBusinessIndustry?.name?.toLowerCase() === sCat);
-          if (!matchCat) return false;
+          const matchedTarget =
+            displayCategoriesList.find((c) =>
+              isCategorySelected(c, selectedCategory),
+            ) || selectedCategory;
+
+          if (!isStoreMatchingCategory(store, matchedTarget)) {
+            return false;
+          }
         }
 
         // City Filter
@@ -390,10 +613,11 @@ export default function BusinessStoreListing() {
     verifiedOnly,
     featuredOnly,
     sortBy,
+    displayCategoriesList,
   ]);
 
   /* =========================================================
-     5. RESET FILTERS
+     6. RESET FILTERS
   ========================================================= */
   const resetFilters = () => {
     setSearchQuery("");
@@ -403,6 +627,9 @@ export default function BusinessStoreListing() {
     setVerifiedOnly(false);
     setFeaturedOnly(false);
     setSortBy("popular");
+
+    const newParams = new URLSearchParams();
+    setSearchParams(newParams, { replace: true });
   };
 
   const hasActiveFilters =
@@ -511,58 +738,72 @@ export default function BusinessStoreListing() {
 
               {/* 1. Category Filter */}
               <div className="space-y-3">
-                <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Store Category
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Business Industry / Category
+                  </span>
+                  {selectedCategory !== "all" && (
+                    <button
+                      type="button"
+                      onClick={() => handleSelectCategory("all")}
+                      className="text-[10px] text-[#2563eb] hover:underline font-bold"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
 
-                <div className="max-h-56 space-y-1 overflow-y-auto pr-1 scrollbar-thin">
+                <div className="max-h-60 space-y-1 overflow-y-auto pr-1 scrollbar-thin">
                   {/* All Categories */}
                   <button
                     type="button"
-                    onClick={() => setSelectedCategory("all")}
+                    onClick={() => handleSelectCategory("all")}
                     className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs transition-all ${
                       selectedCategory === "all"
                         ? "bg-blue-50 font-bold text-[#2563eb] dark:bg-slate-800 dark:text-blue-400"
                         : "text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/60"
                     }`}
                   >
-                    <span>All Categories</span>
+                    <span>All Industries</span>
+                    <span className="text-[10px] opacity-75 font-normal">
+                      ({stores.length})
+                    </span>
                   </button>
 
                   {/* Categories fetched from backend */}
                   {displayCategoriesList.map((catItem) => {
-                    const catName =
-                      typeof catItem === "string" ? catItem : catItem.name;
-                    const catCode =
-                      typeof catItem === "object" ? catItem.code : "";
-                    const count =
-                      categoryCounts[catName] ||
-                      (catCode ? categoryCounts[catCode] : 0) ||
-                      stores.filter(
-                        (s) =>
-                          s.category?.toLowerCase() === catName?.toLowerCase(),
-                      ).length;
-                    const isSelected =
-                      selectedCategory.toLowerCase() ===
-                        catName?.toLowerCase() ||
-                      (catCode &&
-                        selectedCategory.toLowerCase() ===
-                          catCode?.toLowerCase());
+                    const catName = catItem.name;
+                    const isSelected = isCategorySelected(
+                      catItem,
+                      selectedCategory,
+                    );
+                    const count = categoryCounts[catName] ?? 0;
 
                     return (
                       <button
-                        key={catItem._id || catName}
+                        key={catItem._id || catItem.slug || catName}
                         type="button"
                         onClick={() =>
-                          setSelectedCategory(isSelected ? "all" : catName)
+                          handleSelectCategory(catItem.slug || catName)
                         }
                         className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs transition-all ${
                           isSelected
-                            ? "bg-blue-50 font-bold text-[#2563eb] dark:bg-slate-800 dark:text-blue-400"
+                            ? "bg-blue-50 font-bold text-[#2563eb] dark:bg-slate-800 dark:text-blue-400 shadow-2xs"
                             : "text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/60"
                         }`}
                       >
-                        <span className="truncate pr-3">{catName}</span>
+                        <span className="truncate pr-2 text-left">
+                          {catName}
+                        </span>
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${
+                            isSelected
+                              ? "bg-[#2563eb] text-white"
+                              : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                          }`}
+                        >
+                          {count}
+                        </span>
                       </button>
                     );
                   })}
@@ -730,69 +971,6 @@ export default function BusinessStoreListing() {
               </div>
             </div>
 
-            {/* Active Filter Chips */}
-            {hasActiveFilters && (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-semibold text-slate-400">
-                  Active Filters:
-                </span>
-                {searchQuery && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-slate-800 text-[11px] font-bold text-[#2563eb]">
-                    "{searchQuery}"
-                    <button onClick={() => setSearchQuery("")}>
-                      <X size={12} />
-                    </button>
-                  </span>
-                )}
-                {selectedCategory !== "all" && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-slate-800 text-[11px] font-bold text-[#2563eb]">
-                    {selectedCategory}
-                    <button onClick={() => setSelectedCategory("all")}>
-                      <X size={12} />
-                    </button>
-                  </span>
-                )}
-                {selectedCity !== "all" && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-slate-800 text-[11px] font-bold text-[#2563eb]">
-                    City: {selectedCity}
-                    <button onClick={() => setSelectedCity("all")}>
-                      <X size={12} />
-                    </button>
-                  </span>
-                )}
-                {minRating > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-slate-800 text-[11px] font-bold text-[#2563eb]">
-                    {minRating}★+
-                    <button onClick={() => setMinRating(0)}>
-                      <X size={12} />
-                    </button>
-                  </span>
-                )}
-                {verifiedOnly && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-slate-800 text-[11px] font-bold text-[#2563eb]">
-                    Verified
-                    <button onClick={() => setVerifiedOnly(false)}>
-                      <X size={12} />
-                    </button>
-                  </span>
-                )}
-                {featuredOnly && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-slate-800 text-[11px] font-bold text-amber-700 dark:text-amber-400">
-                    Featured
-                    <button onClick={() => setFeaturedOnly(false)}>
-                      <X size={12} />
-                    </button>
-                  </span>
-                )}
-                <button
-                  onClick={resetFilters}
-                  className="text-[11px] font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white underline ml-1"
-                >
-                  Clear All
-                </button>
-              </div>
-            )}
-
             {/* Loading Skeleton */}
             {loading ? (
               <StoreGridSkeleton count={6} />
@@ -882,17 +1060,30 @@ export default function BusinessStoreListing() {
                               />
                             </div>
                             <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-                              <span className="font-semibold text-[#2563eb]">
+                              <span
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSelectCategory(
+                                    store.industrySlug ||
+                                      store.industry ||
+                                      store.category,
+                                  );
+                                }}
+                                className="font-bold text-[#2563eb] hover:underline cursor-pointer"
+                                title={`Filter by ${store.industry || store.category}`}
+                              >
                                 {store.industry || store.category}
                               </span>
-                              {store.industry && store.category && store.industry !== store.category && (
-                                <>
-                                  <span>•</span>
-                                  <span className="text-slate-500 dark:text-slate-400">
-                                    {store.category}
-                                  </span>
-                                </>
-                              )}
+                              {store.industry &&
+                                store.category &&
+                                store.industry !== store.category && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="text-slate-500 dark:text-slate-400">
+                                      {store.category}
+                                    </span>
+                                  </>
+                                )}
                               {store.businessType && (
                                 <>
                                   <span>•</span>
@@ -1044,7 +1235,18 @@ export default function BusinessStoreListing() {
                         {/* Store Body Details */}
                         <div className="p-5 space-y-3">
                           <div className="flex items-center justify-between">
-                            <span className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-slate-800 text-[#2563eb] font-bold text-[10px] uppercase tracking-wider truncate max-w-[150px]">
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSelectCategory(
+                                  store.industrySlug ||
+                                    store.industry ||
+                                    store.category,
+                                );
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-[#2563eb] font-bold text-[10px] uppercase tracking-wider truncate max-w-[150px] cursor-pointer transition-colors"
+                              title={`Filter by ${store.industry || store.category}`}
+                            >
                               {store.industry || store.category}
                             </span>
 
@@ -1150,50 +1352,45 @@ export default function BusinessStoreListing() {
             {/* Mobile Category */}
             <div className="space-y-3">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                Category
+                Business Industry / Category
               </span>
-              <div className="space-y-1.5 max-h-48 overflow-y-auto">
+              <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
                 <button
-                  onClick={() => setSelectedCategory("all")}
-                  className={`w-full text-left text-xs px-3 py-2 rounded-xl font-medium ${
+                  onClick={() => {
+                    handleSelectCategory("all");
+                  }}
+                  className={`w-full flex items-center justify-between text-left text-xs px-3 py-2 rounded-xl font-medium ${
                     selectedCategory === "all"
                       ? "bg-blue-50 dark:bg-slate-800 text-[#2563eb] font-bold"
                       : "text-slate-600 dark:text-slate-400"
                   }`}
                 >
-                  All Categories
+                  <span>All Industries</span>
+                  <span className="text-[10px] text-slate-400">
+                    ({stores.length})
+                  </span>
                 </button>
                 {displayCategoriesList.map((catItem) => {
-                  const catName =
-                    typeof catItem === "string" ? catItem : catItem.name;
-                  const catCode =
-                    typeof catItem === "object" ? catItem.code : "";
-                  const count =
-                    categoryCounts[catName] ||
-                    (catCode ? categoryCounts[catCode] : 0) ||
-                    stores.filter(
-                      (s) =>
-                        s.category?.toLowerCase() === catName?.toLowerCase(),
-                    ).length;
-                  const isSelected =
-                    selectedCategory.toLowerCase() === catName?.toLowerCase() ||
-                    (catCode &&
-                      selectedCategory.toLowerCase() ===
-                        catCode?.toLowerCase());
+                  const catName = catItem.name;
+                  const isSelected = isCategorySelected(
+                    catItem,
+                    selectedCategory,
+                  );
+                  const count = categoryCounts[catName] ?? 0;
 
                   return (
                     <button
-                      key={catItem._id || catName}
-                      onClick={() =>
-                        setSelectedCategory(isSelected ? "all" : catName)
-                      }
+                      key={catItem._id || catItem.slug || catName}
+                      onClick={() => {
+                        handleSelectCategory(catItem.slug || catName);
+                      }}
                       className={`w-full flex items-center justify-between text-left text-xs px-3 py-2 rounded-xl font-medium ${
                         isSelected
                           ? "bg-blue-50 dark:bg-slate-800 text-[#2563eb] font-bold"
                           : "text-slate-600 dark:text-slate-400"
                       }`}
                     >
-                      <span>{catName}</span>
+                      <span className="truncate pr-2">{catName}</span>
                       <span className="text-[10px] text-slate-400">
                         ({count})
                       </span>
