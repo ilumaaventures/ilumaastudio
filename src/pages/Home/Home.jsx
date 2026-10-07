@@ -83,9 +83,7 @@ function Home() {
         }).catch(() => null);
 
         let slist =
-          res?.data ||
-          res?.categories ||
-          (Array.isArray(res) ? res : []);
+          res?.data || res?.categories || (Array.isArray(res) ? res : []);
 
         // Fallback check if businessCategory: "SERVICE" returned nothing
         if (!slist || slist.length === 0) {
@@ -119,9 +117,7 @@ function Home() {
         }).catch(() => null);
 
         let blist =
-          res?.data ||
-          res?.categories ||
-          (Array.isArray(res) ? res : []);
+          res?.data || res?.categories || (Array.isArray(res) ? res : []);
 
         // Fallback for business categories if no items returned under BUSINESS code
         if (!blist || blist.length === 0) {
@@ -222,8 +218,7 @@ function Home() {
 
       {/* Top Rated Service Providers */}
       <TopRatedServiceProviders />
-      {/* Trust & Guarantee Perks */}
-      <WhyChooseUs />
+
       {/* Top Rated Picks Section */}
       <TopRated />
 
@@ -247,8 +242,7 @@ function Home() {
 
       <AppNewsletterSocial />
 
-      {/* Popular Food Spots */}
-      {/* <PopularFoodSpots /> */}
+      <WhyChooseUs />
     </div>
   );
 }

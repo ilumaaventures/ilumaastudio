@@ -86,11 +86,21 @@ export default function BusinessStoreListing() {
       try {
         setLoading(true);
 
-        const [storeRes, catRes] = await Promise.all([
+        let catData = null;
+        try {
+          catData = await fetchCategories({ isIndustry: "true" });
+        } catch (e) {
+          console.warn("fetchCategories with isIndustry failed, falling back:", e);
+        }
+
+        const [storeRes, fallbackCatRes] = await Promise.all([
           fetchAllMarketplaceStores({ anySlugType: true }),
-          fetchCategories({ businessCategory: "business" }),
+          (!catData || (Array.isArray(catData) && catData.length === 0))
+            ? fetchCategories({ businessCategory: "business" })
+            : Promise.resolve(catData),
         ]);
-        console.log("Fetched Categories:", catRes);
+        const catRes = (catData && (!Array.isArray(catData) || catData.length > 0)) ? catData : fallbackCatRes;
+        console.log("Fetched Industry / Business Categories:", catRes);
         if (!isMounted) return;
 
         // 1. Process Stores
@@ -125,6 +135,20 @@ export default function BusinessStoreListing() {
             isCustomDomain ||
             (rawSlug && rawSlug !== "store" && rawSlug.length > 0),
           );
+
+          const industryName =
+            (typeof s.businessIndustry === "object"
+              ? s.businessIndustry?.name
+              : s.businessIndustry) ||
+            s.industry ||
+            "";
+
+          const industrySlug =
+            (typeof s.businessIndustry === "object"
+              ? s.businessIndustry?.slug
+              : "") ||
+            s.industrySlug ||
+            "";
 
           const categoryName =
             (typeof s.businessCategory === "object"
@@ -198,9 +222,12 @@ export default function BusinessStoreListing() {
             phone: s.businessPhone || "",
             website: s.website || "",
             createdAt: s.createdAt || null,
+            industry: industryName,
+            industrySlug: industrySlug,
             rawCategory: s.category,
             rawBusinessCategory: s.businessCategory,
             rawBusinessType: s.businessType,
+            rawBusinessIndustry: s.businessIndustry,
           };
         });
 
@@ -253,7 +280,8 @@ export default function BusinessStoreListing() {
     }
     const set = new Set();
     stores.forEach((s) => {
-      if (s.category) set.add(s.category);
+      if (s.industry) set.add(s.industry);
+      else if (s.category) set.add(s.category);
     });
     return Array.from(set)
       .sort()
@@ -264,7 +292,11 @@ export default function BusinessStoreListing() {
     const counts = {};
     stores.forEach((s) => {
       const cat = s.category || "Other";
+      const ind = s.industry;
       counts[cat] = (counts[cat] || 0) + 1;
+      if (ind) {
+        counts[ind] = (counts[ind] || 0) + 1;
+      }
     });
     return counts;
   }, [stores]);
@@ -280,19 +312,28 @@ export default function BusinessStoreListing() {
           const q = searchQuery.toLowerCase().trim();
           const matchName = store.name.toLowerCase().includes(q);
           const matchCat = store.category.toLowerCase().includes(q);
+          const matchInd = (store.industry || "").toLowerCase().includes(q);
           const matchCity = store.location.toLowerCase().includes(q);
           const matchDesc = store.description.toLowerCase().includes(q);
-          if (!matchName && !matchCat && !matchCity && !matchDesc) {
+          if (!matchName && !matchCat && !matchInd && !matchCity && !matchDesc) {
             return false;
           }
         }
 
-        // Category Filter
+        // Category / Industry Filter
         if (selectedCategory !== "all") {
-          const sCat = selectedCategory.toLowerCase();
+          const sCat = selectedCategory.toLowerCase().trim();
           const matchCat =
-            store.category.toLowerCase() === sCat ||
-            (store.businessType && store.businessType.toLowerCase() === sCat);
+            (store.industry && store.industry.toLowerCase() === sCat) ||
+            (store.industrySlug && store.industrySlug.toLowerCase() === sCat) ||
+            (store.category && store.category.toLowerCase() === sCat) ||
+            (store.businessType && store.businessType.toLowerCase() === sCat) ||
+            (typeof store.rawCategory === "object" &&
+              store.rawCategory?.name?.toLowerCase() === sCat) ||
+            (typeof store.rawBusinessCategory === "object" &&
+              store.rawBusinessCategory?.name?.toLowerCase() === sCat) ||
+            (typeof store.rawBusinessIndustry === "object" &&
+              store.rawBusinessIndustry?.name?.toLowerCase() === sCat);
           if (!matchCat) return false;
         }
 
@@ -842,8 +883,16 @@ export default function BusinessStoreListing() {
                             </div>
                             <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                               <span className="font-semibold text-[#2563eb]">
-                                {store.category}
+                                {store.industry || store.category}
                               </span>
+                              {store.industry && store.category && store.industry !== store.category && (
+                                <>
+                                  <span>•</span>
+                                  <span className="text-slate-500 dark:text-slate-400">
+                                    {store.category}
+                                  </span>
+                                </>
+                              )}
                               {store.businessType && (
                                 <>
                                   <span>•</span>
@@ -996,7 +1045,7 @@ export default function BusinessStoreListing() {
                         <div className="p-5 space-y-3">
                           <div className="flex items-center justify-between">
                             <span className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-slate-800 text-[#2563eb] font-bold text-[10px] uppercase tracking-wider truncate max-w-[150px]">
-                              {store.category}
+                              {store.industry || store.category}
                             </span>
 
                             <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md font-bold text-amber-700 dark:text-amber-400 text-[11px]">

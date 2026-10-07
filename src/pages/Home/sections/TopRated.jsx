@@ -182,51 +182,6 @@ export default function TopRated() {
             </div>
           </div>
         )}
-
-        {/* Bottom Trust & Quality Proof Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-200/60 font-sans text-xs">
-          <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
-            <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
-              <Award size={16} />
-            </div>
-            <div>
-              <span className="font-bold text-slate-900 block">
-                Strict Quality Audit
-              </span>
-              <span className="text-slate-500 text-[11px]">
-                Verified real seller listings
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
-            <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
-              <ThumbsUp size={16} />
-            </div>
-            <div>
-              <span className="font-bold text-slate-900 block">
-                High Customer Ratings
-              </span>
-              <span className="text-slate-500 text-[11px]">
-                Authentic community reviews
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
-            <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
-              <ShieldCheck size={16} />
-            </div>
-            <div>
-              <span className="font-bold text-slate-900 block">
-                Buyer Protection
-              </span>
-              <span className="text-slate-500 text-[11px]">
-                Guaranteed safe & transparent orders
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );
