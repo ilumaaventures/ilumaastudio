@@ -765,9 +765,6 @@ export default function BusinessStoreListing() {
                     }`}
                   >
                     <span>All Industries</span>
-                    <span className="text-[10px] opacity-75 font-normal">
-                      ({stores.length})
-                    </span>
                   </button>
 
                   {/* Categories fetched from backend */}
@@ -794,15 +791,6 @@ export default function BusinessStoreListing() {
                       >
                         <span className="truncate pr-2 text-left">
                           {catName}
-                        </span>
-                        <span
-                          className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${
-                            isSelected
-                              ? "bg-[#2563eb] text-white"
-                              : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
-                          }`}
-                        >
-                          {count}
                         </span>
                       </button>
                     );
@@ -1366,9 +1354,6 @@ export default function BusinessStoreListing() {
                   }`}
                 >
                   <span>All Industries</span>
-                  <span className="text-[10px] text-slate-400">
-                    ({stores.length})
-                  </span>
                 </button>
                 {displayCategoriesList.map((catItem) => {
                   const catName = catItem.name;
@@ -1391,9 +1376,6 @@ export default function BusinessStoreListing() {
                       }`}
                     >
                       <span className="truncate pr-2">{catName}</span>
-                      <span className="text-[10px] text-slate-400">
-                        ({count})
-                      </span>
                     </button>
                   );
                 })}
