@@ -35,6 +35,9 @@ import {
   ArrowRight,
   Shield,
   Zap,
+  Lock,
+  LogIn,
+  UserPlus,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -53,6 +56,18 @@ export default function ServiceDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const isUserLoggedIn = Boolean(
+    isAuthenticated ||
+    (user && user._id) ||
+    (typeof window !== "undefined" &&
+      localStorage.getItem("token") &&
+      localStorage.getItem("token") !== "null" &&
+      localStorage.getItem("token") !== "undefined"),
+  );
+
+  // Authentication Required Popup Modal state
+  const [showAuthRequiredModal, setShowAuthRequiredModal] = useState(false);
+  const [authRequiredIntent, setAuthRequiredIntent] = useState("booking"); // "booking" | "inquiry"
 
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -85,6 +100,29 @@ export default function ServiceDetails() {
   const [inquiryEmail, setInquiryEmail] = useState("");
   const [inquiryPhone, setInquiryPhone] = useState("");
   const [submittingInquiry, setSubmittingInquiry] = useState(false);
+
+  const handleOpenBooking = () => {
+    if (!isUserLoggedIn) {
+      toast.error("Please login to book this service");
+      setAuthRequiredIntent("booking");
+      setShowAuthRequiredModal(true);
+      return;
+    }
+    setShowBookingModal(true);
+  };
+
+  const handleOpenInquiry = (pkg = null) => {
+    if (pkg) {
+      setSelectedPackage(pkg);
+    }
+    if (!isUserLoggedIn) {
+      toast.error("Please login to submit an inquiry");
+      setAuthRequiredIntent("inquiry");
+      setShowAuthRequiredModal(true);
+      return;
+    }
+    setShowInquiryModal(true);
+  };
 
   // Reviews state
   const [reviewsList, setReviewsList] = useState([]);
@@ -245,9 +283,13 @@ export default function ServiceDetails() {
 
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
-    if (!isAuthenticated) {
+    if (!isUserLoggedIn) {
       toast.error("Please login to complete your booking");
-      navigate(`/login?redirect=/services/${id}`);
+      setShowAuthRequiredModal(true);
+      setAuthRequiredIntent("booking");
+      navigate(`/login?redirect=/services/${id}`, {
+        state: { from: `/services/${id}` },
+      });
       return;
     }
 
@@ -305,6 +347,16 @@ export default function ServiceDetails() {
 
   const handleInquirySubmit = async (e) => {
     e.preventDefault();
+    if (!isUserLoggedIn) {
+      toast.error("Please login to submit an inquiry");
+      setShowAuthRequiredModal(true);
+      setAuthRequiredIntent("inquiry");
+      navigate(`/login?redirect=/services/${id}`, {
+        state: { from: `/services/${id}` },
+      });
+      return;
+    }
+
     if (!inquiryMsg.trim()) {
       toast.error("Please provide your project or service requirements");
       return;
@@ -880,8 +932,7 @@ export default function ServiceDetails() {
                               type="button"
                               onClick={() => {
                                 if (isEnquiryOnly) {
-                                  setSelectedPackage(pkg);
-                                  setShowInquiryModal(true);
+                                  handleOpenInquiry(pkg);
                                   return;
                                 }
                                 if (isSelected) {
@@ -902,8 +953,8 @@ export default function ServiceDetails() {
                               {isEnquiryOnly
                                 ? `Enquire for ${pkg.name}`
                                 : isSelected
-                                ? "Package Active ✓"
-                                : `Choose ${pkg.name}`}
+                                  ? "Package Active ✓"
+                                  : `Choose ${pkg.name}`}
                             </button>
                           </div>
                         );
@@ -1479,9 +1530,7 @@ export default function ServiceDetails() {
                 {!isEnquiryOnly && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setShowBookingModal(true);
-                    }}
+                    onClick={handleOpenBooking}
                     className="w-full bg-[#004ac6] hover:bg-blue-700 text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs sm:text-sm transition-all shadow-md shadow-blue-600/20 flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Calendar size={16} />
@@ -1493,7 +1542,7 @@ export default function ServiceDetails() {
 
                 <button
                   type="button"
-                  onClick={() => setShowInquiryModal(true)}
+                  onClick={() => handleOpenInquiry()}
                   className={`w-full py-3.5 px-4 rounded-2xl font-extrabold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer ${
                     isEnquiryOnly
                       ? "bg-[#004ac6] hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 text-sm"
@@ -1539,7 +1588,7 @@ export default function ServiceDetails() {
       </div>
 
       {/* 3. STEP-BY-STEP CUSTOMER BOOKING DRAWER */}
-      {showBookingModal && (
+      {isUserLoggedIn && showBookingModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150 flex flex-col max-h-[90vh]">
             <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50 shrink-0">
@@ -1744,7 +1793,7 @@ export default function ServiceDetails() {
       )}
 
       {/* 4. PROFESSIONAL CUSTOM PROJECT ENQUIRY DRAWER */}
-      {showInquiryModal && (
+      {isUserLoggedIn && showInquiryModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150 flex flex-col max-h-[90vh]">
             <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50 shrink-0">
@@ -1895,6 +1944,77 @@ export default function ServiceDetails() {
                   : "Submit Proposal Request"}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 5. AUTHENTICATION REQUIRED POPUP MODAL */}
+      {showAuthRequiredModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150 p-6 sm:p-7 relative border border-slate-100">
+            <button
+              type="button"
+              onClick={() => setShowAuthRequiredModal(false)}
+              className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="text-center pt-2 pb-2 space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-blue-50 text-[#004ac6] border border-blue-100 flex items-center justify-center mx-auto shadow-xs">
+                <Lock size={28} />
+              </div>
+
+              <div>
+                <h3 className="text-lg font-black text-slate-900">
+                  Login Required
+                </h3>
+                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed font-medium">
+                  {authRequiredIntent === "booking"
+                    ? "Please log in to your account to schedule an appointment and confirm your booking."
+                    : "Please log in to your account to submit a project enquiry or request a custom quotation."}
+                </p>
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="space-y-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAuthRequiredModal(false);
+                    navigate(`/login?redirect=/services/${id}`, {
+                      state: { from: `/services/${id}` },
+                    });
+                  }}
+                  className="w-full bg-[#004ac6] hover:bg-blue-700 text-white font-extrabold py-3.5 px-4 rounded-xl text-xs transition shadow-md shadow-blue-600/20 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <LogIn size={15} />
+                  <span>Log In to Continue</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAuthRequiredModal(false);
+                    navigate(`/register?redirect=/services/${id}`, {
+                      state: { from: `/services/${id}` },
+                    });
+                  }}
+                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold py-3 px-4 rounded-xl text-xs transition flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <UserPlus size={15} />
+                  <span>Create New Account</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowAuthRequiredModal(false)}
+                  className="text-xs text-slate-400 hover:text-slate-600 font-semibold pt-1 cursor-pointer transition block w-full text-center"
+                >
+                  Continue Browsing
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
@@ -88,10 +88,21 @@ function Cart() {
     phone: user?.phone || "",
   });
 
-  // Pincode validation states
+  // Derived cart subtotal
+  const subtotal = useMemo(
+    () =>
+      cartItems.reduce(
+        (acc, item) => acc + (item.price || 0) * (item.quantity || 1),
+        0
+      ),
+    [cartItems]
+  );
+
+  // Pincode validation states with Shadowfax live courier details
   const [pincodeValidation, setPincodeValidation] = useState({
     results: {},
     allAvailable: true,
+    courierInfo: null,
   });
   const [validatingPincode, setValidatingPincode] = useState(false);
 
@@ -427,24 +438,28 @@ function Cart() {
       const zip = shippingAddress.zip?.toString().trim();
       if (/^\d{6}$/.test(zip)) {
         setValidatingPincode(true);
-        const { results, allAvailable } = await validateCartItemsPincode(
+        const { results, allAvailable, courierInfo } = await validateCartItemsPincode(
           cartItems,
           zip,
+          {
+            subtotal,
+            paymentMode: paymentMethod === "cod" ? "COD" : "PREPAID",
+          }
         );
         if (isMounted) {
-          setPincodeValidation({ results, allAvailable });
+          setPincodeValidation({ results, allAvailable, courierInfo });
           setValidatingPincode(false);
         }
       } else {
         const results = {};
         cartItems.forEach((item) => {
           results[item._id] = {
-            available: false,
-            message: "Enter a valid 6-digit pincode to check delivery",
+            available: true,
+            message: "Enter 6-digit PIN code to check Shadowfax delivery",
           };
         });
         if (isMounted) {
-          setPincodeValidation({ results, allAvailable: false });
+          setPincodeValidation({ results, allAvailable: true, courierInfo: null });
           setValidatingPincode(false);
         }
       }
@@ -455,7 +470,7 @@ function Cart() {
     return () => {
       isMounted = false;
     };
-  }, [cartItems, shippingAddress.zip]);
+  }, [cartItems, shippingAddress.zip, paymentMethod, subtotal]);
 
   const handleRemoveCouponQuiet = () => {
     setDiscountAmount(0);
@@ -659,11 +674,6 @@ function Cart() {
     return 5;
   };
 
-  const subtotal = cartItems.reduce(
-    (acc, item) => acc + (item.price || 0) * (item.quantity || 1),
-    0,
-  );
-
   // CompareAtPrice savings
   const productSavings = cartItems.reduce((acc, item) => {
     const comparePrice = Number(item.compareAtPrice) || 0;
@@ -681,7 +691,15 @@ function Cart() {
   }, 0);
 
   const platformFee = 0;
-  const shipping = subtotal >= 5000 || subtotal === 0 ? 0 : 99;
+  // Calculate dynamic shipping strictly based on Shadowfax 3PL courier rate
+  const courierShippingRate =
+    pincodeValidation.courierInfo?.shippingFee !== undefined
+      ? Number(pincodeValidation.courierInfo.shippingFee)
+      : pincodeValidation.courierInfo?.courierRate !== undefined
+        ? Number(pincodeValidation.courierInfo.courierRate)
+        : 79;
+
+  const shipping = cartItems.length === 0 ? 0 : courierShippingRate;
   const taxableAmount = Math.max(0, subtotal - discountAmount + shipping);
   const total = Math.max(
     0,
@@ -699,12 +717,13 @@ function Cart() {
       return;
     }
     if (!shippingAddress.zip || !/^\d{6}$/.test(shippingAddress.zip.trim())) {
-      toast.error("Please enter a valid 6-digit shipping pincode");
+      toast.error("Please enter a valid 6-digit delivery pincode to check Shadowfax serviceability");
       return;
     }
     if (!pincodeValidation.allAvailable) {
       toast.error(
-        "Some items cannot be delivered to the selected pincode. Please update address or remove unavailable products.",
+        pincodeValidation.courierInfo?.message ||
+          "Shadowfax logistics cannot deliver to the entered pincode. Please update address or remove unavailable products."
       );
       return;
     }
@@ -1047,7 +1066,7 @@ function Cart() {
               </div>
             </div>
 
-            {/* Warning Banner if products unavailable */}
+            {/* Warning Banner if products unavailable on Shadowfax */}
             {!pincodeValidation.allAvailable &&
               shippingAddress.zip?.length === 6 && (
                 <div className="bg-rose-50 border border-rose-200 rounded-2xl sm:rounded-3xl p-4 sm:p-5 mb-6 text-rose-800 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs">
@@ -1057,14 +1076,18 @@ function Cart() {
                       className="text-rose-600 shrink-0 mt-0.5"
                     />
                     <div>
-                      <h4 className="font-bold text-sm">Delivery Notice</h4>
+                      <h4 className="font-bold text-sm">Shadowfax Delivery Notice</h4>
                       <p className="text-xs mt-0.5 leading-relaxed">
-                        The following item(s) cannot be delivered to pincode{" "}
-                        <span className="font-bold">{shippingAddress.zip}</span>
-                        :{" "}
-                        <span className="font-semibold">
-                          {unavailableCartItems.map((i) => i.name).join(", ")}
-                        </span>
+                        {pincodeValidation.courierInfo?.message || (
+                          <>
+                            The following item(s) cannot be delivered to pincode{" "}
+                            <span className="font-bold">{shippingAddress.zip}</span>
+                            :{" "}
+                            <span className="font-semibold">
+                              {unavailableCartItems.map((i) => i.name).join(", ")}
+                            </span>
+                          </>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -1201,7 +1224,7 @@ function Cart() {
                                         : item.category}
                                     </span>
                                   )}
-                                  {/* Pincode Availability Status */}
+                                  {/* Shadowfax Pincode Availability Status */}
                                   {shippingAddress.zip?.length === 6 &&
                                     (validatingPincode ? (
                                       <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
@@ -1209,15 +1232,16 @@ function Cart() {
                                           size={10}
                                           className="animate-spin"
                                         />{" "}
-                                        Checking...
+                                        Checking Shadowfax...
                                       </span>
                                     ) : isItemAvailable ? (
                                       <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
-                                        <CheckCircle2 size={11} /> Serviceable
+                                        <CheckCircle2 size={11} /> Shadowfax Deliverable
+                                        {valStatus?.estimatedDays ? ` (${valStatus.estimatedDays}d)` : ""}
                                       </span>
                                     ) : (
                                       <span className="text-[10px] bg-rose-50 text-rose-600 border border-rose-200 px-2 py-0.5 rounded-md font-bold flex items-center gap-1">
-                                        <XCircle size={11} /> Not Deliverable
+                                        <XCircle size={11} /> Not Deliverable via Shadowfax
                                       </span>
                                     ))}
                                 </div>
@@ -1476,36 +1500,34 @@ function Cart() {
                     </span>
                   </h2>
 
-                  {/* Free Shipping Progress bar */}
-                  <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100">
-                    <div className="flex justify-between items-center text-xs font-bold mb-1.5">
-                      <span className="flex items-center gap-1.5 text-slate-700">
-                        <Truck
-                          size={14}
-                          className={
-                            subtotal >= 5000
-                              ? "text-emerald-600"
-                              : "text-[#2563eb]"
-                          }
-                        />
-                        {subtotal >= 5000
-                          ? "Free Express Shipping Unlocked!"
-                          : `Add ₹${5000 - subtotal} more for FREE Delivery`}
+                  {/* Shadowfax 3PL Logistics Rate Card */}
+                  <div className="bg-gradient-to-r from-blue-50/80 via-slate-50 to-indigo-50/60 rounded-2xl p-3 sm:p-3.5 border border-blue-200/70 shadow-2xs">
+                    <div className="flex items-center justify-between text-xs font-bold mb-1">
+                      <span className="flex items-center gap-1.5 text-slate-800">
+                        <Truck size={14} className="text-[#2563eb]" />
+                        <span>Shadowfax Express Delivery</span>
                       </span>
-                      <span className="text-[11px] text-slate-500">
-                        {Math.min(100, Math.round((subtotal / 5000) * 100))}%
+                      <span className="text-[11px] font-mono font-black text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-md">
+                        ₹{shipping}
                       </span>
                     </div>
-                    <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          subtotal >= 5000 ? "bg-emerald-500" : "bg-[#2563eb]"
-                        }`}
-                        style={{
-                          width: `${Math.min(100, Math.max(5, (subtotal / 5000) * 100))}%`,
-                        }}
-                      />
-                    </div>
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      {shippingAddress.zip?.length === 6 &&
+                      pincodeValidation.courierInfo?.serviceable ? (
+                        <>
+                          Direct courier delivery to PIN{" "}
+                          <strong className="text-slate-800">
+                            {shippingAddress.zip}
+                          </strong>{" "}
+                          •{" "}
+                          {pincodeValidation.courierInfo?.deliveryDate
+                            ? `Est. arrival by ${pincodeValidation.courierInfo.deliveryDate}`
+                            : `${pincodeValidation.courierInfo?.estimatedDays || 3} business days`}
+                        </>
+                      ) : (
+                        "Exact courier rate calculated in real-time by Shadowfax 3PL logistics."
+                      )}
+                    </p>
                   </div>
 
                   {/* Detailed Price Breakdown */}
@@ -1533,23 +1555,19 @@ function Cart() {
 
                     <div className="flex justify-between items-center">
                       <div>
-                        <span className="font-medium block">
-                          Shipping & Delivery
+                        <span className="font-medium flex items-center gap-1.5">
+                          <span>Shipping Fee</span>
+                          <span className="text-[10px] bg-blue-100 text-blue-800 font-extrabold px-1.5 py-0.2 rounded">
+                            Shadowfax 3PL
+                          </span>
                         </span>
-                        <span className="text-[10px] text-slate-400">
-                          {subtotal >= 5000
-                            ? "Free delivery applied"
-                            : "Standard delivery fee"}
+                        <span className="text-[10px] text-slate-400 block">
+                          {pincodeValidation.courierInfo?.pricing?.zoneDescription ||
+                            "Express ground & air transit fee"}
                         </span>
                       </div>
                       <span className="font-bold text-slate-900">
-                        {shipping === 0 ? (
-                          <span className="text-emerald-600 font-black">
-                            FREE
-                          </span>
-                        ) : (
-                          `₹${shipping}`
-                        )}
+                        ₹{shipping}
                       </span>
                     </div>
 
@@ -1613,29 +1631,112 @@ function Cart() {
                       </div>
                     )}
                   </div>
-                  {/* Delivery Pincode Bar */}
-                  <div className="bg-slate-50 p-2 sm:p-2.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center gap-2 max-w-full sm:max-w-xs w-full">
-                    <MapPin
-                      size={16}
-                      className="text-[#2563eb] shrink-0 ml-1"
-                    />
-                    <span className="text-[11px] font-bold text-slate-600 shrink-0 hidden xs:inline">
-                      PIN Code:
-                    </span>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      placeholder="Enter 6-digit Pincode"
-                      value={shippingAddress.zip}
-                      onChange={(e) => {
-                        const zipVal = e.target.value.replace(/\D/g, "");
-                        setShippingAddress((prev) => ({
-                          ...prev,
-                          zip: zipVal,
-                        }));
-                      }}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs outline-none focus:border-[#2563eb] font-bold text-slate-900"
-                    />
+                  {/* Delivery Pincode Bar with Shadowfax Live Verification */}
+                  <div className="space-y-2">
+                    <div className="bg-slate-50 p-2 sm:p-2.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center gap-2 max-w-full sm:max-w-xs w-full">
+                      <MapPin
+                        size={16}
+                        className="text-[#2563eb] shrink-0 ml-1"
+                      />
+                      <span className="text-[11px] font-bold text-slate-600 shrink-0 hidden xs:inline">
+                        Delivery PIN:
+                      </span>
+                      <input
+                        type="text"
+                        maxLength={6}
+                        placeholder="Enter 6-digit Pincode"
+                        value={shippingAddress.zip}
+                        onChange={(e) => {
+                          const zipVal = e.target.value.replace(/\D/g, "");
+                          setShippingAddress((prev) => ({
+                            ...prev,
+                            zip: zipVal,
+                          }));
+                        }}
+                        className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs outline-none focus:border-[#2563eb] font-bold text-slate-900"
+                      />
+                      {shippingAddress.zip?.length === 6 && (
+                        <div className="shrink-0 pr-1">
+                          {validatingPincode ? (
+                            <RefreshCw size={14} className="animate-spin text-blue-600" />
+                          ) : pincodeValidation.courierInfo?.serviceable ? (
+                            <CheckCircle2 size={15} className="text-emerald-600" />
+                          ) : (
+                            <XCircle size={15} className="text-rose-600" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Shadowfax Serviceability Status Box */}
+                    {shippingAddress.zip?.length === 6 ? (
+                      validatingPincode ? (
+                        <div className="p-2.5 rounded-xl bg-blue-50/70 border border-blue-200/60 flex items-center gap-2 text-xs text-blue-700">
+                          <RefreshCw size={13} className="animate-spin shrink-0 text-blue-600" />
+                          <span className="font-medium text-[11px]">
+                            Checking Shadowfax logistics serviceability for <strong>{shippingAddress.zip}</strong>...
+                          </span>
+                        </div>
+                      ) : pincodeValidation.courierInfo?.serviceable ? (
+                        <div className="p-3 rounded-2xl bg-emerald-50/90 border border-emerald-200 text-emerald-900 space-y-2 shadow-2xs">
+                          <div className="flex items-center justify-between gap-1.5">
+                            <span className="inline-flex items-center gap-1.5 font-black text-xs text-emerald-800">
+                              <Truck size={14} className="text-emerald-600" />
+                              Shadowfax Express Available
+                            </span>
+                            <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-900 shadow-3xs">
+                              ₹{shipping} Shipping Fee
+                            </span>
+                          </div>
+
+                          <div className="text-[11px] text-emerald-700 leading-tight">
+                            {pincodeValidation.courierInfo?.deliveryDate
+                              ? `Est. Delivery by ${pincodeValidation.courierInfo.deliveryDate} (${pincodeValidation.courierInfo.estimatedDays || 3} Days)`
+                              : pincodeValidation.courierInfo?.message || "Delivery available to your location"}
+                          </div>
+
+                          {/* Live 3PL Rate & Zone Breakdown */}
+                          <div className="flex items-center justify-between pt-1 border-t border-emerald-200/80 text-[10px] text-emerald-800 font-semibold">
+                            <span>
+                              Network: {pincodeValidation.courierInfo?.pricing?.zoneDescription || "All-India Express"}
+                            </span>
+                            <span>
+                              Courier Fee: ₹{shipping}
+                            </span>
+                          </div>
+
+                          {pincodeValidation.courierInfo?.codAvailable && (
+                            <div className="text-[10px] font-semibold text-emerald-700 flex items-center gap-1 pt-0.5">
+                              <Banknote size={11} /> Cash on Delivery (COD) supported
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 space-y-1 shadow-2xs">
+                          <div className="flex items-center justify-between gap-1.5">
+                            <span className="inline-flex items-center gap-1.5 font-bold text-[11px] text-rose-700">
+                              <XCircle size={13} className="text-rose-600" />
+                              Shadowfax Service Unavailable
+                            </span>
+                            <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-rose-100 text-rose-700">
+                              Not Serviceable
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-rose-600 leading-tight">
+                            {pincodeValidation.courierInfo?.message ||
+                              `Shadowfax logistics does not deliver to PIN ${shippingAddress.zip}. Please enter a serviceable pincode.`}
+                          </p>
+                        </div>
+                      )
+                    ) : shippingAddress.zip?.length > 0 ? (
+                      <p className="text-[10px] text-slate-500 pl-1 font-medium">
+                        Enter full 6-digit PIN to check Shadowfax courier delivery.
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-slate-400 pl-1">
+                        Enter delivery pincode to check Shadowfax delivery speed.
+                      </p>
+                    )}
                   </div>
                   {/* Total Amount */}
                   <div className="flex justify-between items-baseline text-base font-black text-slate-900">
@@ -1647,13 +1748,16 @@ function Cart() {
                   <button
                     onClick={handleProceedToCheckout}
                     disabled={
-                      !pincodeValidation.allAvailable || validatingPincode
+                      validatingPincode ||
+                      (shippingAddress.zip?.length === 6 && !pincodeValidation.allAvailable)
                     }
                     className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] active:scale-[0.99] text-white py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider transition shadow-md disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     <span>
-                      {!pincodeValidation.allAvailable
-                        ? "Unavailable Cart check Pincode and Item Avilability"
+                      {validatingPincode
+                        ? "Checking Shadowfax Delivery..."
+                        : shippingAddress.zip?.length === 6 && !pincodeValidation.allAvailable
+                        ? "Pincode Not Serviceable via Shadowfax"
                         : "Proceed to Checkout"}
                     </span>
                     <ArrowRight size={15} />
@@ -1697,11 +1801,18 @@ function Cart() {
                 <button
                   onClick={handleProceedToCheckout}
                   disabled={
-                    !pincodeValidation.allAvailable || validatingPincode
+                    validatingPincode ||
+                    (shippingAddress.zip?.length === 6 && !pincodeValidation.allAvailable)
                   }
                   className="bg-[#2563eb] hover:bg-[#1d4ed8] active:scale-[0.98] text-white px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                 >
-                  <span>Checkout</span>
+                  <span>
+                    {validatingPincode
+                      ? "Checking..."
+                      : shippingAddress.zip?.length === 6 && !pincodeValidation.allAvailable
+                      ? "Unserviceable"
+                      : "Checkout"}
+                  </span>
                   <ArrowRight size={14} />
                 </button>
               </div>
@@ -1917,6 +2028,23 @@ function Cart() {
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs outline-none focus:bg-white focus:border-[#2563eb] font-black text-slate-900"
                         placeholder="e.g. 110001"
                       />
+                      {shippingAddress.zip?.length === 6 && (
+                        <div className="mt-1.5">
+                          {validatingPincode ? (
+                            <span className="text-[11px] text-blue-600 font-medium flex items-center gap-1">
+                              <RefreshCw size={11} className="animate-spin" /> Verifying Shadowfax serviceability...
+                            </span>
+                          ) : pincodeValidation.courierInfo?.serviceable ? (
+                            <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
+                              <CheckCircle2 size={12} /> Shadowfax Express Serviceable ({pincodeValidation.courierInfo?.estimatedDays || 3}d)
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-rose-600 font-bold flex items-center gap-1">
+                              <XCircle size={12} /> Unserviceable via Shadowfax
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -2008,13 +2136,17 @@ function Cart() {
 
                   <button
                     type="submit"
-                    disabled={placingOrder || !pincodeValidation.allAvailable}
+                    disabled={
+                      placingOrder ||
+                      validatingPincode ||
+                      !pincodeValidation.allAvailable
+                    }
                     className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-wider transition shadow-md disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed mt-4"
                   >
                     {placingOrder
                       ? "Processing Order..."
                       : !pincodeValidation.allAvailable
-                        ? "Cannot Place Order (Unavailable Products)"
+                        ? "Cannot Place Order (Shadowfax Unserviceable)"
                         : paymentMethod === "cod"
                           ? `Confirm & Place Order (₹${total})`
                           : `Pay & Place Order (₹${total})`}
@@ -2070,7 +2202,7 @@ function Cart() {
                             </div>
                             {!isAvail && (
                               <p className="text-[10px] text-rose-600 font-bold">
-                                Not deliverable to {shippingAddress.zip}
+                                Not deliverable via Shadowfax to {shippingAddress.zip}
                               </p>
                             )}
                           </div>
@@ -2105,15 +2237,16 @@ function Cart() {
                     )}
 
                     <div className="flex justify-between items-center">
-                      <span>Shipping Fee</span>
-                      <span className="font-bold text-slate-900">
-                        {shipping === 0 ? (
-                          <span className="text-emerald-600 font-bold">
-                            FREE
+                      <span className="flex items-center gap-1.5">
+                        <span>Shipping Fee</span>
+                        {pincodeValidation.courierInfo?.serviceable && (
+                          <span className="text-[10px] bg-blue-100 text-blue-800 font-extrabold px-1.5 py-0.2 rounded">
+                            Shadowfax
                           </span>
-                        ) : (
-                          `₹${shipping}`
                         )}
+                      </span>
+                      <span className="font-bold text-slate-900">
+                        ₹{shipping}
                       </span>
                     </div>
 
@@ -2206,6 +2339,77 @@ function Cart() {
                   </span>
                 </div>
               </div>
+
+              {/* Shadowfax Logistics & Tracking Card */}
+              {Boolean(
+                createdOrder.awbNumber ||
+                  createdOrder.shipments?.[0]?.awb ||
+                  createdOrder.trackingNumber ||
+                  pincodeValidation.courierInfo
+              ) && (
+                <div className="bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-slate-50 rounded-2xl p-4 sm:p-5 border border-blue-200/80 text-left space-y-3 shadow-2xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-blue-200/60 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <Truck size={16} />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-1.5">
+                          <span>Shadowfax Express Delivery</span>
+                          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            AWB Allotted
+                          </span>
+                        </h4>
+                        <p className="text-[11px] text-slate-500">
+                          {pincodeValidation.courierInfo?.deliveryDate
+                            ? `Estimated Delivery: ${pincodeValidation.courierInfo.deliveryDate} (${pincodeValidation.courierInfo.estimatedDays || 3} business days)`
+                            : "Dispatched via Shadowfax logistics network"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Link
+                      to={`/track-order?id=${createdOrder.awbNumber || createdOrder._id}`}
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer shrink-0"
+                    >
+                      <Truck size={14} />
+                      <span>Track Order Live</span>
+                    </Link>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                    <div className="bg-white/80 p-2.5 rounded-xl border border-blue-100">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Courier Partner
+                      </span>
+                      <span className="font-bold text-slate-800 text-xs mt-0.5 block">
+                        Shadowfax Logistics
+                      </span>
+                    </div>
+
+                    <div className="bg-white/80 p-2.5 rounded-xl border border-blue-100">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        AWB Tracking Number
+                      </span>
+                      <span className="font-mono font-bold text-blue-700 text-xs mt-0.5 block truncate">
+                        {createdOrder.awbNumber ||
+                          createdOrder.shipments?.[0]?.awb ||
+                          `SFX${createdOrder._id?.toString().slice(-9).toUpperCase()}`}
+                      </span>
+                    </div>
+
+                    <div className="bg-white/80 p-2.5 rounded-xl border border-blue-100">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Delivery Destination
+                      </span>
+                      <span className="font-bold text-slate-800 text-xs mt-0.5 block truncate">
+                        {shippingAddress.city || "India"} - PIN{" "}
+                        {shippingAddress.zip}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Primary Actions */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">

@@ -71,12 +71,12 @@ export default function ShippingInfo() {
           <section className="space-y-3">
             <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
               <Truck size={18} className="text-[#2563eb]" />
-              2. Shipping Charges & Free Delivery Threshold
+              2. Shipping Charges & Real-Time Shadowfax 3PL Logistics
             </h2>
             <ul className="list-disc pl-5 space-y-1.5 text-slate-600">
-              <li><strong>Standard Orders over ₹999:</strong> Free Delivery on eligible retail items.</li>
-              <li><strong>Orders under ₹999:</strong> Flat nominal shipping fee of ₹49 – ₹99 based on package weight and distance.</li>
-              <li><strong>Express Delivery (Metros):</strong> Expedited next-day or 2-day delivery available for select serviceable hubs.</li>
+              <li><strong>Dynamic Real-Time Rates:</strong> Shipping charges are computed dynamically via Shadowfax based on package weight, parcel dimensions, and destination PIN code zone.</li>
+              <li><strong>Local & Regional Express:</strong> Nominal rates starting from ₹49 for local delivery and ₹69 for regional express transit.</li>
+              <li><strong>National & Metro Transit:</strong> Transparent, competitive courier rates covering 25,000+ PIN codes across India without hidden surcharges.</li>
             </ul>
           </section>
 

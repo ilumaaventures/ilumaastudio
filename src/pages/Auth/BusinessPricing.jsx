@@ -34,7 +34,7 @@ const DEFAULT_4_PLANS = [
     description:
       "For small businesses & startups launching online store or service",
     billingModel: "FIXED",
-    pricing: { monthly: 499, yearly: 399 },
+    pricing: { monthly: 499, yearly: 399, comparisonMonthly: 699, comparisonYearly: 599 },
     popular: false,
     badgeText: "BASIC STORE",
     businessCategoryScope: "ALL",
@@ -62,7 +62,7 @@ const DEFAULT_4_PLANS = [
     name: "Growth",
     description: "For growing brands and scaling multi-channel businesses",
     billingModel: "FIXED",
-    pricing: { monthly: 999, yearly: 799 },
+    pricing: { monthly: 999, yearly: 799, comparisonMonthly: 1499, comparisonYearly: 1199 },
     popular: true,
     badgeText: "MOST POPULAR",
     businessCategoryScope: "ALL",
@@ -97,7 +97,7 @@ const DEFAULT_4_PLANS = [
     description:
       "For established multi-store, service & multi-vendor operations",
     billingModel: "HYBRID",
-    pricing: { monthly: 1999, yearly: 1599 },
+    pricing: { monthly: 1999, yearly: 1599, comparisonMonthly: 2999, comparisonYearly: 2499 },
     commission: { type: "PERCENTAGE", value: 2 },
     popular: false,
     badgeText: "SCALE UP",
@@ -626,6 +626,28 @@ function BusinessPricing() {
     return billing === "yearly" ? y : m;
   };
 
+  const getComparisonMonthlyPrice = (plan) => {
+    if (plan.pricing?.comparisonMonthly !== undefined) return plan.pricing.comparisonMonthly;
+    if (plan.pricing?.comparisonPriceMonthly !== undefined) return plan.pricing.comparisonPriceMonthly;
+    if (plan.pricing?.comparisonMonthlyPrice !== undefined) return plan.pricing.comparisonMonthlyPrice;
+    if (plan.comparisonMonthlyPrice !== undefined) return plan.comparisonMonthlyPrice;
+    return 0;
+  };
+
+  const getComparisonYearlyPrice = (plan) => {
+    if (plan.pricing?.comparisonYearly !== undefined) return plan.pricing.comparisonYearly;
+    if (plan.pricing?.comparisonPriceYearly !== undefined) return plan.pricing.comparisonPriceYearly;
+    if (plan.pricing?.comparisonYearlyPrice !== undefined) return plan.pricing.comparisonYearlyPrice;
+    if (plan.comparisonYearlyPrice !== undefined) return plan.comparisonYearlyPrice;
+    return 0;
+  };
+
+  const getDisplayComparisonPrice = (plan) => {
+    const m = getComparisonMonthlyPrice(plan);
+    const y = getComparisonYearlyPrice(plan);
+    return billing === "yearly" ? y : m;
+  };
+
   const handleSelectPlan = (plan) => {
     if (plan.isCustomTalk) {
       navigate("/contact");
@@ -844,6 +866,11 @@ function BusinessPricing() {
           <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
             {displayedPlans.map((plan, idx) => {
               const price = getDisplayPrice(plan);
+              const comparisonPrice = getDisplayComparisonPrice(plan);
+              const hasDiscount = comparisonPrice > price && comparisonPrice > 0;
+              const discountPercent = hasDiscount
+                ? Math.round(((comparisonPrice - price) / comparisonPrice) * 100)
+                : 0;
               const isSelected = activeCardIndex === idx;
               const isEnterprise = plan.isCustomTalk;
               const isPopular = plan.popular;
@@ -953,25 +980,41 @@ function BusinessPricing() {
 
                   {/* ================= PRICE ================= */}
                   <div className="my-4 border-b border-slate-100 pb-4">
-                    <div className="flex min-h-[42px] items-end gap-1">
-                      {isEnterprise ? (
+                    {isEnterprise ? (
+                      <div className="flex min-h-[50px] items-end">
                         <span className="text-3xl font-black tracking-tight text-amber-600">
                           Let's Talk!
                         </span>
-                      ) : plan.billingModel === "COMMISSION" ? (
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-3xl font-black tracking-tight text-slate-900">
-                            {plan.commission?.value || 0}
-                          </span>
+                      </div>
+                    ) : plan.billingModel === "COMMISSION" ? (
+                      <div className="flex min-h-[50px] items-baseline gap-1">
+                        <span className="text-3xl font-black tracking-tight text-slate-900">
+                          {plan.commission?.value || 0}
+                        </span>
 
-                          <span className="text-xs font-bold text-slate-500">
-                            {plan.commission?.type === "PERCENTAGE"
-                              ? "% Commission"
-                              : "₹ Commission"}
-                          </span>
-                        </div>
-                      ) : (
-                        <>
+                        <span className="text-xs font-bold text-slate-500">
+                          {plan.commission?.type === "PERCENTAGE"
+                            ? "% Commission"
+                            : "₹ Commission"}
+                        </span>
+                      </div>
+                    ) : (
+                      <div>
+                        {/* Strikethrough Cut Comparison Price & % OFF Badge */}
+                        {hasDiscount ? (
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-base font-bold text-slate-400 line-through">
+                              ₹{comparisonPrice.toLocaleString("en-IN")}
+                            </span>
+                            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-800 shadow-2xs">
+                              {discountPercent}% OFF
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="h-5" />
+                        )}
+
+                        <div className="flex items-baseline gap-1">
                           <span className="text-3xl font-black tracking-tight text-slate-900">
                             ₹{price.toLocaleString("en-IN")}
                           </span>
@@ -979,9 +1022,9 @@ function BusinessPricing() {
                           <span className="mb-1 text-[11px] font-semibold text-slate-400">
                             /{billing === "yearly" ? "month" : "month"}
                           </span>
-                        </>
-                      )}
-                    </div>
+                        </div>
+                      </div>
+                    )}
 
                     {isEnterprise && (
                       <p className="mt-1.5 text-[10px] font-semibold leading-4 text-amber-700">

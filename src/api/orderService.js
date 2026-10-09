@@ -47,3 +47,22 @@ export const downloadAndSaveInvoice = async (orderId, invoiceNumber = "") => {
   window.URL.revokeObjectURL(blobUrl);
 };
 
+export const getOrderShipments = async (orderId) => {
+  const response = await baseApi.get(`/shipments/order/${orderId}`);
+  return response.data;
+};
+
+export const trackShipmentLive = async (shipmentId) => {
+  const response = await baseApi.get(`/shipments/${shipmentId}/track`);
+  return response.data;
+};
+
+export const checkShadowfaxServiceability = async (data) => {
+  const response = await baseApi.post("/shipments/serviceability", data);
+  return response.data;
+};
+
+export const trackPublicShipment = async (identifier) => {
+  const response = await baseApi.get(`/shipments/track/${identifier}`);
+  return response.data;
+};

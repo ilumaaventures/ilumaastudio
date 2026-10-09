@@ -1,5 +1,19 @@
 import React, { useState } from "react";
-import { X, Calendar, Clock, User, Phone, CheckCircle, Sparkles } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import {
+  X,
+  Calendar,
+  Clock,
+  User,
+  Phone,
+  CheckCircle,
+  Sparkles,
+  Lock,
+  LogIn,
+  UserPlus,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function BookingModal({
   isOpen,
@@ -10,10 +24,21 @@ export default function BookingModal({
 }) {
   if (!isOpen) return null;
 
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, isAuthenticated } = useSelector((state) => state.auth || {});
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const isUserLoggedIn = Boolean(
+    isAuthenticated ||
+      (user && user._id) ||
+      (token && token !== "null" && token !== "undefined"),
+  );
+
   const [date, setDate] = useState("");
   const [time, setTime] = useState("10:00 AM");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [name, setName] = useState(user?.name || "");
+  const [phone, setPhone] = useState(user?.phone || "");
   const [notes, setNotes] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
@@ -21,6 +46,16 @@ export default function BookingModal({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!isUserLoggedIn) {
+      toast.error("Please log in to complete your booking");
+      navigate(
+        `/login?redirect=${encodeURIComponent(location.pathname + location.search)}`,
+        {
+          state: { from: location.pathname },
+        },
+      );
+      return;
+    }
     setSubmitted(true);
   };
 
@@ -56,7 +91,70 @@ export default function BookingModal({
           <X size={18} />
         </button>
 
-        {submitted ? (
+        {!isUserLoggedIn ? (
+          <div className="text-center py-6 space-y-5">
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto border shadow-xs"
+              style={{
+                backgroundColor: `${primaryColor}15`,
+                borderColor: `${primaryColor}30`,
+                color: primaryColor,
+              }}
+            >
+              <Lock size={30} />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-slate-900">
+                Login Required
+              </h3>
+              <p className="text-xs text-slate-500 max-w-xs mx-auto mt-2 leading-relaxed">
+                Please sign in to your ILumaa account to schedule an appointment
+                or send an inquiry for{" "}
+                <span className="font-bold text-slate-800">
+                  {service?.serviceName || service?.name || "this service"}
+                </span>
+                .
+              </p>
+            </div>
+
+            <div className="space-y-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  resetAndClose();
+                  navigate(
+                    `/login?redirect=${encodeURIComponent(location.pathname + location.search)}`,
+                    {
+                      state: { from: location.pathname },
+                    },
+                  );
+                }}
+                className="w-full py-3.5 rounded-2xl text-white text-xs font-bold transition shadow-md cursor-pointer flex items-center justify-center gap-2 hover:opacity-95"
+                style={{ backgroundColor: primaryColor }}
+              >
+                <LogIn size={15} />
+                <span>Log In to Continue</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  resetAndClose();
+                  navigate(
+                    `/register?redirect=${encodeURIComponent(location.pathname + location.search)}`,
+                    {
+                      state: { from: location.pathname },
+                    },
+                  );
+                }}
+                className="w-full py-3 rounded-2xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer flex items-center justify-center gap-2"
+              >
+                <UserPlus size={15} />
+                <span>Create New Account</span>
+              </button>
+            </div>
+          </div>
+        ) : submitted ? (
           <div className="text-center py-6 space-y-4">
             <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto border border-emerald-100">
               <CheckCircle size={32} />

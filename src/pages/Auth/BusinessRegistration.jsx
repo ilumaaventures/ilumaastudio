@@ -205,7 +205,7 @@ const getFallbackPlans = (categoryScope) => {
         : isBoth
           ? "Scale hybrid operations powering retail storefront and appointment booking."
           : "Scale sales with coupon engine, multi-warehouse shipping and advanced analytics.",
-      pricing: { monthly: 199, yearly: 1990 },
+      pricing: { monthly: 199, yearly: 1990, comparisonMonthly: 349, comparisonYearly: 3490 },
       popular: true,
       businessCategoryScope: isService
         ? "SERVICE"
@@ -234,21 +234,21 @@ const getFallbackPlans = (categoryScope) => {
           ]
         : isBoth
           ? [
-              "500 products & 50 active services",
-              "Unified checkout & booking calendar",
-              "POS integration & barcode support",
-              "Multi-staff & vendor coordination",
-              "Storefront builder with 5 themes",
-              "Comprehensive business analytics",
-            ]
-          : [
-              "Up to 500 product catalog",
-              "2 warehouse hubs & dispatch",
-              "Promotions & coupon engine",
-              "Inventory low-stock alerts",
-              "Storefront builder with 5 themes",
-              "Sales reports & revenue analytics",
-            ],
+            "500 products & 50 active services",
+            "Unified checkout & booking calendar",
+            "POS integration & barcode support",
+            "Multi-staff & vendor coordination",
+            "Storefront builder with 5 themes",
+            "Comprehensive business analytics",
+          ]
+        : [
+            "Up to 500 product catalog",
+            "2 warehouse hubs & dispatch",
+            "Promotions & coupon engine",
+            "Inventory low-stock alerts",
+            "Storefront builder with 5 themes",
+            "Sales reports & revenue analytics",
+          ],
     },
     {
       _id: "scale",
@@ -258,7 +258,7 @@ const getFallbackPlans = (categoryScope) => {
         : isBoth
           ? "Full-scale commerce and booking powerhouse with dedicated POS, APIs & multi-location."
           : "Maximum capacity enterprise ecommerce with multi-warehouse and high-volume order routing.",
-      pricing: { monthly: 499, yearly: 5400 },
+      pricing: { monthly: 499, yearly: 5400, comparisonMonthly: 799, comparisonYearly: 7990 },
       popular: false,
       businessCategoryScope: isService
         ? "SERVICE"
@@ -1445,6 +1445,38 @@ export default function BusinessRegistration() {
                                 )
                               : 0;
 
+                          const compMonthlyPrice = Number(
+                            plan.pricing?.comparisonMonthly ??
+                              plan.pricing?.comparisonPriceMonthly ??
+                              plan.pricing?.comparisonMonthlyPrice ??
+                              0,
+                          );
+
+                          const compYearlyPrice = Number(
+                            plan.pricing?.comparisonYearly ??
+                              plan.pricing?.comparisonPriceYearly ??
+                              plan.pricing?.comparisonYearlyPrice ??
+                              0,
+                          );
+
+                          const currentComparisonPrice =
+                            billingCycle === "yearly"
+                              ? compYearlyPrice
+                              : compMonthlyPrice;
+
+                          const hasComparisonDiscount =
+                            currentComparisonPrice > currentPrice &&
+                            currentComparisonPrice > 0;
+
+                          const comparisonDiscountPercent =
+                            hasComparisonDiscount
+                              ? Math.round(
+                                  ((currentComparisonPrice - currentPrice) /
+                                    currentComparisonPrice) *
+                                    100,
+                                )
+                              : 0;
+
                           const isPopular =
                             plan.isPopular ||
                             plan.is_popular ||
@@ -1526,6 +1558,17 @@ export default function BusinessRegistration() {
 
                                 {/* Price Container */}
                                 <div className="mt-4 pt-3 border-t border-slate-100">
+                                  {hasComparisonDiscount && (
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-sm sm:text-base font-bold text-slate-400 line-through">
+                                        ₹{currentComparisonPrice.toLocaleString("en-IN")}
+                                      </span>
+                                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700 border border-emerald-200">
+                                        {comparisonDiscountPercent}% OFF
+                                      </span>
+                                    </div>
+                                  )}
+
                                   <div className="flex items-baseline gap-1">
                                     <span className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
                                       ₹{currentPrice.toLocaleString("en-IN")}
