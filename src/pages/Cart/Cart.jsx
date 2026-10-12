@@ -48,6 +48,7 @@ import {
 } from "../../api/paymentApi";
 import baseApi from "../../api/baseApi";
 import toast from "react-hot-toast";
+import { playOrderConfirmedSound } from "../../utils/soundEffects";
 import ProductCard from "../../Components/ProductCard";
 import { ProductGridSkeleton } from "../../Components/Skeletons";
 
@@ -805,6 +806,9 @@ function Cart() {
         const order = await placeOrder(orderPayload);
         setCreatedOrder(order);
         dispatch(clearCart());
+        try {
+          playOrderConfirmedSound();
+        } catch (_) {}
         setStep("success");
         window.scrollTo({ top: 0, behavior: "smooth" });
         toast.success("Order placed successfully!");
@@ -859,6 +863,9 @@ function Cart() {
                 });
                 setCreatedOrder(finalOrder);
                 dispatch(clearCart());
+                try {
+                  playOrderConfirmedSound();
+                } catch (_) {}
                 setStep("success");
                 window.scrollTo({ top: 0, behavior: "smooth" });
                 toast.success("Payment successful & order placed!");

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import * as cartService from "../../api/cartService";
+import { playAddToCartSound } from "../../utils/soundEffects";
 
 const getInitialCart = () => {
   try {
@@ -175,6 +176,9 @@ export const addToCart = createAsyncThunk(
       try {
         localStorage.setItem("cartItems", JSON.stringify(mapped));
       } catch (_) {}
+      try {
+        playAddToCartSound();
+      } catch (_) {}
       return mapped;
     } catch (error) {
       console.warn("Backend addToCart error, using resilient fallback:", error);
@@ -239,6 +243,10 @@ export const addToCart = createAsyncThunk(
 
       try {
         localStorage.setItem("cartItems", JSON.stringify(currentItems));
+      } catch (_) {}
+
+      try {
+        playAddToCartSound();
       } catch (_) {}
 
       return currentItems;

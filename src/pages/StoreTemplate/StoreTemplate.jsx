@@ -386,9 +386,9 @@ export default function StoreTemplate() {
           {featuredBusinesses.map((business) => (
             <a
               key={business.id}
-              href={business.url}
-              target="_blank"
-              rel="noopener noreferrer"
+              // href={business.url}
+              // target="_blank"
+              // rel="noopener noreferrer"
               className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-xl"
             >
               {/* Business Preview */}
@@ -413,7 +413,9 @@ export default function StoreTemplate() {
                 {/* Hover Overlay */}
                 <div className="absolute inset-0 flex items-center justify-center bg-slate-950/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                   <Link
-                    // to={`/template-preview/${template.key}`}
+                    to={business.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-slate-900 shadow-lg transition-all duration-200 hover:bg-slate-50 hover:shadow-xl"
                   >
                     <Eye size={15} className="text-indigo-600" />

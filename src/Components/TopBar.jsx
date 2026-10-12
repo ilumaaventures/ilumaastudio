@@ -43,7 +43,7 @@ function TopBar() {
               key={currentAnnouncement?._id || currentIndex}
               className="text-gray-300 block truncate animate-[fadeIn_0.5s_ease-in-out]"
             >
-              {currentAnnouncement?.description || "Welcome to ILumaaStudio!"}
+              {currentAnnouncement?.description || "Welcome to ILUMAA Studio!"}
             </span>
           </div>
         </div>
