@@ -98,8 +98,14 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-gray-800 text-center text-[10px] text-gray-500">
-          &copy; {new Date().getFullYear()} {business?.businessName || "Store"}. All rights reserved. Powered by ILumaa.
+        <div className="mt-8 pt-8 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-[10px] text-gray-500">
+          <span>&copy; {new Date().getFullYear()} {business?.businessName || "Store"}. All rights reserved. Powered by ILumaa.</span>
+          <div className="flex items-center gap-4">
+            <Link to="/cookie-policy" className="hover:text-gray-300 transition">Cookie Policy</Link>
+            <Link to="/accessibility" className="hover:text-gray-300 transition">Accessibility</Link>
+            <Link to="/privacy" className="hover:text-gray-300 transition">Privacy</Link>
+            <Link to="/terms" className="hover:text-gray-300 transition">Terms</Link>
+          </div>
         </div>
       </div>
     </footer>

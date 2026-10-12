@@ -72,6 +72,8 @@ import TrackOrder from "./pages/Order/TrackOrder";
 // Legal, Policies, Shipping & Contact Pages
 import PrivacyPolicy from "./pages/Legal/PrivacyPolicy";
 import TermsOfService from "./pages/Legal/TermsOfService";
+import CookiePolicy from "./pages/Legal/CookiePolicy";
+import AccessibilityPolicy from "./pages/Legal/AccessibilityPolicy";
 import ContactUs from "./pages/Contact/ContactUs";
 import ShippingInfo from "./pages/Shipping/ShippingInfo";
 import RefundReturnPolicy from "./pages/Legal/RefundReturnPolicy";
@@ -232,6 +234,12 @@ function App() {
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/terms-and-conditions" element={<TermsOfService />} />
+            <Route path="/cookies" element={<CookiePolicy />} />
+            <Route path="/cookie-policy" element={<CookiePolicy />} />
+            <Route path="/cookies-policy" element={<CookiePolicy />} />
+            <Route path="/accessibility" element={<AccessibilityPolicy />} />
+            <Route path="/accessibility-statement" element={<AccessibilityPolicy />} />
+            <Route path="/accessibility-policy" element={<AccessibilityPolicy />} />
             <Route path="/contact" element={<ContactUs />} />
             <Route path="/contact-us" element={<ContactUs />} />
             <Route path="/shipping" element={<ShippingInfo />} />

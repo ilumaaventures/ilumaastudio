@@ -89,7 +89,7 @@ export default function ProductCard({
     product.business?.businessName ||
     product.business?.name ||
     product.brand ||
-    "ILumaaStore";
+    "ILUMAA Store";
 
   // Short Subtitle / Description
   const subtitleText =
@@ -285,9 +285,22 @@ export default function ProductCard({
       typeof window !== "undefined" &&
       (window.location.pathname.startsWith("/store") ||
         (window.location.pathname !== "/" &&
-          !["/shop", "/cart", "/wishlist", "/login", "/register", "/about", "/contact", "/categories", "/profile", "/help", "/services", "/compare", "/flash-deals", "/offers"].some((p) =>
-            window.location.pathname.startsWith(p),
-          )));
+          ![
+            "/shop",
+            "/cart",
+            "/wishlist",
+            "/login",
+            "/register",
+            "/about",
+            "/contact",
+            "/categories",
+            "/profile",
+            "/help",
+            "/services",
+            "/compare",
+            "/flash-deals",
+            "/offers",
+          ].some((p) => window.location.pathname.startsWith(p))));
 
     const cardSource =
       product.source || (isStorePath || product.storeName ? "store" : "studio");
@@ -534,11 +547,19 @@ export default function ProductCard({
                   aria-label="Remove item from cart"
                 >
                   <span className="flex items-center gap-1.5 group-hover/cartbtn:hidden">
-                    <Check size={14} strokeWidth={2.5} className="text-emerald-600" />
+                    <Check
+                      size={14}
+                      strokeWidth={2.5}
+                      className="text-emerald-600"
+                    />
                     <span>In Cart</span>
                   </span>
                   <span className="hidden group-hover/cartbtn:flex items-center gap-1.5">
-                    <Trash2 size={13} strokeWidth={2.2} className="text-rose-600" />
+                    <Trash2
+                      size={13}
+                      strokeWidth={2.2}
+                      className="text-rose-600"
+                    />
                     <span>Remove</span>
                   </span>
                 </button>

@@ -181,21 +181,32 @@ export default function ContactUs() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
-        {/* Header Hero */}
-        <div className="text-center max-w-2xl mx-auto space-y-3">
+    <div className="bg-[#f8fafc] min-h-screen py-6 sm:py-10 font-sans text-slate-800 antialiased pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 text-left">
+        {/* Breadcrumb Navigation */}
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+          <Link to="/" className="hover:text-blue-600 transition-colors">
+            Home
+          </Link>
+          <ChevronRight size={12} />
+          <span className="text-slate-900 font-bold">
+            Customer Helpdesk & Contact
+          </span>
+        </div>
+
+        {/* Header Hero Banner */}
+        <div className="bg-white rounded-3xl p-6 sm:p-10 lg:p-12 border border-slate-200/80 shadow-xs space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-[#2563eb] text-xs font-black uppercase tracking-wider">
             <Headphones size={13} />
             Customer Helpdesk & Issues Center
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
             How Can We Help You Today?
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-            Report an issue, make an inquiry, or talk partnerships with our
-            executive team. Every request receives a tracked reference ticket
-            with rapid resolution.
+          <p className="text-xs sm:text-sm text-slate-500 max-w-3xl leading-relaxed">
+            Report an issue, inquire about an ongoing shipment, or speak with
+            our executive team. Every request receives a tracked reference
+            ticket with dedicated resolution SLAs.
           </p>
         </div>
 

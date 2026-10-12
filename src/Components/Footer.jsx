@@ -160,7 +160,7 @@ function Footer() {
               </li>
               <li>
                 <Link
-                  to="/careers"
+                  to="/about"
                   className="hover:text-white transition-colors"
                 >
                   Careers
@@ -168,7 +168,7 @@ function Footer() {
               </li>
               <li>
                 <Link
-                  to="/press"
+                  to="/about"
                   className="hover:text-white transition-colors"
                 >
                   Press
@@ -176,7 +176,7 @@ function Footer() {
               </li>
               <li>
                 <Link
-                  to="/affiliate"
+                  to="/about"
                   className="hover:text-[#2563eb] transition-colors"
                 >
                   Affiliate Program
@@ -196,7 +196,7 @@ function Footer() {
           {/* Col 5: Policies & Payment Methods */}
           <div className="space-y-3">
             <h4 className="font-bold text-white uppercase tracking-wider text-xs">
-              Policies
+              Policies & Legal
             </h4>
             <ul className="space-y-2 text-[11px]">
               <li>
@@ -221,6 +221,22 @@ function Footer() {
                   className="hover:text-white transition-colors"
                 >
                   Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/cookie-policy"
+                  className="hover:text-white transition-colors"
+                >
+                  Cookie Policy
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/accessibility"
+                  className="hover:text-white transition-colors"
+                >
+                  Accessibility Statement
                 </Link>
               </li>
               <li>

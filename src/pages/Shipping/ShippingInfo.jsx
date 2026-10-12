@@ -1,121 +1,263 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Truck, Clock, MapPin, PackageCheck, AlertCircle, ChevronRight, ShieldCheck, HelpCircle } from "lucide-react";
+import {
+  Truck,
+  Clock,
+  MapPin,
+  PackageCheck,
+  AlertCircle,
+  ChevronRight,
+  ShieldCheck,
+  HelpCircle,
+  ArrowRight,
+  Search,
+  CheckCircle2,
+} from "lucide-react";
 
 export default function ShippingInfo() {
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-        
-        {/* Breadcrumb */}
+    <div className="bg-[#f8fafc] min-h-screen py-6 sm:py-10 font-sans text-slate-800 antialiased pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 text-left">
+        {/* Breadcrumb Navigation */}
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-          <Link to="/" className="hover:text-[#2563eb]">Home</Link>
+          <Link to="/" className="hover:text-blue-600 transition-colors">
+            Home
+          </Link>
           <ChevronRight size={12} />
-          <span className="text-slate-900 font-bold">Shipping Info & Policies</span>
+          <span className="text-slate-900 font-bold">
+            Shipping Info & Delivery Policy
+          </span>
         </div>
 
-        {/* Header Hero */}
-        <div className="bg-white rounded-3xl p-8 sm:p-10 border border-slate-200/80 shadow-xs space-y-4">
+        {/* Header Hero Banner */}
+        <div className="bg-white rounded-3xl p-6 sm:p-10 lg:p-12 border border-slate-200/80 shadow-xs space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-[#2563eb] text-xs font-black uppercase tracking-wider">
             <Truck size={13} />
-            Nationwide Logistics
+            Nationwide Logistics & 3PL Standards
           </div>
-          <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">
             Shipping & Delivery Information
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
-            We are dedicated to delivering your orders swiftly, securely, and seamlessly across India. Find complete details about dispatch timelines, shipping rates, courier partners, and tracking.
+          <p className="text-xs sm:text-sm text-slate-500 max-w-3xl leading-relaxed">
+            We are dedicated to delivering your orders swiftly, securely, and
+            seamlessly across India. Find complete details about dispatch SLAs,
+            real-time courier rates, verified logistics partners, and tracking.
           </p>
         </div>
 
         {/* Highlight Perks Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2563eb] flex items-center justify-center">
-              <Clock size={20} />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="p-6 sm:p-7 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#2563eb] flex items-center justify-center font-bold">
+              <Clock size={22} />
             </div>
-            <h3 className="font-bold text-slate-900 text-xs sm:text-sm">Fast 24-48h Dispatch</h3>
-            <p className="text-xs text-slate-500">Items are packed and verified within 1-2 business days.</p>
+            <h3 className="font-bold text-slate-900 text-sm sm:text-base">
+              Fast 24-48h Dispatch
+            </h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Items are carefully verified, packed in tamper-proof mailers, and
+              dispatched within 1-2 business days.
+            </p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <Truck size={20} />
+          <div className="p-6 sm:p-7 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+              <Truck size={22} />
             </div>
-            <h3 className="font-bold text-slate-900 text-xs sm:text-sm">3-5 Days Delivery</h3>
-            <p className="text-xs text-slate-500">Standard ground and air transit across 25,000+ PIN codes.</p>
+            <h3 className="font-bold text-slate-900 text-sm sm:text-base">
+              3-5 Days Nationwide Delivery
+            </h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Optimized ground and air transit coverage servicing 25,000+ PIN
+              codes across metro and regional India.
+            </p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-              <PackageCheck size={20} />
+          <div className="p-6 sm:p-7 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+              <PackageCheck size={22} />
             </div>
-            <h3 className="font-bold text-slate-900 text-xs sm:text-sm">Live SMS & Courier Tracking</h3>
-            <p className="text-xs text-slate-500">Real-time status notifications at every delivery milestone.</p>
+            <h3 className="font-bold text-slate-900 text-sm sm:text-base">
+              Live Courier Tracking
+            </h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Automated SMS, WhatsApp, and email alerts updated in real time at
+              every parcel transit milestone.
+            </p>
           </div>
         </div>
 
-        {/* Shipping Policies & FAQ Section */}
-        <div className="bg-white rounded-3xl p-8 sm:p-10 border border-slate-200/80 shadow-xs space-y-8 text-xs sm:text-sm leading-relaxed text-slate-600">
-          
-          <section className="space-y-3">
-            <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
-              <MapPin size={18} className="text-[#2563eb]" />
-              1. Delivery Coverage & Serviceable PIN Codes
-            </h2>
-            <p>
-              ILumaaStudio delivers to most urban and regional locations throughout India. Before placing an order, you can check delivery eligibility and expected timelines for your specific PIN code directly on any product details page.
-            </p>
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
-              <Truck size={18} className="text-[#2563eb]" />
-              2. Shipping Charges & Real-Time Shadowfax 3PL Logistics
-            </h2>
-            <ul className="list-disc pl-5 space-y-1.5 text-slate-600">
-              <li><strong>Dynamic Real-Time Rates:</strong> Shipping charges are computed dynamically via Shadowfax based on package weight, parcel dimensions, and destination PIN code zone.</li>
-              <li><strong>Local & Regional Express:</strong> Nominal rates starting from ₹49 for local delivery and ₹69 for regional express transit.</li>
-              <li><strong>National & Metro Transit:</strong> Transparent, competitive courier rates covering 25,000+ PIN codes across India without hidden surcharges.</li>
-            </ul>
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
-              <PackageCheck size={18} className="text-[#2563eb]" />
-              3. Courier Partners & Tracking
-            </h2>
-            <p>
-              We partner with India's premier logistics carriers (including Blue Dart, Delhivery, DTDC, and Shadowfax). Once dispatched, you will receive a tracking link via SMS and email. You can also monitor your live package status anytime via our <Link to="/track-order" className="text-[#2563eb] font-bold hover:underline">Track Order page</Link>.
-            </p>
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
-              <AlertCircle size={18} className="text-[#2563eb]" />
-              4. Damaged Packages or Delivery Discrepancies
-            </h2>
-            <p>
-              If your package appears visibly tampered with or damaged upon arrival, we advise taking photos before unboxing and refusing receipt or reporting the issue to our customer support within 48 hours for immediate replacement.
-            </p>
-          </section>
-
-          {/* Track order CTA */}
-          <div className="p-6 rounded-2xl bg-blue-50 border border-blue-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="space-y-1 text-center sm:text-left">
-              <h4 className="font-bold text-slate-900 text-sm">Already Have an Order Number?</h4>
-              <p className="text-xs text-slate-500">Track your ongoing shipment status with one click.</p>
+        {/* 12-Column Two-Column Organization */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column (4 cols): Quick Track & Courier Partners */}
+          <div className="lg:col-span-4 space-y-6 sticky top-24 self-start">
+            {/* Track Shipment Launchpad */}
+            <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#2563eb] flex items-center justify-center font-bold">
+                  <Search size={18} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">
+                    Track Existing Shipment
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Live transit telemetry
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Already placed an order? Enter your order or airway bill (AWB)
+                number to check real-time courier coordinates.
+              </p>
+              <Link
+                to="/track-order"
+                className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-4 py-3 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-2 shadow-sm"
+              >
+                <span>Track Your Package</span>
+                <ArrowRight size={14} />
+              </Link>
             </div>
-            <Link
-              to="/track-order"
-              className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-colors shrink-0"
-            >
-              Track Your Shipment
-            </Link>
+
+            {/* Courier Network Box */}
+            <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-4">
+              <h3 className="font-bold text-slate-900 text-sm">
+                Certified Logistics Partners
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                We fulfill packages through India's premier logistics backbones:
+              </p>
+              <div className="space-y-2 text-xs font-semibold text-slate-700">
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                  <span>Blue Dart Express</span>
+                  <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded">Air Priority</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                  <span>Delhivery Surface & Express</span>
+                  <span className="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">25K+ PINs</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                  <span>Shadowfax Hyperlocal & 3PL</span>
+                  <span className="text-[10px] text-purple-600 font-bold bg-purple-50 px-2 py-0.5 rounded">Smart Routing</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                  <span>DTDC Courier Network</span>
+                  <span className="text-[10px] text-slate-600 font-bold bg-slate-200/60 px-2 py-0.5 rounded">Regional Hubs</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Shipping Support Card */}
+            <div className="p-6 rounded-3xl bg-blue-50/80 border border-blue-100 shadow-xs space-y-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-100 text-[#2563eb] flex items-center justify-center font-bold">
+                  <HelpCircle size={16} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 text-xs">
+                    Shipping Support
+                  </h4>
+                  <p className="text-[11px] text-slate-500">
+                    Delivery questions or delays?
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Contact our customer support if your delivery is delayed or if
+                you need to modify recipient instructions.
+              </p>
+              <Link
+                to="/contact"
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                <span>Contact Logistics Desk</span>
+                <ArrowRight size={13} />
+              </Link>
+            </div>
           </div>
 
-        </div>
+          {/* Right Column (8 cols): Detailed Shipping Policies Section */}
+          <div className="lg:col-span-8 bg-white rounded-3xl p-6 sm:p-10 border border-slate-200/80 shadow-xs space-y-8 text-xs sm:text-sm leading-relaxed text-slate-600">
+            <section className="space-y-3">
+              <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2.5">
+                <MapPin size={20} className="text-[#2563eb] shrink-0" />
+                1. Delivery Coverage & Serviceable PIN Codes
+              </h2>
+              <p>
+                ILumaaStudio delivers to most urban and regional locations
+                throughout India. Before placing an order, you can check delivery
+                eligibility and expected arrival timelines for your specific PIN
+                code directly on any product details page using our live pincode
+                checker.
+              </p>
+            </section>
 
+            <section className="space-y-3">
+              <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2.5">
+                <Truck size={20} className="text-[#2563eb] shrink-0" />
+                2. Shipping Charges & Real-Time Logistics Rates
+              </h2>
+              <ul className="list-disc pl-5 space-y-2 text-slate-600">
+                <li>
+                  <strong>Dynamic Real-Time Rates:</strong> Shipping charges are
+                  computed dynamically via automated logistics engines based on
+                  package dead weight, volumetric dimensions, and destination
+                  PIN code zones.
+                </li>
+                <li>
+                  <strong>Local & Regional Express:</strong> Nominal rates
+                  starting from ₹49 for local delivery and ₹69 for regional
+                  express transit.
+                </li>
+                <li>
+                  <strong>Free Shipping Thresholds:</strong> Select collections
+                  qualify for zero shipping fees on orders exceeding ₹999 or
+                  during platform promotional flash events.
+                </li>
+                <li>
+                  <strong>Transparent Invoicing:</strong> Courier fees are
+                  clearly itemized during cart checkout without hidden handling
+                  or fuel surcharges.
+                </li>
+              </ul>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2.5">
+                <PackageCheck size={20} className="text-[#2563eb]" />
+                3. Courier Partners & Tracking Telemetry
+              </h2>
+              <p>
+                We partner with India's premier logistics carriers including Blue
+                Dart, Delhivery, DTDC, and Shadowfax. Once your parcel departs our
+                fulfillment center, you receive an automated tracking link via
+                SMS, WhatsApp, and email. You can also monitor your live package
+                status anytime via our{" "}
+                <Link
+                  to="/track-order"
+                  className="text-[#2563eb] font-bold hover:underline"
+                >
+                  Track Order page
+                </Link>
+                .
+              </p>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2.5">
+                <AlertCircle size={20} className="text-[#2563eb]" />
+                4. Damaged Packages or Delivery Discrepancies
+              </h2>
+              <p>
+                If your package appears visibly tampered with, damaged, or unsealed
+                upon courier arrival, we advise taking photographs before unboxing
+                and either refusing receipt or reporting the issue to our customer
+                support within 48 hours for immediate replacement under our buyer
+                protection policy.
+              </p>
+            </section>
+          </div>
+        </div>
       </div>
     </div>
   );
