@@ -9,7 +9,8 @@ import {
 } from "../../redux/reducers/cartReducer";
 import { toggleWishlist } from "../../redux/reducers/wishlistReducer";
 import toast from "react-hot-toast";
-import { PRODUCTS, formatPrice } from "./constants";
+import { formatPrice } from "./constants";
+import { ProductGridSkeleton } from "./components/StarlingSkeletons";
 import Icon from "./components/Icon";
 import ProductCard from "./components/ProductCard";
 import ProductModal from "./components/ProductModal";
@@ -24,6 +25,8 @@ export default function StarlingCollection() {
     products,
     categories: storeCategories,
     storeHomePath: contextHomePath,
+    loading = false,
+    isProductsLoading = false,
   } = useStore();
 
   const storeHomePath =
@@ -51,7 +54,7 @@ export default function StarlingCollection() {
     if (Array.isArray(products) && products.length > 0) {
       return products;
     }
-    return PRODUCTS || [];
+    return [];
   }, [products]);
 
   // Map store categories by ID and name (never exposing raw 24-char hex IDs)
@@ -442,7 +445,9 @@ export default function StarlingCollection() {
         </div>
 
         {/* Products Grid */}
-        {filteredProducts.length === 0 ? (
+        {loading || isProductsLoading ? (
+          <ProductGridSkeleton count={8} />
+        ) : filteredProducts.length === 0 ? (
           <div className="text-center py-12 space-y-3 bg-white/40 rounded-2xl border border-cream-dark/50">
             <p className="text-text-muted text-sm font-light">
               No keepsakes currently found in "{activeCategory}".

@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ShoppingCart, Heart, User, Sparkles } from "lucide-react";
 import { useSelector } from "react-redux";
 import { useStore } from "../../Store/StoreContext";
+import StarlingAnnouncementBar from "./StarlingAnnouncementBar";
 
 export default function StarlingNavbar() {
   const { business, storeHomePath: contextHomePath } = useStore();
@@ -103,7 +104,8 @@ export default function StarlingNavbar() {
   };
 
   return (
-    <header
+    <>
+      <header
       className={`sticky top-0 z-50 transition-all duration-300 ${
         scrolled
           ? "bg-[#FCFAF7]/95 backdrop-blur-md shadow-md border-b border-[#C5A880]/20"
@@ -259,5 +261,9 @@ export default function StarlingNavbar() {
         </div>
       )}
     </header>
+
+    {/* Announcement Bar - outside fixed/sticky header so it is NEVER fixed when scrolling */}
+    <StarlingAnnouncementBar />
+  </>
   );
 }

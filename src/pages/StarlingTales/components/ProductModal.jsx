@@ -3,6 +3,7 @@ import Icon from "./Icon";
 import { formatPrice } from "../constants";
 import { useStore } from "../../Store/StoreContext";
 import baseApi from "../../../api/baseApi";
+import ProductReviewsSection from "./ProductReviewsSection";
 
 export default function ProductModal({
   product,
@@ -585,6 +586,16 @@ export default function ProductModal({
                   <div className="pb-4">{renderPolicyContent(pol.content)}</div>
                 </details>
               ))}
+            </div>
+
+            {/* Real Professional Customer Reviews & Review Submission */}
+            <div className="pt-6 border-t border-cream-dark">
+              <ProductReviewsSection
+                productId={product.id || product._id}
+                productName={product.name}
+                initialRating={product.rating}
+                initialReviewCount={product.reviews}
+              />
             </div>
           </div>
         </div>

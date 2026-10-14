@@ -1,14 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./StarlingTales.css";
-import {
-  PRODUCTS,
-  RESIDENTS,
-  navLinks,
-  pillars,
-  FREE_SHIPPING_THRESHOLD,
-  formatPrice,
-  readStorage,
-} from "./constants";
+import { pillars } from "./constants";
 import Icon from "./components/Icon";
 import Botanical from "./components/Botanical";
 import HeartDivider from "./components/HeartDivider";

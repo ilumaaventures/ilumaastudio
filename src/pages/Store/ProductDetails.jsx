@@ -30,6 +30,8 @@ import { addToCart } from "../../redux/reducers/cartReducer";
 import { toggleWishlist } from "../../redux/reducers/wishlistReducer";
 import toast from "react-hot-toast";
 import { useStore } from "./StoreContext";
+import ProductReviewsSection from "../StarlingTales/components/ProductReviewsSection";
+import { ProductDetailSkeleton } from "../StarlingTales/components/StarlingSkeletons";
 
 export default function ProductDetails() {
   const { businessName: paramBusinessName, id } = useParams();
@@ -547,6 +549,15 @@ export default function ProductDetails() {
 
           {/* Tab Content Panels */}
           <div className="pt-2">
+            {activeTab === "reviews" && (
+              <ProductReviewsSection
+                productId={product._id || product.id || id}
+                productName={product.name}
+                initialRating={product.rating || 5}
+                initialReviewCount={product.numReviews || 0}
+              />
+            )}
+
             {activeTab === "description" && (
               <div className="space-y-4 text-slate-700 leading-relaxed text-sm">
                 <h3 className="text-base font-black text-slate-900">About this item</h3>

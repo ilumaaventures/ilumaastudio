@@ -10,17 +10,18 @@ import {
 } from "../../redux/reducers/cartReducer";
 import { toggleWishlist } from "../../redux/reducers/wishlistReducer";
 import toast from "react-hot-toast";
-import { navLinks, formatPrice, PRODUCTS } from "./constants";
+import { navLinks, formatPrice } from "./constants";
 import Icon from "./components/Icon";
 import ProductCard from "./components/ProductCard";
 import ProductModal from "./components/ProductModal";
 import CartDrawer from "./components/CartDrawer";
+import { ProductGridSkeleton } from "./components/StarlingSkeletons";
 import { useNavigate } from "react-router-dom";
 export default function StarlingTalesProduct() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   // Retrieve data from Store Context (API fetched)
-  const { products, categories: storeCategories } = useStore();
+  const { products, categories: storeCategories, loading = false, isProductsLoading = false } = useStore() || {};
 
   // Retrieve data from Redux Store
   const cartItems = useSelector((s) => s.cart?.cartItems || []);
@@ -34,7 +35,7 @@ export default function StarlingTalesProduct() {
     if (Array.isArray(products) && products.length > 0) {
       return products;
     }
-    return PRODUCTS || [];
+    return [];
   }, [products]);
 
   // Map store categories by ID and name (never exposing raw 24-char hex IDs)
@@ -423,21 +424,50 @@ export default function StarlingTalesProduct() {
           </div> */}
         </div>
 
-        {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {filteredProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              isWishlisted={wishlistItems.some(
-                (item) => item._id === product.id,
-              )}
-              onWishlist={handleWishlistToggle}
-              onQuickView={setQuickViewId}
-              onAddToCart={handleAddToCart}
-            />
-          ))}
-        </div>
+        {/* Products Grid / Skeletons */}
+        {loading || isProductsLoading ? (
+          <ProductGridSkeleton count={8} />
+        ) : filteredProducts.length === 0 ? (
+          <div className="text-center py-20 px-4 bg-white rounded-3xl border border-cream-dark max-w-lg mx-auto space-y-4">
+            <div className="w-16 h-16 rounded-full bg-[#FAF7F2] text-[#C5A880] mx-auto flex items-center justify-center border border-[#E8DFC8]">
+              <Icon name="bag" className="w-7 h-7" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-display text-xl font-semibold text-text-dark">
+                No Keepsakes Available
+              </h3>
+              <p className="text-xs text-text-muted leading-relaxed font-light">
+                {activeCategory !== "All"
+                  ? `There are currently no items cataloged under "${activeCategory}".`
+                  : "Our nursery artisans are currently stitching new companions."}
+              </p>
+            </div>
+            {activeCategory !== "All" && (
+              <button
+                type="button"
+                onClick={() => setActiveCategory("All")}
+                className="px-5 py-2.5 rounded-full bg-text-dark text-cream text-xs uppercase tracking-wider font-semibold hover:bg-text-dark/90 transition"
+              >
+                View All Categories
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {filteredProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                isWishlisted={wishlistItems.some(
+                  (item) => item._id === product.id,
+                )}
+                onWishlist={handleWishlistToggle}
+                onQuickView={setQuickViewId}
+                onAddToCart={handleAddToCart}
+              />
+            ))}
+          </div>
+        )}
       </main>
       {/* Cart Drawer */}
       {cartOpen && (

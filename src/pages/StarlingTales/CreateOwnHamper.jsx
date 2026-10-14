@@ -25,7 +25,8 @@ import toast from "react-hot-toast";
 import "./StarlingTales.css";
 import { useStore } from "../Store/StoreContext";
 import { addToCart, clearCart } from "../../redux/reducers/cartReducer";
-import { PRODUCTS, formatPrice } from "./constants";
+import { formatPrice } from "./constants";
+import { ProductGridSkeleton } from "./components/StarlingSkeletons";
 import HeartDivider from "./components/HeartDivider";
 import CartDrawer from "./components/CartDrawer";
 
@@ -88,6 +89,8 @@ export default function CreateOwnHamper() {
     products: apiProducts,
     storeHomePath: contextHomePath,
     business,
+    loading = false,
+    isProductsLoading = false,
   } = useStore();
 
   const storeHomePath =
@@ -121,9 +124,7 @@ export default function CreateOwnHamper() {
   // Filter Nursery Collection Products directly
   const nurseryProducts = useMemo(() => {
     const rawList =
-      Array.isArray(apiProducts) && apiProducts.length > 0
-        ? apiProducts
-        : PRODUCTS || [];
+      Array.isArray(apiProducts) ? apiProducts : [];
 
     return rawList
       .filter((p) => {
@@ -401,7 +402,9 @@ export default function CreateOwnHamper() {
                 </span>
               </div>
 
-              {filteredProducts.length === 0 ? (
+              {loading || isProductsLoading ? (
+                <ProductGridSkeleton count={6} />
+              ) : filteredProducts.length === 0 ? (
                 <div className="text-center py-12 bg-white rounded-2xl border border-[#E8DFC8]/60 p-6 space-y-2">
                   <p className="text-sm text-[#5B5B5B] font-light">
                     No nursery products found matching "{searchQuery}".
