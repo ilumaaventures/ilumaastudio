@@ -205,7 +205,12 @@ const getFallbackPlans = (categoryScope) => {
         : isBoth
           ? "Scale hybrid operations powering retail storefront and appointment booking."
           : "Scale sales with coupon engine, multi-warehouse shipping and advanced analytics.",
-      pricing: { monthly: 199, yearly: 1990, comparisonMonthly: 349, comparisonYearly: 3490 },
+      pricing: {
+        monthly: 199,
+        yearly: 1990,
+        comparisonMonthly: 349,
+        comparisonYearly: 3490,
+      },
       popular: true,
       businessCategoryScope: isService
         ? "SERVICE"
@@ -234,21 +239,21 @@ const getFallbackPlans = (categoryScope) => {
           ]
         : isBoth
           ? [
-            "500 products & 50 active services",
-            "Unified checkout & booking calendar",
-            "POS integration & barcode support",
-            "Multi-staff & vendor coordination",
-            "Storefront builder with 5 themes",
-            "Comprehensive business analytics",
-          ]
-        : [
-            "Up to 500 product catalog",
-            "2 warehouse hubs & dispatch",
-            "Promotions & coupon engine",
-            "Inventory low-stock alerts",
-            "Storefront builder with 5 themes",
-            "Sales reports & revenue analytics",
-          ],
+              "500 products & 50 active services",
+              "Unified checkout & booking calendar",
+              "POS integration & barcode support",
+              "Multi-staff & vendor coordination",
+              "Storefront builder with 5 themes",
+              "Comprehensive business analytics",
+            ]
+          : [
+              "Up to 500 product catalog",
+              "2 warehouse hubs & dispatch",
+              "Promotions & coupon engine",
+              "Inventory low-stock alerts",
+              "Storefront builder with 5 themes",
+              "Sales reports & revenue analytics",
+            ],
     },
     {
       _id: "scale",
@@ -258,7 +263,12 @@ const getFallbackPlans = (categoryScope) => {
         : isBoth
           ? "Full-scale commerce and booking powerhouse with dedicated POS, APIs & multi-location."
           : "Maximum capacity enterprise ecommerce with multi-warehouse and high-volume order routing.",
-      pricing: { monthly: 499, yearly: 5400, comparisonMonthly: 799, comparisonYearly: 7990 },
+      pricing: {
+        monthly: 499,
+        yearly: 5400,
+        comparisonMonthly: 799,
+        comparisonYearly: 7990,
+      },
       popular: false,
       businessCategoryScope: isService
         ? "SERVICE"
@@ -376,6 +386,7 @@ export default function BusinessRegistration() {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [verifiedEmail, setVerifiedEmail] = useState("");
   const [showOtpModal, setShowOtpModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState("next_step"); // 'quick_submit' | 'next_step'
   const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""]);
   const [otpSending, setOtpSending] = useState(false);
   const [otpVerifying, setOtpVerifying] = useState(false);
@@ -403,6 +414,7 @@ export default function BusinessRegistration() {
       [name]: value,
     }));
   };
+
   const validateStep1 = () => {
     if (!formData.legal_business_name.trim()) {
       toast.error("Legal Business Name is required.");
@@ -421,15 +433,10 @@ export default function BusinessRegistration() {
       toast.error("Password must be at least 6 characters long.");
       return false;
     }
-    return true;
-  };
-
-  const validateStep2 = () => {
     if (!formData.business_phone.trim()) {
-      toast.error("Contact phone number is required.");
+      toast.error("Mobile number is required.");
       return false;
     }
-
     const digitsOnly = formData.business_phone
       .trim()
       .replace(/[\s\-\(\)\+]/g, "");
@@ -440,13 +447,22 @@ export default function BusinessRegistration() {
       toast.error("Please enter a valid 10 or 12 digit mobile number.");
       return false;
     }
+    if (!formData.business_category) {
+      toast.error("Please select a Business Category.");
+      return false;
+    }
     return true;
   };
 
-  const handleInitiateOtp = async () => {
+  const validateStep2 = () => {
+    return true;
+  };
+
+  const handleInitiateOtp = async (action = "next_step") => {
     if (!validateStep1()) return;
 
     try {
+      setPendingAction(action);
       setOtpSending(true);
       setOtpError("");
       setOtpCode(["", "", "", "", "", ""]);
@@ -481,11 +497,17 @@ export default function BusinessRegistration() {
       setOtpVerifying(true);
       setOtpError("");
       await verifyOTP(formData.business_email, fullOtp);
-      toast.success("Email verified successfully! Proceeding to Step 2.");
+      toast.success("Email verified successfully!");
       setIsEmailVerified(true);
-      setVerifiedEmail(formData.business_email.trim().toLowerCase());
+      const currentVerified = formData.business_email.trim().toLowerCase();
+      setVerifiedEmail(currentVerified);
       setShowOtpModal(false);
-      setStep(2);
+
+      if (pendingAction === "quick_submit") {
+        await executeRegistration({ useLaunchPlan: true });
+      } else {
+        setStep(2);
+      }
     } catch (err) {
       console.error("OTP verification failed:", err);
       const msg = err.response?.data?.message || "Invalid or expired OTP code.";
@@ -493,6 +515,19 @@ export default function BusinessRegistration() {
       toast.error(msg);
     } finally {
       setOtpVerifying(false);
+    }
+  };
+
+  const handleStep1QuickSubmit = () => {
+    if (!validateStep1()) return;
+
+    if (
+      isEmailVerified &&
+      verifiedEmail === formData.business_email.trim().toLowerCase()
+    ) {
+      executeRegistration({ useLaunchPlan: true });
+    } else {
+      handleInitiateOtp("quick_submit");
     }
   };
 
@@ -505,7 +540,7 @@ export default function BusinessRegistration() {
     ) {
       setStep(2);
     } else {
-      handleInitiateOtp();
+      handleInitiateOtp("next_step");
     }
   };
 
@@ -722,13 +757,38 @@ export default function BusinessRegistration() {
       console.error("Error registering on Bkonnect:", error);
     }
   };
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateStep1() || !validateStep2()) return;
-    if (!formData.plan) {
-      toast.error("Please select a subscription plan.");
-      return;
-    }
+  const getDefaultLaunchPlanId = () => {
+    const launchInFiltered = filteredPlans.find(
+      (p) =>
+        p.name?.toLowerCase().includes("launch") ||
+        p.isFree ||
+        Number(p.pricing?.monthly ?? p.price ?? 0) === 0,
+    );
+    if (launchInFiltered) return launchInFiltered._id;
+
+    const launchInAll = plans.find(
+      (p) =>
+        p.name?.toLowerCase().includes("launch") ||
+        p.isFree ||
+        Number(p.pricing?.monthly ?? p.price ?? 0) === 0,
+    );
+    if (launchInAll) return launchInAll._id;
+
+    if (filteredPlans.length > 0) return filteredPlans[0]._id;
+    return "launch";
+  };
+
+  const executeRegistration = async ({
+    useLaunchPlan = false,
+    planId = null,
+  } = {}) => {
+    if (!validateStep1()) return;
+
+    const targetPlanId =
+      planId ||
+      (useLaunchPlan
+        ? getDefaultLaunchPlanId()
+        : formData.plan || getDefaultLaunchPlanId());
 
     try {
       setLoading(true);
@@ -752,7 +812,7 @@ export default function BusinessRegistration() {
         websiteUrl: formData.website_url,
         ownerPassword: formData.ownerPassword,
         ownerName: formData.legal_business_name,
-        plan: formData.plan,
+        plan: targetPlanId,
       };
 
       await registerBusiness(postData);
@@ -768,6 +828,16 @@ export default function BusinessRegistration() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!validateStep1() || !validateStep2()) return;
+    if (!formData.plan) {
+      toast.error("Please select a subscription plan.");
+      return;
+    }
+    await executeRegistration({ planId: formData.plan });
   };
 
   if (isSubmitted) {
@@ -963,10 +1033,10 @@ export default function BusinessRegistration() {
               <div className="mb-8 border-b border-slate-100 pb-6">
                 <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-3">
                   <span className={step >= 1 ? "text-[#C9956C] font-bold" : ""}>
-                    1. Credentials
+                    1. Account & Category
                   </span>
                   <span className={step >= 2 ? "text-[#C9956C] font-bold" : ""}>
-                    2. Business Scale
+                    2. Business Scale (Optional)
                   </span>
                   <span className={step >= 3 ? "text-[#C9956C] font-bold" : ""}>
                     3. Choose Plan
@@ -984,14 +1054,20 @@ export default function BusinessRegistration() {
                 onSubmit={handleSubmit}
                 className="space-y-6 text-xs font-medium"
               >
-                {/* STEP 1: Profile & Password */}
+                {/* STEP 1: Basic Details, Credentials & Business Category */}
                 {step === 1 && (
                   <div className="space-y-5">
-                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                      <Building2 size={16} className="text-[#C9956C]" /> Step 1:
-                      Account Credentials & Identity
-                    </h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <Building2 size={16} className="text-[#C9956C]" /> Step
+                        1: Basic Details & Category
+                      </h3>
+                      <span className="text-[11px] font-semibold text-slate-400">
+                        Essential Setup
+                      </span>
+                    </div>
 
+                    {/* Field 1: Business Name */}
                     <div>
                       <label className="block text-slate-700 font-semibold mb-1.5">
                         Legal Business Name *
@@ -1014,6 +1090,7 @@ export default function BusinessRegistration() {
                       </div>
                     </div>
 
+                    {/* Field 2: Business Email */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="block text-slate-700 font-semibold">
@@ -1054,6 +1131,7 @@ export default function BusinessRegistration() {
                       </div>
                     </div>
 
+                    {/* Field 3: Password */}
                     <div>
                       <label className="block text-slate-700 font-semibold mb-1.5">
                         Owner Password *
@@ -1086,86 +1164,41 @@ export default function BusinessRegistration() {
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      disabled={otpSending}
-                      onClick={handleStep1Proceed}
-                      className="w-full py-3.5 rounded-xl bg-slate-900 font-bold text-white text-sm hover:bg-slate-800 transition cursor-pointer flex items-center justify-center gap-2 shadow-md mt-4 disabled:opacity-50"
-                    >
-                      {otpSending ? (
-                        <>
-                          <Loader2 size={16} className="animate-spin" /> Sending
-                          Verification Code...
-                        </>
-                      ) : isEmailVerified &&
-                        verifiedEmail ===
-                          formData.business_email.trim().toLowerCase() ? (
-                        <>
-                          Continue to Business Scale <ArrowRight size={16} />
-                        </>
-                      ) : (
-                        <>
-                          Verify Email & Continue <ArrowRight size={16} />
-                        </>
-                      )}
-                    </button>
-                    <div className="mt-3 text-[11px] text-slate-500 text-center">
-                      {" "}
-                      Business Account?{" "}
-                      <Link
-                        to={import.meta.env.VITE_DASHBOARD_URL}
-                        className="font-semibold text-[#2563eb] hover:underline"
-                      >
-                        {" "}
-                        Login Here{" "}
-                      </Link>{" "}
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 2: Business Category & Contact */}
-                {step === 2 && (
-                  <div className="space-y-5">
-                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                      <BriefcaseBusiness size={16} className="text-[#C9956C]" />{" "}
-                      Step 2: Scale & Operations
-                    </h3>
-
+                    {/* Field 4: Mobile No & Field 5: Business Category */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Field 4: Mobile Number */}
                       <div>
                         <label className="block text-slate-700 font-semibold mb-1.5">
-                          Legal Structure
+                          Mobile Number *
                         </label>
-                        <select
-                          name="business_type"
-                          value={formData.business_type}
-                          onChange={handleChange}
-                          className="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3.5 py-2.5 text-slate-900 focus:border-[#C9956C] focus:bg-white outline-none transition"
-                        >
-                          {businessTypes.length > 0
-                            ? businessTypes.map((bt) => (
-                                <option key={bt._id} value={bt._id}>
-                                  {bt.name} ({bt.code || "Type"})
-                                </option>
-                              ))
-                            : BUSINESS_TYPES.map((bt) => (
-                                <option key={bt.value} value={bt.value}>
-                                  {bt.label}
-                                </option>
-                              ))}
-                        </select>
+                        <div className="relative">
+                          <Phone
+                            size={16}
+                            className="absolute left-3.5 top-3 text-slate-400"
+                          />
+                          <input
+                            type="tel"
+                            name="business_phone"
+                            value={formData.business_phone}
+                            onChange={handleChange}
+                            placeholder="+91 98765 43210"
+                            required
+                            className="w-full rounded-xl border border-slate-300 bg-slate-50/50 pl-10 pr-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:border-[#C9956C] focus:bg-white outline-none transition"
+                          />
+                        </div>
                       </div>
 
+                      {/* Field 5: Business Category */}
                       <div>
                         <label className="block text-slate-700 font-semibold mb-1.5">
-                          Business Category / Industry *
+                          Business Category *
                         </label>
                         <select
                           name="business_category"
                           value={formData.business_category}
                           onChange={handleChange}
                           required
-                          className="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3.5 py-2.5 text-slate-900 focus:border-[#C9956C] focus:bg-white outline-none transition"
+                          className="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3.5 py-2.5 text-slate-900 focus:border-[#C9956C] focus:bg-white outline-none transition cursor-pointer"
                         >
                           {businessCategories.length > 0 ? (
                             businessCategories.map((cat) => {
@@ -1209,7 +1242,132 @@ export default function BusinessRegistration() {
                       </div>
                     </div>
 
+                    {/* Step 1 Actions: Quick Submit with Default Launch Plan OR Proceed to Step 2 */}
+                    <div className="pt-2 space-y-3">
+                      {/* Option 1: Quick Register & Submit with Default Launch Plan */}
+                      <button
+                        type="button"
+                        disabled={loading || otpSending}
+                        onClick={handleStep1QuickSubmit}
+                        className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-600 via-[#C9956C] to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition cursor-pointer disabled:opacity-50"
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" />{" "}
+                            Submitting Registration...
+                          </>
+                        ) : otpSending && pendingAction === "quick_submit" ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" />{" "}
+                            Sending Verification Code...
+                          </>
+                        ) : (
+                          <>
+                            <Zap
+                              size={16}
+                              className="text-amber-200 fill-amber-200"
+                            />
+                            Register with Free Launch Plan
+                          </>
+                        )}
+                      </button>
+                      <p className="text-[11px] text-center text-slate-500 font-medium -mt-1">
+                        Instant access with default Launch plan • No credit card
+                        required
+                      </p>
+
+                      {/* Divider */}
+                      <div className="relative flex items-center justify-center my-2">
+                        <div className="border-t border-slate-200 w-full" />
+                        <span className="bg-white px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                          Or
+                        </span>
+                        <div className="border-t border-slate-200 w-full" />
+                      </div>
+
+                      {/* Option 2: Proceed to Step 2 */}
+                      <button
+                        type="button"
+                        disabled={loading || otpSending}
+                        onClick={handleStep1Proceed}
+                        className="w-full py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition cursor-pointer disabled:opacity-50"
+                      >
+                        {otpSending && pendingAction === "next_step" ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" />{" "}
+                            Sending Verification Code...
+                          </>
+                        ) : isEmailVerified &&
+                          verifiedEmail ===
+                            formData.business_email.trim().toLowerCase() ? (
+                          <>
+                            Continue to Business Scale (Step 2){" "}
+                            <ArrowRight size={16} />
+                          </>
+                        ) : (
+                          <>
+                            Verify Email & Continue to Step 2{" "}
+                            <ArrowRight size={16} />
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="mt-3 text-[11px] text-slate-500 text-center">
+                      {" "}
+                      Already have a Business Account?{" "}
+                      <Link
+                        to={import.meta.env.VITE_DASHBOARD_URL}
+                        className="font-semibold text-[#2563eb] hover:underline"
+                      >
+                        {" "}
+                        Login Here{" "}
+                      </Link>{" "}
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 2: Business Scale & Additional Operations */}
+                {step === 2 && (
+                  <div className="space-y-5">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <BriefcaseBusiness
+                          size={16}
+                          className="text-[#C9956C]"
+                        />{" "}
+                        Step 2: Additional Business Details
+                      </h3>
+                      <span className="text-[11px] font-semibold text-slate-400">
+                        Optional Details
+                      </span>
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-slate-700 font-semibold mb-1.5">
+                          Legal Structure
+                        </label>
+                        <select
+                          name="business_type"
+                          value={formData.business_type}
+                          onChange={handleChange}
+                          className="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3.5 py-2.5 text-slate-900 focus:border-[#C9956C] focus:bg-white outline-none transition cursor-pointer"
+                        >
+                          {businessTypes.length > 0
+                            ? businessTypes.map((bt) => (
+                                <option key={bt._id} value={bt._id}>
+                                  {bt.name} ({bt.code || "Type"})
+                                </option>
+                              ))
+                            : BUSINESS_TYPES.map((bt) => (
+                                <option key={bt.value} value={bt.value}>
+                                  {bt.label}
+                                </option>
+                              ))}
+                        </select>
+                      </div>
+
                       <div>
                         <label className="block text-slate-700 font-semibold mb-1.5">
                           Employee Scale
@@ -1218,7 +1376,7 @@ export default function BusinessRegistration() {
                           name="business_size"
                           value={formData.business_size}
                           onChange={handleChange}
-                          className="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3.5 py-2.5 text-slate-900 focus:border-[#C9956C] focus:bg-white outline-none transition"
+                          className="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3.5 py-2.5 text-slate-900 focus:border-[#C9956C] focus:bg-white outline-none transition cursor-pointer"
                         >
                           {BUSINESS_SIZES.map((sz) => (
                             <option key={sz} value={sz}>
@@ -1226,27 +1384,6 @@ export default function BusinessRegistration() {
                             </option>
                           ))}
                         </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-slate-700 font-semibold mb-1.5">
-                          Contact Phone *
-                        </label>
-                        <div className="relative">
-                          <Phone
-                            size={16}
-                            className="absolute left-3.5 top-3 text-slate-400"
-                          />
-                          <input
-                            type="text"
-                            name="business_phone"
-                            value={formData.business_phone}
-                            onChange={handleChange}
-                            placeholder="+91 98765 43210"
-                            required
-                            className="w-full rounded-xl border border-slate-300 bg-slate-50/50 pl-10 pr-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:border-[#C9956C] focus:bg-white outline-none transition"
-                          />
-                        </div>
                       </div>
                     </div>
 
@@ -1272,7 +1409,7 @@ export default function BusinessRegistration() {
                       </div>
 
                       <div>
-                        <label className="block text-slate-300 font-semibold mb-1.5">
+                        <label className="block text-slate-700 font-semibold mb-1.5">
                           LinkedIn Profile (Optional)
                         </label>
                         <div className="relative">
@@ -1292,22 +1429,39 @@ export default function BusinessRegistration() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 pt-2">
+                    <div className="flex flex-col sm:flex-row items-center gap-3 pt-3">
                       <button
                         type="button"
                         onClick={() => setStep(1)}
-                        className="py-3 px-5 rounded-xl border border-slate-300 font-bold text-slate-700 text-sm hover:bg-slate-100 transition cursor-pointer flex items-center gap-1.5"
+                        className="w-full sm:w-auto py-3 px-5 rounded-xl border border-slate-300 font-bold text-slate-700 text-sm hover:bg-slate-100 transition cursor-pointer flex items-center justify-center gap-1.5"
                       >
                         <ArrowLeft size={16} /> Back
                       </button>
+
+                      <button
+                        type="button"
+                        disabled={loading}
+                        onClick={() =>
+                          executeRegistration({ useLaunchPlan: true })
+                        }
+                        className="w-full sm:w-auto flex-1 py-3 px-4 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 font-bold text-amber-900 text-sm transition cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        {loading ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <Zap size={15} className="text-[#C9956C]" />
+                        )}
+                        Submit with Free Launch Plan
+                      </button>
+
                       <button
                         type="button"
                         onClick={() => {
                           if (validateStep2()) setStep(3);
                         }}
-                        className="flex-1 py-3.5 rounded-xl bg-slate-900 font-bold text-white text-sm hover:bg-slate-800 transition cursor-pointer flex items-center justify-center gap-2 shadow-md"
+                        className="w-full sm:w-auto flex-1 py-3 px-4 rounded-xl bg-slate-900 font-bold text-white text-sm hover:bg-slate-800 transition cursor-pointer flex items-center justify-center gap-2 shadow-md"
                       >
-                        Select Platform Plan <ArrowRight size={16} />
+                        Select Platform Plan (Step 3) <ArrowRight size={16} />
                       </button>
                     </div>
                   </div>
@@ -1561,7 +1715,10 @@ export default function BusinessRegistration() {
                                   {hasComparisonDiscount && (
                                     <div className="flex items-center gap-2 mb-1">
                                       <span className="text-sm sm:text-base font-bold text-slate-400 line-through">
-                                        ₹{currentComparisonPrice.toLocaleString("en-IN")}
+                                        ₹
+                                        {currentComparisonPrice.toLocaleString(
+                                          "en-IN",
+                                        )}
                                       </span>
                                       <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700 border border-emerald-200">
                                         {comparisonDiscountPercent}% OFF
@@ -2028,6 +2185,10 @@ export default function BusinessRegistration() {
                   <Loader2 size={16} className="animate-spin" /> Verifying
                   Code...
                 </>
+              ) : pendingAction === "quick_submit" ? (
+                <>
+                  <CheckCircle2 size={16} /> Verify & Complete Registration
+                </>
               ) : (
                 <>
                   <CheckCircle2 size={16} /> Verify & Proceed to Step 2
@@ -2055,7 +2216,9 @@ export default function BusinessRegistration() {
                   <button
                     type="button"
                     disabled={otpSending}
-                    onClick={handleInitiateOtp}
+                    onClick={() =>
+                      handleInitiateOtp(pendingAction || "next_step")
+                    }
                     className="text-[#C9956C] hover:underline font-bold cursor-pointer"
                   >
                     {otpSending ? "Sending..." : "Resend OTP"}
