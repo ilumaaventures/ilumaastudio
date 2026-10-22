@@ -820,9 +820,7 @@ function TrackOrder() {
                     <div className="flex justify-between pt-2">
                       <span className="text-slate-500 font-medium">Shipping</span>
                       <span className="font-bold text-slate-900">
-                        {order.shippingPrice > 0
-                          ? `₹${order.shippingPrice.toLocaleString("en-IN")}`
-                          : "Free Delivery"}
+                        ₹{(Number(order.shippingPrice) || 0).toLocaleString("en-IN")}
                       </span>
                     </div>
 

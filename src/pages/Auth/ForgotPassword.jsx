@@ -15,6 +15,7 @@ import {
   resetPassword,
 } from "../../api/authService";
 import ilumaIcon from "../../assests/iluma_icon.png";
+import PasswordStrengthMeter from "../../components/PasswordStrengthMeter";
 
 function ForgotPassword() {
   const [step, setStep] = useState(1);
@@ -277,6 +278,7 @@ function ForgotPassword() {
                           className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#2563eb] transition-colors text-slate-900 dark:text-white font-medium"
                         />
                       </div>
+                      <PasswordStrengthMeter password={formData.password} />
                     </div>
 
                     <div className="space-y-1">

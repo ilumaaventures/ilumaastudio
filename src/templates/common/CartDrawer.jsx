@@ -29,15 +29,6 @@ export default function CartDrawer({
     (sum, item) => sum + (Number(item.price) || 0) * (item.quantity || 1),
     0
   );
-  const freeShippingThreshold = 499;
-  const progressToFreeShipping = Math.min(
-    100,
-    (subtotal / freeShippingThreshold) * 100
-  );
-  const remainingForFreeShipping = Math.max(
-    0,
-    freeShippingThreshold - subtotal
-  ).toFixed(2);
 
   const primaryColor = themeColors.primary || "#4F46E5";
 
@@ -67,21 +58,10 @@ export default function CartDrawer({
             </button>
           </div>
 
-          {/* Free Shipping Progress */}
-          <div className="bg-slate-50 px-6 py-3 border-b border-slate-100">
-            <div className="text-xs font-semibold text-slate-700 mb-1.5">
-              {remainingForFreeShipping > 0 ? (
-                <>Add <span className="font-bold">{currency}{remainingForFreeShipping}</span> more for <span className="text-emerald-600 font-bold">FREE Express Delivery</span></>
-              ) : (
-                <span className="text-emerald-600 font-bold">🎉 You've unlocked FREE Express Delivery!</span>
-              )}
-            </div>
-            <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-emerald-500 transition-all duration-300"
-                style={{ width: `${progressToFreeShipping}%` }}
-              />
-            </div>
+          {/* Delivery Note */}
+          <div className="bg-slate-50 px-6 py-2.5 border-b border-slate-100 flex items-center justify-between text-xs text-slate-600">
+            <span>Live Shadowfax Delivery</span>
+            <span className="font-semibold text-slate-800">Exact rate computed at cart</span>
           </div>
 
           {/* Item List */}
@@ -161,18 +141,15 @@ export default function CartDrawer({
                 </span>
               </div>
               <div className="flex justify-between items-center text-xs text-slate-600">
-                <span>Estimated Shipping</span>
-                <span className="font-semibold text-emerald-600">
-                  {remainingForFreeShipping == 0 ? "FREE" : `${currency}49.00`}
+                <span>Shipping</span>
+                <span className="font-medium text-slate-500">
+                  Calculated at Checkout
                 </span>
               </div>
               <div className="border-t border-slate-100 pt-2 flex justify-between items-center font-bold text-sm text-slate-900">
-                <span>Total</span>
+                <span>Subtotal</span>
                 <span>
-                  {currency}
-                  {(
-                    subtotal + (remainingForFreeShipping == 0 ? 0 : 49)
-                  ).toFixed(2)}
+                  {currency}{subtotal.toFixed(2)}
                 </span>
               </div>
 

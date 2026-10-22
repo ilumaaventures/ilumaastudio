@@ -163,7 +163,7 @@ export default function Profile() {
         returnModalItem.item._id,
         returnForm.reason,
         returnForm.requestType,
-        returnForm.notes
+        returnForm.notes,
       );
       toast.success(`${returnForm.requestType} request submitted successfully`);
       setReturnModalItem(null);
@@ -260,7 +260,9 @@ export default function Profile() {
       try {
         setLoadingBookings(true);
         const res = await getBookings();
-        const list = Array.isArray(res) ? res : res?.bookings || res?.data || [];
+        const list = Array.isArray(res)
+          ? res
+          : res?.bookings || res?.data || [];
         setCustomerBookings(list);
       } catch (err) {
         console.error("Bookings load error:", err);
@@ -272,7 +274,9 @@ export default function Profile() {
     const loadAddressesData = async () => {
       try {
         const res = await getAddresses();
-        const list = Array.isArray(res) ? res : res?.addresses || res?.data || [];
+        const list = Array.isArray(res)
+          ? res
+          : res?.addresses || res?.data || [];
         if (list.length > 0) setAddresses(list);
       } catch (err) {
         console.error("Addresses load fallback:", err);
@@ -352,9 +356,9 @@ export default function Profile() {
             a._id === editingAddressId
               ? { ...a, ...newAddress }
               : newAddress.isDefault
-              ? { ...a, isDefault: false }
-              : a
-          )
+                ? { ...a, isDefault: false }
+                : a,
+          ),
         );
         toast.success("Address updated successfully!");
       } else {
@@ -396,17 +400,20 @@ export default function Profile() {
     try {
       await apiSetDefaultAddress(id);
       setAddresses((prev) =>
-        prev.map((a) => ({ ...a, isDefault: a._id === id }))
+        prev.map((a) => ({ ...a, isDefault: a._id === id })),
       );
       toast.success("Default address updated!");
     } catch (err) {
       console.error("Set default error:", err);
-      toast.error(err.response?.data?.message || "Failed to update default address");
+      toast.error(
+        err.response?.data?.message || "Failed to update default address",
+      );
     }
   };
 
   const handleDeleteAddress = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this address?")) return;
+    if (!window.confirm("Are you sure you want to delete this address?"))
+      return;
     try {
       await apiDeleteAddress(id);
       setAddresses((prev) => prev.filter((a) => a._id !== id));
@@ -520,7 +527,6 @@ export default function Profile() {
 
           {/* Right Main Content (9 cols) */}
           <main className="lg:col-span-9 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-            
             {/* TAB: PROFILE DETAILS */}
             {activeTab === "profile" && (
               <div className="space-y-6">
@@ -619,14 +625,18 @@ export default function Profile() {
                       Loyalty Points & Platform Rewards
                     </h2>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Earn points on purchases and referrals, share your code, and redeem rewards
+                      Earn points on purchases and referrals, share your code,
+                      and redeem rewards
                     </p>
                   </div>
                   <button
                     onClick={fetchLoyaltyData}
                     className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-xl transition cursor-pointer"
                   >
-                    <RefreshCw size={16} className={loadingLoyalty ? "animate-spin" : ""} />
+                    <RefreshCw
+                      size={16}
+                      className={loadingLoyalty ? "animate-spin" : ""}
+                    />
                   </button>
                 </div>
 
@@ -638,8 +648,12 @@ export default function Profile() {
                         <Award size={16} /> Total Loyalty Points
                       </div>
                       <div className="text-4xl sm:text-5xl font-black tracking-tight text-white flex items-baseline gap-2">
-                        {(loyaltyAccount?.loyaltyPoint ?? 100).toLocaleString("en-IN")}
-                        <span className="text-sm font-bold text-blue-300">PTS</span>
+                        {(loyaltyAccount?.loyaltyPoint ?? 100).toLocaleString(
+                          "en-IN",
+                        )}
+                        <span className="text-sm font-bold text-blue-300">
+                          PTS
+                        </span>
                       </div>
                     </div>
 
@@ -653,15 +667,23 @@ export default function Profile() {
                           {loyaltyAccount?.referralCode || "..."}
                         </span>
                         <button
-                          onClick={() => handleCopyCode(loyaltyAccount?.referralCode)}
+                          onClick={() =>
+                            handleCopyCode(loyaltyAccount?.referralCode)
+                          }
                           className="bg-white text-[#2563eb] hover:bg-blue-50 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow"
                         >
-                          {copiedCode ? <Check size={14} /> : <Copy size={14} />}
+                          {copiedCode ? (
+                            <Check size={14} />
+                          ) : (
+                            <Copy size={14} />
+                          )}
                           {copiedCode ? "Copied" : "Copy"}
                         </button>
                       </div>
                       <p className="text-[10px] text-blue-100 mt-1.5 font-medium">
-                        Share this code: Both you & your friend get <strong className="text-white">+50 Points</strong> on qualifying purchase!
+                        Share this code: Both you & your friend get{" "}
+                        <strong className="text-white">+50 Points</strong> on
+                        qualifying purchase!
                       </p>
                     </div>
                   </div>
@@ -697,7 +719,10 @@ export default function Profile() {
                                   {reward.rewardType.replace(/_/g, " ")}
                                 </span>
                                 <span className="text-xs font-black text-blue-600 dark:text-blue-400">
-                                  {reward.requiredPoints.toLocaleString("en-IN")} PTS
+                                  {reward.requiredPoints.toLocaleString(
+                                    "en-IN",
+                                  )}{" "}
+                                  PTS
                                 </span>
                               </div>
                               <h4 className="font-extrabold text-slate-900 dark:text-white text-sm">
@@ -711,8 +736,12 @@ export default function Profile() {
                             </div>
 
                             <button
-                              onClick={() => handleRedeemRewardAction(reward._id)}
-                              disabled={!isEligible || redeemingId === reward._id}
+                              onClick={() =>
+                                handleRedeemRewardAction(reward._id)
+                              }
+                              disabled={
+                                !isEligible || redeemingId === reward._id
+                              }
                               className={`w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-1.5 cursor-pointer ${
                                 isEligible
                                   ? "bg-[#2563eb] hover:bg-[#1d4ed8] text-white shadow-md shadow-blue-500/20"
@@ -751,7 +780,10 @@ export default function Profile() {
                               {red.reward?.name || "Redeemed Reward"}
                             </p>
                             <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
-                              Code: <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{red.code}</span>
+                              Code:{" "}
+                              <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                {red.code}
+                              </span>
                             </p>
                           </div>
                           <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
@@ -775,7 +807,10 @@ export default function Profile() {
                   ) : (
                     <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 overflow-hidden">
                       {loyaltyTx.map((tx) => (
-                        <div key={tx._id} className="p-4 flex items-center justify-between text-xs">
+                        <div
+                          key={tx._id}
+                          className="p-4 flex items-center justify-between text-xs"
+                        >
                           <div className="space-y-0.5">
                             <div className="flex items-center gap-2">
                               <span
@@ -783,24 +818,30 @@ export default function Profile() {
                                   tx.source === "WELCOME_BONUS"
                                     ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200"
                                     : tx.source === "REFERRAL"
-                                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                                    : tx.source === "REWARD_REDEEM"
-                                    ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
-                                    : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                      : tx.source === "REWARD_REDEEM"
+                                        ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
+                                        : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
                                 }`}
                               >
                                 {tx.source.replace(/_/g, " ")}
                               </span>
                               <span className="text-[10px] text-slate-400 font-semibold">
-                                {new Date(tx.createdAt).toLocaleDateString("en-IN")}
+                                {new Date(tx.createdAt).toLocaleDateString(
+                                  "en-IN",
+                                )}
                               </span>
                             </div>
-                            <p className="font-bold text-slate-800 dark:text-slate-200">{tx.description}</p>
+                            <p className="font-bold text-slate-800 dark:text-slate-200">
+                              {tx.description}
+                            </p>
                           </div>
 
                           <span
                             className={`font-black text-sm ${
-                              tx.points > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+                              tx.points > 0
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : "text-red-600 dark:text-red-400"
                             }`}
                           >
                             {tx.points > 0 ? `+${tx.points}` : tx.points} PTS
@@ -819,16 +860,28 @@ export default function Profile() {
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-center">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">Successful</p>
-                        <p className="text-xl font-black text-slate-900 dark:text-white mt-1">{referralsInfo.successfulCount || 0}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">
+                          Successful
+                        </p>
+                        <p className="text-xl font-black text-slate-900 dark:text-white mt-1">
+                          {referralsInfo.successfulCount || 0}
+                        </p>
                       </div>
                       <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-center">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">Pending</p>
-                        <p className="text-xl font-black text-slate-900 dark:text-white mt-1">{referralsInfo.pendingCount || 0}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">
+                          Pending
+                        </p>
+                        <p className="text-xl font-black text-slate-900 dark:text-white mt-1">
+                          {referralsInfo.pendingCount || 0}
+                        </p>
                       </div>
                       <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 text-center col-span-2 sm:col-span-1">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">Total Referral Earned</p>
-                        <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">+{referralsInfo.totalEarned || 0} PTS</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">
+                          Total Referral Earned
+                        </p>
+                        <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                          +{referralsInfo.totalEarned || 0} PTS
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -845,7 +898,8 @@ export default function Profile() {
                       My Orders & Track Fulfillment
                     </h2>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      View past orders, track real-time delivery status, or request returns and replacements
+                      View past orders, track real-time delivery status, or
+                      request returns and replacements
                     </p>
                   </div>
                   <Link
@@ -872,8 +926,12 @@ export default function Profile() {
                 ) : (
                   <div className="space-y-5">
                     {customerOrders.map((ord) => {
-                      const isDelivered = (ord.status || "").toLowerCase().includes("delivered");
-                      const isCancelled = (ord.status || "").toLowerCase().includes("cancel");
+                      const isDelivered = (ord.status || "")
+                        .toLowerCase()
+                        .includes("delivered");
+                      const isCancelled = (ord.status || "")
+                        .toLowerCase()
+                        .includes("cancel");
                       const canCancel = !isDelivered && !isCancelled;
 
                       return (
@@ -885,10 +943,18 @@ export default function Profile() {
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3 gap-2 text-xs">
                             <div>
                               <span className="font-mono font-black text-slate-900 dark:text-white text-sm">
-                                Order #{ord._id ? ord._id.slice(-8).toUpperCase() : "N/A"}
+                                Order #
+                                {ord._id
+                                  ? ord._id.slice(-8).toUpperCase()
+                                  : "N/A"}
                               </span>
                               <p className="text-[11px] text-slate-400 mt-0.5">
-                                Placed on {ord.createdAt ? new Date(ord.createdAt).toLocaleDateString("en-IN") : "N/A"}
+                                Placed on{" "}
+                                {ord.createdAt
+                                  ? new Date(ord.createdAt).toLocaleDateString(
+                                      "en-IN",
+                                    )
+                                  : "N/A"}
                               </p>
                             </div>
 
@@ -898,8 +964,8 @@ export default function Profile() {
                                   isDelivered
                                     ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                                     : isCancelled
-                                    ? "bg-rose-50 text-rose-700 border-rose-200"
-                                    : "bg-blue-50 text-blue-700 border-blue-200"
+                                      ? "bg-rose-50 text-rose-700 border-rose-200"
+                                      : "bg-blue-50 text-blue-700 border-blue-200"
                                 }`}
                               >
                                 ● {ord.status || "Processing"}
@@ -910,9 +976,12 @@ export default function Profile() {
                           {/* Order Items List */}
                           <div className="divide-y divide-slate-100 dark:divide-slate-700/60">
                             {ord.items?.map((item, idx) => {
-                              const itemStatus = item.status || ord.status || "Pending";
-                              const isItemDelivered = itemStatus === "Delivered" || isDelivered;
-                              const isRequested = item.returnRequest?.isRequested;
+                              const itemStatus =
+                                item.status || ord.status || "Pending";
+                              const isItemDelivered =
+                                itemStatus === "Delivered" || isDelivered;
+                              const isRequested =
+                                item.returnRequest?.isRequested;
 
                               return (
                                 <div
@@ -932,23 +1001,31 @@ export default function Profile() {
                                     />
                                     <div>
                                       <p className="font-bold text-slate-900 dark:text-white">
-                                        {item.product?.name || item.name || "Product"}
+                                        {item.product?.name ||
+                                          item.name ||
+                                          "Product"}
                                       </p>
                                       <div className="flex flex-wrap items-center gap-2 mt-0.5">
                                         <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                                          ₹{(item.price || 0).toLocaleString("en-IN")} × {item.quantity || 1}
+                                          ₹
+                                          {(item.price || 0).toLocaleString(
+                                            "en-IN",
+                                          )}{" "}
+                                          × {item.quantity || 1}
                                         </span>
                                         <span className="inline-block text-[9px] font-black uppercase px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-600">
                                           Product Status: {itemStatus}
                                         </span>
                                         <span
                                           className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded ${
-                                            (item.source || ord.orderSource) === "store"
+                                            (item.source || ord.orderSource) ===
+                                            "store"
                                               ? "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
                                               : "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
                                           }`}
                                         >
-                                          {(item.source || ord.orderSource) === "store"
+                                          {(item.source || ord.orderSource) ===
+                                          "store"
                                             ? item.storeName
                                               ? `Store: ${item.storeName}`
                                               : "Added from Store"
@@ -957,7 +1034,9 @@ export default function Profile() {
                                       </div>
                                       {isRequested && (
                                         <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
-                                          {item.returnRequest?.requestType || "Return"} Request ({item.returnRequest?.status})
+                                          {item.returnRequest?.requestType ||
+                                            "Return"}{" "}
+                                          Request ({item.returnRequest?.status})
                                         </span>
                                       )}
                                     </div>
@@ -966,7 +1045,12 @@ export default function Profile() {
                                   <div className="flex items-center gap-2 self-end sm:self-center">
                                     {isItemDelivered && !isRequested && (
                                       <button
-                                        onClick={() => setReturnModalItem({ orderId: ord._id, item })}
+                                        onClick={() =>
+                                          setReturnModalItem({
+                                            orderId: ord._id,
+                                            item,
+                                          })
+                                        }
                                         className="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-800 dark:text-white rounded-xl text-[11px] font-bold transition cursor-pointer"
                                       >
                                         Return / Replace
@@ -981,15 +1065,22 @@ export default function Profile() {
                           {/* Order Card Footer */}
                           <div className="pt-3 border-t border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                             <div>
-                              <span className="text-[10px] font-bold text-slate-400 uppercase">Total Amount</span>
+                              <span className="text-[10px] font-bold text-slate-400 uppercase">
+                                Total Amount
+                              </span>
                               <p className="text-sm font-black text-slate-900 dark:text-white">
-                                ₹{(ord.totalPrice || ord.total || 0).toLocaleString("en-IN")}
+                                ₹
+                                {(
+                                  ord.totalPrice ||
+                                  ord.total ||
+                                  0
+                                ).toLocaleString("en-IN")}
                               </p>
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2">
                               <Link
-                                to={`/order-tracking?orderId=${ord._id}`}
+                                to={`/track-order?orderId=${ord._id}`}
                                 className="px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5"
                               >
                                 <Truck size={14} />
@@ -1035,7 +1126,8 @@ export default function Profile() {
                 >
                   <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3">
                     <h3 className="font-black text-slate-900 dark:text-white text-base">
-                      Cancel Order #{cancelModalOrder._id?.slice(-8).toUpperCase()}
+                      Cancel Order #
+                      {cancelModalOrder._id?.slice(-8).toUpperCase()}
                     </h3>
                     <button
                       onClick={() => setCancelModalOrder(null)}
@@ -1045,7 +1137,10 @@ export default function Profile() {
                     </button>
                   </div>
 
-                  <form onSubmit={handleCancelOrderSubmit} className="space-y-4 text-xs">
+                  <form
+                    onSubmit={handleCancelOrderSubmit}
+                    className="space-y-4 text-xs"
+                  >
                     <div>
                       <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
                         Select Reason for Cancellation
@@ -1056,10 +1151,18 @@ export default function Profile() {
                         className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-semibold text-slate-800 dark:text-slate-200"
                       >
                         <option value="Changed my mind">Changed my mind</option>
-                        <option value="Ordered by mistake">Ordered by mistake</option>
-                        <option value="Found a better price elsewhere">Found a better price elsewhere</option>
-                        <option value="Delivery duration is too long">Delivery duration is too long</option>
-                        <option value="Incorrect shipping address">Incorrect shipping address</option>
+                        <option value="Ordered by mistake">
+                          Ordered by mistake
+                        </option>
+                        <option value="Found a better price elsewhere">
+                          Found a better price elsewhere
+                        </option>
+                        <option value="Delivery duration is too long">
+                          Delivery duration is too long
+                        </option>
+                        <option value="Incorrect shipping address">
+                          Incorrect shipping address
+                        </option>
                       </select>
                     </div>
 
@@ -1076,7 +1179,9 @@ export default function Profile() {
                         disabled={submittingCancel}
                         className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow cursor-pointer"
                       >
-                        {submittingCancel ? "Cancelling..." : "Confirm Cancel Order"}
+                        {submittingCancel
+                          ? "Cancelling..."
+                          : "Confirm Cancel Order"}
                       </button>
                     </div>
                   </form>
@@ -1100,7 +1205,9 @@ export default function Profile() {
                         Request Return or Replacement
                       </h3>
                       <p className="text-[11px] text-slate-500">
-                        Product: {returnModalItem.item.product?.name || returnModalItem.item.name}
+                        Product:{" "}
+                        {returnModalItem.item.product?.name ||
+                          returnModalItem.item.name}
                       </p>
                     </div>
                     <button
@@ -1111,7 +1218,10 @@ export default function Profile() {
                     </button>
                   </div>
 
-                  <form onSubmit={handleReturnSubmit} className="space-y-4 text-xs">
+                  <form
+                    onSubmit={handleReturnSubmit}
+                    className="space-y-4 text-xs"
+                  >
                     {/* Select Request Type */}
                     <div>
                       <label className="font-bold text-slate-700 dark:text-slate-300 block mb-2">
@@ -1120,7 +1230,12 @@ export default function Profile() {
                       <div className="grid grid-cols-2 gap-3">
                         <button
                           type="button"
-                          onClick={() => setReturnForm({ ...returnForm, requestType: "Return" })}
+                          onClick={() =>
+                            setReturnForm({
+                              ...returnForm,
+                              requestType: "Return",
+                            })
+                          }
                           className={`p-3 rounded-xl border text-center font-bold transition cursor-pointer ${
                             returnForm.requestType === "Return"
                               ? "bg-blue-50 dark:bg-blue-950 border-[#2563eb] text-[#2563eb]"
@@ -1131,7 +1246,12 @@ export default function Profile() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setReturnForm({ ...returnForm, requestType: "Replacement" })}
+                          onClick={() =>
+                            setReturnForm({
+                              ...returnForm,
+                              requestType: "Replacement",
+                            })
+                          }
                           className={`p-3 rounded-xl border text-center font-bold transition cursor-pointer ${
                             returnForm.requestType === "Replacement"
                               ? "bg-purple-50 dark:bg-purple-950 border-purple-600 text-purple-600"
@@ -1150,14 +1270,29 @@ export default function Profile() {
                       </label>
                       <select
                         value={returnForm.reason}
-                        onChange={(e) => setReturnForm({ ...returnForm, reason: e.target.value })}
+                        onChange={(e) =>
+                          setReturnForm({
+                            ...returnForm,
+                            reason: e.target.value,
+                          })
+                        }
                         className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-semibold text-slate-800 dark:text-slate-200"
                       >
-                        <option value="Damaged item received">Damaged item received</option>
-                        <option value="Defective / Item not working properly">Defective / Item not working properly</option>
-                        <option value="Wrong size or wrong item delivered">Wrong size or wrong item delivered</option>
-                        <option value="Item missing or incomplete package">Item missing or incomplete package</option>
-                        <option value="Quality not as expected">Quality not as expected</option>
+                        <option value="Damaged item received">
+                          Damaged item received
+                        </option>
+                        <option value="Defective / Item not working properly">
+                          Defective / Item not working properly
+                        </option>
+                        <option value="Wrong size or wrong item delivered">
+                          Wrong size or wrong item delivered
+                        </option>
+                        <option value="Item missing or incomplete package">
+                          Item missing or incomplete package
+                        </option>
+                        <option value="Quality not as expected">
+                          Quality not as expected
+                        </option>
                         <option value="Other reason">Other reason</option>
                       </select>
                     </div>
@@ -1171,7 +1306,12 @@ export default function Profile() {
                         rows="3"
                         placeholder="Provide details about the issue..."
                         value={returnForm.notes}
-                        onChange={(e) => setReturnForm({ ...returnForm, notes: e.target.value })}
+                        onChange={(e) =>
+                          setReturnForm({
+                            ...returnForm,
+                            notes: e.target.value,
+                          })
+                        }
                         className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-medium text-slate-800 dark:text-slate-200"
                       ></textarea>
                     </div>
@@ -1189,7 +1329,9 @@ export default function Profile() {
                         disabled={submittingReturn}
                         className="px-5 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold rounded-xl shadow cursor-pointer"
                       >
-                        {submittingReturn ? "Submitting..." : `Submit ${returnForm.requestType} Request`}
+                        {submittingReturn
+                          ? "Submitting..."
+                          : `Submit ${returnForm.requestType} Request`}
                       </button>
                     </div>
                   </form>
@@ -1206,7 +1348,8 @@ export default function Profile() {
                       My Service Bookings
                     </h2>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Track and manage your upcoming home services & appointments
+                      Track and manage your upcoming home services &
+                      appointments
                     </p>
                   </div>
                   <Link
@@ -1219,12 +1362,16 @@ export default function Profile() {
 
                 {customerBookings.length === 0 ? (
                   <div className="p-8 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-center space-y-2">
-                    <Sparkles size={32} className="text-[#2563eb] mx-auto opacity-60" />
+                    <Sparkles
+                      size={32}
+                      className="text-[#2563eb] mx-auto opacity-60"
+                    />
                     <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
                       No service bookings yet
                     </p>
                     <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
-                      Explore our top rated home cleaning, AC repair, and beauty services available near you.
+                      Explore our top rated home cleaning, AC repair, and beauty
+                      services available near you.
                     </p>
                     <Link
                       to="/services"
@@ -1251,11 +1398,15 @@ export default function Profile() {
                         <div className="grid grid-cols-2 gap-2 text-slate-600 dark:text-slate-300 text-[11px]">
                           <div className="flex items-center gap-1.5">
                             <Calendar size={13} className="text-slate-400" />
-                            <span>Date: {b.bookingDate || b.date || "Tomorrow"}</span>
+                            <span>
+                              Date: {b.bookingDate || b.date || "Tomorrow"}
+                            </span>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <Clock size={13} className="text-slate-400" />
-                            <span>Slot: {b.timeSlot || "10:00 AM - 11:00 AM"}</span>
+                            <span>
+                              Slot: {b.timeSlot || "10:00 AM - 11:00 AM"}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -1302,7 +1453,11 @@ export default function Profile() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="p-1.5 bg-white dark:bg-slate-800 rounded-lg text-[#2563eb] border border-slate-200 dark:border-slate-700">
-                            {addr.type === "Work" ? <Briefcase size={14} /> : <Home size={14} />}
+                            {addr.type === "Work" ? (
+                              <Briefcase size={14} />
+                            ) : (
+                              <Home size={14} />
+                            )}
                           </span>
                           <span className="font-black text-slate-900 dark:text-white uppercase tracking-wider text-[10px]">
                             {addr.type || "Home"}
@@ -1325,9 +1480,14 @@ export default function Profile() {
 
                       {/* Address Body */}
                       <div className="space-y-1 text-slate-700 dark:text-slate-300">
-                        <div className="font-bold text-slate-900 dark:text-white">{addr.fullName}</div>
+                        <div className="font-bold text-slate-900 dark:text-white">
+                          {addr.fullName}
+                        </div>
                         <div className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
-                          {addr.street}, {addr.city}, {addr.state} - <span className="font-mono font-bold">{addr.pincode}</span>
+                          {addr.street}, {addr.city}, {addr.state} -{" "}
+                          <span className="font-mono font-bold">
+                            {addr.pincode}
+                          </span>
                         </div>
                         <div className="text-[11px] text-slate-500 font-semibold pt-1">
                           Phone: {addr.phone}
@@ -1394,7 +1554,6 @@ export default function Profile() {
                 </button>
               </div>
             )}
-
           </main>
         </div>
       </div>
@@ -1403,11 +1562,14 @@ export default function Profile() {
       {showAddressModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 w-full max-w-lg space-y-5 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
                 <MapPin size={18} className="text-[#2563eb]" />
-                <span>{editingAddressId ? "Edit Delivery Address" : "Add New Delivery Address"}</span>
+                <span>
+                  {editingAddressId
+                    ? "Edit Delivery Address"
+                    : "Add New Delivery Address"}
+                </span>
               </h3>
               <button
                 onClick={() => {
@@ -1420,7 +1582,10 @@ export default function Profile() {
               </button>
             </div>
 
-            <form onSubmit={handleAddAddressSubmit} className="space-y-4 text-xs">
+            <form
+              onSubmit={handleAddAddressSubmit}
+              className="space-y-4 text-xs"
+            >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="font-bold text-slate-700 dark:text-slate-300">
@@ -1457,7 +1622,8 @@ export default function Profile() {
 
               <div className="space-y-1">
                 <label className="font-bold text-slate-700 dark:text-slate-300">
-                  Street Address / House No. / Area <span className="text-red-500">*</span>
+                  Street Address / House No. / Area{" "}
+                  <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   required

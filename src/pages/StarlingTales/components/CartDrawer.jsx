@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import Icon from './Icon';
-import { formatPrice, FREE_SHIPPING_THRESHOLD } from '../constants';
+import { formatPrice } from '../constants';
 import { removeFromCart, updateCartQuantity } from '../../../redux/reducers/cartReducer';
 import toast from 'react-hot-toast';
 
@@ -97,9 +97,6 @@ export default function CartDrawer({
     return sum + unitPrice * (item.quantity || 1);
   }, 0);
 
-  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : 99;
-  const remaining = FREE_SHIPPING_THRESHOLD - subtotal;
-
   return (
     <div className="fixed inset-0 z-[1100] flex items-stretch justify-end" role="dialog" aria-modal="true" aria-label="Shopping cart">
       <button className="absolute inset-0 bg-text-dark/45 backdrop-blur-[2px] animate-fade-in" type="button" onClick={onClose} aria-label="Close cart" />
@@ -115,21 +112,10 @@ export default function CartDrawer({
           </button>
         </div>
 
-        {/* Free Shipping Progress */}
-        <div className="p-4 px-6 border-b border-cream-dark bg-white">
-          {remaining > 0 ? (
-            <p className="text-xs text-text-muted">
-              Add <span className="font-semibold text-text-dark">{formatPrice(remaining)}</span> more for Free Shipping!
-            </p>
-          ) : (
-            <p className="text-xs font-medium text-blue-soft">Congratulations! You've unlocked Free Shipping.</p>
-          )}
-          <div className="mt-2 h-1.5 w-full bg-cream-dark/55 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-blue-soft transition-all duration-350"
-              style={{ width: `${Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100)}%` }}
-            />
-          </div>
+        {/* Delivery Note */}
+        <div className="p-3.5 px-6 border-b border-cream-dark bg-cream/40 flex justify-between text-xs text-text-muted">
+          <span>Shadowfax 3PL Delivery</span>
+          <span className="font-medium text-text-dark">Calculated at checkout</span>
         </div>
 
         {/* Cart Items List */}
@@ -224,11 +210,7 @@ export default function CartDrawer({
             </div>
             <div className="flex justify-between">
               <span>Shipping</span>
-              <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
-            </div>
-            <div className="flex justify-between text-base font-semibold border-t border-cream-dark/40 pt-2 text-text-dark">
-              <span>Total</span>
-              <span>{formatPrice(subtotal + shipping)}</span>
+              <span className="text-text-muted">Calculated at checkout</span>
             </div>
           </div>
           <button 

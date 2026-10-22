@@ -21,6 +21,7 @@ import {
   verifyOTP as verifyOTPApi,
 } from "../../api/authService";
 import ilumaIcon from "../../assests/iluma_icon.png";
+import PasswordStrengthMeter from "../../components/PasswordStrengthMeter";
 
 const Register = () => {
   const dispatch = useDispatch();
@@ -122,38 +123,7 @@ const Register = () => {
     }
   };
 
-  const getPasswordQuality = (password) => {
-    if (!password) return null;
-    if (password.length < 6)
-      return {
-        level: "Weak",
-        color: "text-red-500",
-        text: "Too short (min 6 chars)",
-      };
-    const hasLetter = /[a-zA-Z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
 
-    if (hasLetter && (hasNumber || hasSymbol) && password.length >= 8) {
-      return {
-        level: "Strong",
-        color: "text-emerald-600 dark:text-emerald-400",
-        text: "High Quality (Strong)",
-      };
-    } else if (hasLetter && (hasNumber || hasSymbol)) {
-      return {
-        level: "Good",
-        color: "text-blue-600 dark:text-blue-400",
-        text: "High Quality (Good)",
-      };
-    } else {
-      return {
-        level: "Moderate",
-        color: "text-amber-500",
-        text: "Add numbers or special characters",
-      };
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -438,13 +408,7 @@ const Register = () => {
                         )}
                       </button>
                     </div>
-                    {formData.password && (
-                      <p
-                        className={`text-[10px] font-bold mt-1 ${getPasswordQuality(formData.password)?.color}`}
-                      >
-                        Quality: {getPasswordQuality(formData.password)?.text}
-                      </p>
-                    )}
+                    <PasswordStrengthMeter password={formData.password} />
                   </div>
                 </div>
 

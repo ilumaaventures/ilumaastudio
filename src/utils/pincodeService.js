@@ -1,5 +1,5 @@
 import { getProductById } from "../api/productService";
-import { checkShadowfaxServiceability } from "../api/orderService";
+import { checkShadowfaxServiceability, getShippingQuote } from "../api/orderService";
 
 /**
  * Checks live Shadowfax 3PL logistics courier serviceability for a delivery pincode
@@ -98,7 +98,7 @@ export const checkInventoryPincodeAvailability = (inventory, pincode) => {
 };
 
 /**
- * Validates availability for an array of cart items against a target pincode using live Shadowfax courier API.
+ * Validates availability for an array of cart items against a target pincode using live backend shipping quote engine.
  */
 export const validateCartItemsPincode = async (cartItems, pincode, options = {}) => {
   if (!Array.isArray(cartItems) || cartItems.length === 0) {
@@ -128,31 +128,78 @@ export const validateCartItemsPincode = async (cartItems, pincode, options = {})
     };
   }
 
-  // 1. Live Shadowfax 3PL Logistics Serviceability & Pricing Check
   const subtotal = options.subtotal || cartItems.reduce(
     (acc, it) => acc + (Number(it.price) || 0) * (Number(it.quantity) || 1),
-    0
-  );
-  const totalWeight = cartItems.reduce(
-    (acc, it) => acc + ((Number(it.weight) || 350) * (Number(it.quantity) || 1)),
     0
   );
 
   let courierInfo;
   try {
-    courierInfo = await checkPincodeServiceability(cleanPincode, {
-      items: cartItems,
-      subtotal,
-      weight: totalWeight,
+    const quoteRes = await getShippingQuote({
+      items: cartItems.map((it) => ({
+        product: it._id || it.product,
+        name: it.name,
+        price: it.price,
+        quantity: it.quantity,
+        variantId: it.variantId || null,
+        warehouse: it.warehouse || null,
+        weight: it.weight || 350,
+        dimensions: it.dimensions || null,
+      })),
+      deliveryPincode: cleanPincode,
       paymentMode: options.paymentMode || "PREPAID",
+      orderValue: subtotal,
     });
+
+    if (quoteRes && quoteRes.success) {
+      const minDays =
+        quoteRes.groups && quoteRes.groups.length > 0
+          ? Math.max(...quoteRes.groups.map((g) => g.estimatedDays || 3))
+          : 3;
+
+      courierInfo = {
+        serviceable: quoteRes.allServiceable,
+        courierPartner: quoteRes.courierPartner || "Shadowfax Logistics",
+        pincode: cleanPincode,
+        message:
+          quoteRes.allServiceable
+            ? `Shadowfax Express delivery in ${minDays} business days`
+            : quoteRes.message || "One or more packages cannot be delivered to this pincode",
+        shippingFee: quoteRes.totalShippingFee,
+        courierRate: quoteRes.totalShippingFee,
+        actualCourierCost: quoteRes.actualCourierCost ?? quoteRes.totalShippingFee,
+        platformSubsidy: 0,
+        isFreeDelivery: false,
+        groupsCount: quoteRes.groupsCount,
+        groups: quoteRes.groups || [],
+        quoteId: quoteRes.quoteId,
+        quoteToken: quoteRes.quoteToken,
+        expiresAt: quoteRes.expiresAt,
+        estimatedDays: minDays,
+        codAvailable: (options.paymentMode || "").toUpperCase() === "COD",
+        pricing: {
+          zoneDescription: quoteRes.groups?.[0]?.quoteBreakdown?.zoneDescription || "Express Surface",
+        },
+      };
+    } else {
+      courierInfo = {
+        serviceable: false,
+        courierPartner: "Shadowfax Logistics",
+        pincode: cleanPincode,
+        message: quoteRes?.message || "Delivery unavailable to this pincode",
+        shippingFee: 0,
+        courierRate: 0,
+        isFreeDelivery: false,
+        groups: [],
+      };
+    }
   } catch (err) {
-    console.error("Shadowfax serviceability check error:", err);
+    console.error("Shadowfax quote service error:", err);
     courierInfo = {
       serviceable: false,
       courierPartner: "Shadowfax Logistics",
       estimatedDays: null,
-      message: "Shadowfax courier availability could not be verified.",
+      message: err?.response?.data?.message || "Shadowfax shipping quotation could not be generated.",
       codAvailable: false,
       shippingFee: 0,
       courierRate: 0,

@@ -62,6 +62,11 @@ export const checkShadowfaxServiceability = async (data) => {
   return response.data;
 };
 
+export const getShippingQuote = async (data) => {
+  const response = await baseApi.post("/shipments/quote", data);
+  return response.data;
+};
+
 export const trackPublicShipment = async (identifier) => {
   const response = await baseApi.get(`/shipments/track/${identifier}`);
   return response.data;

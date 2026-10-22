@@ -307,10 +307,10 @@ export default function HelpCenter() {
                   Mon - Sat (9 AM - 9 PM)
                 </p>
                 <a
-                  href="tel:+9118001234567"
+                  href="tel:+9810927437"
                   className="text-xs font-bold text-emerald-600 block pt-1 hover:underline"
                 >
-                  +91 1800-123-4567
+                  +91 9810927437
                 </a>
               </div>
             </div>

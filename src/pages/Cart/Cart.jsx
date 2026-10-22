@@ -114,6 +114,7 @@ function Cart() {
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const recScrollRef = useRef(null);
+  const quoteSeqRef = useRef(0);
 
   // Fetch Recommended / Similar Products
   useEffect(() => {
@@ -437,6 +438,8 @@ function Cart() {
       if (cartItems.length === 0) return;
 
       const zip = shippingAddress.zip?.toString().trim();
+      const currentSeq = ++quoteSeqRef.current;
+
       if (/^\d{6}$/.test(zip)) {
         setValidatingPincode(true);
         const { results, allAvailable, courierInfo } = await validateCartItemsPincode(
@@ -447,7 +450,7 @@ function Cart() {
             paymentMode: paymentMethod === "cod" ? "COD" : "PREPAID",
           }
         );
-        if (isMounted) {
+        if (isMounted && currentSeq === quoteSeqRef.current) {
           setPincodeValidation({ results, allAvailable, courierInfo });
           setValidatingPincode(false);
         }
@@ -459,7 +462,7 @@ function Cart() {
             message: "Enter 6-digit PIN code to check Shadowfax delivery",
           };
         });
-        if (isMounted) {
+        if (isMounted && currentSeq === quoteSeqRef.current) {
           setPincodeValidation({ results, allAvailable: true, courierInfo: null });
           setValidatingPincode(false);
         }
@@ -692,13 +695,19 @@ function Cart() {
   }, 0);
 
   const platformFee = 0;
-  // Calculate dynamic shipping strictly based on Shadowfax 3PL courier rate
+  // Calculate dynamic shipping strictly based on verified Shadowfax 3PL courier rate
   const courierShippingRate =
     pincodeValidation.courierInfo?.shippingFee !== undefined
       ? Number(pincodeValidation.courierInfo.shippingFee)
       : pincodeValidation.courierInfo?.courierRate !== undefined
         ? Number(pincodeValidation.courierInfo.courierRate)
-        : 79;
+        : 0;
+
+  const isShippingVerified =
+    cartItems.length > 0 &&
+    pincodeValidation.courierInfo &&
+    pincodeValidation.courierInfo.serviceable === true &&
+    typeof pincodeValidation.courierInfo.shippingFee === "number";
 
   const shipping = cartItems.length === 0 ? 0 : courierShippingRate;
   const taxableAmount = Math.max(0, subtotal - discountAmount + shipping);
@@ -721,11 +730,18 @@ function Cart() {
       toast.error("Please enter a valid 6-digit delivery pincode to check Shadowfax serviceability");
       return;
     }
-    if (!pincodeValidation.allAvailable) {
+    if (!isShippingVerified || !pincodeValidation.allAvailable) {
       toast.error(
         pincodeValidation.courierInfo?.message ||
-          "Shadowfax logistics cannot deliver to the entered pincode. Please update address or remove unavailable products."
+          "Shadowfax delivery rate could not be verified for the entered pincode. Please update address or remove unavailable products."
       );
+      return;
+    }
+    if (
+      pincodeValidation.courierInfo?.expiresAt &&
+      new Date(pincodeValidation.courierInfo.expiresAt).getTime() < Date.now()
+    ) {
+      toast.error("Shipping quotation has expired. Refreshing rates...");
       return;
     }
     setStep("checkout");
@@ -750,6 +766,14 @@ function Cart() {
       toast.error(
         "Some items cannot be delivered to your shipping pincode. Order placement blocked.",
       );
+      return;
+    }
+
+    if (
+      pincodeValidation.courierInfo?.expiresAt &&
+      new Date(pincodeValidation.courierInfo.expiresAt).getTime() < Date.now()
+    ) {
+      toast.error("Shipping quotation has expired. Please refresh the page to calculate current rates.");
       return;
     }
 
@@ -788,6 +812,15 @@ function Cart() {
           type: paymentMethod === "cod" ? "COD" : "Razorpay",
           status: "Pending",
         },
+        shippingQuote: pincodeValidation.courierInfo?.quoteId
+          ? {
+              quoteId: pincodeValidation.courierInfo.quoteId,
+              quoteToken: pincodeValidation.courierInfo.quoteToken,
+              expiresAt: pincodeValidation.courierInfo.expiresAt,
+              totalShippingFee: shipping,
+              deliveryPincode: shippingAddress.zip,
+            }
+          : null,
         shippingPrice: shipping,
         taxPrice: tax,
         couponCode: appliedCouponCode || undefined,
@@ -1560,23 +1593,46 @@ function Cart() {
                       </div>
                     )}
 
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <span className="font-medium flex items-center gap-1.5">
-                          <span>Shipping Fee</span>
-                          <span className="text-[10px] bg-blue-100 text-blue-800 font-extrabold px-1.5 py-0.2 rounded">
-                            Shadowfax 3PL
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="font-medium flex items-center gap-1.5">
+                            <span>Shipping Fee</span>
+                            <span className="text-[10px] bg-blue-100 text-blue-800 font-extrabold px-1.5 py-0.2 rounded">
+                              Shadowfax 3PL
+                            </span>
                           </span>
-                        </span>
-                        <span className="text-[10px] text-slate-400 block">
-                          {pincodeValidation.courierInfo?.pricing?.zoneDescription ||
-                            "Express ground & air transit fee"}
+                          <span className="text-[10px] text-slate-400 block">
+                            {pincodeValidation.courierInfo?.pricing?.zoneDescription ||
+                              "Express ground & air transit fee"}
+                          </span>
+                        </div>
+                        <span className="font-bold text-slate-900">
+                          {isShippingVerified ? `₹${shipping}` : "Pending PIN"}
                         </span>
                       </div>
-                      <span className="font-bold text-slate-900">
-                        ₹{shipping}
-                      </span>
-                    </div>
+
+                      {pincodeValidation.courierInfo?.groups &&
+                        pincodeValidation.courierInfo.groups.length > 1 && (
+                          <div className="mt-1 bg-slate-50 border border-slate-200/60 rounded-lg p-2 space-y-1">
+                            <div className="text-[10px] font-bold text-slate-700 flex justify-between">
+                              <span>
+                                {pincodeValidation.courierInfo.groups.length} Fulfillment Packages
+                              </span>
+                              <span className="text-blue-600 font-medium">Independent AWBs</span>
+                            </div>
+                            {pincodeValidation.courierInfo.groups.map((grp, idx) => (
+                              <div
+                                key={idx}
+                                className="flex justify-between items-center text-[10px] text-slate-500"
+                              >
+                                <span>
+                                  Package {idx + 1}: {grp.warehouse?.city || "Warehouse"} ({grp.itemsCount} items)
+                                </span>
+                                <span className="font-semibold text-slate-700">₹{grp.shippingFee}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
 
                     <div className="flex justify-between items-center pt-1 border-t border-dashed border-slate-100">
                       <span className="font-medium text-slate-500">
@@ -1790,10 +1846,10 @@ function Cart() {
                     ₹{total}
                   </span>
                 </div>
-                <div className="text-[10px] text-emerald-600 font-semibold truncate">
-                  {shipping === 0
-                    ? "✓ Free shipping included"
-                    : "+₹99 standard shipping"}
+                <div className="text-[10px] text-slate-500 font-semibold truncate">
+                  {isShippingVerified
+                    ? `+ ₹${shipping} Shadowfax delivery`
+                    : "Shipping verified at PIN"}
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">

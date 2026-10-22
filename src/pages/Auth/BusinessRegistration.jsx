@@ -33,6 +33,7 @@ import toast from "react-hot-toast";
 import { registerBusiness, sendOTP, verifyOTP } from "../../api/authService";
 import baseApi from "../../api/baseApi";
 import { registerOnBkonnect } from "../../api/bkonnect";
+import PasswordStrengthMeter from "../../components/PasswordStrengthMeter";
 
 const BUSINESS_TYPES = [
   { value: "PRIVATE_LIMITED", label: "Private Limited Company" },
@@ -1162,6 +1163,7 @@ export default function BusinessRegistration() {
                           )}
                         </button>
                       </div>
+                      <PasswordStrengthMeter password={formData.ownerPassword} />
                     </div>
 
                     {/* Field 4: Mobile No & Field 5: Business Category */}

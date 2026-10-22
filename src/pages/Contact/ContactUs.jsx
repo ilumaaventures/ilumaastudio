@@ -248,10 +248,10 @@ export default function ContactUs() {
                   Mon-Sat, 9:00 AM to 7:00 PM IST
                 </p>
                 <a
-                  href="tel:+918001234567"
+                  href="tel:+919810927437"
                   className="text-xs font-bold text-emerald-600 hover:underline block pt-1"
                 >
-                  +91 (800) 123-4567
+                  +91 9810927437
                 </a>
               </div>
             </div>
