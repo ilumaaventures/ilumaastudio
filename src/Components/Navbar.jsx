@@ -20,6 +20,14 @@ import {
   ChevronDown,
   Scale,
   Calendar,
+  Compass,
+  GraduationCap,
+  Plane,
+  Film,
+  Stethoscope,
+  ShoppingBag,
+  Coffee,
+  Gift,
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "../redux/actions/authActions";
@@ -33,8 +41,46 @@ import {
   isServiceCategory,
   isBusinessCategory,
 } from "../redux/reducers/businessCategoryReducer";
-import { getUserLocation } from "../utils/location";
+import {
+  getUserLocation,
+  getSavedLocation,
+  getSavedDistanceRange,
+  saveDistanceRange,
+  saveUserLocation,
+} from "../utils/location";
 import ilumaIcon from "../assests/iluma_icon.png";
+
+// Static Nearby Navigation Categories with icons and badges
+const NEARBY_NAV_ITEMS = [
+  { name: "All Nearby", slug: "all", icon: Compass, badge: null },
+  {
+    name: "Tuitions & Coaching",
+    slug: "education",
+    icon: GraduationCap,
+    badge: "HOT",
+  },
+  {
+    name: "Artisan Products",
+    slug: "products",
+    icon: ShoppingBag,
+    badge: null,
+  },
+  { name: "Local Boutiques", slug: "businesses", icon: Building2, badge: null },
+  { name: "Repairs & Services", slug: "services", icon: Sparkles, badge: null },
+  { name: "Food & Cafés", slug: "food", icon: Coffee, badge: null },
+  { name: "Gifts & Hampers", slug: "gifts", icon: Gift, badge: null },
+  { name: "Exclusive Offers", slug: "offers", icon: Tag, badge: "DEALS" },
+  { name: "Places to Visit", slug: "places", icon: MapPin, badge: null },
+  { name: "Travel Deals", slug: "travel", icon: Plane, badge: null },
+  { name: "Latest Movies", slug: "movies", icon: Film, badge: null },
+  {
+    name: "Doctors & Clinics",
+    slug: "doctors",
+    icon: Stethoscope,
+    badge: null,
+  },
+  { name: "Real Estate", slug: "real-estate", icon: Building2, badge: null },
+];
 
 function Navbar() {
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -72,15 +118,42 @@ function Navbar() {
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
 
-  const [userLocation, setUserLocation] = useState(null);
+  const [userLocation, setUserLocation] = useState(() => getSavedLocation());
+  const [distanceRange, setDistanceRange] = useState(() =>
+    getSavedDistanceRange(),
+  );
   const catScrollRef = useRef(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
 
+  // Synchronize location and distance range updates across components
+  useEffect(() => {
+    const handleLocationRangeChange = (e) => {
+      if (e?.detail) {
+        if (e.detail.location) setUserLocation(e.detail.location);
+        if (e.detail.distanceRange) setDistanceRange(e.detail.distanceRange);
+      }
+    };
+    window.addEventListener(
+      "ilumaa:location_range_changed",
+      handleLocationRangeChange,
+    );
+    return () => {
+      window.removeEventListener(
+        "ilumaa:location_range_changed",
+        handleLocationRangeChange,
+      );
+    };
+  }, []);
+
   const isService = isServiceCategory(selectedBusinessCategory);
   const isBusiness = isBusinessCategory(selectedBusinessCategory);
+  const isNearby =
+    location.pathname.startsWith("/explore-nearby") ||
+    selectedBusinessCategory === "EXPLORE_NEARBY";
 
   // Auto-sync Global Business Category State on Route Change:
+  // - On /explore-nearby -> set EXPLORE_NEARBY
   // - On Home page ("/", "") or moving anywhere general -> set ECOMMERCE
   // - On Shop pages (/shop, /products, /productlisting, etc.) -> set ECOMMERCE
   // - On Service listing / services pages -> set SERVICE (Service Provider)
@@ -88,9 +161,14 @@ function Navbar() {
   useEffect(() => {
     const path = (location.pathname || "").toLowerCase();
 
+    // 0. Explore Nearby route:
+    if (path.startsWith("/explore-nearby")) {
+      if (selectedBusinessCategory !== "EXPLORE_NEARBY") {
+        dispatch(setSelectedBusinessCategory("EXPLORE_NEARBY"));
+      }
+    }
     // 1. Service Provider routes: /servicelisting, /services, /services/:id, /my-bookings, etc.
-    if (
-      path.startsWith("/services") ||
+    else if (
       path.startsWith("/services") ||
       path.startsWith("/service/") ||
       path.startsWith("/my-bookings") ||
@@ -116,7 +194,10 @@ function Navbar() {
     // 3. E-Commerce routes & Home page / general navigation:
     // "/", "/shop", "/products", "/productlisting", "/cart", "/wishlist", "/compare", "/flash-deals", "/offers", etc.
     else {
-      if (selectedBusinessCategory !== BUSINESS_CATEGORY_CODES.ECOMMERCE) {
+      if (
+        selectedBusinessCategory !== BUSINESS_CATEGORY_CODES.ECOMMERCE &&
+        selectedBusinessCategory !== "EXPLORE_NEARBY"
+      ) {
         dispatch(
           setSelectedBusinessCategory(BUSINESS_CATEGORY_CODES.ECOMMERCE),
         );
@@ -125,8 +206,13 @@ function Navbar() {
   }, [location.pathname, dispatch, selectedBusinessCategory]);
 
   // Immediate navigation handler on business category change:
-  // ECOMMERCE => /shop, SERVICE => /servicelisting, BUSINESS => /store
+  // EXPLORE_NEARBY => /explore-nearby, ECOMMERCE => /shop, SERVICE => /services, BUSINESS => /store
   const handleBusinessCategoryChange = (newBCat) => {
+    if (newBCat === "EXPLORE_NEARBY" || newBCat === "Explore NearBy") {
+      dispatch(setSelectedBusinessCategory("EXPLORE_NEARBY"));
+      navigate("/explore-nearby");
+      return;
+    }
     dispatch(setSelectedBusinessCategory(newBCat));
     if (isServiceCategory(newBCat)) {
       navigate("/services");
@@ -164,13 +250,16 @@ function Navbar() {
     };
   }, [categories]);
 
-  // Fetch user location
+  // Fetch user location (auto-detect if permission granted)
   const fetchLocation = async () => {
     try {
       const loc = await getUserLocation();
-      if (loc) setUserLocation(loc);
+      if (loc && (loc.city || loc.pincode)) {
+        setUserLocation(loc);
+        saveUserLocation(loc);
+      }
     } catch (err) {
-      console.error("Failed to get location:", err);
+      // Quiet fallback to saved or default location
     }
   };
 
@@ -360,14 +449,26 @@ function Navbar() {
 
           {/* Right Action Icons (Desktop) */}
           <div className="hidden lg:flex items-center gap-5 text-xs">
-            {/* Location Pill */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700">
-              <MapPin size={16} className="text-[#2563eb]" />
-              <div className="flex flex-col text-[10px] leading-tight">
-                <span className="font-bold text-slate-900">
-                  {userLocation?.city || "Unknown City"}
-                </span>
-              </div>
+            {/* Location Pill & Explore Nearby Trigger */}
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-blue-50/80 border border-slate-200/80 hover:border-blue-200 text-slate-700 shadow-2xs transition-colors">
+              <Link
+                to={`/explore-nearby?city=${encodeURIComponent(userLocation?.city || "Lucknow")}&area=${encodeURIComponent(userLocation?.area || "Gomti Nagar")}&pincode=${encodeURIComponent(userLocation?.pincode || "226010")}&radius=${distanceRange || 15}`}
+                className="flex items-center gap-1.5 hover:text-[#2563eb] transition-colors cursor-pointer"
+                title="Click to Explore Nearby"
+              >
+                <div className="relative flex items-center justify-center">
+                  <MapPin size={15} className="text-[#2563eb] shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse absolute -top-0.5 -right-0.5" />
+                </div>
+                <div className="flex flex-col text-left text-[9px] leading-tight">
+                  <span className="text-slate-400 font-medium">
+                    Explore Near
+                  </span>
+                  <span className="font-extrabold text-slate-900 truncate max-w-[95px]">
+                    {userLocation?.city || "Lucknow"}
+                  </span>
+                </div>
+              </Link>
             </div>
 
             <Link
@@ -545,11 +646,13 @@ function Navbar() {
           <div className="relative shrink-0 flex items-center">
             <select
               value={
-                isService
-                  ? BUSINESS_CATEGORY_CODES.SERVICE
-                  : isBusiness
-                    ? BUSINESS_CATEGORY_CODES.BUSINESS
-                    : BUSINESS_CATEGORY_CODES.ECOMMERCE
+                isNearby
+                  ? "EXPLORE_NEARBY"
+                  : isService
+                    ? BUSINESS_CATEGORY_CODES.SERVICE
+                    : isBusiness
+                      ? BUSINESS_CATEGORY_CODES.BUSINESS
+                      : BUSINESS_CATEGORY_CODES.ECOMMERCE
               }
               onChange={(e) => handleBusinessCategoryChange(e.target.value)}
               className="bg-white border border-slate-300 text-slate-800 rounded-full pl-3 pr-5 py-1 text-xs font-extrabold shadow-2xs focus:outline-none focus:border-[#2563eb] cursor-pointer hover:bg-slate-50 transition appearance-none"
@@ -563,6 +666,7 @@ function Navbar() {
               <option value={BUSINESS_CATEGORY_CODES.BUSINESS}>
                 Business Brands
               </option>
+              <option value="EXPLORE_NEARBY">Explore NearBy</option>
               {businessCategories
                 .filter((bc) => {
                   const code = String(bc.code || "").toUpperCase();
@@ -591,6 +695,39 @@ function Navbar() {
             />
           </div>
 
+          {/* Mobile Location & Distance Range Link */}
+          <div className="lg:hidden shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-slate-300 text-slate-800 text-[11px] font-bold shadow-2xs">
+            <Link
+              to={`/explore-nearby?city=${encodeURIComponent(userLocation?.city || "Lucknow")}&area=${encodeURIComponent(userLocation?.area || "Gomti Nagar")}&pincode=${encodeURIComponent(userLocation?.pincode || "226010")}&radius=${distanceRange || 15}`}
+              className="flex items-center gap-1 hover:text-[#2563eb]"
+            >
+              <MapPin size={12} className="text-[#2563eb] shrink-0" />
+              <span className="truncate max-w-[65px]">
+                {userLocation?.city || "Lucknow"}
+              </span>
+            </Link>
+            <span className="text-slate-300">|</span>
+            <select
+              value={distanceRange}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                setDistanceRange(val);
+                saveDistanceRange(val);
+                navigate(
+                  `/explore-nearby?city=${encodeURIComponent(userLocation?.city || "Lucknow")}&area=${encodeURIComponent(userLocation?.area || "Gomti Nagar")}&pincode=${encodeURIComponent(userLocation?.pincode || "226010")}&radius=${val}`,
+                );
+              }}
+              className="bg-transparent text-[#2563eb] font-black text-[11px] outline-none cursor-pointer"
+              aria-label="Distance range"
+            >
+              <option value={5}>5 km</option>
+              <option value={10}>10 km</option>
+              <option value={15}>15 km</option>
+              <option value={25}>25 km</option>
+              <option value={50}>50 km</option>
+            </select>
+          </div>
+
           {/* Scroll Left Button */}
           {showLeftArrow && (
             <button
@@ -609,8 +746,43 @@ function Navbar() {
             ref={catScrollRef}
             className="flex-1 flex items-center gap-1.5 sm:gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden scroll-smooth py-0.5"
           >
-            {/* Dynamic Button 1: All Products (/shop) vs All Services (/services) */}
-            {isService ? (
+            {isNearby ? (
+              /* EXPLORE NEARBY STATIC DATA & NAVIGATION FEATURES */
+              NEARBY_NAV_ITEMS.map((item) => {
+                const ItemIcon = item.icon;
+                const searchParams = new URLSearchParams(location.search);
+                const currentCat = searchParams.get("category") || "all";
+                const isItemActive = currentCat === item.slug;
+
+                return (
+                  <button
+                    key={item.slug}
+                    type="button"
+                    onClick={() =>
+                      navigate(
+                        `/explore-nearby?category=${item.slug}&city=${encodeURIComponent(userLocation?.city || "Lucknow")}&area=${encodeURIComponent(userLocation?.area || "Gomti Nagar")}&pincode=${encodeURIComponent(userLocation?.pincode || "226010")}&radius=${distanceRange || 15}`,
+                      )
+                    }
+                    className={`px-3 py-1 rounded-full font-bold transition shrink-0 text-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                      isItemActive
+                        ? "bg-[#2563eb] text-white shadow-xs"
+                        : "bg-white hover:bg-blue-50 text-slate-700 hover:text-[#2563eb] border border-slate-200"
+                    }`}
+                  >
+                    {/* <ItemIcon
+                      size={13}
+                      className={isItemActive ? "text-white" : "text-[#2563eb]"}
+                    /> */}
+                    <span>{item.name}</span>
+                    {item.badge && (
+                      <span className="px-1.5 py-0.2 rounded-full bg-red-600 text-white text-[8px] font-black uppercase tracking-wider">
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })
+            ) : isService ? (
               <button
                 type="button"
                 onClick={() => navigate("/services")}
@@ -639,59 +811,50 @@ function Navbar() {
               </button>
             )}
 
-            {/* Flash Deals: Only show when NOT service */}
-            {/* {!isService && !isBusiness && (
-              <Link
-                to="/flash-deals"
-                className="px-3 py-1 rounded-full font-black transition shrink-0 bg-amber-500 text-white hover:bg-amber-600 cursor-pointer flex items-center gap-1 shadow-2xs text-xs"
-              >
-                <Sparkles size={12} />
-                <span>Flash Deals</span>
-              </Link>
-            )} */}
+            {!isNearby &&
+              (loadingCategories ? (
+                <span className="text-xs text-slate-400 font-medium px-3 animate-pulse">
+                  Loading categories...
+                </span>
+              ) : (
+                displayCategories.map((cat, idx) => {
+                  const catName = cat.name || cat.title;
+                  const targetPath = isService
+                    ? `/services?category=${encodeURIComponent(catName)}`
+                    : isBusiness
+                      ? `/store?category=${encodeURIComponent(catName)}`
+                      : `/shop?category=${encodeURIComponent(catName)}`;
 
-            {loadingCategories ? (
-              <span className="text-xs text-slate-400 font-medium px-3 animate-pulse">
-                Loading categories...
-              </span>
-            ) : (
-              displayCategories.map((cat, idx) => {
-                const catName = cat.name || cat.title;
-                const catId = cat._id || cat.id || idx;
-                const targetPath = isService
-                  ? `/services?category=${encodeURIComponent(catName)}`
-                  : isBusiness
-                    ? `/store?category=${encodeURIComponent(catName)}`
-                    : `/shop?category=${encodeURIComponent(catName)}`;
-
-                return (
-                  <button
-                    key={cat._id || `cat_nav_${idx}`}
-                    type="button"
-                    onClick={() => navigate(targetPath)}
-                    className="px-3 py-1 rounded-full font-semibold transition shrink-0 text-[#2563eb] sm:text-slate-700 hover:bg-slate-200 hover:text-slate-900 cursor-pointer whitespace-nowrap text-xs"
-                  >
-                    {catName}
-                  </button>
-                );
-              })
-            )}
+                  return (
+                    <button
+                      key={cat._id || `cat_nav_${idx}`}
+                      type="button"
+                      onClick={() => navigate(targetPath)}
+                      className="px-3 py-1 rounded-full font-semibold transition shrink-0 text-[#2563eb] sm:text-slate-700 hover:bg-slate-200 hover:text-slate-900 cursor-pointer whitespace-nowrap text-xs"
+                    >
+                      {catName}
+                    </button>
+                  );
+                })
+              ))}
 
             {/* End Button: Explore All */}
-            <button
-              onClick={() =>
-                navigate(
-                  isService ? "/services" : isBusiness ? "/store" : "/shop",
-                )
-              }
-              className="px-3 py-1 rounded-full font-semibold transition shrink-0 text-[#2563eb] sm:text-slate-700 hover:bg-slate-200 hover:text-slate-900 cursor-pointer whitespace-nowrap text-xs"
-            >
-              {isService
-                ? "Explore all services"
-                : isBusiness
-                  ? "Explore all businesses"
-                  : "Explore all products"}
-            </button>
+            {!isNearby && (
+              <button
+                onClick={() =>
+                  navigate(
+                    isService ? "/services" : isBusiness ? "/store" : "/shop",
+                  )
+                }
+                className="px-3 py-1 rounded-full font-semibold transition shrink-0 text-[#2563eb] sm:text-slate-700 hover:bg-slate-200 hover:text-slate-900 cursor-pointer whitespace-nowrap text-xs"
+              >
+                {isService
+                  ? "Explore all services"
+                  : isBusiness
+                    ? "Explore all businesses"
+                    : "Explore all products"}
+              </button>
+            )}
           </div>
 
           {/* Scroll Right Button */}
@@ -774,11 +937,13 @@ function Navbar() {
             </label>
             <select
               value={
-                isService
-                  ? BUSINESS_CATEGORY_CODES.SERVICE
-                  : isBusiness
-                    ? BUSINESS_CATEGORY_CODES.BUSINESS
-                    : BUSINESS_CATEGORY_CODES.ECOMMERCE
+                isNearby
+                  ? "EXPLORE_NEARBY"
+                  : isService
+                    ? BUSINESS_CATEGORY_CODES.SERVICE
+                    : isBusiness
+                      ? BUSINESS_CATEGORY_CODES.BUSINESS
+                      : BUSINESS_CATEGORY_CODES.ECOMMERCE
               }
               onChange={(e) => {
                 handleBusinessCategoryChange(e.target.value);
@@ -795,6 +960,7 @@ function Navbar() {
               <option value={BUSINESS_CATEGORY_CODES.BUSINESS}>
                 Business Brands
               </option>
+              <option value="EXPLORE_NEARBY">📍 Explore NearBy</option>
               {businessCategories
                 .filter((bc) => {
                   const code = String(bc.code || "").toUpperCase();
@@ -819,13 +985,23 @@ function Navbar() {
             </select>
           </div>
 
-          {/* Location Badge */}
-          <div className="flex items-center gap-2 px-3 py-2 bg-blue-50/60 text-slate-700 rounded-lg text-xs">
-            <MapPin size={15} className="text-[#2563eb] shrink-0" />
-            <span className="text-slate-500">Location:</span>
-            <span className="font-bold text-slate-900">
-              {userLocation?.city || "Detecting Location..."}
-            </span>
+          {/* Location with Explore Nearby Link & Distance Range */}
+          <div className="flex items-center justify-between px-3 py-2.5 bg-blue-50/70 border border-blue-200/60 rounded-xl text-xs">
+            <Link
+              to={`/explore-nearby?city=${encodeURIComponent(userLocation?.city || "Lucknow")}&area=${encodeURIComponent(userLocation?.area || "Gomti Nagar")}&pincode=${encodeURIComponent(userLocation?.pincode || "226010")}&radius=${distanceRange || 15}`}
+              onClick={() => setMobileMenu(false)}
+              className="flex items-center gap-2 hover:text-[#2563eb]"
+            >
+              <MapPin size={16} className="text-[#2563eb] shrink-0" />
+              <div className="text-left">
+                <span className="text-[10px] text-blue-600 font-bold block">
+                  Explore Nearby:
+                </span>
+                <span className="font-bold text-slate-900">
+                  {userLocation?.city || "Lucknow"}
+                </span>
+              </div>
+            </Link>
           </div>
 
           {/* Quick Links Grid - Mode Adapted */}
@@ -834,6 +1010,19 @@ function Navbar() {
               Quick Navigation
             </div>
             <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
+              <Link
+                to={`/explore-nearby?city=${encodeURIComponent(userLocation?.city || "Lucknow")}&area=${encodeURIComponent(userLocation?.area || "Gomti Nagar")}&pincode=${encodeURIComponent(userLocation?.pincode || "226010")}&radius=${distanceRange || 15}`}
+                onClick={() => setMobileMenu(false)}
+                className="col-span-2 flex items-center justify-between p-2.5 bg-blue-50/80 hover:bg-blue-100/90 rounded-xl font-bold text-[#2563eb] transition-colors border border-blue-200/80 shadow-2xs"
+              >
+                <div className="flex items-center gap-2">
+                  <Compass size={17} className="text-[#2563eb]" />
+                  <span>Explore Nearby Catalog</span>
+                </div>
+                <span className="text-[10px] bg-[#2563eb] text-white font-black px-2 py-0.5 rounded-full">
+                  Within {distanceRange || 15} km
+                </span>
+              </Link>
               {isService ? (
                 <>
                   <Link

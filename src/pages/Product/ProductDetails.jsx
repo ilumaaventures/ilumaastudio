@@ -52,6 +52,7 @@ import { toggleCompare } from "../../redux/reducers/compareReducer";
 import { DetailSkeleton } from "../../Components/Skeletons";
 import { getProductFlashDealStatus } from "../../api/flashDealService";
 import ProductCard from "../../Components/ProductCard";
+import { NEARBY_PRODUCTS, NEARBY_GIFTS } from "../../data/nearbyMockData";
 import toast from "react-hot-toast";
 
 const DEFAULT_POLICIES = [
@@ -230,10 +231,40 @@ function ProductDetails() {
           getProductFlashDealStatus(id),
         ]);
 
-        const pData =
+        let pData =
           pRes.status === "fulfilled"
             ? pRes.value?.product || pRes.value?.data || pRes.value
             : null;
+
+        if (!pData) {
+          const fallbackMock = [...NEARBY_PRODUCTS, ...NEARBY_GIFTS].find(
+            (p) => String(p.id) === String(id) || String(p._id) === String(id),
+          );
+          if (fallbackMock) {
+            pData = {
+              _id: fallbackMock.id,
+              id: fallbackMock.id,
+              name: fallbackMock.name || fallbackMock.title,
+              price: fallbackMock.price,
+              originalPrice:
+                fallbackMock.originalPrice || Math.round(fallbackMock.price * 1.25),
+              images: [{ url: fallbackMock.image }],
+              category: { name: fallbackMock.category, _id: "cat_mock" },
+              description: `Authentic local product from ${fallbackMock.businessName}. Available for local pickup or fast courier delivery in ${fallbackMock.area}, ${fallbackMock.city}. Handcrafted and sourced locally.`,
+              business: {
+                _id: fallbackMock.businessId || "business-001",
+                name: fallbackMock.businessName,
+                address: `${fallbackMock.area}, ${fallbackMock.city}`,
+                city: fallbackMock.city,
+                pincode: fallbackMock.pincode,
+              },
+              stock: 25,
+              isDemo: true,
+              rating: 4.8,
+              numReviews: 19,
+            };
+          }
+        }
 
         const fetchedPolicies =
           pRes.status === "fulfilled" &&

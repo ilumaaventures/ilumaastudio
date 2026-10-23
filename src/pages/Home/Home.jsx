@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Compass, ArrowRight } from "lucide-react";
 import HeroBanner from "./sections/HeroBanner";
 import MarketplaceHub from "./sections/MarketplaceHub";
 import ShopByCategory from "./sections/ShopByCategory";
@@ -192,6 +193,40 @@ function Home() {
 
       {/* Popular Local Shops */}
       <TopBrands />
+
+      {/* Hyperlocal Explore Nearby Banner */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 p-6 sm:p-8 lg:p-10 text-white shadow-xl border border-slate-800">
+          <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2.5 max-w-xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-bold">
+                <Compass size={14} className="text-blue-400" />
+                <span>Hyperlocal Discovery</span>
+                <span>•</span>
+                <span className="text-amber-300">Within 5-50 km</span>
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                Discover Stores, Services & Cafés Near You
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Connect with local artisans, doorstep service professionals, bakeries, gift studios, and explore trending neighbourhood spots.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => navigate("/explore-nearby")}
+                className="px-6 py-3 rounded-2xl bg-[#2563eb] hover:bg-blue-600 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Explore Nearby Radar</span>
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <MegaSaleBanner
         bannerIndex={1}
         fallbackTitle="Premium Brands & Exclusive Studio Collections"

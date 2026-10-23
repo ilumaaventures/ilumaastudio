@@ -23,6 +23,8 @@ import Shop from "./pages/Shop/Shop";
 import Category from "./pages/Category/Category";
 import ComparePage from "./pages/Compare/ComparePage";
 import CompareFloatingBar from "./Components/comparison/CompareFloatingBar";
+import ExploreNearby from "./pages/ExploreNearby/ExploreNearby";
+import ExploreNearbyDetail from "./pages/ExploreNearby/ExploreNearbyDetail";
 
 // Auth Pages
 import Login from "./pages/Auth/Login";
@@ -205,6 +207,8 @@ function App() {
             <Route path="cart" element={<Cart />} />
             <Route path="wishlist" element={<Wishlist />} />
             <Route path="compare" element={<ComparePage />} />
+            <Route path="explore-nearby" element={<ExploreNearby />} />
+            <Route path="explore-nearby/:id" element={<ExploreNearbyDetail />} />
           </Route>
         ) : (
           /* Marketplace Branch: Root is the Public Marketplace Home */
@@ -215,6 +219,8 @@ function App() {
             <Route path="/products/:id" element={<ProductDetails />} />
             <Route path="/compare" element={<ComparePage />} />
             <Route path="/shop" element={<Shop />} />
+            <Route path="/explore-nearby" element={<ExploreNearby />} />
+            <Route path="/explore-nearby/:id" element={<ExploreNearbyDetail />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/services" element={<Services />} />

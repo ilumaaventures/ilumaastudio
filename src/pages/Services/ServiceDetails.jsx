@@ -40,6 +40,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { NEARBY_SERVICES } from "../../data/nearbyMockData";
 
 const formatDuration = (dur) => {
   if (!dur) return "45 mins";
@@ -158,13 +159,72 @@ export default function ServiceDetails() {
     const fetchDetails = async () => {
       try {
         setLoading(true);
-        const data = await getServiceById(id);
-        const serviceObj = data.service || data.data || data;
+        let serviceObj = null;
+        try {
+          const data = await getServiceById(id);
+          serviceObj = data.service || data.data || data;
+        } catch (apiErr) {
+          const fallbackMock = NEARBY_SERVICES.find(
+            (s) => String(s.id) === String(id) || String(s._id) === String(id),
+          );
+          if (fallbackMock) {
+            serviceObj = {
+              _id: fallbackMock.id,
+              name: fallbackMock.title,
+              title: fallbackMock.title,
+              price: fallbackMock.startingPrice,
+              startingPrice: fallbackMock.startingPrice,
+              duration: fallbackMock.duration,
+              category: { name: fallbackMock.category },
+              thumbnail: fallbackMock.image,
+              images: [{ url: fallbackMock.image }],
+              description:
+                fallbackMock.description ||
+                `Professional ${fallbackMock.category} services provided locally by ${fallbackMock.providerName} in ${fallbackMock.area}, ${fallbackMock.city}. Certified local specialists.`,
+              providerName: fallbackMock.providerName,
+              vendor: { name: fallbackMock.providerName, _id: "vendor_mock" },
+              business: { name: fallbackMock.providerName, _id: "biz_mock" },
+              city: fallbackMock.city,
+              area: fallbackMock.area,
+              distanceKm: fallbackMock.distanceKm,
+              isDemo: true,
+              rating: 4.9,
+              totalReviews: 22,
+              packages: [
+                {
+                  name: "Standard Service",
+                  price: fallbackMock.startingPrice,
+                  duration: fallbackMock.duration,
+                  features: [
+                    "Direct Consultation",
+                    "Expert Service Delivery",
+                    "Doorstep or In-Clinic Option",
+                    "Satisfaction Assurance",
+                  ],
+                },
+                {
+                  name: "Premium Comprehensive Package",
+                  price: Math.round(fallbackMock.startingPrice * 1.5),
+                  duration: `${fallbackMock.duration} + extra consultation`,
+                  features: [
+                    "Priority Scheduling Slot",
+                    "Dedicated Senior Specialist",
+                    "Premium Materials & Tools",
+                    "Post-Service Support & Warranty",
+                  ],
+                },
+              ],
+            };
+          } else {
+            throw apiErr;
+          }
+        }
+
         setService(serviceObj);
         setSelectedImageIndex(0);
         if (serviceObj.reviews && Array.isArray(serviceObj.reviews)) {
           setReviewsList(serviceObj.reviews);
-        } else if (serviceObj._id) {
+        } else if (serviceObj._id && !serviceObj.isDemo) {
           getServiceReviews(serviceObj._id)
             .then((rRes) => {
               if (rRes?.reviews) setReviewsList(rRes.reviews);

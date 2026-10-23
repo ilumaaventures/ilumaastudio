@@ -30,6 +30,7 @@ import {
   Scale,
   RefreshCw,
   Tag,
+  MapPin,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../redux/reducers/cartReducer";
@@ -37,6 +38,7 @@ import { toggleWishlist } from "../../redux/reducers/wishlistReducer";
 import { toggleCompare } from "../../redux/reducers/compareReducer";
 import { getallProducts } from "../../api/productService";
 import { fetchCategories } from "../../api/categoryService";
+import { getSavedDistanceRange, getSavedLocation } from "../../utils/location";
 import ProductCard from "../../Components/ProductCard";
 import toast from "react-hot-toast";
 
@@ -79,6 +81,20 @@ export default function ShopPage() {
   const cartItems = useSelector(
     (s) => s.cart?.cartItems || s.cart?.items || [],
   );
+
+  const [distanceRange, setDistanceRange] = useState(getSavedDistanceRange);
+  const [userLocation, setUserLocation] = useState(getSavedLocation);
+
+  useEffect(() => {
+    const handleUpdate = (e) => {
+      if (e?.detail) {
+        if (e.detail.distanceRange) setDistanceRange(e.detail.distanceRange);
+        if (e.detail.location) setUserLocation(e.detail.location);
+      }
+    };
+    window.addEventListener("ilumaa:location_range_changed", handleUpdate);
+    return () => window.removeEventListener("ilumaa:location_range_changed", handleUpdate);
+  }, []);
 
   // ==========================================
   // URL-DRIVEN FILTER STATE
@@ -949,6 +965,11 @@ export default function ShopPage() {
                 {totalProducts}
               </span>
               <span>products</span>
+              <span className="text-slate-300 dark:text-slate-700">|</span>
+              <div className="inline-flex items-center gap-1 text-[11px] font-bold text-[#2563eb] bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-full border border-blue-100 dark:border-blue-900/50">
+                <MapPin size={11} />
+                <span>Radius: {distanceRange} km ({userLocation?.city || "Local"})</span>
+              </div>
             </div>
           </div>
 

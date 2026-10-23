@@ -14,9 +14,15 @@ import { ROOT_DOMAIN, RESERVED_SUBDOMAINS } from "../config/env";
  */
 export const getTenantSubdomain = (hostname = typeof window !== "undefined" ? window.location.hostname : "") => {
   if (!hostname) return null;
-  const lowerHost = hostname.toLowerCase();
+  const lowerHost = hostname.toLowerCase().split(":")[0];
 
-  // 1. Localhost development (e.g. freshmart.localhost or freshmart.localhost:5173)
+  // IP addresses (127.0.0.1, 192.168.x.x, ::1) are local network development, not tenant custom domains
+  const isIp = /^(\d{1,3}\.){3}\d{1,3}$/.test(lowerHost) || lowerHost === "::1";
+  if (isIp) {
+    return null;
+  }
+
+  // 1. Localhost development (e.g. freshmart.localhost)
   if (lowerHost.endsWith(".localhost") || (lowerHost.includes("localhost") && lowerHost !== "localhost")) {
     const parts = lowerHost.split(".");
     if (parts.length >= 2) {
