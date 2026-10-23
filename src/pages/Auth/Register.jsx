@@ -21,7 +21,7 @@ import {
   verifyOTP as verifyOTPApi,
 } from "../../api/authService";
 import ilumaIcon from "../../assests/iluma_icon.png";
-import PasswordStrengthMeter from "../../components/PasswordStrengthMeter";
+import PasswordStrengthMeter from "../../Components/PasswordStrengthMeter";
 
 const Register = () => {
   const dispatch = useDispatch();
