@@ -28,6 +28,10 @@ import {
   Edit3,
   Truck,
   Download,
+  ExternalLink,
+  RotateCcw,
+  XCircle,
+  AlertCircle,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
@@ -926,52 +930,177 @@ export default function Profile() {
                 ) : (
                   <div className="space-y-5">
                     {customerOrders.map((ord) => {
-                      const isDelivered = (ord.status || "")
-                        .toLowerCase()
-                        .includes("delivered");
-                      const isCancelled = (ord.status || "")
-                        .toLowerCase()
-                        .includes("cancel");
-                      const canCancel = !isDelivered && !isCancelled;
+                      const orderStatus = ord.status || "Pending";
+                      const orderStatusLower = orderStatus.toLowerCase();
+
+                      // Robust status flags
+                      const isDelivered =
+                        orderStatusLower === "delivered" ||
+                        ord.items?.some(
+                          (it) => (it.status || "").toLowerCase() === "delivered"
+                        );
+
+                      const isShipped =
+                        ["shipped", "in_transit", "picked_up", "out_for_delivery"].includes(
+                          orderStatusLower
+                        ) ||
+                        ord.items?.some((it) =>
+                          [
+                            "shipped",
+                            "in_transit",
+                            "picked_up",
+                            "out_for_delivery",
+                          ].includes((it.status || "").toLowerCase())
+                        );
+
+                      const isCancelled =
+                        orderStatusLower.includes("cancel") ||
+                        (ord.items &&
+                          ord.items.length > 0 &&
+                          ord.items.every((it) =>
+                            (it.status || "").toLowerCase().includes("cancel")
+                          ));
+
+                      const isReturnedOrRefunded =
+                        [
+                          "returned",
+                          "refunded",
+                          "return requested",
+                          "replacement requested",
+                          "replacement approved",
+                        ].includes(orderStatusLower) ||
+                        ord.items?.some((it) =>
+                          [
+                            "returned",
+                            "refunded",
+                            "return requested",
+                            "replacement requested",
+                          ].includes((it.status || "").toLowerCase())
+                        );
+
+                      // Cancellation strictly permitted ONLY before dispatch/delivery/return
+                      const canCancel =
+                        !isDelivered &&
+                        !isShipped &&
+                        !isCancelled &&
+                        !isReturnedOrRefunded &&
+                        ["pending", "processing", "packed"].includes(orderStatusLower);
+
+                      const awbNumber =
+                        ord.awbNumber ||
+                        ord.trackingNumber ||
+                        ord.shippingDetails?.awb;
+                      const courierName =
+                        ord.shippingDetails?.courier ||
+                        ord.courierPartner ||
+                        "Shadowfax Logistics";
+                      const trackingUrl =
+                        ord.trackingUrl ||
+                        ord.shippingDetails?.trackingUrl ||
+                        (awbNumber
+                          ? `https://tracker.shadowfax.in/track?awb=${awbNumber}`
+                          : null);
 
                       return (
                         <div
                           key={ord._id}
-                          className="bg-white dark:bg-slate-800/90 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-5 space-y-4 shadow-2xs"
+                          className="bg-white dark:bg-slate-800/90 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-5 space-y-4 shadow-2xs transition hover:shadow-xs"
                         >
                           {/* Order Header Bar */}
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3 gap-2 text-xs">
                             <div>
-                              <span className="font-mono font-black text-slate-900 dark:text-white text-sm">
-                                Order #
-                                {ord._id
-                                  ? ord._id.slice(-8).toUpperCase()
-                                  : "N/A"}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono font-black text-slate-900 dark:text-white text-sm">
+                                  Order #
+                                  {ord._id
+                                    ? ord._id.slice(-8).toUpperCase()
+                                    : "N/A"}
+                                </span>
+                                {ord.orderSource && (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 uppercase">
+                                    {ord.orderSource}
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-[11px] text-slate-400 mt-0.5">
                                 Placed on{" "}
                                 {ord.createdAt
                                   ? new Date(ord.createdAt).toLocaleDateString(
                                       "en-IN",
+                                      {
+                                        day: "numeric",
+                                        month: "short",
+                                        year: "numeric",
+                                      }
                                     )
                                   : "N/A"}
+                                {ord.deliveredAt && isDelivered && (
+                                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold ml-2">
+                                    • Delivered on{" "}
+                                    {new Date(ord.deliveredAt).toLocaleDateString(
+                                      "en-IN",
+                                      { day: "numeric", month: "short" }
+                                    )}
+                                  </span>
+                                )}
                               </p>
                             </div>
 
                             <div className="flex items-center gap-2">
-                              <span
-                                className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${
-                                  isDelivered
-                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                    : isCancelled
-                                      ? "bg-rose-50 text-rose-700 border-rose-200"
-                                      : "bg-blue-50 text-blue-700 border-blue-200"
-                                }`}
-                              >
-                                ● {ord.status || "Processing"}
-                              </span>
+                              {isDelivered ? (
+                                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase border bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 flex items-center gap-1.5 shadow-2xs">
+                                  <CheckCircle size={12} className="text-emerald-600 dark:text-emerald-400" />
+                                  Delivered
+                                </span>
+                              ) : isCancelled ? (
+                                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase border bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800 flex items-center gap-1.5 shadow-2xs">
+                                  <XCircle size={12} className="text-rose-600 dark:text-rose-400" />
+                                  Cancelled
+                                </span>
+                              ) : isReturnedOrRefunded ? (
+                                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase border bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800 flex items-center gap-1.5 shadow-2xs">
+                                  <RotateCcw size={12} className="text-purple-600 dark:text-purple-400" />
+                                  {orderStatus}
+                                </span>
+                              ) : isShipped ? (
+                                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase border bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800 flex items-center gap-1.5 shadow-2xs">
+                                  <Truck size={12} className="text-indigo-600 dark:text-indigo-400" />
+                                  {orderStatus}
+                                </span>
+                              ) : (
+                                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase border bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800 flex items-center gap-1.5 shadow-2xs">
+                                  <Clock size={12} className="text-blue-600 dark:text-blue-400" />
+                                  {orderStatus}
+                                </span>
+                              )}
                             </div>
                           </div>
+
+                          {/* Courier & Shipping Tracking Block */}
+                          {awbNumber && (
+                            <div className="flex flex-wrap items-center justify-between bg-slate-50 dark:bg-slate-900/60 rounded-xl px-3.5 py-2.5 border border-slate-200/70 dark:border-slate-700/70 text-xs gap-2">
+                              <div className="flex items-center gap-2">
+                                <Truck size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                                <span className="text-slate-600 dark:text-slate-300">
+                                  Courier: <strong className="text-slate-900 dark:text-white">{courierName}</strong>
+                                </span>
+                                <span className="text-slate-300 dark:text-slate-600">•</span>
+                                <span className="text-slate-600 dark:text-slate-300">
+                                  AWB: <strong className="font-mono text-slate-900 dark:text-white">{awbNumber}</strong>
+                                </span>
+                              </div>
+                              {trackingUrl && (
+                                <a
+                                  href={trackingUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[#2563eb] hover:text-[#1d4ed8] dark:text-blue-400 font-bold text-[11px] inline-flex items-center gap-1 cursor-pointer transition hover:underline"
+                                >
+                                  Live Courier Tracking <ExternalLink size={11} />
+                                </a>
+                              )}
+                            </div>
+                          )}
 
                           {/* Order Items List */}
                           <div className="divide-y divide-slate-100 dark:divide-slate-700/60">
@@ -997,7 +1126,7 @@ export default function Profile() {
                                         "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=200&q=80"
                                       }
                                       alt={item.product?.name || "Product"}
-                                      className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700 bg-slate-50"
+                                      className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700 bg-slate-50 shrink-0"
                                     />
                                     <div>
                                       <p className="font-bold text-slate-900 dark:text-white">
@@ -1009,12 +1138,12 @@ export default function Profile() {
                                         <span className="text-[11px] text-slate-500 dark:text-slate-400">
                                           ₹
                                           {(item.price || 0).toLocaleString(
-                                            "en-IN",
+                                            "en-IN"
                                           )}{" "}
                                           × {item.quantity || 1}
                                         </span>
                                         <span className="inline-block text-[9px] font-black uppercase px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-600">
-                                          Product Status: {itemStatus}
+                                          Status: {itemStatus}
                                         </span>
                                         <span
                                           className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded ${
@@ -1033,7 +1162,7 @@ export default function Profile() {
                                         </span>
                                       </div>
                                       {isRequested && (
-                                        <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                                        <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                                           {item.returnRequest?.requestType ||
                                             "Return"}{" "}
                                           Request ({item.returnRequest?.status})
@@ -1043,7 +1172,7 @@ export default function Profile() {
                                   </div>
 
                                   <div className="flex items-center gap-2 self-end sm:self-center">
-                                    {isItemDelivered && !isRequested && (
+                                    {isItemDelivered && !isRequested && !isCancelled && (
                                       <button
                                         onClick={() =>
                                           setReturnModalItem({
@@ -1051,8 +1180,9 @@ export default function Profile() {
                                             item,
                                           })
                                         }
-                                        className="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-800 dark:text-white rounded-xl text-[11px] font-bold transition cursor-pointer"
+                                        className="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-white rounded-xl text-[11px] font-bold transition cursor-pointer flex items-center gap-1.5 border border-slate-200 dark:border-slate-600"
                                       >
+                                        <RotateCcw size={12} />
                                         Return / Replace
                                       </button>
                                     )}
@@ -1064,24 +1194,45 @@ export default function Profile() {
 
                           {/* Order Card Footer */}
                           <div className="pt-3 border-t border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                            <div>
-                              <span className="text-[10px] font-bold text-slate-400 uppercase">
-                                Total Amount
-                              </span>
-                              <p className="text-sm font-black text-slate-900 dark:text-white">
-                                ₹
-                                {(
-                                  ord.totalPrice ||
-                                  ord.total ||
-                                  0
-                                ).toLocaleString("en-IN")}
-                              </p>
+                            <div className="flex items-center gap-3">
+                              <div>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">
+                                  Total Amount
+                                </span>
+                                <p className="text-sm font-black text-slate-900 dark:text-white">
+                                  ₹
+                                  {(
+                                    ord.totalPrice ||
+                                    ord.total ||
+                                    0
+                                  ).toLocaleString("en-IN")}
+                                </p>
+                              </div>
+                              {ord.paymentInfo && (
+                                <div className="border-l border-slate-200 dark:border-slate-700 pl-3">
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase">
+                                    Payment
+                                  </span>
+                                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                    {ord.paymentInfo.method || ord.paymentInfo.type || "COD"} •{" "}
+                                    <span
+                                      className={
+                                        ord.paymentInfo.status === "Paid"
+                                          ? "text-emerald-600 dark:text-emerald-400"
+                                          : "text-amber-600 dark:text-amber-400"
+                                      }
+                                    >
+                                      {ord.paymentInfo.status || "Pending"}
+                                    </span>
+                                  </p>
+                                </div>
+                              )}
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2">
                               <Link
                                 to={`/track-order?orderId=${ord._id}`}
-                                className="px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5"
+                                className="px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer"
                               >
                                 <Truck size={14} />
                                 Track Order Status
@@ -1096,13 +1247,35 @@ export default function Profile() {
                                 Invoice
                               </button>
 
+                              {/* Cancellation strictly hidden if delivered, shipped, or returned */}
                               {canCancel && (
                                 <button
                                   onClick={() => setCancelModalOrder(ord)}
-                                  className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition cursor-pointer"
+                                  className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800 rounded-xl text-xs font-bold transition cursor-pointer"
                                 >
                                   Cancel Order
                                 </button>
+                              )}
+
+                              {isDelivered && (
+                                <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-xl flex items-center gap-1">
+                                  <CheckCircle size={12} className="text-emerald-600 dark:text-emerald-400" />
+                                  Delivered
+                                </span>
+                              )}
+
+                              {isShipped && !isDelivered && (
+                                <span className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 px-3 py-1.5 rounded-xl flex items-center gap-1">
+                                  <Truck size={12} className="text-indigo-600 dark:text-indigo-400" />
+                                  Dispatched
+                                </span>
+                              )}
+
+                              {isCancelled && (
+                                <span className="text-[11px] font-semibold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 px-3 py-1.5 rounded-xl flex items-center gap-1">
+                                  <XCircle size={12} className="text-rose-600 dark:text-rose-400" />
+                                  Cancelled
+                                </span>
                               )}
                             </div>
                           </div>

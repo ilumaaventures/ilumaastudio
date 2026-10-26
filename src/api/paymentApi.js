@@ -63,3 +63,12 @@ export const verifyRazorpayPayment = async (verificationData) => {
   const response = await baseApi.post("/payments/verify", verificationData);
   return response.data;
 };
+
+/**
+ * Gets payment status of an order for checkout recovery
+ * @param {string} orderId
+ */
+export const getOrderPaymentStatus = async (orderId) => {
+  const response = await baseApi.get(`/payments/order/${orderId}/status`);
+  return response.data;
+};

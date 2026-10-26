@@ -20,6 +20,7 @@ import {
   ExternalLink,
   Copy,
   Check,
+  ShieldCheck,
 } from "lucide-react";
 import {
   getOrderDetails,
@@ -440,9 +441,39 @@ function TrackOrder() {
 
               {/* Order Milestone Stepper */}
               <div className="p-6 sm:p-8">
-                <h3 className="font-extrabold text-slate-900 text-sm mb-6">
-                  Fulfillment Status
-                </h3>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+                  <h3 className="font-extrabold text-slate-900 text-sm">
+                    Fulfillment Status
+                  </h3>
+                  {order.status?.toLowerCase().includes("out") && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold">
+                      <ShieldCheck size={13} className="text-amber-600" /> Delivery Verification Active
+                    </span>
+                  )}
+                </div>
+
+                {/* Out for Delivery Advisory Banner */}
+                {order.status?.toLowerCase().includes("out") && (
+                  <div className="mb-6 p-4 rounded-2xl bg-amber-50/80 border border-amber-200 flex items-start gap-3">
+                    <div className="p-2 rounded-xl bg-amber-100 text-amber-800 shrink-0 mt-0.5">
+                      <ShieldCheck size={18} />
+                    </div>
+                    <div className="space-y-1 text-xs">
+                      <h4 className="font-bold text-amber-950 flex items-center gap-2">
+                        <span>Courier Out for Delivery</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-200/70 text-amber-900 font-bold uppercase tracking-wider">
+                          OTP Verification
+                        </span>
+                      </h4>
+                      <p className="text-amber-800 font-medium leading-relaxed">
+                        Our logistics partner Shadowfax is currently out for delivery with your package. Upon arrival at your address, the delivery executive may request an <strong>SMS delivery verification OTP</strong> sent by Shadowfax directly to your registered phone number.
+                      </p>
+                      <p className="text-[11px] text-amber-700 italic">
+                        * Please note: Delivery OTPs are sent strictly via SMS by Shadowfax to protect your order and are never stored or displayed on ILumaa.
+                      </p>
+                    </div>
+                  </div>
+                )}
                 <div className="relative">
                   {getTrackingSteps(order.status).map((step, idx, arr) => {
                     const StepIcon = step.icon;
@@ -581,6 +612,59 @@ function TrackOrder() {
                             )}
                           </div>
                         </div>
+
+                        {/* Out For Delivery OTP Notice for Specific Package */}
+                        {shipment.status === "OUT_FOR_DELIVERY" && (
+                          <div className="mx-5 mt-4 p-4 rounded-2xl bg-amber-50/80 border border-amber-200 flex items-start gap-3">
+                            <div className="p-2 rounded-xl bg-amber-100 text-amber-800 shrink-0 mt-0.5">
+                              <ShieldCheck size={18} />
+                            </div>
+                            <div className="space-y-1 text-xs">
+                              <div className="font-bold text-amber-950 flex items-center gap-1.5">
+                                <span>Delivery Verification in Progress</span>
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-200/70 text-amber-900 font-bold uppercase tracking-wider">
+                                  Shadowfax OTP
+                                </span>
+                              </div>
+                              <p className="text-amber-800 font-medium leading-relaxed">
+                                The courier rider is out for delivery. To complete the handover, Shadowfax may ask you for an <strong>SMS delivery OTP</strong> sent directly to your registered mobile phone. Please keep your phone accessible and provide the OTP to the courier executive.
+                              </p>
+                              <p className="text-[11px] text-amber-700 italic">
+                                For customer security, delivery OTPs are dispatched strictly by Shadowfax carrier systems and are never stored or displayed on ILumaa.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Delivered Confirmation Notice */}
+                        {shipment.status === "DELIVERED" && (
+                          <div className="mx-5 mt-4 p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 flex items-start gap-3">
+                            <div className="p-2 rounded-xl bg-emerald-100 text-emerald-800 shrink-0 mt-0.5">
+                              <CheckCircle2 size={18} />
+                            </div>
+                            <div className="space-y-1 text-xs">
+                              <div className="font-bold text-emerald-950 flex items-center gap-1.5">
+                                <span>Package Delivered Successfully</span>
+                                {shipment.podDetails?.otpVerified && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-200/70 text-emerald-900 font-bold uppercase tracking-wider">
+                                    OTP Verified
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-emerald-800 font-medium leading-relaxed">
+                                Delivered on{" "}
+                                <strong>
+                                  {shipment.deliveredAt
+                                    ? new Date(shipment.deliveredAt).toLocaleString("en-IN")
+                                    : shipment.podDetails?.deliveredAt
+                                    ? new Date(shipment.podDetails.deliveredAt).toLocaleString("en-IN")
+                                    : "Recently"}
+                                </strong>
+                                {shipment.podDetails?.receivedBy ? ` to ${shipment.podDetails.receivedBy}` : ""}.
+                              </p>
+                            </div>
+                          </div>
+                        )}
 
                         {/* Package Contents & Scan History */}
                         <div className="p-6 grid md:grid-cols-2 gap-6">

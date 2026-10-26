@@ -251,7 +251,7 @@ const featuredBusinesses = [
     name: "Pixel6D",
     type: "3D Printing & Prototyping",
     image: "https://pixel6d.com/images/modern-living-room.png",
-    url: "https://pixel6d.com",
+    url: "https://pixel6d.vercel.app",
     badge: "3D Printing",
   },
   {

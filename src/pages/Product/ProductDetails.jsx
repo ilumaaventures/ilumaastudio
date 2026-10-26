@@ -541,19 +541,24 @@ function ProductDetails() {
     try {
       setCheckingPincode(true);
       setPincodeMsg(null);
+      const businessId = displayProduct?.business?._id || displayProduct?.business || null;
+      const vendorId = displayProduct?.vendor?._id || displayProduct?.vendor || null;
       const res = await checkCustomerDelivery({
         productId: displayProduct._id,
+        businessId,
+        vendorId,
         pincode: pincode.trim(),
       });
-      if (res?.deliverable) {
+      const isAvailable = Boolean(res?.available ?? res?.deliverable);
+      if (isAvailable) {
         setPincodeMsg({
           success: true,
-          text: `Delivery available for ${pincode}! Estimated delivery in 3-5 business days.`,
+          text: res?.message || `Delivery available for ${pincode}! Estimated delivery in ${res?.estimatedDeliveryDays || "3-5"} business days.`,
         });
       } else {
         setPincodeMsg({
           success: false,
-          text: `Sorry, this item is currently not deliverable to ${pincode}.`,
+          text: res?.message || `Sorry, this item is currently not deliverable to ${pincode}.`,
         });
       }
     } catch {

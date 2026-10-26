@@ -64,7 +64,7 @@ function Cart() {
   const [step, setStep] = useState("cart");
   const [createdOrder, setCreatedOrder] = useState(null);
   const [placingOrder, setPlacingOrder] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("cod"); // 'cod' | 'razorpay'
+  const [paymentMethod, setPaymentMethod] = useState("razorpay"); // 'cod' | 'razorpay'
   const [orderNotes, setOrderNotes] = useState("");
 
   // Coupon states
@@ -851,7 +851,7 @@ function Cart() {
         window.scrollTo({ top: 0, behavior: "smooth" });
         toast.success("Order placed successfully!");
       } else {
-        // Razorpay Online Flow
+        // Razorpay Online Flow - Durable Checkout Lifecycle
         const isLoaded = await loadRazorpayScript();
         if (!isLoaded) {
           toast.error(
@@ -861,45 +861,62 @@ function Cart() {
           return;
         }
 
-        const razorpayRes = await createRazorpayOrder({
-          amount: total,
-          currency: "INR",
-          receipt: `rcpt_${Date.now()}`,
-        });
+        // 1. Create internal pending order first to guarantee no unrecorded charges
+        const pendingOrderPayload = {
+          ...orderPayload,
+          paymentInfo: {
+            type: "Razorpay",
+            method: "Razorpay",
+            status: "Pending",
+          },
+        };
 
-        const rzpOrderData = razorpayRes?.order || razorpayRes;
-        const rzpKey = razorpayRes?.key || (await getRazorpayKey());
-        const rzpOrderId = rzpOrderData?.id || null;
+        const initialOrder = await placeOrder(pendingOrderPayload);
+        setCreatedOrder(initialOrder);
+
+        let rzpOrderData = initialOrder?.razorpay;
+        let rzpKey = rzpOrderData?.key || (await getRazorpayKey());
+        let rzpOrderId = rzpOrderData?.orderId || null;
+        let paymentId = rzpOrderData?.paymentId || null;
+
+        // If backend did not auto-return razorpay details, initialize with authoritative orderId
+        if (!rzpOrderId) {
+          const razorpayRes = await createRazorpayOrder({
+            orderId: initialOrder._id,
+            amount: initialOrder.totalPrice,
+            currency: "INR",
+          });
+          rzpOrderData = razorpayRes?.order || razorpayRes;
+          rzpKey = razorpayRes?.key || rzpKey;
+          rzpOrderId = rzpOrderData?.id || null;
+          paymentId = razorpayRes?.paymentId || null;
+        }
 
         const options = {
           key: rzpKey,
-          amount: rzpOrderData?.amount || Math.round(total * 100),
+          amount:
+            rzpOrderData?.amount ||
+            Math.round(Number(initialOrder.totalPrice) * 100),
           currency: rzpOrderData?.currency || "INR",
           name: "ILumaaStudio",
-          description: `Payment for Order`,
+          description: `Payment for Order #${initialOrder._id.toString().slice(-6).toUpperCase()}`,
+          order_id: rzpOrderId,
           handler: async (response) => {
             try {
+              if (!response.razorpay_signature) {
+                toast.error("Payment signature missing from gateway callback.");
+                return;
+              }
+
               const verifyRes = await verifyRazorpayPayment({
                 razorpay_order_id: response.razorpay_order_id || rzpOrderId,
                 razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature:
-                  response.razorpay_signature || "standard_auth",
-                paymentId: razorpayRes?.paymentId || null,
+                razorpay_signature: response.razorpay_signature,
+                orderId: initialOrder._id,
+                paymentId,
               });
 
               if (verifyRes.success) {
-                const finalOrder = await placeOrder({
-                  ...orderPayload,
-                  paymentInfo: {
-                    type: "Razorpay",
-                    status: "Completed",
-                    transactionId: response.razorpay_payment_id,
-                    razorpayOrderId: response.razorpay_order_id || rzpOrderId,
-                    method: "Razorpay",
-                    id: razorpayRes?.paymentId || null,
-                  },
-                });
-                setCreatedOrder(finalOrder);
                 dispatch(clearCart());
                 try {
                   playOrderConfirmedSound();
@@ -908,14 +925,26 @@ function Cart() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
                 toast.success("Payment successful & order placed!");
               } else {
-                toast.error("Payment verification failed.");
+                toast.error(
+                  "Payment verification failed. Please check order status in My Orders.",
+                );
               }
             } catch (err) {
               console.error("Verification error:", err);
               toast.error(
                 err.response?.data?.message || "Error verifying payment.",
               );
+            } finally {
+              setPlacingOrder(false);
             }
+          },
+          modal: {
+            ondismiss: () => {
+              toast.info(
+                "Payment window closed. Your order is saved as pending in My Orders.",
+              );
+              setPlacingOrder(false);
+            },
           },
           prefill: {
             name: shippingAddress.fullName || user?.name || "",
@@ -927,11 +956,14 @@ function Cart() {
           },
         };
 
-        if (rzpOrderId) {
-          options.order_id = rzpOrderId;
-        }
-
         const paymentObject = new window.Razorpay(options);
+        paymentObject.on("payment.failed", (failedRes) => {
+          console.warn("Payment failed:", failedRes.error);
+          toast.error(
+            failedRes.error?.description || "Payment failed. Please retry.",
+          );
+          setPlacingOrder(false);
+        });
         paymentObject.open();
       }
     } catch (error) {
@@ -2152,35 +2184,6 @@ function Cart() {
                     </h3>
 
                     <div className="grid sm:grid-cols-2 gap-3 pt-1">
-                      {/* Cash on Delivery */}
-                      <label
-                        className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                          paymentMethod === "cod"
-                            ? "border-[#2563eb] bg-blue-50/50"
-                            : "border-slate-200 bg-white hover:border-slate-300"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="cod"
-                          checked={paymentMethod === "cod"}
-                          onChange={() => setPaymentMethod("cod")}
-                          className="accent-[#2563eb] w-4 h-4 cursor-pointer"
-                        />
-                        <div className="flex items-center gap-2.5">
-                          <Banknote size={20} className="text-emerald-600" />
-                          <div>
-                            <span className="font-black text-xs text-slate-900 block">
-                              Cash on Delivery (COD)
-                            </span>
-                            <span className="text-[10px] text-slate-500">
-                              Pay cash at your doorstep
-                            </span>
-                          </div>
-                        </div>
-                      </label>
-
                       {/* Online Razorpay */}
                       <label
                         className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
@@ -2205,6 +2208,34 @@ function Cart() {
                             </span>
                             <span className="text-[10px] text-slate-500">
                               UPI, Cards, NetBanking
+                            </span>
+                          </div>
+                        </div>
+                      </label>
+                      {/* Cash on Delivery */}
+                      <label
+                        className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                          paymentMethod === "cod"
+                            ? "border-[#2563eb] bg-blue-50/50"
+                            : "border-slate-200 bg-white hover:border-slate-300"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="cod"
+                          checked={paymentMethod === "cod"}
+                          onChange={() => setPaymentMethod("cod")}
+                          className="accent-[#2563eb] w-4 h-4 cursor-pointer"
+                        />
+                        <div className="flex items-center gap-2.5">
+                          <Banknote size={20} className="text-emerald-600" />
+                          <div>
+                            <span className="font-black text-xs text-slate-900 block">
+                              Cash on Delivery (COD)
+                            </span>
+                            <span className="text-[10px] text-slate-500">
+                              Pay cash at your doorstep
                             </span>
                           </div>
                         </div>
