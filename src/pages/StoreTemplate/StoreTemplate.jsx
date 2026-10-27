@@ -268,7 +268,7 @@ const featuredBusinesses = [
     name: "Aricsso India",
     type: "Manufacturing & Industrial Solutions",
     image: "https://aricssoindia.co.in/images/sam3.jfif",
-    url: "https://aricsso.com",
+    url: "https://aricssoindia.co.in",
     badge: "Industrial Solutions",
   },
   {

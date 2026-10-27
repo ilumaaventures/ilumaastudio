@@ -34,7 +34,12 @@ const DEFAULT_4_PLANS = [
     description:
       "For small businesses & startups launching online store or service",
     billingModel: "FIXED",
-    pricing: { monthly: 499, yearly: 399, comparisonMonthly: 699, comparisonYearly: 599 },
+    pricing: {
+      monthly: 499,
+      yearly: 399,
+      comparisonMonthly: 699,
+      comparisonYearly: 599,
+    },
     popular: false,
     badgeText: "BASIC STORE",
     businessCategoryScope: "ALL",
@@ -62,7 +67,12 @@ const DEFAULT_4_PLANS = [
     name: "Growth",
     description: "For growing brands and scaling multi-channel businesses",
     billingModel: "FIXED",
-    pricing: { monthly: 999, yearly: 799, comparisonMonthly: 1499, comparisonYearly: 1199 },
+    pricing: {
+      monthly: 999,
+      yearly: 799,
+      comparisonMonthly: 1499,
+      comparisonYearly: 1199,
+    },
     popular: true,
     badgeText: "MOST POPULAR",
     businessCategoryScope: "ALL",
@@ -97,7 +107,12 @@ const DEFAULT_4_PLANS = [
     description:
       "For established multi-store, service & multi-vendor operations",
     billingModel: "HYBRID",
-    pricing: { monthly: 1999, yearly: 1599, comparisonMonthly: 2999, comparisonYearly: 2499 },
+    pricing: {
+      monthly: 1999,
+      yearly: 1599,
+      comparisonMonthly: 2999,
+      comparisonYearly: 2499,
+    },
     commission: { type: "PERCENTAGE", value: 2 },
     popular: false,
     badgeText: "SCALE UP",
@@ -354,7 +369,7 @@ const COMPARISON_GROUPS = [
       ["wallet", false, false, true, true],
       ["settlement", false, false, true, true],
       ["refund accounting", false, false, true, true],
-      ["MLM", false, false, true, true],
+      ["MLM", false, false, false, true],
     ],
   },
   {
@@ -627,18 +642,26 @@ function BusinessPricing() {
   };
 
   const getComparisonMonthlyPrice = (plan) => {
-    if (plan.pricing?.comparisonMonthly !== undefined) return plan.pricing.comparisonMonthly;
-    if (plan.pricing?.comparisonPriceMonthly !== undefined) return plan.pricing.comparisonPriceMonthly;
-    if (plan.pricing?.comparisonMonthlyPrice !== undefined) return plan.pricing.comparisonMonthlyPrice;
-    if (plan.comparisonMonthlyPrice !== undefined) return plan.comparisonMonthlyPrice;
+    if (plan.pricing?.comparisonMonthly !== undefined)
+      return plan.pricing.comparisonMonthly;
+    if (plan.pricing?.comparisonPriceMonthly !== undefined)
+      return plan.pricing.comparisonPriceMonthly;
+    if (plan.pricing?.comparisonMonthlyPrice !== undefined)
+      return plan.pricing.comparisonMonthlyPrice;
+    if (plan.comparisonMonthlyPrice !== undefined)
+      return plan.comparisonMonthlyPrice;
     return 0;
   };
 
   const getComparisonYearlyPrice = (plan) => {
-    if (plan.pricing?.comparisonYearly !== undefined) return plan.pricing.comparisonYearly;
-    if (plan.pricing?.comparisonPriceYearly !== undefined) return plan.pricing.comparisonPriceYearly;
-    if (plan.pricing?.comparisonYearlyPrice !== undefined) return plan.pricing.comparisonYearlyPrice;
-    if (plan.comparisonYearlyPrice !== undefined) return plan.comparisonYearlyPrice;
+    if (plan.pricing?.comparisonYearly !== undefined)
+      return plan.pricing.comparisonYearly;
+    if (plan.pricing?.comparisonPriceYearly !== undefined)
+      return plan.pricing.comparisonPriceYearly;
+    if (plan.pricing?.comparisonYearlyPrice !== undefined)
+      return plan.pricing.comparisonYearlyPrice;
+    if (plan.comparisonYearlyPrice !== undefined)
+      return plan.comparisonYearlyPrice;
     return 0;
   };
 
@@ -867,9 +890,12 @@ function BusinessPricing() {
             {displayedPlans.map((plan, idx) => {
               const price = getDisplayPrice(plan);
               const comparisonPrice = getDisplayComparisonPrice(plan);
-              const hasDiscount = comparisonPrice > price && comparisonPrice > 0;
+              const hasDiscount =
+                comparisonPrice > price && comparisonPrice > 0;
               const discountPercent = hasDiscount
-                ? Math.round(((comparisonPrice - price) / comparisonPrice) * 100)
+                ? Math.round(
+                    ((comparisonPrice - price) / comparisonPrice) * 100,
+                  )
                 : 0;
               const isSelected = activeCardIndex === idx;
               const isEnterprise = plan.isCustomTalk;
