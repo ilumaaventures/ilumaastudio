@@ -247,7 +247,8 @@ function ProductDetails() {
               name: fallbackMock.name || fallbackMock.title,
               price: fallbackMock.price,
               originalPrice:
-                fallbackMock.originalPrice || Math.round(fallbackMock.price * 1.25),
+                fallbackMock.originalPrice ||
+                Math.round(fallbackMock.price * 1.25),
               images: [{ url: fallbackMock.image }],
               category: { name: fallbackMock.category, _id: "cat_mock" },
               description: `Authentic local product from ${fallbackMock.businessName}. Available for local pickup or fast courier delivery in ${fallbackMock.area}, ${fallbackMock.city}. Handcrafted and sourced locally.`,
@@ -541,8 +542,10 @@ function ProductDetails() {
     try {
       setCheckingPincode(true);
       setPincodeMsg(null);
-      const businessId = displayProduct?.business?._id || displayProduct?.business || null;
-      const vendorId = displayProduct?.vendor?._id || displayProduct?.vendor || null;
+      const businessId =
+        displayProduct?.business?._id || displayProduct?.business || null;
+      const vendorId =
+        displayProduct?.vendor?._id || displayProduct?.vendor || null;
       const res = await checkCustomerDelivery({
         productId: displayProduct._id,
         businessId,
@@ -553,12 +556,16 @@ function ProductDetails() {
       if (isAvailable) {
         setPincodeMsg({
           success: true,
-          text: res?.message || `Delivery available for ${pincode}! Estimated delivery in ${res?.estimatedDeliveryDays || "3-5"} business days.`,
+          text:
+            res?.message ||
+            `Delivery available for ${pincode}! Estimated delivery in ${res?.estimatedDeliveryDays || "3-5"} business days.`,
         });
       } else {
         setPincodeMsg({
           success: false,
-          text: res?.message || `Sorry, this item is currently not deliverable to ${pincode}.`,
+          text:
+            res?.message ||
+            `Sorry, this item is currently not deliverable to ${pincode}.`,
         });
       }
     } catch {
@@ -628,7 +635,7 @@ function ProductDetails() {
                 src={
                   selectedImage ||
                   displayProduct.images?.[0]?.url ||
-                  "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=600"
+                  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0E0BNvQPwouv9sUatAHO5KQSc0BlsPlC39MhTBsgCmnyK6hIH6P1OBSeV&s=10"
                 }
                 alt={displayProduct.name}
                 className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"

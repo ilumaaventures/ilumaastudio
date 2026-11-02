@@ -1192,6 +1192,50 @@ export default function Profile() {
                             })}
                           </div>
 
+                          {/* Dedicated Refund Tracking Information Block */}
+                          {ord.refunds && ord.refunds.length > 0 && (
+                            <div className="bg-emerald-50/70 dark:bg-emerald-950/20 rounded-xl p-3.5 border border-emerald-200/80 dark:border-emerald-800/60 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <CheckCircle size={14} className="text-emerald-600 dark:text-emerald-400" />
+                                  <span className="text-xs font-black text-emerald-900 dark:text-emerald-200">
+                                    Refund Information
+                                  </span>
+                                </div>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-200/60 dark:bg-emerald-800/50 text-emerald-800 dark:text-emerald-200 uppercase">
+                                  Verified Gateway Record
+                                </span>
+                              </div>
+                              <div className="divide-y divide-emerald-200/40 dark:divide-emerald-800/40">
+                                {ord.refunds.map((rf, rIdx) => (
+                                  <div key={rf._id || rIdx} className="pt-2 text-[11px] grid grid-cols-1 sm:grid-cols-4 gap-2 text-slate-700 dark:text-slate-300">
+                                    <div>
+                                      <span className="text-slate-400 text-[10px] block uppercase font-bold">Refund ID</span>
+                                      <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{rf.refundNumber || rf._id?.slice(-8)}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-slate-400 text-[10px] block uppercase font-bold">Amount</span>
+                                      <span className="font-black text-emerald-700 dark:text-emerald-300">₹{(rf.amount || 0).toLocaleString("en-IN")}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-slate-400 text-[10px] block uppercase font-bold">Gateway Ref</span>
+                                      <span className="font-mono text-[10px]">{rf.gatewayRefundId || "Razorpay API"}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-slate-400 text-[10px] block uppercase font-bold">Status</span>
+                                      <span className={`inline-block font-bold px-2 py-0.5 rounded text-[10px] uppercase ${
+                                        rf.status === "completed" ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200" :
+                                        rf.status === "failed" ? "bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200" : "bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200"
+                                      }`}>
+                                        {rf.status || "Processed"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
                           {/* Order Card Footer */}
                           <div className="pt-3 border-t border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                             <div className="flex items-center gap-3">

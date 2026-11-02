@@ -75,7 +75,7 @@ export default function ProductCard({
     product.thumbnail?.url ||
     product.thumbnail ||
     (Array.isArray(product.photos) && product.photos[0]) ||
-    "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=700&q=80";
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0E0BNvQPwouv9sUatAHO5KQSc0BlsPlC39MhTBsgCmnyK6hIH6P1OBSeV&s=10";
 
   // Normalize Category Name
   const categoryName =
