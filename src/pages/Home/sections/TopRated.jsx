@@ -127,6 +127,35 @@ export default function TopRated() {
 
           {/* Navigation Controls */}
           <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+            <div className="flex items-center gap-1.5 mr-1">
+              <button
+                type="button"
+                onClick={() => handleScroll("left")}
+                disabled={!canScrollLeft}
+                aria-label="Scroll Left"
+                className={`w-8 h-8 rounded-full border shadow-2xs flex items-center justify-center transition-all ${
+                  canScrollLeft
+                    ? "bg-white hover:bg-slate-100 text-slate-700 border-slate-200 hover:scale-105 active:scale-95 cursor-pointer"
+                    : "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed"
+                }`}
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleScroll("right")}
+                disabled={!canScrollRight}
+                aria-label="Scroll Right"
+                className={`w-8 h-8 rounded-full border shadow-2xs flex items-center justify-center transition-all ${
+                  canScrollRight
+                    ? "bg-white hover:bg-slate-100 text-slate-700 border-slate-200 hover:scale-105 active:scale-95 cursor-pointer"
+                    : "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed"
+                }`}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+
             <Link
               to="/products?sort=rating"
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0 ml-1"
@@ -160,7 +189,27 @@ export default function TopRated() {
             ))}
           </div>
         ) : (
-          <div className="relative">
+          <div className="relative group/carousel">
+            {/* Floating Left Arrow */}
+            <button
+              type="button"
+              onClick={() => handleScroll("left")}
+              aria-label="Scroll Left"
+              className="absolute -left-2 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/95 hover:bg-white text-slate-700 hover:text-blue-600 border border-slate-200/90 shadow-md hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer opacity-90 sm:opacity-0 group-hover/carousel:opacity-100"
+            >
+              <ChevronLeft size={20} className="stroke-[2.5]" />
+            </button>
+
+            {/* Floating Right Arrow */}
+            <button
+              type="button"
+              onClick={() => handleScroll("right")}
+              aria-label="Scroll Right"
+              className="absolute -right-2 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/95 hover:bg-white text-slate-700 hover:text-blue-600 border border-slate-200/90 shadow-md hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer opacity-90 sm:opacity-0 group-hover/carousel:opacity-100"
+            >
+              <ChevronRight size={20} className="stroke-[2.5]" />
+            </button>
+
             {canScrollLeft && (
               <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-12 bg-gradient-to-r from-white via-white/80 to-transparent z-20 pointer-events-none transition-opacity duration-300" />
             )}

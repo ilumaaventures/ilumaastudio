@@ -153,47 +153,15 @@ export default function NewArrivalsSection() {
 
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-1 flex items-center gap-2">
             New Arrivals
-            <Sparkles size={18} className="text-amber-500" />
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-            Explore products fresh off the shelves, sorted in real-time by creation date.
+            Explore products fresh off the shelves, sorted in real-time by
+            creation date.
           </p>
         </div>
 
         {/* Action Buttons & Navigation Arrows */}
         <div className="flex items-center gap-2.5 self-end sm:self-center">
-          {newArrivals.length > 4 && (
-            <div className="hidden sm:flex items-center gap-1.5 mr-1">
-              <button
-                type="button"
-                onClick={() => scroll("left")}
-                disabled={!canScrollLeft}
-                aria-label="Scroll left"
-                className={`p-2 rounded-full border transition-all duration-200 ${
-                  canScrollLeft
-                    ? "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-800 shadow-xs cursor-pointer"
-                    : "opacity-30 cursor-not-allowed bg-slate-50 dark:bg-slate-950 text-slate-400 border-slate-200/50"
-                }`}
-              >
-                <ChevronLeft size={16} />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => scroll("right")}
-                disabled={!canScrollRight}
-                aria-label="Scroll right"
-                className={`p-2 rounded-full border transition-all duration-200 ${
-                  canScrollRight
-                    ? "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-800 shadow-xs cursor-pointer"
-                    : "opacity-30 cursor-not-allowed bg-slate-50 dark:bg-slate-950 text-slate-400 border-slate-200/50"
-                }`}
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          )}
-
           <Link
             to="/shop?sort=Newest"
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0"
@@ -210,21 +178,43 @@ export default function NewArrivalsSection() {
       {loading ? (
         <ProductGridSkeleton count={6} />
       ) : (
-        <div
-          ref={scrollRef}
-          onScroll={checkScroll}
-          className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {newArrivals.map((prod) => (
-            <ProductCard
-              key={prod._id || prod.id}
-              product={{
-                ...prod,
-                badge: prod.badge || "NEW",
-              }}
-              isCarousel={true}
-            />
-          ))}
+        <div className="relative group/carousel">
+          {/* Floating Left Arrow Overlay */}
+          <button
+            type="button"
+            onClick={() => scroll("left")}
+            aria-label="Scroll left"
+            className="absolute -left-2 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/95 hover:bg-white text-slate-700 hover:text-blue-600 border border-slate-200/90 shadow-md hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer opacity-90 sm:opacity-0 group-hover/carousel:opacity-100"
+          >
+            <ChevronLeft size={20} className="stroke-[2.5]" />
+          </button>
+
+          {/* Floating Right Arrow Overlay */}
+          <button
+            type="button"
+            onClick={() => scroll("right")}
+            aria-label="Scroll right"
+            className="absolute -right-2 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/95 hover:bg-white text-slate-700 hover:text-blue-600 border border-slate-200/90 shadow-md hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer opacity-90 sm:opacity-0 group-hover/carousel:opacity-100"
+          >
+            <ChevronRight size={20} className="stroke-[2.5]" />
+          </button>
+
+          <div
+            ref={scrollRef}
+            onScroll={checkScroll}
+            className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {newArrivals.map((prod) => (
+              <ProductCard
+                key={prod._id || prod.id}
+                product={{
+                  ...prod,
+                  badge: prod.badge || "NEW",
+                }}
+                isCarousel={true}
+              />
+            ))}
+          </div>
         </div>
       )}
     </section>

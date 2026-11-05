@@ -10,7 +10,11 @@ export default function ProductCard({
 }) {
   const [isWishlisted, setIsWishlisted] = useState(false);
 
-  const discountBadge = product.badge || (product.compareAtPrice && product.compareAtPrice > product.price ? "Sale!" : null);
+  const discountBadge =
+    product.badge ||
+    (product.compareAtPrice && product.compareAtPrice > product.price
+      ? "Sale!"
+      : null);
   const displayImage = getProductImage(product, product.image);
 
   return (
@@ -43,10 +47,11 @@ export default function ProductCard({
               setIsWishlisted(!isWishlisted);
             }}
             title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer shadow-md hover:scale-110 ${isWishlisted
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 cursor-pointer shadow-md hover:scale-110 ${
+              isWishlisted
                 ? "bg-rose-50 text-rose-600"
                 : "bg-white text-stone-700 hover:bg-[#A07855] hover:text-white"
-              }`}
+            }`}
           >
             <Heart size={16} fill={isWishlisted ? "currentColor" : "none"} />
           </button>
@@ -58,7 +63,7 @@ export default function ProductCard({
               e.stopPropagation();
               onQuickView?.(product);
             }}
-            title="Quick view"
+            title="View"
             className="w-10 h-10 rounded-full bg-white text-stone-700 hover:bg-[#A07855] hover:text-white flex items-center justify-center transition-all duration-200 cursor-pointer shadow-md hover:scale-110"
           >
             <Eye size={16} />
@@ -109,17 +114,25 @@ export default function ProductCard({
               <Star
                 key={i}
                 size={13}
-                className={i < Math.floor(product.rating || 5) ? "fill-amber-500 text-amber-500" : "text-stone-300"}
+                className={
+                  i < Math.floor(product.rating || 5)
+                    ? "fill-amber-500 text-amber-500"
+                    : "text-stone-300"
+                }
               />
             ))}
           </div>
-          <span className="text-stone-500 text-xs">({product.reviewCount || 1})</span>
+          <span className="text-stone-500 text-xs">
+            ({product.reviewCount || 1})
+          </span>
         </div>
 
         {/* Price */}
         <div className="flex items-center gap-2 pt-0.5">
           <span className="text-stone-900 font-bold text-sm sm:text-base">
-            {product.priceRange ? product.priceRange : `$${Number(product.price).toFixed(2)}`}
+            {product.priceRange
+              ? product.priceRange
+              : `$${Number(product.price).toFixed(2)}`}
           </span>
           {product.compareAtPrice && product.compareAtPrice > product.price && (
             <span className="text-stone-400 text-xs sm:text-sm line-through">

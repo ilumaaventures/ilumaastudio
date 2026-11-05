@@ -17,10 +17,7 @@ import {
   updateCartQuantity,
 } from "../../../redux/reducers/cartReducer";
 
-import {
-  getProductStock,
-  isOutOfStock,
-} from "../../../utils/stockUtils";
+import { getProductStock, isOutOfStock } from "../../../utils/stockUtils";
 
 import { getProductImage } from "../../../utils/productImage";
 
@@ -39,9 +36,7 @@ function ProductCard({
 }) {
   const dispatch = useDispatch();
 
-  const cartItems = useSelector(
-    (state) => state.cart?.cartItems || []
-  );
+  const cartItems = useSelector((state) => state.cart?.cartItems || []);
 
   const [isWishlisted, setIsWishlisted] = useState(false);
 
@@ -58,11 +53,8 @@ function ProductCard({
   const productId = product._id || product.id;
 
   const cartItem = useMemo(
-    () =>
-      cartItems.find(
-        (item) => (item._id || item.id) === productId
-      ),
-    [cartItems, productId]
+    () => cartItems.find((item) => (item._id || item.id) === productId),
+    [cartItems, productId],
   );
 
   const quantity = cartItem?.quantity || 0;
@@ -76,19 +68,12 @@ function ProductCard({
   const hasDiscount = compareAtPrice > price;
 
   const discountPercent = hasDiscount
-    ? Math.round(
-      ((compareAtPrice - price) / compareAtPrice) * 100
-    )
+    ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
     : 0;
 
-  const savings = hasDiscount
-    ? compareAtPrice - price
-    : 0;
+  const savings = hasDiscount ? compareAtPrice - price : 0;
 
-  const imageUrl = getProductImage(
-    product,
-    product.image
-  );
+  const imageUrl = getProductImage(product, product.image);
 
   /* =========================================================
      PRODUCT ATTRIBUTES
@@ -96,34 +81,26 @@ function ProductCard({
 
   const productText = useMemo(
     () =>
-      [
-        product.name,
-        product.description,
-        product.badge,
-      ]
+      [product.name, product.description, product.badge]
         .filter(Boolean)
         .join(" ")
         .toLowerCase(),
-    [product]
+    [product],
   );
 
   const isOrganic =
-    Boolean(product.isOrganic) ||
-    productText.includes("organic");
+    Boolean(product.isOrganic) || productText.includes("organic");
 
   const category =
     typeof product.category === "object" && product.category !== null
       ? product.category.name || product.category.title || "Fresh Harvest"
       : product.category || "Fresh Harvest";
 
-  const unit =
-    product.unit || "1 pack";
+  const unit = product.unit || "1 pack";
 
-  const rating =
-    Number(product.rating) || 4.9;
+  const rating = Number(product.rating) || 4.9;
 
-  const reviewCount =
-    Number(product.reviewCount) || 36;
+  const reviewCount = Number(product.reviewCount) || 36;
 
   /* =========================================================
      HANDLERS
@@ -135,15 +112,12 @@ function ProductCard({
 
   const handleCardKeyDown = useCallback(
     (event) => {
-      if (
-        event.key === "Enter" ||
-        event.key === " "
-      ) {
+      if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
         handleCardSelect();
       }
     },
-    [handleCardSelect]
+    [handleCardSelect],
   );
 
   const handleAdd = useCallback(
@@ -151,9 +125,7 @@ function ProductCard({
       event?.stopPropagation();
 
       if (outOfStock) {
-        toast.error(
-          `${product.name} is currently out of stock.`
-        );
+        toast.error(`${product.name} is currently out of stock.`);
         return;
       }
 
@@ -166,19 +138,12 @@ function ProductCard({
         addToCart({
           product,
           quantity: 1,
-        })
+        }),
       );
 
-      toast.success(
-        `${product.name} added to cart`
-      );
+      toast.success(`${product.name} added to cart`);
     },
-    [
-      dispatch,
-      onAddToCart,
-      outOfStock,
-      product,
-    ]
+    [dispatch, onAddToCart, outOfStock, product],
   );
 
   const handleQuantityChange = useCallback(
@@ -189,67 +154,44 @@ function ProductCard({
         if (onUpdateQuantity) {
           onUpdateQuantity(productId, 0);
         } else {
-          dispatch(
-            removeFromCart(productId)
-          );
+          dispatch(removeFromCart(productId));
         }
 
         return;
       }
 
-      if (
-        stockCount > 0 &&
-        nextQuantity > stockCount
-      ) {
-        toast.error(
-          `Only ${stockCount} items available.`
-        );
+      if (stockCount > 0 && nextQuantity > stockCount) {
+        toast.error(`Only ${stockCount} items available.`);
         return;
       }
 
       if (onUpdateQuantity) {
-        onUpdateQuantity(
-          productId,
-          nextQuantity
-        );
+        onUpdateQuantity(productId, nextQuantity);
       } else {
         dispatch(
           updateCartQuantity({
             productId,
             quantity: nextQuantity,
-          })
+          }),
         );
       }
     },
-    [
-      dispatch,
-      onUpdateQuantity,
-      productId,
-      stockCount,
-    ]
+    [dispatch, onUpdateQuantity, productId, stockCount],
   );
 
-  const handleWishlist = useCallback(
-    (event) => {
-      event?.stopPropagation();
+  const handleWishlist = useCallback((event) => {
+    event?.stopPropagation();
 
-      setIsWishlisted((previous) => {
-        const next = !previous;
+    setIsWishlisted((previous) => {
+      const next = !previous;
 
-        toast.success(
-          next
-            ? "Added to favorites"
-            : "Removed from favorites",
-          {
-            duration: 1600,
-          }
-        );
-
-        return next;
+      toast.success(next ? "Added to favorites" : "Removed from favorites", {
+        duration: 1600,
       });
-    },
-    []
-  );
+
+      return next;
+    });
+  }, []);
 
   /* =========================================================
      SHARED UI
@@ -270,13 +212,11 @@ function ProductCard({
         </span>
       )}
 
-      {!isOrganic &&
-        !hasDiscount &&
-        product.badge && (
-          <span className="rounded-full bg-emerald-800/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm backdrop-blur">
-            {product.badge}
-          </span>
-        )}
+      {!isOrganic && !hasDiscount && product.badge && (
+        <span className="rounded-full bg-emerald-800/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm backdrop-blur">
+          {product.badge}
+        </span>
+      )}
     </div>
   );
 
@@ -284,11 +224,7 @@ function ProductCard({
     <button
       type="button"
       onClick={handleWishlist}
-      aria-label={
-        isWishlisted
-          ? "Remove from wishlist"
-          : "Add to wishlist"
-      }
+      aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
       className={[
         "absolute right-3 top-3 z-20",
         "flex h-9 w-9 items-center justify-center",
@@ -301,14 +237,7 @@ function ProductCard({
           : "border-white/70 bg-white/90 text-slate-400 hover:border-rose-200 hover:bg-white hover:text-rose-500",
       ].join(" ")}
     >
-      <Heart
-        size={16}
-        className={
-          isWishlisted
-            ? "fill-current"
-            : ""
-        }
-      />
+      <Heart size={16} className={isWishlisted ? "fill-current" : ""} />
     </button>
   );
 
@@ -322,10 +251,7 @@ function ProductCard({
       );
     }
 
-    if (
-      stockCount > 0 &&
-      stockCount <= 5
-    ) {
+    if (stockCount > 0 && stockCount <= 5) {
       return (
         <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-amber-700">
           <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
@@ -342,9 +268,7 @@ function ProductCard({
     );
   };
 
-  const QuantityControl = ({
-    compact = false,
-  }) => {
+  const QuantityControl = ({ compact = false }) => {
     if (outOfStock) {
       return (
         <button
@@ -364,20 +288,13 @@ function ProductCard({
             "flex items-center",
             "rounded-xl border border-emerald-200",
             "bg-emerald-50 p-1",
-            compact
-              ? "gap-1"
-              : "gap-1.5",
+            compact ? "gap-1" : "gap-1.5",
           ].join(" ")}
         >
           <button
             type="button"
             aria-label="Decrease quantity"
-            onClick={(event) =>
-              handleQuantityChange(
-                event,
-                quantity - 1
-              )
-            }
+            onClick={(event) => handleQuantityChange(event, quantity - 1)}
             className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-emerald-700 transition hover:bg-emerald-100 active:scale-95"
           >
             <Minus size={14} />
@@ -390,12 +307,7 @@ function ProductCard({
           <button
             type="button"
             aria-label="Increase quantity"
-            onClick={(event) =>
-              handleQuantityChange(
-                event,
-                quantity + 1
-              )
-            }
+            onClick={(event) => handleQuantityChange(event, quantity + 1)}
             className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-700 text-white transition hover:bg-emerald-800 active:scale-95"
           >
             <Plus size={14} />
@@ -416,9 +328,7 @@ function ProductCard({
           "transition-all duration-200",
           "hover:bg-emerald-800 hover:shadow-md",
           "active:scale-95",
-          compact
-            ? "px-3.5 py-2 text-xs"
-            : "px-4 py-2.5 text-xs",
+          compact ? "px-3.5 py-2 text-xs" : "px-4 py-2.5 text-xs",
         ].join(" ")}
       >
         <ShoppingCart size={14} />
@@ -446,9 +356,7 @@ function ProductCard({
           "hover:border-emerald-300",
           "hover:shadow-lg",
           "sm:flex-row sm:items-center",
-          onSelect
-            ? "cursor-pointer"
-            : "",
+          onSelect ? "cursor-pointer" : "",
         ].join(" ")}
       >
         {/* Image */}
@@ -502,14 +410,9 @@ function ProductCard({
             </span>
 
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600">
-              <Star
-                size={13}
-                className="fill-amber-400 text-amber-400"
-              />
+              <Star size={13} className="fill-amber-400 text-amber-400" />
               {rating.toFixed(1)}
-              <span className="text-slate-400">
-                ({reviewCount})
-              </span>
+              <span className="text-slate-400">({reviewCount})</span>
             </span>
 
             <StockIndicator />
@@ -547,11 +450,7 @@ function ProductCard({
             >
               <Heart
                 size={16}
-                className={
-                  isWishlisted
-                    ? "fill-rose-500 text-rose-500"
-                    : ""
-                }
+                className={isWishlisted ? "fill-rose-500 text-rose-500" : ""}
               />
             </button>
 
@@ -580,9 +479,7 @@ function ProductCard({
         "hover:-translate-y-0.5",
         "hover:border-emerald-300",
         "hover:shadow-xl",
-        onSelect
-          ? "cursor-pointer"
-          : "",
+        onSelect ? "cursor-pointer" : "",
       ].join(" ")}
     >
       {/* ===============================================
@@ -606,7 +503,7 @@ function ProductCard({
         <div className="pointer-events-none absolute inset-x-3 bottom-3 flex justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-950/80 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-md">
             <Eye size={12} />
-            Quick view
+            View
           </span>
         </div>
 
@@ -632,10 +529,7 @@ function ProductCard({
           </span>
 
           <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold text-slate-500">
-            <Star
-              size={12}
-              className="fill-amber-400 text-amber-400"
-            />
+            <Star size={12} className="fill-amber-400 text-amber-400" />
             {rating.toFixed(1)}
           </span>
         </div>

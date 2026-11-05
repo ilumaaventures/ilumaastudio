@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Clock3,
   Tag,
+  ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import toast from "react-hot-toast";

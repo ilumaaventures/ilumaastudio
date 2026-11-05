@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, Star, Gift, ShoppingBag, ArrowRight } from "lucide-react";
+import { Heart, Star, Gift, ShoppingBag, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { addToCart } from "../../../redux/reducers/cartReducer";
 import { toggleWishlist } from "../../../redux/reducers/wishlistReducer";
@@ -15,6 +15,16 @@ export default function GiftingProductsSection() {
   const wishlistItems = useSelector((s) => s.wishlist?.items || []);
   const [giftingProducts, setGiftingProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const scrollRef = useRef(null);
+
+  const handleScroll = (direction) => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({
+        left: direction === "left" ? -320 : 320,
+        behavior: "smooth",
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchGiftingProducts = async () => {
@@ -136,32 +146,78 @@ export default function GiftingProductsSection() {
           </p>
         </div>
 
-        <Link
-          to="https://gifter.ilumaa.com"
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0"
-        >
-          <span>See All</span>
-          <ArrowRight
-            size={13}
-            className="transition-transform duration-200 group-hover:translate-x-0.5"
-          />
-        </Link>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 mr-1">
+            <button
+              type="button"
+              onClick={() => handleScroll("left")}
+              aria-label="Scroll Left"
+              className="w-8 h-8 rounded-full bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleScroll("right")}
+              aria-label="Scroll Right"
+              className="w-8 h-8 rounded-full bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+
+          <Link
+            to="https://gifter.ilumaa.com"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0"
+          >
+            <span>See All</span>
+            <ArrowRight
+              size={13}
+              className="transition-transform duration-200 group-hover:translate-x-0.5"
+            />
+          </Link>
+        </div>
       </div>
 
       {loading ? (
         <ProductGridSkeleton count={5} />
       ) : (
-        <div className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          {giftingProducts.map((prod) => (
-            <ProductCard
-              key={prod._id || prod.id}
-              product={{
-                ...prod,
-                badge: prod.badge || "GIFT SPECIAL",
-              }}
-              isCarousel={true}
-            />
-          ))}
+        <div className="relative group/carousel">
+          {/* Floating Left Arrow */}
+          <button
+            type="button"
+            onClick={() => handleScroll("left")}
+            aria-label="Scroll Left"
+            className="absolute -left-2 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/95 hover:bg-white text-slate-700 hover:text-blue-600 border border-slate-200/90 shadow-md hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer opacity-90 sm:opacity-0 group-hover/carousel:opacity-100"
+          >
+            <ChevronLeft size={20} className="stroke-[2.5]" />
+          </button>
+
+          {/* Floating Right Arrow */}
+          <button
+            type="button"
+            onClick={() => handleScroll("right")}
+            aria-label="Scroll Right"
+            className="absolute -right-2 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/95 hover:bg-white text-slate-700 hover:text-blue-600 border border-slate-200/90 shadow-md hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer opacity-90 sm:opacity-0 group-hover/carousel:opacity-100"
+          >
+            <ChevronRight size={20} className="stroke-[2.5]" />
+          </button>
+
+          <div
+            ref={scrollRef}
+            className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {giftingProducts.map((prod) => (
+              <ProductCard
+                key={prod._id || prod.id}
+                product={{
+                  ...prod,
+                  badge: prod.badge || "GIFT SPECIAL",
+                }}
+                isCarousel={true}
+              />
+            ))}
+          </div>
         </div>
       )}
     </section>

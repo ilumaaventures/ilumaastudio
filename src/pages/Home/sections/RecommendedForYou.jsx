@@ -82,6 +82,24 @@ function RecommendedForYou() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 mr-1">
+            <button
+              type="button"
+              onClick={() => handleScroll("left")}
+              aria-label="Scroll Left"
+              className="w-8 h-8 rounded-full bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleScroll("right")}
+              aria-label="Scroll Right"
+              className="w-8 h-8 rounded-full bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
           <Link
             to="/shop"
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-100/80 transition-all duration-200 shadow-2xs group shrink-0"
@@ -98,18 +116,40 @@ function RecommendedForYou() {
       {loading ? (
         <ProductGridSkeleton count={6} />
       ) : (
-        <div
-          ref={scrollRef}
-          className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-none py-2 px-1"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {items.map((prod) => (
-            <ProductCard
-              key={prod._id || prod.id}
-              product={prod}
-              isCarousel={true}
-            />
-          ))}
+        <div className="relative group/carousel">
+          {/* Floating Left Arrow Overlay */}
+          <button
+            type="button"
+            onClick={() => handleScroll("left")}
+            aria-label="Scroll Left"
+            className="absolute -left-2 sm:-left-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/95 hover:bg-white text-slate-700 hover:text-blue-600 border border-slate-200/90 shadow-md hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer opacity-90 sm:opacity-0 group-hover/carousel:opacity-100"
+          >
+            <ChevronLeft size={20} className="stroke-[2.5]" />
+          </button>
+
+          {/* Floating Right Arrow Overlay */}
+          <button
+            type="button"
+            onClick={() => handleScroll("right")}
+            aria-label="Scroll Right"
+            className="absolute -right-2 sm:-right-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/95 hover:bg-white text-slate-700 hover:text-blue-600 border border-slate-200/90 shadow-md hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer opacity-90 sm:opacity-0 group-hover/carousel:opacity-100"
+          >
+            <ChevronRight size={20} className="stroke-[2.5]" />
+          </button>
+
+          <div
+            ref={scrollRef}
+            className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-none py-2 px-1"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {items.map((prod) => (
+              <ProductCard
+                key={prod._id || prod.id}
+                product={prod}
+                isCarousel={true}
+              />
+            ))}
+          </div>
         </div>
       )}
     </section>

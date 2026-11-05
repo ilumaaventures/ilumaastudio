@@ -368,7 +368,37 @@ function CouponsOffers() {
             ))}
           </div>
         ) : (
-          <div className="relative">
+          <div className="relative group/carousel">
+            {/* Floating Left Arrow */}
+            <button
+              type="button"
+              onClick={() => handleScroll("left")}
+              disabled={!canScrollLeft}
+              aria-label="Scroll Left"
+              className={`absolute -left-2 sm:-left-4 top-1/2 -translate-y-1/2 z-30 w-9 h-9 sm:w-10 sm:h-10 rounded-full border shadow-md flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 ${
+                canScrollLeft
+                  ? "bg-white/95 hover:bg-white text-slate-700 hover:text-blue-600 border-slate-200/90 hover:shadow-xl cursor-pointer opacity-90 sm:opacity-0 group-hover/carousel:opacity-100"
+                  : "bg-white/70 text-slate-300 border-slate-100 cursor-not-allowed opacity-0"
+              }`}
+            >
+              <ChevronLeft size={20} className="stroke-[2.5]" />
+            </button>
+
+            {/* Floating Right Arrow */}
+            <button
+              type="button"
+              onClick={() => handleScroll("right")}
+              disabled={!canScrollRight}
+              aria-label="Scroll Right"
+              className={`absolute -right-2 sm:-right-4 top-1/2 -translate-y-1/2 z-30 w-9 h-9 sm:w-10 sm:h-10 rounded-full border shadow-md flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 ${
+                canScrollRight
+                  ? "bg-white/95 hover:bg-white text-slate-700 hover:text-blue-600 border-slate-200/90 hover:shadow-xl cursor-pointer opacity-90 sm:opacity-0 group-hover/carousel:opacity-100"
+                  : "bg-white/70 text-slate-300 border-slate-100 cursor-not-allowed opacity-0"
+              }`}
+            >
+              <ChevronRight size={20} className="stroke-[2.5]" />
+            </button>
+
             {canScrollLeft && (
               <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-12 bg-gradient-to-r from-slate-50 via-slate-50/80 to-transparent z-20 pointer-events-none transition-opacity duration-300" />
             )}

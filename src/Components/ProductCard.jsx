@@ -468,7 +468,7 @@ export default function ProductCard({
           className="absolute bottom-2.5 right-2.5 z-20 flex items-center gap-1.5 rounded-full bg-white/95 backdrop-blur-xs px-3 py-1.5 text-[11px] font-bold text-slate-700 shadow-sm border border-slate-100/90 hover:bg-white hover:text-blue-600 transition-all duration-200 cursor-pointer"
         >
           <Eye size={12} strokeWidth={2.2} className="text-slate-600" />
-          <span>Quick View</span>
+          <span> View</span>
         </button>
       </div>
 

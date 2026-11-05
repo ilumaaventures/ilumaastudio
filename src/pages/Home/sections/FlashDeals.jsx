@@ -395,7 +395,27 @@ export default function FlashDeals() {
             HORIZONTAL DEAL SHELF USING STANDARD PRODUCTCARD UI
             (Exclusively maps backend active flash deal products)
         ============================================================ */}
-        <div className="p-4 sm:p-6 lg:p-7">
+        <div className="p-4 sm:p-6 lg:p-7 relative group/carousel">
+          {/* Floating Left Arrow Overlay */}
+          <button
+            type="button"
+            onClick={handleScrollLeft}
+            aria-label="Scroll Flash Deals Left"
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/95 hover:bg-white text-slate-700 hover:text-blue-600 border border-slate-200/90 shadow-md hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer opacity-90 sm:opacity-0 group-hover/carousel:opacity-100"
+          >
+            <ChevronLeft size={20} className="stroke-[2.5]" />
+          </button>
+
+          {/* Floating Right Arrow Overlay */}
+          <button
+            type="button"
+            onClick={handleScrollRight}
+            aria-label="Scroll Flash Deals Right"
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/95 hover:bg-white text-slate-700 hover:text-blue-600 border border-slate-200/90 shadow-md hover:shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer opacity-90 sm:opacity-0 group-hover/carousel:opacity-100"
+          >
+            <ChevronRight size={20} className="stroke-[2.5]" />
+          </button>
+
           <div
             ref={sliderRef}
             className="
