@@ -78,7 +78,7 @@ export default function BestSellingProducts() {
           </div>
           <p className="text-xs text-slate-500 font-medium mt-1">
             Most popular and top-rated items loved by customers across
-            ILumaaStudio.
+            ILUMAAStudio.
           </p>
         </div>
 
