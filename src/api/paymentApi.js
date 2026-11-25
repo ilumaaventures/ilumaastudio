@@ -72,3 +72,37 @@ export const getOrderPaymentStatus = async (orderId) => {
   const response = await baseApi.get(`/payments/order/${orderId}/status`);
   return response.data;
 };
+
+/**
+ * Fetches Stripe publishable key from backend with env fallback
+ */
+export const getStripePublishableKey = async () => {
+  try {
+    const res = await baseApi.get("/payments/stripe/key");
+    if (res.data && (res.data.key || res.data.publishableKey)) {
+      return res.data.key || res.data.publishableKey;
+    }
+  } catch (err) {
+    console.warn("Could not fetch Stripe key from backend, using env fallback:", err);
+  }
+  return import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "pk_test_51Uepv5Ls99xcMmKxf2TSYtVSHP9ZzeeSDJFgi3alVTvkgXoZhMu8hHxXatluKFw3CXObIUrrpz9gEUmjFR3zAQtf00J0krWtOw";
+};
+
+/**
+ * Creates a Stripe PaymentIntent on backend
+ * @param {Object} data - { amount, currency, orderId, customerEmail, customerName, metadata }
+ */
+export const createStripePaymentIntent = async (data) => {
+  const response = await baseApi.post("/payments/stripe/create-intent", data);
+  return response.data;
+};
+
+/**
+ * Verifies Stripe payment on backend after confirmation
+ * @param {Object} data - { paymentIntentId, orderId, paymentId }
+ */
+export const verifyStripePayment = async (data) => {
+  const response = await baseApi.post("/payments/stripe/verify", data);
+  return response.data;
+};
+

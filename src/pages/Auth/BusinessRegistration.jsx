@@ -1163,7 +1163,9 @@ export default function BusinessRegistration() {
                           )}
                         </button>
                       </div>
-                      <PasswordStrengthMeter password={formData.ownerPassword} />
+                      <PasswordStrengthMeter
+                        password={formData.ownerPassword}
+                      />
                     </div>
 
                     {/* Field 4: Mobile No & Field 5: Business Category */}
@@ -1243,9 +1245,24 @@ export default function BusinessRegistration() {
                         </select>
                       </div>
                     </div>
-
+                    <div className="text-[11px] text-center text-slate-500 font-medium">
+                      Accept our{" "}
+                      <Link
+                        to="/terms"
+                        className="text-[#2563eb] hover:underline font-semibold"
+                      >
+                        Terms of Service
+                      </Link>{" "}
+                      and{" "}
+                      <Link
+                        to="/privacy"
+                        className="text-[#2563eb] hover:underline font-semibold"
+                      >
+                        Privacy Policy
+                      </Link>
+                    </div>
                     {/* Step 1 Actions: Quick Submit with Default Launch Plan OR Proceed to Step 2 */}
-                    <div className="pt-2 space-y-3">
+                    <div className=" space-y-3">
                       {/* Option 1: Quick Register & Submit with Default Launch Plan */}
                       <button
                         type="button"

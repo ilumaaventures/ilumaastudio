@@ -183,7 +183,6 @@ const Login = () => {
         </form>
 
         <div className="space-y-2 text-center text-xs text-slate-500 dark:text-slate-400">
-          {" "}
           <div>
             {" "}
             Don&apos;t have an account?{" "}
@@ -194,7 +193,23 @@ const Login = () => {
               {" "}
               Create an Account{" "}
             </Link>{" "}
-          </div>{" "}
+          </div>
+          <div>
+            Accept our{" "}
+            <Link
+              to="/terms"
+              className="text-[#2563eb] hover:underline font-semibold"
+            >
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link
+              to="/privacy"
+              className="text-[#2563eb] hover:underline font-semibold"
+            >
+              Privacy Policy
+            </Link>
+          </div>
         </div>
       </div>
     </div>

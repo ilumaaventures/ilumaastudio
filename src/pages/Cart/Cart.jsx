@@ -30,6 +30,7 @@ import {
   Printer,
   ChevronDown,
   ChevronUp,
+  Globe,
 } from "lucide-react";
 import {
   removeFromCart,
@@ -45,7 +46,10 @@ import {
   getRazorpayKey,
   createRazorpayOrder,
   verifyRazorpayPayment,
+  getStripePublishableKey,
+  createStripePaymentIntent,
 } from "../../api/paymentApi";
+import StripeCheckoutModal from "../../Components/Payment/StripeCheckoutModal";
 import baseApi from "../../api/baseApi";
 import toast from "react-hot-toast";
 import { playOrderConfirmedSound } from "../../utils/soundEffects";
@@ -64,8 +68,26 @@ function Cart() {
   const [step, setStep] = useState("cart");
   const [createdOrder, setCreatedOrder] = useState(null);
   const [placingOrder, setPlacingOrder] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("razorpay"); // 'cod' | 'razorpay'
+  const [paymentMethod, setPaymentMethod] = useState("razorpay"); // 'cod' | 'razorpay' | 'stripe'
   const [orderNotes, setOrderNotes] = useState("");
+
+  // Stripe Modal States
+  const [stripeModalOpen, setStripeModalOpen] = useState(false);
+  const [stripeClientSecret, setStripeClientSecret] = useState("");
+  const [stripePublishableKey, setStripePublishableKey] = useState("");
+  const [stripePaymentId, setStripePaymentId] = useState(null);
+  const [stripeOrder, setStripeOrder] = useState(null);
+
+  const handleStripeSuccess = (updatedOrder, paymentIntent) => {
+    setStripeModalOpen(false);
+    dispatch(clearCart());
+    try {
+      playOrderConfirmedSound();
+    } catch (_) {}
+    setCreatedOrder(updatedOrder || stripeOrder);
+    setStep("success");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   // Coupon states
   const [couponCodeInput, setCouponCodeInput] = useState("");
@@ -850,6 +872,39 @@ function Cart() {
         setStep("success");
         window.scrollTo({ top: 0, behavior: "smooth" });
         toast.success("Order placed successfully!");
+      } else if (paymentMethod === "stripe") {
+        // Stripe Online Flow - Card & Digital Wallets
+        const pendingOrderPayload = {
+          ...orderPayload,
+          paymentInfo: {
+            type: "Online",
+            method: "Stripe",
+            status: "Pending",
+          },
+        };
+
+        const initialOrder = await placeOrder(pendingOrderPayload);
+        setCreatedOrder(initialOrder);
+        setStripeOrder(initialOrder);
+
+        const stripeRes = await createStripePaymentIntent({
+          orderId: initialOrder._id,
+          amount: initialOrder.totalPrice,
+          currency: "INR",
+          customerEmail: shippingAddress.email || user?.email || "",
+          customerName: shippingAddress.fullName || user?.name || "",
+        });
+
+        if (!stripeRes?.clientSecret) {
+          throw new Error("Unable to initialize Stripe payment session.");
+        }
+
+        const pubKey = stripeRes.publishableKey || (await getStripePublishableKey());
+        setStripeClientSecret(stripeRes.clientSecret);
+        setStripePublishableKey(pubKey);
+        setStripePaymentId(stripeRes.paymentId || null);
+        setStripeModalOpen(true);
+        setPlacingOrder(false);
       } else {
         // Razorpay Online Flow - Durable Checkout Lifecycle
         const isLoaded = await loadRazorpayScript();
@@ -2183,13 +2238,13 @@ function Cart() {
                       <span>Payment Method</span>
                     </h3>
 
-                    <div className="grid sm:grid-cols-2 gap-3 pt-1">
+                    <div className="grid sm:grid-cols-3 gap-3 pt-1">
                       {/* Online Razorpay */}
                       <label
-                        className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                        className={`flex items-center gap-2.5 p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${
                           paymentMethod === "razorpay"
-                            ? "border-[#2563eb] bg-blue-50/50"
-                            : "border-slate-200 bg-white hover:border-slate-300"
+                            ? "border-[#2563eb] bg-blue-50/50 dark:bg-blue-950/20"
+                            : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300"
                         }`}
                       >
                         <input
@@ -2198,26 +2253,56 @@ function Cart() {
                           value="razorpay"
                           checked={paymentMethod === "razorpay"}
                           onChange={() => setPaymentMethod("razorpay")}
-                          className="accent-[#2563eb] w-4 h-4 cursor-pointer"
+                          className="accent-[#2563eb] w-4 h-4 cursor-pointer shrink-0"
                         />
-                        <div className="flex items-center gap-2.5">
-                          <CreditCard size={20} className="text-[#2563eb]" />
+                        <div className="flex items-center gap-2">
+                          <CreditCard size={18} className="text-[#2563eb] shrink-0" />
                           <div>
-                            <span className="font-black text-xs text-slate-900 block">
-                              Online Payment
+                            <span className="font-black text-xs text-slate-900 dark:text-white block">
+                              Razorpay
                             </span>
-                            <span className="text-[10px] text-slate-500">
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block leading-tight">
                               UPI, Cards, NetBanking
                             </span>
                           </div>
                         </div>
                       </label>
+
+                      {/* Online Stripe */}
+                      <label
+                        className={`flex items-center gap-2.5 p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${
+                          paymentMethod === "stripe"
+                            ? "border-[#6366f1] bg-indigo-50/50 dark:bg-indigo-950/20"
+                            : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="stripe"
+                          checked={paymentMethod === "stripe"}
+                          onChange={() => setPaymentMethod("stripe")}
+                          className="accent-[#6366f1] w-4 h-4 cursor-pointer shrink-0"
+                        />
+                        <div className="flex items-center gap-2">
+                          <Globe size={18} className="text-[#6366f1] shrink-0" />
+                          <div>
+                            <span className="font-black text-xs text-slate-900 dark:text-white block">
+                              Stripe Global
+                            </span>
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block leading-tight">
+                              Debit/Credit Cards & Wallets
+                            </span>
+                          </div>
+                        </div>
+                      </label>
+
                       {/* Cash on Delivery */}
                       <label
-                        className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                        className={`flex items-center gap-2.5 p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${
                           paymentMethod === "cod"
-                            ? "border-[#2563eb] bg-blue-50/50"
-                            : "border-slate-200 bg-white hover:border-slate-300"
+                            ? "border-[#2563eb] bg-blue-50/50 dark:bg-blue-950/20"
+                            : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300"
                         }`}
                       >
                         <input
@@ -2226,16 +2311,16 @@ function Cart() {
                           value="cod"
                           checked={paymentMethod === "cod"}
                           onChange={() => setPaymentMethod("cod")}
-                          className="accent-[#2563eb] w-4 h-4 cursor-pointer"
+                          className="accent-[#2563eb] w-4 h-4 cursor-pointer shrink-0"
                         />
-                        <div className="flex items-center gap-2.5">
-                          <Banknote size={20} className="text-emerald-600" />
+                        <div className="flex items-center gap-2">
+                          <Banknote size={18} className="text-emerald-600 shrink-0" />
                           <div>
-                            <span className="font-black text-xs text-slate-900 block">
-                              Cash on Delivery (COD)
+                            <span className="font-black text-xs text-slate-900 dark:text-white block">
+                              Cash on Delivery
                             </span>
-                            <span className="text-[10px] text-slate-500">
-                              Pay cash at your doorstep
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block leading-tight">
+                              Pay cash at doorstep
                             </span>
                           </div>
                         </div>
@@ -2539,6 +2624,17 @@ function Cart() {
           </div>
         )}
       </div>
+
+      {/* Stripe Payment Modal */}
+      <StripeCheckoutModal
+        isOpen={stripeModalOpen}
+        onClose={() => setStripeModalOpen(false)}
+        clientSecret={stripeClientSecret}
+        publishableKey={stripePublishableKey}
+        order={stripeOrder || createdOrder}
+        paymentId={stripePaymentId}
+        onSuccess={handleStripeSuccess}
+      />
     </div>
   );
 }

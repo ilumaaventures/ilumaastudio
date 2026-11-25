@@ -413,27 +413,27 @@ const COMPARISON_GROUPS = [
   {
     title: "Scale Tiers & Developer APIs",
     rows: [
-      ["Starter / Growth / Professional tiers", false, true, true, true],
+      ["Starter / Growth / Professional tiers", false, false, true, true],
       [
         "inventory and reporting APIs for third parties",
         false,
-        true,
+        false,
         true,
         true,
       ],
-      ["API access", false, true, true, true],
-      ["premium support", false, true, true, true],
-      ["lower commission", false, true, true, true],
-      ["bulk operations", false, true, true, true],
+      ["API access", false, false, true, true],
+      ["premium support", false, false, true, true],
+      ["lower commission", false, false, true, true],
+      ["bulk operations", false, false, true, true],
     ],
   },
   {
     title: "Market Intelligence & Competitor Analytics",
     rows: [
-      ["Best-selling products", false, true, true, true],
-      ["customer demographics", false, true, true, true],
-      ["competitor pricing", false, true, true, true],
-      ["demand forecasts", false, true, true, true],
+      ["Best-selling products", false, false, true, true],
+      ["customer demographics", false, false, true, true],
+      ["competitor pricing", false, false, true, true],
+      ["demand forecasts", false, false, true, true],
       ["trending keywords", false, false, true, true],
       ["product comparison", false, true, true, true],
     ],
@@ -441,12 +441,12 @@ const COMPARISON_GROUPS = [
   {
     title: "Financial Services & Credit Solutions",
     rows: [
-      ["Seller loans", false, false, true, true],
+      ["Seller loans", false, false, false, true],
       ["invoice financing", false, false, false, true],
       ["buy-now-pay-later", false, false, false, true],
       ["customer credit", false, false, false, true],
-      ["working capital", false, false, true, true],
-      ["insurance", false, false, true, true],
+      ["working capital", false, false, false, true],
+      ["insurance", false, false, false, true],
     ],
   },
   {
