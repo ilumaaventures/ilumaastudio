@@ -25,7 +25,12 @@ baseApi.interceptors.request.use(
     }
 
     let guestId = localStorage.getItem("guestId");
-    if (!guestId) {
+    if (
+      !guestId ||
+      guestId === "default_guest" ||
+      guestId === "null" ||
+      guestId === "undefined"
+    ) {
       guestId =
         "guest_" +
         Math.random().toString(36).substring(2, 12) +

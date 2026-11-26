@@ -33,6 +33,10 @@ const syncCartAndWishlist = () => async (dispatch, getState) => {
     // Sync cart: if guest cart has items, sync/merge them; otherwise fetch from DB
     if (cart && cart.cartItems && cart.cartItems.length > 0) {
       await dispatch(syncCart(cart.cartItems));
+      try {
+        localStorage.removeItem("cartItems");
+      } catch (_) {}
+      await dispatch(fetchCart());
     } else {
       await dispatch(fetchCart());
     }
@@ -41,6 +45,10 @@ const syncCartAndWishlist = () => async (dispatch, getState) => {
     if (wishlist && wishlist.items && wishlist.items.length > 0) {
       const productIds = wishlist.items.map((item) => item._id);
       await dispatch(syncWishlist(productIds));
+      try {
+        localStorage.removeItem("wishlistItems");
+      } catch (_) {}
+      await dispatch(fetchWishlist());
     } else {
       await dispatch(fetchWishlist());
     }
@@ -159,6 +167,15 @@ export const logoutUser = () => async (dispatch) => {
   // Clear cart and wishlist from Redux store and localStorage
   dispatch(clearLocalCart());
   dispatch(clearLocalWishlist());
+
+  // Generate a fresh guest session ID so previous session is completely isolated
+  const freshGuestId =
+    "guest_" +
+    Math.random().toString(36).substring(2, 12) +
+    Date.now().toString(36);
+  try {
+    localStorage.setItem("guestId", freshGuestId);
+  } catch (_) {}
 };
 
 export const loginWithGoogle =
